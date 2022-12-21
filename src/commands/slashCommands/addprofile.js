@@ -18,30 +18,30 @@ const {
   
       const firstModal = new TextInputBuilder()
         .setCustomId(`profileName`)
-        .setLabel(`Name`)
+        .setLabel(`Full Name`)
         .setStyle(TextInputStyle.Short)
-        .setPlaceholder("Input your FULL NAME here.");
+        .setPlaceholder("Input your first name followed by your last name.");
   
       const secondModal = new TextInputBuilder()
         .setCustomId(`referrerId`)
-        .setLabel(`Refferer ID`)
+        .setLabel(`Refferer ID (Optional)`)
         .setMinLength(20)
         .setMaxLength(20)
         .setStyle(TextInputStyle.Short)
-        .setPlaceholder("ID should start with LEV and ends with IOSA")
+        .setPlaceholder("Leave blank if no referral ID")
         .setRequired(false);
   
-    //   const thirdModal = new TextInputBuilder()
-    //     .setCustomId(`price`)
-    //     .setLabel(`Inventory Price`)
-    //     .setStyle(TextInputStyle.Short)
-    //     .setPlaceholder("Inventory price must be numbers ONLY.");
+      const thirdModal = new TextInputBuilder()
+        .setCustomId(`email`)
+        .setLabel(`Email Address`)
+        .setStyle(TextInputStyle.Short)
+        .setPlaceholder("Input your email address here.");
   
       const firstActionRow = new ActionRowBuilder().addComponents(firstModal);
       const secondActionRow = new ActionRowBuilder().addComponents(secondModal);
-    //   const thirdActionRow = new ActionRowBuilder().addComponents(thirdModal);
+      const thirdActionRow = new ActionRowBuilder().addComponents(thirdModal);
   
-      modal.addComponents(firstActionRow, secondActionRow);
+      modal.addComponents(thirdActionRow, firstActionRow, secondActionRow);
       await interaction.showModal(modal);
     },
   };

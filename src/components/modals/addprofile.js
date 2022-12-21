@@ -1,7 +1,9 @@
 const { EmbedBuilder } = require("discord.js");
-const config = require(`../../config.json`);
-const Profile = require("../../schemas/verified");
-const mongoose = require("mongoose");
+let db;
+
+(async () => {
+  db = await require("../src/database/db");
+})();
 
 module.exports = {
   data: {
@@ -10,20 +12,23 @@ module.exports = {
   async execute(interaction, client) {
     const userName = interaction.fields.getTextInputValue("profileName");
     const uplineID = interaction.fields.getTextInputValue("referrerId");
+    const userEmail = interaction.fields.getTextInputValue("email");
 
-    const newProfile = await new Profile({
-      profileName: userName,
-      balance: 0,
-      referrer: uplineID,
-    });
+    const id = new Date().getTime();
 
+    db.query(
+      `INSERT INTO Verified-Users (MEMBER ID, FULL NAME, EMAIL, REFERRER ID) VALUES (LEV${id}IOSA, ${userName}, ${userEmail}, ${uplineID})`
+    );
+
+
+    return
     await newProfile.save().catch(console.error);
 
     const date = new Date(Date.now() + 28800000).toLocaleString("en-US", {
       dateStyle: "full",
       timeStyle: "short",
     });
-    
+
     const embed = new EmbedBuilder()
       .setTitle("✅ MEMBER CREATED")
       .setColor("8e18be")

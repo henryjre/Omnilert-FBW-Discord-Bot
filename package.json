@@ -16,6 +16,6 @@
     "discord.js": "^14.7.1",
     "dotenv": "^16.0.3",
     "google-spreadsheet": "^3.3.0",
-    "mongoose": "^6.8.0"
+    "mysql2": "^2.3.3"
   }
 }

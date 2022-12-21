@@ -1,8 +1,8 @@
 const { Client, Collection, GatewayIntentBits } = require("discord.js");
 const fs = require("fs");
-const mongoose = require("mongoose");
-
 const config = require(`./config.json`);
+
+let db;
 
 const client = new Client({
   intents: [
@@ -19,8 +19,6 @@ client.selectMenus = new Collection();
 client.modals = new Collection();
 client.commandArray = [];
 
-mongoose.set("strictQuery", false);
-
 const functionFolders = fs.readdirSync(`./src/functions`);
 for (const folder of functionFolders) {
   const functionFiles = fs
@@ -34,10 +32,4 @@ client.handleEvents();
 client.handleCommands();
 client.handleComponents();
 
-
-////////////change
-
 client.login(config.token);
-(async () => {
-  await mongoose.connect(config.dbToken).catch(console.error);
-})();
