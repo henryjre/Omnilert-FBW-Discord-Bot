@@ -34,6 +34,9 @@ client.handleEvents();
 client.handleCommands();
 client.handleComponents();
 
+
+////////////change
+
 client.login(config.token);
 (async () => {
   await mongoose.connect(config.dbToken).catch(console.error);
