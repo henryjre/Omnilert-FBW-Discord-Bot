@@ -1,7 +1,7 @@
 const { EmbedBuilder } = require("discord.js");
 const mysql = require("mysql2/promise");
 const chalk = require("chalk");
-require('dotenv').config()
+require('dotenv').config({ path: 'src/.env'})
 
 module.exports = {
   data: {
@@ -41,9 +41,14 @@ module.exports = {
 
     let upline;
     let referrer;
+    let embedReferrer
+    let embedUpline
+
     if (uplId.length != 20) {
-      upline = "No_Referrer_ID";
-      referrer = "No_Referrer";
+      upline = "'-'";
+      referrer = "'-'";
+      embedReferrer = "None"
+      embedUpline = "None"
     } else {
       upline = interaction.fields.getTextInputValue("referrerId");
 
@@ -52,7 +57,8 @@ module.exports = {
         `SELECT FULL_NAME FROM Verified_Users WHERE MEMBER_ID = ${uplineID}`
       );
       referrer = "'" + refQuery[0][0]["FULL_NAME"] + "'";
-      var embedReferrer = refQuery[0][0]["FULL_NAME"]
+      embedReferrer = refQuery[0][0]["FULL_NAME"]
+      embedUpline = interaction.fields.getTextInputValue("referrerId");
     }
 
     const embedUserId = `LEV${id}IOSA`;
@@ -95,7 +101,7 @@ module.exports = {
         },
         {
           name: `REFERRER ID`,
-          value: upline,
+          value: embedUpline,
         },
       ]);
 

@@ -1,7 +1,7 @@
 const { EmbedBuilder } = require("discord.js");
 const { GoogleSpreadsheet } = require("google-spreadsheet");
 const creds = require(`../../secret-key.json`);
-require('dotenv').config()
+require('dotenv').config({ path: 'src/.env'})
 const sheetId = process.env.sheetId;
 
 const doc = new GoogleSpreadsheet(sheetId);
