@@ -2,7 +2,7 @@ const { Client, Collection, GatewayIntentBits } = require("discord.js");
 const fs = require("fs");
 const config = require(`./config.json`);
 
-let db;
+require('dotenv').config()
 
 const client = new Client({
   intents: [
@@ -32,4 +32,4 @@ client.handleEvents();
 client.handleCommands();
 client.handleComponents();
 
-client.login(config.token);
+client.login(process.env.token);
