@@ -2,7 +2,7 @@ const { EmbedBuilder } = require("discord.js");
 let db;
 
 (async () => {
-  db = await require("../src/database/db");
+  db = await require("../../database/db");
 })();
 
 module.exports = {
