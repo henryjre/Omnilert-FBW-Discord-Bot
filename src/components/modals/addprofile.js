@@ -16,10 +16,13 @@ module.exports = {
 
     const id = new Date().getTime();
 
+    console.log('lol')
+
     db.query(
       `INSERT INTO Verified-Users (MEMBER ID, FULL NAME, EMAIL, REFERRER ID) VALUES (LEV${id}IOSA, ${userName}, ${userEmail}, ${uplineID})`
     );
 
+    console.log('wow')
 
     return
     await newProfile.save().catch(console.error);
