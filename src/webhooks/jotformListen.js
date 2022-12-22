@@ -19,7 +19,7 @@ const listen = async () => {
   });
 
   app.post("/userData", async (req, res) => {
-    if (req.query.token !== config.TOKEN) {
+    if (req.query.token !== TOKEN) {
       return res.sendStatus(401);
     }
 
@@ -30,17 +30,15 @@ const listen = async () => {
   });
 
   app.get("/sample", async (req, res) => {
-    if (req.query.token !== config.TOKEN) {
+    if (req.query.token !== TOKEN) {
       return res.sendStatus(401);
     }
-
-    console.log(req);
 
     res.send("🟢 Successful!");
     return;
   });
 
-  server.listen(PORT, '0.0.0.0', () =>
+  server.listen(PORT, () =>
     console.log(
       chalk.yellow(`🟠 Webhook running on ${server.address().address}:${server.address().port}`)
     )
