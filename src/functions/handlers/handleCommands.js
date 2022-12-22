@@ -1,7 +1,8 @@
 const { REST } = require("@discordjs/rest");
 const { Routes } = require("discord-api-types/v9");
 const fs = require("fs");
-require('dotenv').config({ path: 'src/.env'})
+const chalk = require("chalk");
+require("dotenv").config({ path: "src/.env" });
 
 module.exports = (client) => {
   client.handleCommands = async () => {
@@ -40,13 +41,15 @@ module.exports = (client) => {
     const guildId = "1049165537193754664";
     const rest = new REST({ version: "9" }).setToken(process.env.token);
     try {
-      console.log("Started refreshing application (/) commands.");
+      console.log(chalk.blue("Started refreshing application (/) commands."));
 
       await rest.put(Routes.applicationGuildCommands(clientId, guildId), {
         body: client.commandArray,
       });
 
-      console.log("Successfully reloaded application (/) commands.");
+      console.log(
+        chalk.blue("Successfully reloaded application (/) commands.")
+      );
     } catch (error) {
       console.error(error);
     }

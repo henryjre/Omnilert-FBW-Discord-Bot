@@ -1,8 +1,7 @@
 const { Client, Collection, GatewayIntentBits } = require("discord.js");
 const fs = require("fs");
 
-require('dotenv').config({ path: 'src/.env'})
-
+require("dotenv").config({ path: "src/.env" });
 
 const client = new Client({
   intents: [
@@ -32,4 +31,6 @@ client.handleEvents();
 client.handleCommands();
 client.handleComponents();
 
-client.login(process.env.token);
+client.login(process.env.token).then(() => {
+  require("./webhooks/jotformListen");
+});
