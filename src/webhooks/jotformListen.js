@@ -40,7 +40,7 @@ const listen = async () => {
     return;
   });
 
-  server.listen(PORT, () =>
+  server.listen(PORT, '0.0.0.0', () =>
     console.log(
       chalk.yellow(`🟠 Webhook running on ${server.address().address}:${server.address().port}`)
     )
