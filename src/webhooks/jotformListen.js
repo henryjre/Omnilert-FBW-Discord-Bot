@@ -1,12 +1,14 @@
 const express = require("express");
 const bodyParser = require("body-parser");
+const http = require("http");
 require("dotenv").config({ path: "src/.env" });
 const chalk = require("chalk");
 
 const PORT = process.env.PORT;
 const TOKEN = process.env.webhookToken;
 
-const app = express();
+const app = express()
+const server = http.createServer(app)
 
 const listen = async () => {
   app.use(bodyParser.json());
@@ -38,8 +40,10 @@ const listen = async () => {
     return;
   });
 
-  app.listen(PORT, () =>
-    console.log(chalk.yellow(`🟠 Webhook running on PORT ${PORT}`))
+  server.listen(PORT, () =>
+    console.log(
+      chalk.yellow(`🟠 Webhook running on ${server.address().address}:${server.address().port}`)
+    )
   );
 };
 
