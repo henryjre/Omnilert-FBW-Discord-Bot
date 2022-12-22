@@ -1,18 +1,24 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const http = require("http");
+const cors = require('cors');   
+const helmet = require('helmet');
+const morgan = require('morgan');
+
 require("dotenv").config({ path: "src/.env" });
 const chalk = require("chalk");
+const authenticateToken = require('./auth')
 
 const PORT = process.env.PORT;
 const TOKEN = process.env.webhookToken;
 
 const app = express()
-const server = http.createServer(app)
 
 const listen = async () => {
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: true }));
+  app.use(helmet());
+  app.use(cors());
+  app.use(morgan('combined'));
 
   app.get("/", (req, res) => {
     res.json("Listening for User Registrations...");
@@ -29,18 +35,15 @@ const listen = async () => {
     return;
   });
 
-  app.get("/sample", async (req, res) => {
-    if (req.query.token !== TOKEN) {
-      return res.sendStatus(401);
-    }
+  app.get("/sample", authenticateToken, async (req, res) => {
 
     res.send("🟢 Successful!");
     return;
   });
 
-  server.listen(PORT, () =>
+  app.listen(PORT, () =>
     console.log(
-      chalk.yellow(`🟠 Webhook running on ${server.address().address}:${server.address().port}`)
+      chalk.yellow(`🟠 Webhook running on PORT ${PORT}`)
     )
   );
 };
