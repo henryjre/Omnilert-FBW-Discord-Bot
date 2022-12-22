@@ -32,7 +32,7 @@ client.handleCommands();
 client.handleComponents();
 
 client.login(process.env.token).then(() => {
-  require("./webhooks/jotformListen");
+  require("./webhook/jotformListen");
 });
 
 /////changes
