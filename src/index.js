@@ -34,5 +34,3 @@ client.handleComponents();
 client.login(process.env.token).then(() => {
   require("./webhook/jotformListen");
 });
-
-/////changes

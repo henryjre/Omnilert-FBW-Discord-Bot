@@ -17,11 +17,11 @@ const listen = async () => {
   app.use(helmet());
   app.use(cors());
 
-  app.get("/", (req, res) => {
+  app.get("/api", (req, res) => {
     res.json("Listening for User Registrations...");
   });
 
-  app.get("/registerUser", authenticateToken, async (req, res) => {
+  app.get("/api/registerUser", authenticateToken, async (req, res) => {
 
     res.send("🟢 Successful!");
     return;
