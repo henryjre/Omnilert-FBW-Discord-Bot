@@ -23,6 +23,7 @@ const listen = async () => {
 
   app.get("/api/registerUser", authenticateToken, async (req, res) => {
 
+    console.log(req.body)
     res.send("🟢 Successful!");
     return;
   });
