@@ -21,7 +21,7 @@ const listen = async () => {
     res.json("Listening for User Registrations...");
   });
 
-  app.get("/api/registerUser", authenticateToken, async (req, res) => {
+  app.post("/api/registerUser", authenticateToken, async (req, res) => {
 
     console.log(req.body)
     res.send("🟢 Successful!");
