@@ -2,7 +2,7 @@ const { EmbedBuilder } = require("discord.js");
 const mysql = require("mysql2/promise");
 require("dotenv").config({ path: "src/.env" });
 
-export async function addPersonalDetails(
+module.exports = async function addDatabaseDetails(
   fullName,
   birthdate,
   gender,
