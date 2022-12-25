@@ -6,7 +6,7 @@ const helmet = require("helmet");
 require("dotenv").config({ path: "src/.env" });
 const chalk = require("chalk");
 const authenticateToken = require("./auth");
-const { addDatabaseDetails } = require("../database/add-user");
+const addDatabaseDetails = require("../database/add-user");
 
 const PORT = process.env.PORT;
 

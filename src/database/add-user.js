@@ -1,6 +1,7 @@
-const { EmbedBuilder } = require("discord.js");
+const { EmbedBuilder, Guild } = require("discord.js");
 const mysql = require("mysql2/promise");
 require("dotenv").config({ path: "src/.env" });
+const { client } = require("../index");
 
 module.exports = async function addDatabaseDetails(
   fullName,
@@ -25,30 +26,21 @@ module.exports = async function addDatabaseDetails(
 
   const memberId = `LEV${id}IOSA`;
 
-  const queryDetails =
-    "INSERT INTO Personal_Details VALUES ('" +
-    memberId +
-    "','" +
-    fullName +
-    "','" +
-    birthdate +
-    "','" +
-    gender +
-    "','" +
-    email +
-    "','" +
-    "','" +
-    mobileNumber +
-    "','" +
-    address +
-    "','" +
-    frontId +
-    "','" +
-    backId +
-    "','" +
-    selfieWithId +
-    "'";
-  await connection.query(queryDetails).catch((err) => console.log(err));
+  const personalQuery = `INSERT INTO Personal_Details (MEMBER_ID, FULL_NAME, BIRTHDATE, GENDER, EMAIL, MOBILE_NUMBER, ADDRESS, FRONT_ID, BACK_ID, SELFIE_WITH_ID) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+  await connection
+    .query(personalQuery, [
+      memberId,
+      fullName,
+      birthdate,
+      gender,
+      email,
+      mobileNumber,
+      address,
+      frontId,
+      backId,
+      selfieWithId,
+    ])
+    .catch((err) => console.log(err));
 
   let referrer;
   let refId;
@@ -57,31 +49,19 @@ module.exports = async function addDatabaseDetails(
     referrer = "none";
   } else {
     const selectQueryDetails =
-      "SELECT FULL_NAME FROM Personal_Details WHERE MEMBER_ID = '" +
-      referrerId +
-      "'";
-
+      "SELECT FULL_NAME FROM Personal_Details WHERE MEMBER_ID = ?";
     const refQuery = await connection
-      .query(selectQueryDetails)
+      .query(selectQueryDetails, [referrerId])
       .catch((err) => console.log(err));
 
     refId = referrerId;
     referrer = refQuery[0][0]["FULL_NAME"];
   }
 
-  const refQueryDetails =
-    "INSERT INTO Referral_Details VALUES ('" +
-    memberId +
-    "','" +
-    fullName +
-    "','" +
-    0 +
-    "','" +
-    refId +
-    "','" +
-    referrer +
-    "'";
-  await connection.query(refQueryDetails).catch((err) => console.log(err));
+  const refQueryDetails = `INSERT INTO Referral_Details (MEMBER_ID, FULL_NAME, REFERRAL_BALANCE, REFERRER_ID, REFERRER_NAME) VALUES (?, ?, ?, ?, ?)`;
+  await connection
+    .query(refQueryDetails, [memberId, fullName, 0, refId, referrer])
+    .catch((err) => console.log(err));
 
   connection.end();
 
@@ -136,7 +116,7 @@ module.exports = async function addDatabaseDetails(
       },
     ]);
 
-  await interaction.reply({
+  await client.channels.cache.get("1053860453853433860").send({
     embeds: [embed],
   });
-}
+};

@@ -12,6 +12,7 @@ const client = new Client({
     GatewayIntentBits.GuildIntegrations,
   ],
 });
+
 client.commands = new Collection();
 client.buttons = new Collection();
 client.selectMenus = new Collection();
@@ -34,3 +35,5 @@ client.handleComponents();
 client.login(process.env.token).then(() => {
   require("./webhook/jotformListen");
 });
+
+module.exports = { client }
