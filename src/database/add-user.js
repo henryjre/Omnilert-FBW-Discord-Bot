@@ -1,4 +1,4 @@
-const { EmbedBuilder, Guild } = require("discord.js");
+const { EmbedBuilder } = require("discord.js");
 const mysql = require("mysql2/promise");
 require("dotenv").config({ path: "src/.env" });
 const { client } = require("../index");
