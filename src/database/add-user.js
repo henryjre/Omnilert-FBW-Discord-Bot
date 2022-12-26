@@ -2,6 +2,7 @@ const { EmbedBuilder, Guild } = require("discord.js");
 const mysql = require("mysql2/promise");
 require("dotenv").config({ path: "src/.env" });
 const { client } = require("../index");
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 
 module.exports = async function addDatabaseDetails(
   fullName,
@@ -120,7 +121,18 @@ module.exports = async function addDatabaseDetails(
       },
     ]);
 
+  const verifyButton = new ButtonBuilder()
+    .setCustomId("verify-user")
+    .setLabel(`Verify`)
+    .setStyle(ButtonStyle.Success);
+
+  const rejectButton = new ButtonBuilder()
+    .setCustomId("reject-user")
+    .setLabel(`Reject`)
+    .setStyle(ButtonStyle.Danger);
+
   await client.channels.cache.get("1053860453853433860").send({
     embeds: [embed],
+    components: [new ActionRowBuilder().addComponents(verifyButton).addComponents(rejectButton)],
   });
 };
