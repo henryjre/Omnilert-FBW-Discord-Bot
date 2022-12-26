@@ -40,29 +40,21 @@ module.exports = async function addDatabaseDetails(
       frontId,
       backId,
       selfieWithId,
-      paymentImage
+      paymentImage,
     ])
     .catch((err) => console.log(err));
 
-  let referrer;
-  let refId;
-  if (referrerId.length != 20) {
-    refId = "none";
-    referrer = "none";
-  } else {
-    const selectQueryDetails =
-      "SELECT FULL_NAME FROM Personal_Details WHERE MEMBER_ID = ?";
-    const refQuery = await connection
-      .query(selectQueryDetails, [referrerId])
-      .catch((err) => console.log(err));
+  const selectQueryDetails =
+    "SELECT FULL_NAME FROM Personal_Details WHERE MEMBER_ID = ?";
+  const refQuery = await connection
+    .query(selectQueryDetails, [referrerId])
+    .catch((err) => console.log(err));
 
-    refId = referrerId;
-    referrer = refQuery[0][0]["FULL_NAME"];
-  }
+  const referrer = refQuery[0][0]["FULL_NAME"];
 
   const refQueryDetails = `INSERT INTO Referral_Details (MEMBER_ID, FULL_NAME, REFERRAL_BALANCE, REFERRER_ID, REFERRER_NAME) VALUES (?, ?, ?, ?, ?)`;
   await connection
-    .query(refQueryDetails, [memberId, fullName, 0, refId, referrer])
+    .query(refQueryDetails, [memberId, fullName, 0, referrerId, referrer])
     .catch((err) => console.log(err));
 
   connection.end();
@@ -72,7 +64,7 @@ module.exports = async function addDatabaseDetails(
     timeStyle: "short",
   });
 
-  let genderEmoji
+  let genderEmoji;
   if (gender === "Male") {
     genderEmoji = "👨";
   } else {
@@ -82,11 +74,13 @@ module.exports = async function addDatabaseDetails(
   const embed = new EmbedBuilder()
     .setTitle("⌛ PENDING VERIFICATION")
     .setColor("ff9646")
-    .setDescription(`**FRONT ID IMAGE**: [Click to view](${frontId})\n**BACK ID IMAGE**: [Click to view](${backId})\n**SELFIE WITH ID**: [Click to view](${selfieWithId})`)
+    .setDescription(
+      `**FRONT ID IMAGE**: [Click to view](${frontId})\n**BACK ID IMAGE**: [Click to view](${backId})\n**SELFIE WITH ID**: [Click to view](${selfieWithId})`
+    )
     .setFooter({
       text: date,
     })
-    .setImage(selfieWithId)
+    .setImage(paymentImage)
     .addFields([
       {
         name: `MEMBER ID`,

@@ -23,6 +23,7 @@ const listen = async () => {
   });
 
   app.post("/api/registerUser", authenticateToken, async (req, res) => {
+
     await addDatabaseDetails(
       req.body.full_name,
       req.body.birthdate,
