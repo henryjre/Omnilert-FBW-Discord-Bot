@@ -112,7 +112,7 @@ module.exports = async function addDatabaseDetails(
       },
       {
         name: `REFERRER ID`,
-        value: `🆔 ${refId}`,
+        value: `🆔 ${referrerId}`,
       },
       {
         name: `REFERRED BY`,
