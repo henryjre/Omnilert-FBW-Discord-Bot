@@ -13,7 +13,8 @@ module.exports = async function addDatabaseDetails(
   frontId,
   backId,
   selfieWithId,
-  referrerId
+  referrerId,
+  paymentImage
 ) {
   const connection = await mysql.createConnection({
     host: process.env.sqlHost,
@@ -26,7 +27,7 @@ module.exports = async function addDatabaseDetails(
 
   const memberId = `LEV${id}IOSA`;
 
-  const personalQuery = `INSERT INTO Personal_Details (MEMBER_ID, FULL_NAME, BIRTHDATE, GENDER, EMAIL, MOBILE_NUMBER, ADDRESS, FRONT_ID, BACK_ID, SELFIE_WITH_ID) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+  const personalQuery = `INSERT INTO Personal_Details (MEMBER_ID, FULL_NAME, BIRTHDATE, GENDER, EMAIL, MOBILE_NUMBER, ADDRESS, FRONT_ID, BACK_ID, SELFIE_WITH_ID, PROOF_OF_MEMBERSHIP) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
   await connection
     .query(personalQuery, [
       memberId,
@@ -39,6 +40,7 @@ module.exports = async function addDatabaseDetails(
       frontId,
       backId,
       selfieWithId,
+      paymentImage
     ])
     .catch((err) => console.log(err));
 
@@ -70,9 +72,17 @@ module.exports = async function addDatabaseDetails(
     timeStyle: "short",
   });
 
+  let genderEmoji
+  if (gender === "Male") {
+    genderEmoji = "👨";
+  } else {
+    genderEmoji = "👩";
+  }
+
   const embed = new EmbedBuilder()
-    .setTitle("✅ MEMBER CREATED")
-    .setColor("8e18be")
+    .setTitle("⌛ PENDING VERIFICATION")
+    .setColor("ff9646")
+    .setDescription(`**FRONT ID IMAGE**: [Click to view](${frontId})\n**BACK ID IMAGE**: [Click to view](${backId})\n**SELFIE WITH ID**: [Click to view](${selfieWithId})`)
     .setFooter({
       text: date,
     })
@@ -80,39 +90,39 @@ module.exports = async function addDatabaseDetails(
     .addFields([
       {
         name: `MEMBER ID`,
-        value: memberId,
+        value: `🆔 ${memberId}`,
       },
       {
         name: `NAME`,
-        value: fullName,
+        value: `📛 ${fullName}`,
       },
       {
         name: `GENDER`,
-        value: gender,
+        value: `${genderEmoji} ${gender}`,
       },
       {
         name: `DATE OF BIRTH`,
-        value: birthdate,
+        value: `🎂 ${birthdate}`,
       },
       {
         name: `MOBILE NUMBER`,
-        value: mobileNumber,
+        value: `📞 ${mobileNumber}`,
       },
       {
         name: `EMAIL`,
-        value: email,
+        value: `📧 ${email}`,
       },
       {
         name: `ADDRESS`,
-        value: `${address}\n\u200b`,
+        value: `🏠 ${address}\n\u200b`,
       },
       {
         name: `REFERRER ID`,
-        value: refId,
+        value: `🆔 ${refId}`,
       },
       {
         name: `REFERRED BY`,
-        value: referrer,
+        value: `👥 ${referrer}`,
       },
     ]);
 

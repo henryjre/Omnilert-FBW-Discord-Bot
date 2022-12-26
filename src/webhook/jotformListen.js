@@ -33,7 +33,8 @@ const listen = async () => {
       req.body.front_id,
       req.body.back_Id,
       req.body.selfie_image,
-      req.body.referrer_id
+      req.body.referrer_id,
+      req.body.payment_image
     );
     res.send("🟢 Successful!");
     return;
