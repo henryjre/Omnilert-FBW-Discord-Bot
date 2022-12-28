@@ -16,8 +16,6 @@ const verifyNumber = require("../database/verify-number/request-mobile-otp");
 const verifyMobiletp = require("../database/verify-number/verify-mobile-otp");
 const resendMobileOTP = require("../database/verify-number/resend-mobile-otp");
 
-
-
 const PORT = process.env.PORT;
 
 const app = express();
@@ -103,3 +101,5 @@ const listen = async () => {
     console.log(chalk.yellow(`🟠 Webhook running on PORT ${PORT}`))
   );
 };
+
+listen();
