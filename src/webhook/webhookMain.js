@@ -78,10 +78,6 @@ const listen = async () => {
     return;
   });
 
-  app.listen(PORT, () =>
-    console.log(chalk.yellow(`🟠 Webhook running on PORT ${PORT}`))
-  );
-
   app.post("/api/mobile/request-otp", authenticateToken, async (req, res) => {
     const { mobileNumber } = req.body;
 
@@ -107,5 +103,3 @@ const listen = async () => {
     console.log(chalk.yellow(`🟠 Webhook running on PORT ${PORT}`))
   );
 };
-
-listen();
