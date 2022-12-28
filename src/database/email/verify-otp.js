@@ -45,11 +45,6 @@ module.exports = async function verifyOtp(otp, email, res) {
       error: "Invalid OTP code.",
     });
   }
-  const updateValidityQuery =
-    "UPDATE User_OTP_Verification SET VERIFIED = ? WHERE MEMBER_EMAIL = ?";
-  await connection
-    .query(updateValidityQuery, [1, email])
-    .catch((err) => console.log(err));
 
   connection.end();
 

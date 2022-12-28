@@ -7,9 +7,16 @@ require("dotenv").config({ path: "src/.env" });
 const chalk = require("chalk");
 const authenticateToken = require("./auth");
 const addDatabaseDetails = require("../database/add-user");
+///////////////////////EMAIL
 const verifyEmail = require("../database/email/verify-email");
 const verifyOtp = require("../database/email/verify-otp");
 const resendOTP = require("../database/email/resend-otp");
+//////////////////////MOBILE
+const verifyNumber = require("../database/verify-number/request-mobile-otp");
+const verifyMobiletp = require("../database/verify-number/verify-mobile-otp");
+const resendMobileOTP = require("../database/verify-number/resend-mobile-otp");
+
+
 
 const PORT = process.env.PORT;
 
@@ -43,14 +50,14 @@ const listen = async () => {
     return;
   });
 
-  app.post("/api/request-otp", authenticateToken, async (req, res) => {
+  app.post("/api/email/request-otp", authenticateToken, async (req, res) => {
     const { email_Address } = req.body;
 
     await verifyEmail(email_Address, res);
     return;
   });
 
-  app.post("/api/verify-otp", authenticateToken, async (req, res) => {
+  app.post("/api/email/verify-otp", authenticateToken, async (req, res) => {
     const { otpInput, email_Address } = req.body;
 
     if (!otpInput) {
@@ -64,10 +71,35 @@ const listen = async () => {
     return;
   });
 
-  app.post("/api/resend-otp", authenticateToken, async (req, res) => {
+  app.post("/api/email/resend-otp", authenticateToken, async (req, res) => {
     const { email_Address } = req.body;
 
     await resendOTP(email_Address, res);
+    return;
+  });
+
+  app.listen(PORT, () =>
+    console.log(chalk.yellow(`🟠 Webhook running on PORT ${PORT}`))
+  );
+
+  app.post("/api/mobile/request-otp", authenticateToken, async (req, res) => {
+    const { mobileNumber } = req.body;
+
+    await verifyNumber(mobileNumber, res);
+    return;
+  });
+
+  app.post("/api/mobile/verify-otp", authenticateToken, async (req, res) => {
+    const { otpInput, mobileNumber } = req.body;
+
+    await verifyMobiletp(otpInput, mobileNumber, res);
+    return;
+  });
+
+  app.post("/api/mobile/resend-otp", authenticateToken, async (req, res) => {
+    const { email_Address } = req.body;
+
+    await resendMobileOTP(email_Address, res);
     return;
   });
 
