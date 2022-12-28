@@ -22,10 +22,9 @@ module.exports = async function verifyEmail(email, res) {
 
   if (findEmail[0].length > 0) {
     connection.end()
-    res.statusMessage = "An account is already registered with that email.";
     return res.status(400).send({
       ok: false,
-      error: "Email already exists in database.",
+      error: "An account is already registered with that email.",
     });
   }
 
