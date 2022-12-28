@@ -11,6 +11,22 @@ module.exports = async function resendMobileOTP(mobile_number, res) {
     port: process.env.sqlPort,
   });
 
+  const findExistingQuery =
+    "SELECT VERIFIED FROM User_Mobile_Verification WHERE MOBILE_NUMBER = ?";
+  const findExisting = await connection
+    .query(findExistingQuery, [mobile_number])
+    .catch((err) => console.log(err));
+
+  if (findExisting[0].length > 0) {
+    if (findExisting[0][0].VERIFIED === 1) {
+      connection.end();
+      return res.status(400).send({
+        ok: false,
+        error: "This mobile number is already verified.",
+      });
+    }
+  }
+
   const deleteUserQuery =
     "DELETE FROM User_Mobile_Verification WHERE MOBILE_NUMBER = ?";
   await connection
