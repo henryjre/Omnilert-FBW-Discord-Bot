@@ -15,7 +15,7 @@ module.exports = async function verifyEmail(email, res) {
     port: process.env.sqlPort,
   });
 
-  const findEmailQuery = "SELECT MEMBER_EMAIL FROM User_OTP_Verification WHERE EMAIL = ?";
+  const findEmailQuery = "SELECT MEMBER_EMAIL FROM User_OTP_Verification WHERE MEMBER_EMAIL = ?";
   const findEmail = await connection
     .query(findEmailQuery, [email])
     .catch((err) => console.log(err));
