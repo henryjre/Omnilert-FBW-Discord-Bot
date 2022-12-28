@@ -21,9 +21,8 @@ module.exports = async function verifyEmail(email, res) {
     .catch((err) => console.log(err));
 
   if (findEmail[0].length > 0) {
-    return res.status(400).send({
-      ok: false,
-      error: "Email already exists in database.",
+    return res.status(400).json({
+      message: "Email already exists in database.",
     });
   }
 
