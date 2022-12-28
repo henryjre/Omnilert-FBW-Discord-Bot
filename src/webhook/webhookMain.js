@@ -31,6 +31,7 @@ const listen = async () => {
   });
 
   app.post("/api/registerUser", authenticateToken, async (req, res) => {
+    console.log(req.body)
     await addDatabaseDetails(
       req.body.full_name,
       req.body.birthdate,
