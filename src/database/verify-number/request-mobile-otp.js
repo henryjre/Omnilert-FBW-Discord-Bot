@@ -40,6 +40,7 @@ module.exports = async function verifyNumber(mobile_number, res) {
         api_secret: process.env.moviderAPI_SECRET,
         code_length: "6",
         from: "MOVIDER",
+        pin_expire: 600,
         to: mobile_number,
       }),
     };
