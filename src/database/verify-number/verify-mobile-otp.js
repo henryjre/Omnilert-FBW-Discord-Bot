@@ -63,7 +63,7 @@ module.exports = async function verifyMobiletp(otp, mobile_number, res) {
       });
 
     const updateQuery =
-      "UPDATE User_OTP_Verification SET VERIFIED = ? WHERE MOBILE_NUMBER = ?";
+      "UPDATE User_Mobile_Verification SET VERIFIED = ? WHERE MOBILE_NUMBER = ?";
     await connection
       .query(updateQuery, [1, mobile_number])
       .catch((err) => console.log(err));
