@@ -31,7 +31,7 @@ module.exports = async function verifyMobiletp(otp, mobile_number, res) {
     const deleteUserQuery =
       "DELETE FROM User_Mobile_Verification WHERE MOBILE_NUMBER = ?";
     await connection
-      .query(deleteUserQuery, [email])
+      .query(deleteUserQuery, [mobile_number])
       .catch((err) => console.log(err));
 
     return res.status(400).send({
@@ -58,6 +58,15 @@ module.exports = async function verifyMobiletp(otp, mobile_number, res) {
     await fetch("https://api.movider.co/v1/verify/acknowledge", options)
       .then((response) => response.json())
       .then((response) => console.log(response))
+      .catch((error) => {
+        throw error;
+      });
+
+    const updateQuery =
+      "UPDATE User_OTP_Verification SET VERIFIED = ? WHERE MOBILE_NUMBER = ?";
+    await connection
+      .query(updateQuery, [1, mobile_number])
+      .catch((err) => console.log(err));
 
     return res.status(200).send({
       ok: true,

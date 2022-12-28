@@ -46,6 +46,12 @@ module.exports = async function verifyOtp(otp, email, res) {
     });
   }
 
+  const updateQuery =
+    "UPDATE User_OTP_Verification SET VERIFIED = ? WHERE MEMBER_EMAIL = ?";
+  await connection
+    .query(updateQuery, [1, email])
+    .catch((err) => console.log(err));
+
   connection.end();
 
   return res.status(200).send({
