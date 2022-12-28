@@ -25,26 +25,30 @@ module.exports = async function verifyNumber(mobile_number, res) {
     });
   }
 
+  console.log(mobile_number);
+
   try {
-    const verifyMobile = await axios.post({
+    const verifyMobile = await axios({
       method: "post",
       url: "https://api.movider.co/v1/verify",
       data: {
         to: mobile_number,
-        code_length: 6,
+        code_length: `6`,
         from: `MVDVERIFY`,
         api_key: process.env.moviderAPI_KEY,
         api_secret: process.env.moviderAPI_SECRET,
       },
       headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json;charset=UTF-8",
+        accept: "application/json",
+        "content-type": "application/x-www-form-urlencoded",
       },
     });
 
-    console.log(verifyMobile);
+    console.log("wow");
 
-    const otp = verifyMobile.request_id;
+    console.log(verifyMobile.data);
+
+    const otp = verifyMobile.data.request_id;
 
     const findExistingQuery =
       "SELECT MOBILE_NUMBER FROM User_Mobile_Verification WHERE MOBILE_NUMBER = ?";
