@@ -70,7 +70,7 @@ module.exports = async function verifyEmail(email, res) {
       const updateQuery =
         "UPDATE User_OTP_Verification SET OTP_CODE = ?, CREATED_AT = ?, EXPIRES_AT = ? WHERE MEMBER_EMAIL = ?";
       await connection
-        .query(updateQuery, [hashedOTP, Date.now(), Date.now() + 3600000])
+        .query(updateQuery, [hashedOTP, Date.now(), Date.now() + 3600000, email])
         .catch((err) => console.log(err));
     } else {
       const otpQuery = `INSERT INTO User_OTP_Verification (MEMBER_EMAIL, OTP_CODE, CREATED_AT, EXPIRES_AT) VALUES (?, ?, ?, ?)`;
