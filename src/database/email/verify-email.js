@@ -21,7 +21,7 @@ module.exports = async function verifyEmail(email, res) {
     .catch((err) => console.log(err));
 
   if (findEmail[0].length > 0) {
-    connection.end()
+    connection.end();
     return res.status(400).send({
       ok: false,
       error: "An account is already registered with that email.",
@@ -61,16 +61,28 @@ module.exports = async function verifyEmail(email, res) {
     const hashedOTP = await bcrypt.hash(otp, saltRounds);
 
     const findExistingQuery =
-      "SELECT MEMBER_EMAIL FROM User_OTP_Verification WHERE MEMBER_EMAIL = ?";
+      "SELECT VERIFIED FROM User_OTP_Verification WHERE MEMBER_EMAIL = ?";
     const findExisting = await connection
       .query(findExistingQuery, [email])
       .catch((err) => console.log(err));
 
     if (findExisting[0].length > 0) {
+      if (findExisting[0][0]["VERIFIED"] === 1) {
+        connection.end();
+        return res.status(400).send({
+          ok: false,
+          error: "This email address is already verified.",
+        });
+      }
       const updateQuery =
         "UPDATE User_OTP_Verification SET OTP_CODE = ?, CREATED_AT = ?, EXPIRES_AT = ? WHERE MEMBER_EMAIL = ?";
       await connection
-        .query(updateQuery, [hashedOTP, Date.now(), Date.now() + 3600000, email])
+        .query(updateQuery, [
+          hashedOTP,
+          Date.now(),
+          Date.now() + 3600000,
+          email,
+        ])
         .catch((err) => console.log(err));
     } else {
       const otpQuery = `INSERT INTO User_OTP_Verification (MEMBER_EMAIL, OTP_CODE, CREATED_AT, EXPIRES_AT) VALUES (?, ?, ?, ?)`;

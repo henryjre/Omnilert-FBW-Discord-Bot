@@ -57,12 +57,19 @@ module.exports = async function verifyNumber(mobile_number, res) {
     const otp = verifyMobile.request_id;
 
     const findExistingQuery =
-      "SELECT MOBILE_NUMBER FROM User_Mobile_Verification WHERE MOBILE_NUMBER = ?";
+      "SELECT VERIFIED FROM User_Mobile_Verification WHERE MOBILE_NUMBER = ?";
     const findExisting = await connection
       .query(findExistingQuery, [mobile_number])
       .catch((err) => console.log(err));
 
     if (findExisting[0].length > 0) {
+      if (findExisting[0][0]["VERIFIED"] === 1) {
+        connection.end();
+        return res.status(400).send({
+          ok: false,
+          error: "This mobile number is already verified.",
+        });
+      }
       const updateQuery =
         "UPDATE User_Mobile_Verification SET OTP_ID = ?, CREATED_AT = ?, EXPIRES_AT = ? WHERE MOBILE_NUMBER = ?";
       await connection
