@@ -18,8 +18,10 @@ module.exports = async function verifyOtp(otp, email, res) {
     .catch((err) => console.log(err));
 
   if (findEmail[0].length <= 0) {
-    connection.end();
-    return res.status(400).send("Email does not exist or already verified.");
+    return res.status(400).send({
+      ok: false,
+      error: "Email does not exist or already verified.",
+    });
   }
   const { OTP_CODE, EXPIRES_AT } = findEmail[0][0];
 
@@ -29,14 +31,18 @@ module.exports = async function verifyOtp(otp, email, res) {
     const deleteUser = await connection
       .query(deleteUserQuery, [email])
       .catch((err) => console.log(err));
-    connection.end();
-    return res.status(400).send("Code expired. Resend code again.");
+    return res.status(400).send({
+      ok: false,
+      error: "Code expired. Resend code again.",
+    });
   }
 
   const validOTP = await bcrypt.compare(otp, OTP_CODE);
   if (!validOTP) {
-    connection.end();
-    return res.status(400).send("OTP does not match.");
+    return res.status(400).send({
+      ok: false,
+      error: "Invalid OTP.",
+    });
   }
   const updateValidityQuery =
     "UPDATE User_OTP_Verification SET VERIFIED = ? WHERE MEMBER_EMAIL = ?";

@@ -15,15 +15,16 @@ module.exports = async function verifyEmail(email, res) {
     port: process.env.sqlPort,
   });
 
-  const findEmailQuery =
-    "SELECT MEMBER_EMAIL FROM User_OTP_Verification WHERE MEMBER_EMAIL = ?";
+  const findEmailQuery = "SELECT MEMBER_EMAIL FROM User_OTP_Verification WHERE MEMBER_EMAIL = ?";
   const findEmail = await connection
     .query(findEmailQuery, [email])
     .catch((err) => console.log(err));
 
   if (findEmail[0].length > 0) {
-    connection.end();
-    return res.status(400).send("Email already exists in database.");
+    return res.status(400).send({
+      ok: false,
+      error: "Email already exists in database.",
+    });
   }
 
   try {
