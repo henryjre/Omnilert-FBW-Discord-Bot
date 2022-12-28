@@ -17,15 +17,13 @@ module.exports = async function verifyOtp(otp, email, res) {
     .query(findEmailQuery, [email])
     .catch((err) => console.log(err));
 
-  console.log(findEmail[0]);
-
   if (findEmail[0].length <= 0) {
     return res.status(400).send({
       ok: false,
       error: "Email does not exist or already verified.",
     });
   }
-  const { MEMBER_EMAIL, OTP_CODE, CREATED_AT, EXPIRES_AT } = findEmail[0][0];
+  const { OTP_CODE, EXPIRES_AT } = findEmail[0][0];
 
   if (EXPIRES_AT < Date.now()) {
     const deleteUserQuery =
