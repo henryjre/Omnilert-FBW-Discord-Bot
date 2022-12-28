@@ -15,7 +15,7 @@ module.exports = async function verifyEmail(email, res) {
     port: process.env.sqlPort,
   });
 
-  const findEmailQuery = "SELECT EMAIL FROM Personal_Details WHERE EMAIL = ?";
+  const findEmailQuery = "SELECT EMAIL FROM User_OTP_Verification WHERE EMAIL = ?";
   const findEmail = await connection
     .query(findEmailQuery, [email])
     .catch((err) => console.log(err));
@@ -60,7 +60,7 @@ module.exports = async function verifyEmail(email, res) {
     const saltRounds = 10;
 
     const hashedOTP = await bcrypt.hash(otp, saltRounds);
-    
+
     const otpQuery = `INSERT INTO User_OTP_Verification (MEMBER_EMAIL, OTP_CODE, CREATED_AT, EXPIRES_AT) VALUES (?, ?, ?, ?)`;
     await connection
       .query(otpQuery, [email, hashedOTP, Date.now(), Date.now() + 3600000])
