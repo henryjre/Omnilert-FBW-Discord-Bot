@@ -33,7 +33,7 @@ client.handleCommands();
 client.handleComponents();
 
 client.login(process.env.token).then(() => {
-  require("./webhook/jotformListen");
+  require("./webhook/webhookMain");
 });
 
 module.exports = { client }
