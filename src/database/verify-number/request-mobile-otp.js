@@ -63,7 +63,7 @@ module.exports = async function verifyNumber(mobile_number, res) {
       .catch((err) => console.log(err));
 
     if (findExisting[0].length > 0) {
-      if (findExisting[0][0]["VERIFIED"] === 1) {
+      if (findExisting[0][0].VERIFIED  === 1) {
         connection.end();
         return res.status(400).send({
           ok: false,
