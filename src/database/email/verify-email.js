@@ -15,12 +15,13 @@ module.exports = async function verifyEmail(email, res) {
     port: process.env.sqlPort,
   });
 
-  const findEmailQuery = "SELECT MEMBER_EMAIL FROM User_OTP_Verification WHERE MEMBER_EMAIL = ?";
+  const findEmailQuery = "SELECT EMAIL FROM Personal_Details WHERE EMAIL = ?";
   const findEmail = await connection
     .query(findEmailQuery, [email])
     .catch((err) => console.log(err));
 
   if (findEmail[0].length > 0) {
+    res.statusMessage = "An account is already registered with that email.";
     return res.status(400).send({
       ok: false,
       error: "Email already exists in database.",
@@ -29,8 +30,6 @@ module.exports = async function verifyEmail(email, res) {
 
   try {
     const otp = `${Math.floor(1000 * Math.random() * 9000)}`;
-
-    console.log(otp);
 
     const filePath = path.join(__dirname, "./send-otp.html");
     const source = fs.readFileSync(filePath, "utf-8").toString();

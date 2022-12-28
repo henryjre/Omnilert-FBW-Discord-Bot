@@ -18,6 +18,7 @@ module.exports = async function verifyOtp(otp, email, res) {
     .catch((err) => console.log(err));
 
   if (findEmail[0].length <= 0) {
+    res.statusMessage = "Email does not exist or already verified.";
     return res.status(400).send({
       ok: false,
       error: "Email does not exist or already verified.",
@@ -28,9 +29,11 @@ module.exports = async function verifyOtp(otp, email, res) {
   if (EXPIRES_AT < Date.now()) {
     const deleteUserQuery =
       "DELETE FROM User_OTP_Verification WHERE MEMBER_EMAIL = ?";
-    const deleteUser = await connection
+    await connection
       .query(deleteUserQuery, [email])
       .catch((err) => console.log(err));
+
+    res.statusMessage = "Code has expired. Resend code again.";
     return res.status(400).send({
       ok: false,
       error: "Code expired. Resend code again.",
@@ -39,6 +42,7 @@ module.exports = async function verifyOtp(otp, email, res) {
 
   const validOTP = await bcrypt.compare(otp, OTP_CODE);
   if (!validOTP) {
+    res.statusMessage = "Invalid OTP code.";
     return res.status(400).send({
       ok: false,
       error: "Invalid OTP.",
