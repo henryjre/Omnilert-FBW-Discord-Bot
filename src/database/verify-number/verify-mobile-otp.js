@@ -1,5 +1,7 @@
 const mysql = require("mysql2/promise");
 require("dotenv").config({ path: "src/.env" });
+const fetch = (...args) =>
+  import("node-fetch").then(({ default: fetch }) => fetch(...args));
 
 module.exports = async function verifyMobiletp(otp, mobile_number, res) {
   const connection = await mysql.createConnection({
@@ -38,32 +40,34 @@ module.exports = async function verifyMobiletp(otp, mobile_number, res) {
     });
   }
 
-  await axios
-    .post({
-      method: "post",
-      url: "https://api.movider.co/v1/verify/acknowledge",
-      data: {
-        request_id: OTP_ID,
-        code: otp,
+  try {
+    const options = {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
         api_key: process.env.moviderAPI_KEY,
         api_secret: process.env.moviderAPI_SECRET,
-      },
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json;charset=UTF-8",
-      },
-    })
-    .catch(function (err) {
-      if (err.response) {
-        return res.status(400).send({
-          ok: false,
-          error: "Verification error.",
-        });
-      }
-    });
+        request_id: OTP_ID,
+        code: otp,
+      }),
+    };
 
-  return res.status(200).send({
-    ok: true,
-    message: "Email verified successfully.",
-  });
+    await fetch("https://api.movider.co/v1/verify/acknowledge", options)
+      .then((response) => response.json())
+      .then((response) => console.log(response))
+
+    return res.status(200).send({
+      ok: true,
+      message: "Mobile number verified successfully.",
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(400).send({
+      ok: false,
+      error: "Verification error.",
+    });
+  }
 };

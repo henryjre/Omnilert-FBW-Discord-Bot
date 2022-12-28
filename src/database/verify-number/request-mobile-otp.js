@@ -1,6 +1,7 @@
 require("dotenv").config({ path: "src/.env" });
 const mysql = require("mysql2/promise");
-const axios = require("axios");
+const fetch = (...args) =>
+  import("node-fetch").then(({ default: fetch }) => fetch(...args));
 
 module.exports = async function verifyNumber(mobile_number, res) {
   const connection = await mysql.createConnection({
@@ -28,27 +29,32 @@ module.exports = async function verifyNumber(mobile_number, res) {
   console.log(mobile_number);
 
   try {
-    const verifyMobile = await axios({
-      method: "post",
-      url: "https://api.movider.co/v1/verify",
-      data: {
-        to: mobile_number,
-        code_length: `6`,
-        from: `MVDVERIFY`,
-        api_key: process.env.moviderAPI_KEY,
-        api_secret: process.env.moviderAPI_SECRET,
-      },
+    const options = {
+      method: "POST",
       headers: {
         accept: "application/json",
         "content-type": "application/x-www-form-urlencoded",
       },
-    });
+      body: new URLSearchParams({
+        api_key: process.env.moviderAPI_KEY,
+        api_secret: process.env.moviderAPI_SECRET,
+        code_length: "6",
+        from: "MOVIDER",
+        pin_expire: 3600000,
+        to: mobile_number,
+      }),
+    };
 
-    console.log("wow");
+    const fetchAPI = await fetch(
+      "https://api.movider.co/v1/verify",
+      options
+    ).catch((err) => console.error(err));
 
-    console.log(verifyMobile.data);
+    const verifyMobile = await fetchAPI.json();
 
-    const otp = verifyMobile.data.request_id;
+    console.log(verifyMobile);
+
+    const otp = verifyMobile.request_id;
 
     const findExistingQuery =
       "SELECT MOBILE_NUMBER FROM User_Mobile_Verification WHERE MOBILE_NUMBER = ?";
