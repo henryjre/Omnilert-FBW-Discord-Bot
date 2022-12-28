@@ -81,7 +81,7 @@ module.exports = async function verifyEmail(email, res) {
 
     connection.end();
 
-    transporter.sendMail(mailOptions);
+    await transporter.sendMail(mailOptions);
     res.status(200).send({
       ok: true,
       message: "Verification code sent.",
