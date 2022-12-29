@@ -28,80 +28,73 @@ module.exports = async function verifyEmail(email, otp, res) {
     });
   }
 
-  try {
-    // const otp = `${Math.floor(1000 * Math.random() * 9000)}`;
+  // const otp = `${Math.floor(1000 * Math.random() * 9000)}`;
 
-    // const filePath = path.join(__dirname, "./send-otp.html");
-    // const source = fs.readFileSync(filePath, "utf-8").toString();
-    // const template = handlebars.compile(source);
-    // const replacements = {
-    //   otpCode: otp,
-    // };
-    // const htmlToSend = template(replacements);
+  // const filePath = path.join(__dirname, "./send-otp.html");
+  // const source = fs.readFileSync(filePath, "utf-8").toString();
+  // const template = handlebars.compile(source);
+  // const replacements = {
+  //   otpCode: otp,
+  // };
+  // const htmlToSend = template(replacements);
 
-    // let transporter = nodemailer.createTransport({
-    //   host: "smtp.zoho.com",
-    //   port: 465,
-    //   secure: true, //ssl
-    //   auth: {
-    //     user: process.env.zmailEmail,
-    //     pass: process.env.zmailPass,
-    //   },
-    // });
+  // let transporter = nodemailer.createTransport({
+  //   host: "smtp.zoho.com",
+  //   port: 465,
+  //   secure: true, //ssl
+  //   auth: {
+  //     user: process.env.zmailEmail,
+  //     pass: process.env.zmailPass,
+  //   },
+  // });
 
-    // const mailOptions = {
-    //   from: process.env.zmailEmail,
-    //   to: email,
-    //   subject: "Leviosa Email Verification",
-    //   html: htmlToSend,
-    // };
+  // const mailOptions = {
+  //   from: process.env.zmailEmail,
+  //   to: email,
+  //   subject: "Leviosa Email Verification",
+  //   html: htmlToSend,
+  // };
 
-    const saltRounds = 10;
+  const saltRounds = 10;
 
-    const hashedOTP = await bcrypt.hash(otp, saltRounds);
+  const hashedOTP = await bcrypt.hash(otp, saltRounds);
 
-    const findExistingQuery =
-      "SELECT VERIFIED FROM User_OTP_Verification WHERE MEMBER_EMAIL = ?";
-    const findExisting = await connection
-      .query(findExistingQuery, [email])
-      .catch((err) => console.log(err));
+  const findExistingQuery =
+    "SELECT VERIFIED FROM User_OTP_Verification WHERE MEMBER_EMAIL = ?";
+  const findExisting = await connection
+    .query(findExistingQuery, [email])
+    .catch((err) => console.log(err));
 
-    if (findExisting[0].length > 0) {
-      if (findExisting[0][0].VERIFIED === 0) {
-        const updateQuery =
-          "UPDATE User_OTP_Verification SET OTP_CODE = ?, CREATED_AT = ?, EXPIRES_AT = ? WHERE MEMBER_EMAIL = ?";
-        await connection
-          .query(updateQuery, [
-            hashedOTP,
-            Date.now(),
-            Date.now() + 3600000,
-            email,
-          ])
-          .catch((err) => console.log(err));
-        // connection.end();
-        // return res.status(400).send({
-        //   ok: false,
-        //   error: "This email address is already verified.",
-        // });
-      }
-    } else {
-      const otpQuery = `INSERT INTO User_OTP_Verification (MEMBER_EMAIL, OTP_CODE, CREATED_AT, EXPIRES_AT) VALUES (?, ?, ?, ?)`;
+  if (findExisting[0].length > 0) {
+    if (findExisting[0][0].VERIFIED === 0) {
+      const updateQuery =
+        "UPDATE User_OTP_Verification SET OTP_CODE = ?, CREATED_AT = ?, EXPIRES_AT = ? WHERE MEMBER_EMAIL = ?";
       await connection
-        .query(otpQuery, [email, hashedOTP, Date.now(), Date.now() + 3600000])
+        .query(updateQuery, [
+          hashedOTP,
+          Date.now(),
+          Date.now() + 3600000,
+          email,
+        ])
         .catch((err) => console.log(err));
+      // connection.end();
+      // return res.status(400).send({
+      //   ok: false,
+      //   error: "This email address is already verified.",
+      // });
     }
-
-    connection.end();
-
-    // await transporter.sendMail(mailOptions);
-    res.status(200).send({
-      ok: true,
-      message: "Verification Pending.",
-    });
-  } catch (error) {
-    return res.status(400).send({
-      ok: false,
-      error: error,
-    });
+  } else {
+    const otpQuery = `INSERT INTO User_OTP_Verification (MEMBER_EMAIL, OTP_CODE, CREATED_AT, EXPIRES_AT) VALUES (?, ?, ?, ?)`;
+    await connection
+      .query(otpQuery, [email, hashedOTP, Date.now(), Date.now() + 3600000])
+      .catch((err) => console.log(err));
   }
+
+  connection.end();
+
+  // await transporter.sendMail(mailOptions);
+  res.status(200).send({
+    ok: true,
+    message: "Verification Pending.",
+  });
 };
