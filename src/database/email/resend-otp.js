@@ -34,5 +34,8 @@ module.exports = async function resendOTP(email, res) {
     .catch((err) => console.log(err));
 
   connection.end();
-  verifyEmail(email, res);
+  return res.status(200).send({
+    ok: true,
+    error: "This email address will verify again.",
+  });
 };
