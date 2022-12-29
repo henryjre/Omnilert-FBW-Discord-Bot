@@ -51,7 +51,12 @@ module.exports = async function addDatabaseDetails(
     .query(selectQueryDetails, [referrerId])
     .catch((err) => console.log(err));
 
-  const referrer = refQuery[0][0]["FULL_NAME"];
+  let referrer
+  if (!refQuery[0]) {
+    referrer = 'Invalid'
+  } else {
+    referrer = refQuery[0][0]["FULL_NAME"];
+  }
 
   const refQueryDetails = `INSERT INTO Referral_Details (MEMBER_ID, FULL_NAME, REFERRAL_BALANCE, REFERRER_ID, REFERRER_NAME) VALUES (?, ?, ?, ?, ?)`;
   await connection
