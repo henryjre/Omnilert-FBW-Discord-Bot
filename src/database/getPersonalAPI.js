@@ -14,7 +14,7 @@ module.exports = async function getPersonalDetails(member_id, res) {
   const personalDetails = await connection
     .query(queryRefDetails, [member_id])
     .catch((err) => console.log(err));
-  connection.end();
 
-  return personalDetails[0][0];
+  connection.end();
+  res.send(personalDetails[0][0]);
 };

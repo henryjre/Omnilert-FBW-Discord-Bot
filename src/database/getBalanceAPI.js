@@ -1,7 +1,7 @@
 require("dotenv").config({ path: "src/.env" });
 const mysql = require("mysql2/promise");
 
-module.exports = async function getReferralDetails(mobile_number, res) {
+module.exports = async function getReferralDetails(member_id, res) {
   const connection = await mysql.createConnection({
     host: process.env.sqlHost,
     user: process.env.sqlUsername,
@@ -12,9 +12,9 @@ module.exports = async function getReferralDetails(mobile_number, res) {
 
   const queryRefDetails = "SELECT * FROM Referral_Details WHERE MEMBER_ID = ?";
   const referralDetails = await connection
-    .query(queryRefDetails, [mobile_number])
-    .catch((err) => console.log(err));
-  connection.end();
+    .query(queryRefDetails, [member_id])
+    .catch((err) => consolFe.log(err));
 
-  return referralDetails[0][0];
+  connection.end();
+  res.send(referralDetails[0][0]);
 };

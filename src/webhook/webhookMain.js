@@ -34,14 +34,14 @@ const listen = async () => {
     res.json("Listening for User Registrations...");
   });
 
-  app.get("/api/database/get-referral-details", authenticateToken, async (req, res) => {
+  app.post("/api/database/get-referral-details", authenticateToken, async (req, res) => {
     const { member_id } = req.body;
 
     await getReferralDetails(member_id, res);
     return;
   });
 
-  app.get("/api/database/get-personal-details", authenticateToken, async (req, res) => {
+  app.post("/api/database/get-personal-details", authenticateToken, async (req, res) => {
     const { member_id } = req.body;
 
     await getPersonalDetails(member_id, res);
