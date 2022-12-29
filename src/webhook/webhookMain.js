@@ -16,6 +16,9 @@ const resendOTP = require("../database/email/resend-otp");
 const verifyNumber = require("../database/verify-number/request-mobile-otp");
 const verifyMobiletp = require("../database/verify-number/verify-mobile-otp");
 const resendMobileOTP = require("../database/verify-number/resend-mobile-otp");
+/////////////////////DATA
+const getReferralDetails = require("../database/getBalanceAPI");
+const getPersonalDetails = require("../database/getPersonalAPI");
 
 const PORT = process.env.PORT;
 
@@ -29,6 +32,20 @@ const listen = async () => {
 
   app.get("/api", (req, res) => {
     res.json("Listening for User Registrations...");
+  });
+
+  app.get("/api/database/get-referral-details", authenticateToken, async (req, res) => {
+    const { member_id } = req.body;
+
+    await getReferralDetails(member_id, res);
+    return;
+  });
+
+  app.get("/api/database/get-personal-details", authenticateToken, async (req, res) => {
+    const { member_id } = req.body;
+
+    await getPersonalDetails(member_id, res);
+    return;
   });
 
   app.post("/api/registerUser", authenticateToken, async (req, res) => {
