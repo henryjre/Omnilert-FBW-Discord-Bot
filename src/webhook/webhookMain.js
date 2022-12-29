@@ -8,7 +8,7 @@ const chalk = require("chalk");
 const authenticateToken = require("./auth");
 const addDatabaseDetails = require("../database/add-user");
 ///////////////////////EMAIL
-const checkEmail = require("../database/verify-number/check-email");
+const checkEmail = require("../database/email/check-email");
 const verifyEmail = require("../database/email/verify-email");
 const verifyOtp = require("../database/email/verify-otp");
 const resendOTP = require("../database/email/resend-otp");
