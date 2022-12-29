@@ -8,7 +8,7 @@ const chalk = require("chalk");
 const authenticateToken = require("./auth");
 const addDatabaseDetails = require("../database/add-user");
 ///////////////////////EMAIL
-const verifyEmail = require("../database/email/verify-email");
+const checkEmail = require("../database/email/check-email");
 const verifyOtp = require("../database/email/verify-otp");
 const resendOTP = require("../database/email/resend-otp");
 //////////////////////MOBILE
@@ -49,10 +49,10 @@ const listen = async () => {
     return;
   });
 
-  app.post("/api/email/request-otp", authenticateToken, async (req, res) => {
+  app.post("/api/email/check-email", authenticateToken, async (req, res) => {
     const { email_Address } = req.body;
 
-    await verifyEmail(email_Address, res);
+    await checkEmail(email_Address, res);
     return;
   });
 
