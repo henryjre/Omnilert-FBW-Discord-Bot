@@ -26,8 +26,6 @@ module.exports = async function verifyNumber(mobile_number, res) {
     });
   }
 
-  console.log(mobile_number);
-
   try {
     const options = {
       method: "POST",
