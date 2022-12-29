@@ -53,7 +53,7 @@ const listen = async () => {
   app.post("/api/email/check-email", authenticateToken, async (req, res) => {
     const { email_Address } = req.body;
 
-    await verifyEmail(email_Address, res);
+    await checkEmail(email_Address, res);
     return;
   });
 
