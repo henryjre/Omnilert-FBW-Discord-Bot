@@ -63,6 +63,7 @@ module.exports = async function verifyNumber(mobile_number, res) {
       ).catch((err) => console.error(err));
 
       const verifyMobile = await fetchAPI.json();
+      console.log(verifyMobile);
       const otp = verifyMobile.request_id;
 
       const updateQuery =
@@ -80,7 +81,6 @@ module.exports = async function verifyNumber(mobile_number, res) {
         "https://api.movider.co/v1/verify",
         options
       ).catch((err) => console.error(err));
-
       const verifyMobile = await fetchAPI.json();
       const otp = verifyMobile.request_id;
 
