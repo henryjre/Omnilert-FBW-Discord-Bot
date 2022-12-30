@@ -24,14 +24,14 @@ module.exports = async function resendMobileOTP(mobile_number, res) {
         ok: false,
         error: "This mobile number is already verified.",
       });
+    } else {
+      const deleteUserQuery =
+        "DELETE FROM User_Mobile_Verification WHERE MOBILE_NUMBER = ?";
+      await connection
+        .query(deleteUserQuery, [mobile_number])
+        .catch((err) => console.log(err));
     }
   }
-
-  const deleteUserQuery =
-    "DELETE FROM User_Mobile_Verification WHERE MOBILE_NUMBER = ?";
-  await connection
-    .query(deleteUserQuery, [mobile_number])
-    .catch((err) => console.log(err));
 
   connection.end();
   verifyNumber(mobile_number, res);
