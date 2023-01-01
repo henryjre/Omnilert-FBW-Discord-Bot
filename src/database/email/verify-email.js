@@ -60,7 +60,7 @@ module.exports = async function verifyEmail(email, otp, res) {
   const hashedOTP = await bcrypt.hash(otp, saltRounds);
 
   const findExistingQuery =
-    "SELECT VERIFIED FROM User_OTP_Verification WHERE MEMBER_EMAIL = ?";
+    "SELECT * FROM User_OTP_Verification WHERE MEMBER_EMAIL = ?";
   const findExisting = await connection
     .query(findExistingQuery, [email])
     .catch((err) => console.log(err));
