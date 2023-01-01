@@ -15,18 +15,18 @@ module.exports = async function verifyEmail(email, otp, res) {
     port: process.env.sqlPort,
   });
 
-  const findEmailQuery = "SELECT EMAIL FROM Personal_Details WHERE EMAIL = ?";
-  const findEmail = await connection
-    .query(findEmailQuery, [email])
-    .catch((err) => console.log(err));
+  // const findEmailQuery = "SELECT EMAIL FROM Personal_Details WHERE EMAIL = ?";
+  // const findEmail = await connection
+  //   .query(findEmailQuery, [email])
+  //   .catch((err) => console.log(err));
 
-  if (findEmail[0].length > 0) {
-    connection.end();
-    return res.status(400).send({
-      ok: false,
-      error: "An account is already registered with that email.",
-    });
-  }
+  // if (findEmail[0].length > 0) {
+  //   connection.end();
+  //   return res.status(400).send({
+  //     ok: false,
+  //     error: "An account is already registered with that email.",
+  //   });
+  // }
 
   // const otp = `${Math.floor(1000 * Math.random() * 9000)}`;
 
@@ -66,23 +66,16 @@ module.exports = async function verifyEmail(email, otp, res) {
     .catch((err) => console.log(err));
 
   if (findExisting[0].length > 0) {
-    if (findExisting[0][0].VERIFIED === 0) {
-      const updateQuery =
-        "UPDATE User_OTP_Verification SET OTP_CODE = ?, CREATED_AT = ?, EXPIRES_AT = ? WHERE MEMBER_EMAIL = ?";
-      await connection
-        .query(updateQuery, [
-          hashedOTP,
-          Date.now(),
-          Date.now() + 3600000,
-          email,
-        ])
-        .catch((err) => console.log(err));
-      // connection.end();
-      // return res.status(400).send({
-      //   ok: false,
-      //   error: "This email address is already verified.",
-      // });
-    }
+    const updateQuery =
+      "UPDATE User_OTP_Verification SET OTP_CODE = ?, CREATED_AT = ?, EXPIRES_AT = ? WHERE MEMBER_EMAIL = ?";
+    await connection
+      .query(updateQuery, [hashedOTP, Date.now(), Date.now() + 3600000, email])
+      .catch((err) => console.log(err));
+    // connection.end();
+    // return res.status(400).send({
+    //   ok: false,
+    //   error: "This email address is already verified.",
+    // });
   } else {
     const otpQuery = `INSERT INTO User_OTP_Verification (MEMBER_EMAIL, OTP_CODE, CREATED_AT, EXPIRES_AT) VALUES (?, ?, ?, ?)`;
     await connection

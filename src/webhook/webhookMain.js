@@ -19,6 +19,7 @@ const resendMobileOTP = require("../database/verify-number/resend-mobile-otp");
 /////////////////////DATA
 const getReferralDetails = require("../database/getBalanceAPI");
 const getPersonalDetails = require("../database/getPersonalAPI");
+const getTransactionHistory = require("../database/getTransactionHistory");
 
 const PORT = process.env.PORT;
 
@@ -45,6 +46,13 @@ const listen = async () => {
     const { member_id } = req.body;
 
     await getPersonalDetails(member_id, res);
+    return;
+  });
+
+  app.post("/api/database/get-transaction-history", authenticateToken, async (req, res) => {
+    const { member_id } = req.body;
+
+    await getTransactionHistory(member_id, res);
     return;
   });
 

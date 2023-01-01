@@ -18,19 +18,11 @@ module.exports = async function resendMobileOTP(mobile_number, res) {
     .catch((err) => console.log(err));
 
   if (findExisting[0].length > 0) {
-    if (findExisting[0][0].VERIFIED === 1) {
-      connection.end();
-      return res.status(400).send({
-        ok: false,
-        error: "This mobile number is already verified.",
-      });
-    } else {
-      const deleteUserQuery =
-        "DELETE FROM User_Mobile_Verification WHERE MOBILE_NUMBER = ?";
-      await connection
-        .query(deleteUserQuery, [mobile_number])
-        .catch((err) => console.log(err));
-    }
+    const deleteUserQuery =
+      "DELETE FROM User_Mobile_Verification WHERE MOBILE_NUMBER = ?";
+    await connection
+      .query(deleteUserQuery, [mobile_number])
+      .catch((err) => console.log(err));
   }
 
   connection.end();
