@@ -16,5 +16,5 @@ module.exports = async function getTransactionHistory(member_id, res) {
     .catch((err) => consolFe.log(err));
 
   connection.end();
-  res.send(transDetails[0][0]);
+  res.send(transDetails[0]);
 };
