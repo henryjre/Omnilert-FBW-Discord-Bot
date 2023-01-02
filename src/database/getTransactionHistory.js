@@ -10,7 +10,7 @@ module.exports = async function getTransactionHistory(member_id, res) {
     port: process.env.sqlPort,
   });
 
-  const queryTransDetails = "SELECT * FROM Transaction_History WHERE MEMBER_ID = ? LIMIT 10";
+  const queryTransDetails = "SELECT * FROM Transaction_History WHERE MEMBER_ID = ? LIMIT 10 ORDER BY TXN_DATE DESC";
   const transDetails = await connection
     .query(queryTransDetails, [member_id])
     .catch((err) => consolFe.log(err));
