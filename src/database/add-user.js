@@ -51,9 +51,9 @@ module.exports = async function addDatabaseDetails(
     .query(selectQueryDetails, [referrerId])
     .catch((err) => console.log(err));
 
-  let referrer
+  let referrer;
   if (!refQuery[0]) {
-    referrer = 'Invalid'
+    referrer = "Invalid";
   } else {
     referrer = refQuery[0][0]["FULL_NAME"];
   }
@@ -138,6 +138,11 @@ module.exports = async function addDatabaseDetails(
 
   await client.channels.cache.get("1053860453853433860").send({
     embeds: [embed],
-    components: [new ActionRowBuilder().addComponents(verifyButton).addComponents(rejectButton)],
+    components: [
+      new ActionRowBuilder()
+        .addComponents(verifyButton)
+        .addComponents(rejectButton),
+    ],
   });
+  return res.send(memberId);
 };
