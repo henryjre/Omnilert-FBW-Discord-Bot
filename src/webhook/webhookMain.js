@@ -110,6 +110,7 @@ const listen = async () => {
   app.post("/api/registerUser", authenticateToken, async (req, res) => {
     console.log(req.body);
     await addDatabaseDetails(
+      req.body.member_id,
       req.body.full_name,
       req.body.birthdate,
       req.body.gender,
@@ -121,6 +122,7 @@ const listen = async () => {
       req.body.selfie_image,
       req.body.referrer_id,
       req.body.payment_image,
+      req.body.approval_token,
       res
     );
   });

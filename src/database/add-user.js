@@ -5,6 +5,7 @@ const { client } = require("../index");
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 
 module.exports = async function addDatabaseDetails(
+  memberId,
   fullName,
   birthdate,
   gender,
@@ -16,6 +17,7 @@ module.exports = async function addDatabaseDetails(
   selfieWithId,
   referrerId,
   paymentImage,
+  approvalToken,
   res
 ) {
   const connection = await mysql.createConnection({
@@ -25,11 +27,8 @@ module.exports = async function addDatabaseDetails(
     database: process.env.sqlDatabase,
     port: process.env.sqlPort,
   });
-  const id = new Date().getTime();
 
-  const memberId = `LEV${id}IOSA`;
-
-  const personalQuery = `INSERT INTO Personal_Details (MEMBER_ID, FULL_NAME, BIRTHDATE, GENDER, EMAIL, MOBILE_NUMBER, ADDRESS, FRONT_ID, BACK_ID, SELFIE_WITH_ID, PROOF_OF_MEMBERSHIP) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+  const personalQuery = `INSERT INTO Personal_Details (MEMBER_ID, FULL_NAME, BIRTHDATE, GENDER, EMAIL, MOBILE_NUMBER, ADDRESS, FRONT_ID, BACK_ID, SELFIE_WITH_ID, PROOF_OF_MEMBERSHIP, MEMBER_STATUS) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
   await connection
     .query(personalQuery, [
       memberId,
@@ -43,6 +42,7 @@ module.exports = async function addDatabaseDetails(
       backId,
       selfieWithId,
       paymentImage,
+      approvalToken
     ])
     .catch((err) => console.log(err));
 
