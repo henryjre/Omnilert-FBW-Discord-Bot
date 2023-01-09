@@ -130,5 +130,8 @@ module.exports = async function addDatabaseDetails(
   await client.channels.cache.get("1053860453853433860").send({
     embeds: [embed],
   });
-  return res.send(memberId);
+  return res.status(200).send({
+    ok: true,
+    message: memberId,
+  });
 };
