@@ -17,9 +17,11 @@ const verifyNumber = require("../database/verify-number/request-mobile-otp");
 const verifyMobiletp = require("../database/verify-number/verify-mobile-otp");
 const resendMobileOTP = require("../database/verify-number/resend-mobile-otp");
 /////////////////////DATA
-const getReferralDetails = require("../database/getBalanceAPI");
+const getReferralDetails = require("../database/balance/getBalanceAPI");
 const getPersonalDetails = require("../database/getPersonalAPI");
-const getTransactionHistory = require("../database/getTransactionHistory");
+const getTransactionHistory = require("../database/transaction/getTransactionHistory");
+const addTransactionHistory = require("../database/transaction/add-transaction");
+const updateMemberBalance = require("../database/balance/change-balance");
 
 const PORT = process.env.PORT;
 
@@ -35,26 +37,75 @@ const listen = async () => {
     res.json("Listening for User Registrations...");
   });
 
-  app.post("/api/database/get-referral-details", authenticateToken, async (req, res) => {
-    const { member_id } = req.body;
+  app.post(
+    "/api/database/get-referral-details",
+    authenticateToken,
+    async (req, res) => {
+      const { member_id } = req.body;
 
-    await getReferralDetails(member_id, res);
-    return;
-  });
+      await getReferralDetails(member_id, res);
+      return;
+    }
+  );
 
-  app.post("/api/database/get-personal-details", authenticateToken, async (req, res) => {
-    const { member_id } = req.body;
+  app.post(
+    "/api/database/get-personal-details",
+    authenticateToken,
+    async (req, res) => {
+      const { member_id } = req.body;
 
-    await getPersonalDetails(member_id, res);
-    return;
-  });
+      await getPersonalDetails(member_id, res);
+      return;
+    }
+  );
 
-  app.post("/api/database/get-transaction-history", authenticateToken, async (req, res) => {
-    const { member_id } = req.body;
+  app.post(
+    "/api/database/get-transaction-history",
+    authenticateToken,
+    async (req, res) => {
+      const { member_id } = req.body;
 
-    await getTransactionHistory(member_id, res);
-    return;
-  });
+      await getTransactionHistory(member_id, res);
+      return;
+    }
+  );
+
+  app.post(
+    "/api/database/add-transaction-history",
+    authenticateToken,
+    async (req, res) => {
+      const {
+        txn_date,
+        member_id,
+        txn_description,
+        txn_details,
+        txn_amount,
+        txn_rembal,
+      } = req.body;
+
+      await addTransactionHistory(
+        txn_date,
+        member_id,
+        txn_description,
+        txn_details,
+        txn_amount,
+        txn_rembal,
+        res
+      );
+      return;
+    }
+  );
+
+  app.post(
+    "/api/database/change-balance",
+    authenticateToken,
+    async (req, res) => {
+      const { member_id, txn_amount } = req.body;
+
+      await updateMemberBalance(member_id, amount, res);
+      return;
+    }
+  );
 
   app.post("/api/registerUser", authenticateToken, async (req, res) => {
     console.log(req.body);
