@@ -42,6 +42,7 @@ module.exports = async function addDatabaseDetails(
       backId,
       selfieWithId,
       paymentImage,
+      res
     ])
     .catch((err) => console.log(err));
 
