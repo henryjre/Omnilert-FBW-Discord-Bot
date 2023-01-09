@@ -1,6 +1,6 @@
 require("dotenv").config({ path: "src/.env" });
 const mysql = require("mysql2/promise");
-const nanoid = require("nano-id/async");
+const nanoid = require("nano-id");
 
 module.exports = async function addTransactionHistory(
   date,
