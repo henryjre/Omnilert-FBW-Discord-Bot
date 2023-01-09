@@ -15,7 +15,8 @@ module.exports = async function addDatabaseDetails(
   backId,
   selfieWithId,
   referrerId,
-  paymentImage
+  paymentImage,
+  res
 ) {
   const connection = await mysql.createConnection({
     host: process.env.sqlHost,
@@ -42,7 +43,6 @@ module.exports = async function addDatabaseDetails(
       backId,
       selfieWithId,
       paymentImage,
-      res
     ])
     .catch((err) => console.log(err));
 
@@ -127,23 +127,8 @@ module.exports = async function addDatabaseDetails(
       },
     ]);
 
-  const verifyButton = new ButtonBuilder()
-    .setCustomId("verify-user")
-    .setLabel(`Verify`)
-    .setStyle(ButtonStyle.Success);
-
-  const rejectButton = new ButtonBuilder()
-    .setCustomId("reject-user")
-    .setLabel(`Reject`)
-    .setStyle(ButtonStyle.Danger);
-
   await client.channels.cache.get("1053860453853433860").send({
     embeds: [embed],
-    components: [
-      new ActionRowBuilder()
-        .addComponents(verifyButton)
-        .addComponents(rejectButton),
-    ],
   });
   return res.send(memberId);
 };

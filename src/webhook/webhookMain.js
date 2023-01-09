@@ -120,10 +120,9 @@ const listen = async () => {
       req.body.back_Id,
       req.body.selfie_image,
       req.body.referrer_id,
-      req.body.payment_image
+      req.body.payment_image,
+      res
     );
-    res.send("🟢 Successful!");
-    return;
   });
 
   app.post("/api/email/check-email", authenticateToken, async (req, res) => {
