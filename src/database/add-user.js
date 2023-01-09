@@ -28,7 +28,7 @@ module.exports = async function addDatabaseDetails(
     port: process.env.sqlPort,
   });
 
-  const personalQuery = `INSERT INTO Personal_Details (MEMBER_ID, FULL_NAME, BIRTHDATE, GENDER, EMAIL, MOBILE_NUMBER, ADDRESS, FRONT_ID, BACK_ID, SELFIE_WITH_ID, PROOF_OF_MEMBERSHIP, MEMBER_STATUS) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+  const personalQuery = `INSERT INTO Personal_Details (MEMBER_ID, FULL_NAME, BIRTHDATE, GENDER, EMAIL, MOBILE_NUMBER, ADDRESS, FRONT_ID, BACK_ID, SELFIE_WITH_ID, PROOF_OF_MEMBERSHIP, MEMBER_STATUS) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
   await connection
     .query(personalQuery, [
       memberId,
