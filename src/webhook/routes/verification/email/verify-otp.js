@@ -2,7 +2,7 @@ const mysql = require("mysql2/promise");
 require("dotenv").config({ path: "src/.env" });
 const bcrypt = require("bcrypt");
 
-module.exports = async function verifyOtp(otp, email, res) {
+module.exports = async (req, res) => {
   const connection = await mysql.createConnection({
     host: process.env.sqlHost,
     user: process.env.sqlUsername,
@@ -11,10 +11,12 @@ module.exports = async function verifyOtp(otp, email, res) {
     port: process.env.sqlPort,
   });
 
+  const { otpInput, email_Address } = req.body;
+
   const findEmailQuery =
     "SELECT * FROM User_OTP_Verification WHERE MEMBER_EMAIL = ?";
   const findEmail = await connection
-    .query(findEmailQuery, [email])
+    .query(findEmailQuery, [email_Address])
     .catch((err) => console.log(err));
 
   if (findEmail[0].length <= 0) {
@@ -29,7 +31,7 @@ module.exports = async function verifyOtp(otp, email, res) {
     const deleteUserQuery =
       "DELETE FROM User_OTP_Verification WHERE MEMBER_EMAIL = ?";
     await connection
-      .query(deleteUserQuery, [email])
+      .query(deleteUserQuery, [email_Address])
       .catch((err) => console.log(err));
 
     return res.status(400).send({
@@ -38,7 +40,7 @@ module.exports = async function verifyOtp(otp, email, res) {
     });
   }
 
-  const validOTP = await bcrypt.compare(otp, OTP_CODE);
+  const validOTP = await bcrypt.compare(otpInput, OTP_CODE);
   if (!validOTP) {
     return res.status(400).send({
       ok: false,

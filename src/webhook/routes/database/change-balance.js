@@ -1,7 +1,7 @@
 require("dotenv").config({ path: "src/.env" });
 const mysql = require("mysql2/promise");
 
-module.exports = async function updateMemberBalance(member_id, amount, res) {
+module.exports = async (req, res) => {
   const connection = await mysql.createConnection({
     host: process.env.sqlHost,
     user: process.env.sqlUsername,
@@ -9,6 +9,8 @@ module.exports = async function updateMemberBalance(member_id, amount, res) {
     database: process.env.sqlDatabase,
     port: process.env.sqlPort,
   });
+
+  const { member_id, txn_amount } = req.body;
 
   const queryRefDetails =
     "SELECT REFERRAL_BALANCE FROM Referral_Details WHERE MEMBER_ID = ?";
@@ -18,11 +20,11 @@ module.exports = async function updateMemberBalance(member_id, amount, res) {
 
   const balance = referralDetails[0][0]["REFERRAL_BALANCE"];
   let remBal;
-  if (amount.includes("-")) {
-    const newAmount = amount.replace("- ", "");
+  if (txn_amount.includes("-")) {
+    const newAmount = txn_amount.replace("- ", "");
     rembal = Number(balance) - Number(newAmount);
-  } else if (amount.includes("+")) {
-    const newAmount = amount.replace("+ ", "");
+  } else if (txn_amount.includes("+")) {
+    const newAmount = txn_amount.replace("+ ", "");
     rembal = Number(balance) - Number(newAmount);
   } else {
     return res.status(400).send({

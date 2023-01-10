@@ -2,15 +2,16 @@ require("dotenv").config({ path: "src/.env" });
 const mysql = require("mysql2/promise");
 const nanoid = require("nano-id");
 
-module.exports = async function addTransactionHistory(
-  date,
-  levID,
-  description,
-  details,
-  amount,
-  remaining_balance,
-  res
-) {
+module.exports = async (req, res) => {
+  const {
+    txn_date,
+    member_id,
+    txn_description,
+    txn_details,
+    txn_amount,
+    txn_rembal,
+  } = req.body;
+
   const connection = await mysql.createConnection({
     host: process.env.sqlHost,
     user: process.env.sqlUsername,
@@ -31,12 +32,12 @@ module.exports = async function addTransactionHistory(
     .query(queryTransDetails, [
       txnId,
       leviosaTxnId,
-      levID,
-      date,
-      description,
-      amount,
-      details,
-      remaining_balance,
+      member_id,
+      txn_date,
+      txn_description,
+      txn_amount,
+      txn_details,
+      txn_rembal,
     ])
     .catch((err) => console.log(err));
 

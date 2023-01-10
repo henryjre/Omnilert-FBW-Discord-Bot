@@ -2,7 +2,7 @@ require("dotenv").config({ path: "src/.env" });
 const mysql = require("mysql2/promise");
 const verifyNumber = require("./request-mobile-otp");
 
-module.exports = async function resendMobileOTP(mobile_number, res) {
+module.exports = async (req, res) => {
   const connection = await mysql.createConnection({
     host: process.env.sqlHost,
     user: process.env.sqlUsername,
@@ -10,6 +10,8 @@ module.exports = async function resendMobileOTP(mobile_number, res) {
     database: process.env.sqlDatabase,
     port: process.env.sqlPort,
   });
+
+  const { mobile_number } = req.body;
 
   const findExistingQuery =
     "SELECT VERIFIED FROM User_Mobile_Verification WHERE MOBILE_NUMBER = ?";

@@ -3,7 +3,7 @@ require("dotenv").config({ path: "src/.env" });
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
 
-module.exports = async function verifyMobiletp(otp, mobile_number, res) {
+module.exports = async (req, res) => {
   const connection = await mysql.createConnection({
     host: process.env.sqlHost,
     user: process.env.sqlUsername,
@@ -11,6 +11,8 @@ module.exports = async function verifyMobiletp(otp, mobile_number, res) {
     database: process.env.sqlDatabase,
     port: process.env.sqlPort,
   });
+
+  const { otpInput, mobile_number } = req.body;
 
   const findMobileQuery =
     "SELECT * FROM User_Mobile_Verification WHERE MOBILE_NUMBER = ?";
@@ -51,7 +53,7 @@ module.exports = async function verifyMobiletp(otp, mobile_number, res) {
         api_key: process.env.moviderAPI_KEY,
         api_secret: process.env.moviderAPI_SECRET,
         request_id: OTP_ID,
-        code: otp,
+        code: otpInput,
       }),
     };
 

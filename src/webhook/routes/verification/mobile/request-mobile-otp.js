@@ -3,7 +3,7 @@ const mysql = require("mysql2/promise");
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
 
-module.exports = async function verifyNumber(mobile_number, res) {
+module.exports = async (req, res) => {
   const connection = await mysql.createConnection({
     host: process.env.sqlHost,
     user: process.env.sqlUsername,
@@ -12,10 +12,12 @@ module.exports = async function verifyNumber(mobile_number, res) {
     port: process.env.sqlPort,
   });
 
+  const { mobileNumber } = req.body;
+
   const findMobileQuery =
     "SELECT MOBILE_NUMBER FROM Personal_Details WHERE MOBILE_NUMBER = ?";
   const findMobile = await connection
-    .query(findMobileQuery, [mobile_number])
+    .query(findMobileQuery, [mobileNumber])
     .catch((err) => console.log(err));
 
   if (findMobile[0].length > 0) {
@@ -39,7 +41,7 @@ module.exports = async function verifyNumber(mobile_number, res) {
         code_length: "6",
         from: "MOVIDER",
         pin_expire: 600,
-        to: mobile_number,
+        to: mobileNumber,
       }),
     };
 
@@ -54,7 +56,7 @@ module.exports = async function verifyNumber(mobile_number, res) {
     const findExistingQuery =
       "SELECT * FROM User_Mobile_Verification WHERE MOBILE_NUMBER = ?";
     const findExisting = await connection
-      .query(findExistingQuery, [mobile_number])
+      .query(findExistingQuery, [mobileNumber])
       .catch((err) => console.log(err));
 
     if (findExisting[0].length > 0) {
@@ -65,13 +67,13 @@ module.exports = async function verifyNumber(mobile_number, res) {
           otp,
           Date.now(),
           Date.now() + 3600000,
-          mobile_number,
+          mobileNumber,
         ])
         .catch((err) => console.log(err));
     } else {
       const otpQuery = `INSERT INTO User_Mobile_Verification (MOBILE_NUMBER, OTP_ID, CREATED_AT, EXPIRES_AT) VALUES (?, ?, ?, ?)`;
       await connection
-        .query(otpQuery, [mobile_number, otp, Date.now(), Date.now() + 3600000])
+        .query(otpQuery, [mobileNumber, otp, Date.now(), Date.now() + 3600000])
         .catch((err) => console.log(err));
     }
 

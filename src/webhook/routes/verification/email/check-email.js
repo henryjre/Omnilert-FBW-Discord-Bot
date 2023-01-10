@@ -1,7 +1,7 @@
 require("dotenv").config({ path: "src/.env" });
 const mysql = require("mysql2/promise");
 
-module.exports = async function checkEmail(email, res) {
+module.exports = async (req, res) => {
   const connection = await mysql.createConnection({
     host: process.env.sqlHost,
     user: process.env.sqlUsername,
@@ -10,9 +10,11 @@ module.exports = async function checkEmail(email, res) {
     port: process.env.sqlPort,
   });
 
+  const { email_Address } = req.body;
+
   const findEmailQuery = "SELECT EMAIL FROM Personal_Details WHERE EMAIL = ?";
   const findEmail = await connection
-    .query(findEmailQuery, [email])
+    .query(findEmailQuery, [email_Address])
     .catch((err) => console.log(err));
 
   if (findEmail[0].length > 0) {
@@ -23,10 +25,10 @@ module.exports = async function checkEmail(email, res) {
     });
   }
 
+  connection.end();
+
   return res.status(200).send({
     ok: true,
     message: "No email found in database.",
   });
-
-  connection.end();
 };

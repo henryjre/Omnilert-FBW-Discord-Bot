@@ -1,7 +1,7 @@
 require("dotenv").config({ path: "src/.env" });
 const mysql = require("mysql2/promise");
 
-module.exports = async function getPersonalDetails(member_id, res) {
+module.exports = async (req, res) => {
   const connection = await mysql.createConnection({
     host: process.env.sqlHost,
     user: process.env.sqlUsername,
@@ -9,6 +9,8 @@ module.exports = async function getPersonalDetails(member_id, res) {
     database: process.env.sqlDatabase,
     port: process.env.sqlPort,
   });
+
+  const { member_id } = req.body;
 
   const queryRefDetails = "SELECT * FROM Personal_Details WHERE MEMBER_ID = ?";
   const personalDetails = await connection
