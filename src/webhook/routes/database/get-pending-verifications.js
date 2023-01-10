@@ -23,8 +23,8 @@ module.exports = async (req, res) => {
 
   connection.end();
   const obj = {
-    pending_payments: pendingPaymentDetails[0][0],
-    pending_membership: pendingMemberDetails[0][0],
+    pending_payments: pendingPaymentDetails[0],
+    pending_membership: pendingMemberDetails[0],
   };
 
   res.send(obj);
