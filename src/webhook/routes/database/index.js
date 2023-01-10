@@ -8,8 +8,9 @@ const api_txHistory = require('./api-transaction-history');
 const changeBalance = require('./change-balance');
 const pendingDetails = require('./get-pending-verifications');
 
+database.get('/members/get-pending', pendingDetails);
+
 database.post('/members/pending', addPendingMember);
-database.post('/members/get-pending', pendingDetails);
 database.post('/transactions/add-tx-history', addTransactionHistory);
 database.post('/transactions/history', api_txHistory);
 database.post('/members/personal-details', api_personalDetails);
