@@ -1,10 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
-const { GoogleSpreadsheet } = require("google-spreadsheet");
-const creds = require(`../../secret-key.json`);
-require('dotenv').config({ path: 'src/.env'})
-const sheetId = process.env.sheetId;
-
-const doc = new GoogleSpreadsheet(sheetId);
+const mysql = require("mysql2/promise");
+require("dotenv").config({ path: "src/.env" });
 
 module.exports = {
   data: {
@@ -18,66 +14,59 @@ module.exports = {
     if (isNaN(quantity)) {
       await interaction.reply({
         content: `🔴 ERROR: The product quantity must be a number!`,
-        ephemeral: true
+        ephemeral: true,
       });
       return;
     }
     if (quantity.indexOf(".") != -1) {
       await interaction.reply({
         content: `🔴 ERROR: The product quantity must be a whole number!`,
-        ephemeral: true
+        ephemeral: true,
       });
       return;
     }
     if (isNaN(barcode)) {
       await interaction.reply({
         content: `🔴 ERROR: The product barcode must be a number!`,
-        ephemeral: true
+        ephemeral: true,
       });
       return;
     }
     if (isNaN(price)) {
       await interaction.reply({
         content: `🔴 ERROR: The inventory price must be a number!`,
-        ephemeral: true
+        ephemeral: true,
       });
       return;
     }
 
-    //////////////////////////////////////////GSHEET
-    await doc.useServiceAccountAuth(creds);
-    await doc.loadInfo();
+    //////////////////////////////////////////MYSQL
+    const connection = await mysql.createConnection({
+      host: process.env.sqlHost,
+      user: process.env.inventorySqlUsername,
+      password: process.env.inventorySqlPassword,
+      database: process.env.inventoryDatabase,
+      port: process.env.sqlPort,
+    });
 
-    const summarySheet = doc.sheetsByTitle["Summary"];
-    const sheetRows = await summarySheet.getRows();
+    const selectQueryDetails =
+      "SELECT * FROM INVENTORY_SUMMARY WHERE BARCODE = ?";
+    const selectFromInventory = await connection
+      .query(selectQueryDetails, [barcode])
+      .catch((err) => console.log(err));
 
-    const rowNumber = [];
-
-    for (var row in sheetRows) {
-      if (sheetRows[row]['BARCODE'].indexOf(barcode) === 0) {
-        rowNumber.push(row);
-      }
-    }
-
-    if (rowNumber === undefined || rowNumber.length == 0) {
+    if (selectFromInventory[0].length == 0) {
       await interaction.reply({
-        content: `🔴 ERROR: No product found for barcode #**${barcode}**`,
-        ephemeral: true
-      });
-      return;
-    }
-    if (rowNumber.length > 1) {
-      await interaction.reply({
-        content: `🔴 ERROR: Two products were found for barcode #**${barcode}**`,
-        ephemeral: true
+        content: `🔴 ERROR: No product found for barcode **#${barcode}**`,
+        ephemeral: true,
       });
       return;
     }
 
-    const prodQuan = sheetRows[rowNumber]["QUANTITY"];
-    const prodPrice = sheetRows[rowNumber]["U. PRICE"];
-    const prodName = sheetRows[rowNumber]["PRODUCT"];
-    const prodPic = sheetRows[rowNumber]["PIC URL"];
+    const prodQuan = selectFromInventory[0][0]["QUANTITY"];
+    const prodPrice = selectFromInventory[0][0]["UNIT_PRICE"];
+    const prodName = selectFromInventory[0][0]["PRODUCT_NAME"];
+    const prodPic = selectFromInventory[0][0]["PIC_URL"];
 
     const quanQuan = Number(prodQuan) + Number(quantity);
 
@@ -88,10 +77,13 @@ module.exports = {
 
     const newVal = quanQuan * newPrice;
 
-    sheetRows[rowNumber]["QUANTITY"] = quanQuan;
-    sheetRows[rowNumber]["U. PRICE"] = newPrice;
-    sheetRows[rowNumber]["U. VALUE"] = newVal;
+    const updateQueryDetails =
+      "UPDATE INVENTORY_SUMMARY SET QUANTITY = ?, UNIT_PRICE = ?, UNIT_VALUE = ?  WHERE BARCODE = ?";
+    await connection
+      .query(updateQueryDetails, [quanQuan, newPrice, newVal, barcode])
+      .catch((err) => consolFe.log(err));
 
+    connection.end();
     //////////////////////////////////////////////////
 
     const date = new Date(Date.now()).toLocaleString("en-US", {
@@ -131,7 +123,5 @@ module.exports = {
     await interaction.reply({
       embeds: [embed],
     });
-
-    await sheetRows[rowNumber].save();
   },
 };

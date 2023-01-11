@@ -1,10 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
-const { GoogleSpreadsheet } = require("google-spreadsheet");
-const creds = require(`../../secret-key.json`);
-require('dotenv').config({ path: 'src/.env'})
-const sheetId = process.env.sheetId;
-
-const doc = new GoogleSpreadsheet(sheetId);
+const mysql = require("mysql2/promise");
+require("dotenv").config({ path: "src/.env" });
 
 module.exports = {
   name: "rts",
@@ -38,45 +34,54 @@ module.exports = {
     });
 
     //////////////////////////////////////////GSHEET
-    await doc.useServiceAccountAuth(creds);
-    await doc.loadInfo();
+    const connection = await mysql.createConnection({
+      host: process.env.sqlHost,
+      user: process.env.inventorySqlUsername,
+      password: process.env.inventorySqlPassword,
+      database: process.env.inventoryDatabase,
+      port: process.env.sqlPort,
+    });
 
-    const summarySheet = doc.sheetsByTitle["Summary"];
-    const sheetHistory = doc.sheetsByTitle["Audit History"];
-    const sheetRows = await summarySheet.getRows();
-    const sheetHistoryRows = await sheetHistory.getRows();
+    const selectQueryDetails =
+      "SELECT * FROM INVENTORY_SUMMARY WHERE BARCODE = ?";
+    const selectFromInventory = await connection
+      .query(selectQueryDetails, [barcode])
+      .catch((err) => console.log(err));
 
-    const rowNumber = [];
-    const pendingAudit = sheetHistoryRows[0]["PENDING AUDIT"];
-
-    for (var row in sheetRows) {
-      if (sheetRows[row]["BARCODE"].indexOf(barcode) === 0) {
-        rowNumber.push(row);
-      }
-    }
-
-    if (rowNumber === undefined || rowNumber.length == 0) {
-      await message.reply({
-        content: `🔴 ERROR: No product found for barcode **${barcode}**`,
+    if (selectFromInventory[0].length == 0) {
+      await interaction.reply({
+        content: `🔴 ERROR: No product found for barcode **#${barcode}**`,
         ephemeral: true,
       });
       return;
     }
 
-    const prodPic = sheetRows[rowNumber]["PIC URL"];
-    const prodBrand = sheetRows[rowNumber]["BRAND"];
-    const prodName = sheetRows[rowNumber]["PRODUCT"];
-    const prodBarcode = sheetRows[rowNumber]["BARCODE"];
-    const prodPrice = sheetRows[rowNumber]["U. PRICE"];
-    const prodQuant = sheetRows[rowNumber]["QUANTITY"];
+    const prodPic = selectFromInventory[0][0]["PIC_URL"];
+    const prodBrand = selectFromInventory[0][0]["BRAND"];
+    const prodName = selectFromInventory[0][0]["PRODUCT_NAME"];
+    const prodBarcode = selectFromInventory[0][0]["BARCODE"];
+    const prodPrice = selectFromInventory[0][0]["UNIT_PRICE"];
+    const prodQuant = selectFromInventory[0][0]["QUANTITY"];
     const newQuant = Number(prodQuant) + 1;
+    const timestamp = Date.now() / 1000;
+    const negativePrice = -prodPrice;
 
-    sheetRows[rowNumber]["QUANTITY"] = Number(prodQuant) + 1;
-    await sheetRows[rowNumber].save();
+    const updateQueryDetails =
+      "UPDATE INVENTORY_SUMMARY SET QUANTITY = ? WHERE BARCODE = ?";
+    await connection
+      .query(updateQueryDetails, [`QUANTITY + 1`, barcode])
+      .catch((err) => consolFe.log(err));
 
-    sheetHistoryRows[0]["PENDING AUDIT"] =
-      Number(pendingAudit) - Number(prodPrice);
-    await sheetHistoryRows[0].save();
+    const insertQuery = `INSERT INTO PENDING_AUDIT (BRAND, BARCODE, PRODUCT_NAME, UNIT_PRICE, TIMESTAMP) VALUES (?, ?, ?, ?, ?)`;
+    await connection
+      .query(insertQuery, [
+        prodBrand,
+        prodBarcode,
+        prodName,
+        negativePrice,
+        timestamp,
+      ])
+      .catch((err) => console.log(err));
 
     const embed = new EmbedBuilder()
       .setTitle(`RTS RECORDED #${prodBarcode}`)

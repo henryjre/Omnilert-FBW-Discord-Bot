@@ -1,10 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
-const { GoogleSpreadsheet } = require("google-spreadsheet");
-const creds = require(`../../secret-key.json`);
-require('dotenv').config({ path: 'src/.env'})
-const sheetId = process.env.sheetId;
-
-const doc = new GoogleSpreadsheet(sheetId);
+const mysql = require("mysql2/promise");
+require("dotenv").config({ path: "src/.env" });
 
 module.exports = {
   name: "audit",
@@ -17,6 +13,14 @@ module.exports = {
       return;
     }
 
+    const connection = await mysql.createConnection({
+      host: process.env.sqlHost,
+      user: process.env.inventorySqlUsername,
+      password: process.env.inventorySqlPassword,
+      database: process.env.inventoryDatabase,
+      port: process.env.sqlPort,
+    });
+
     const todaydate = new Date();
     const daysAgo = (todaydate - 1000 * 60 * 60 * 24 * 14) / 1000;
 
@@ -25,34 +29,31 @@ module.exports = {
       timeStyle: "short",
     });
 
-    //////////////////////////////////////////GSHEET
-    await doc.useServiceAccountAuth(creds);
-    await doc.loadInfo();
+    //////////////////////////////////////////SQL
+    const selectQueryDetails =
+      "SELECT UNIT_PRICE FROM PENDING_AUDIT WHERE TIMESTAMP < ?";
+    const selectFromInventory = await connection
+      .query(selectQueryDetails, [daysAgo])
+      .catch((err) => console.log(err));
 
-    const auditSheet = doc.sheetsByTitle["Pending Audit"];
-    const sheetHistory = doc.sheetsByTitle["Audit History"];
-    const sheetRows = await auditSheet.getRows();
-    const sheetHistoryRows = await sheetHistory.getRows();
-
-    const oldUPrice = [];
-    const newUPrice = [];
-    const pendingAudit = sheetHistoryRows[0]["PENDING AUDIT"];
-
-    for (var row in sheetRows) {
-      if (sheetRows[row]["TIMESTAMP"] < daysAgo) {
-        oldUPrice.push(sheetRows[row]["U. PRICE"]);
-      } else {
-        newUPrice.push(sheetRows[row]["U. PRICE"]);
-      }
+    if (selectFromInventory[0].length == 0) {
+      await interaction.reply({
+        content: `🔴 ERROR: No pending found from 14 days ago.`,
+        ephemeral: true,
+      });
+      return;
     }
 
-    const sum = oldUPrice.reduce((a, b) => Number(a) + Number(b), 0);
-    const newSum = newUPrice.reduce((a, b) => Number(a) + Number(b), 0);
-    const totalSum = sum + Number(pendingAudit);
+    const sums = selectFromInventory[0].reduce(
+      (a, b) => a + Number(b.UNIT_PRICE),
+      0
+    );
+    const totalSum = sums.toFixed(2);
 
-    sheetHistoryRows[0]["PENDING AUDIT"] = newSum;
-    await sheetHistoryRows[0].save();
-    auditSheet.clearRows();
+    const deleteQueryDetails = "DELETE FROM PENDING_AUDIT WHERE TIMESTAMP < ?";
+    await connection
+      .query(deleteQueryDetails, [daysAgo])
+      .catch((err) => console.log(err));
 
     const embed = new EmbedBuilder()
       .setTitle(`AUDIT SUCCESS`)

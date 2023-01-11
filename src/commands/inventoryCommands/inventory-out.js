@@ -1,10 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
-const { GoogleSpreadsheet } = require("google-spreadsheet");
-const creds = require(`../../secret-key.json`);
-require('dotenv').config({ path: 'src/.env'})
-const sheetId = process.env.sheetId;
-
-const doc = new GoogleSpreadsheet(sheetId);
+const mysql = require("mysql2/promise");
+require("dotenv").config({ path: "src/.env" });
 
 module.exports = {
   name: "inventory-out",
@@ -25,26 +21,23 @@ module.exports = {
     }
 
     //////////////////////////////////////////GSHEET
-    await doc.useServiceAccountAuth(creds);
-    await doc.loadInfo();
+    const connection = await mysql.createConnection({
+      host: process.env.sqlHost,
+      user: process.env.inventorySqlUsername,
+      password: process.env.inventorySqlPassword,
+      database: process.env.inventoryDatabase,
+      port: process.env.sqlPort,
+    });
 
-    const summarySheet = doc.sheetsByTitle["Summary"];
-    const auditSheet = doc.sheetsByTitle["Pending Audit"];
-    const sheetRows = await summarySheet.getRows();
-    const sheetHistory = doc.sheetsByTitle["Audit History"];
-    const sheetHistoryRows = await sheetHistory.getRows();
+    const selectQueryDetails =
+      "SELECT * FROM INVENTORY_SUMMARY WHERE BARCODE = ?";
+    const selectFromInventory = await connection
+      .query(selectQueryDetails, [message.content])
+      .catch((err) => console.log(err));
 
-    const rowNumber = [];
-
-    for (var row in sheetRows) {
-      if (sheetRows[row]["BARCODE"].indexOf(message.content) === 0) {
-        rowNumber.push(row);
-      }
-    }
-
-    if (rowNumber === undefined || rowNumber.length == 0) {
-      await message.reply({
-        content: `🔴 ERROR: No product found for barcode **${message.content}**`,
+    if (selectFromInventory[0].length == 0) {
+      await interaction.reply({
+        content: `🔴 ERROR: No product found for barcode **#${message.content}**`,
         ephemeral: true,
       });
       return;
@@ -57,30 +50,43 @@ module.exports = {
 
     const timestamp = Date.now() / 1000;
 
-    const prodPic = sheetRows[rowNumber]["PIC URL"];
-    const prodBrand = sheetRows[rowNumber]["BRAND"];
-    const prodName = sheetRows[rowNumber]["PRODUCT"];
-    const prodBarcode = sheetRows[rowNumber]["BARCODE"];
-    const prodPrice = sheetRows[rowNumber]["U. PRICE"];
-    const prodQuant = sheetRows[rowNumber]["QUANTITY"];
+    const prodPic = selectFromInventory[0][0]["PIC_URL"];
+    const prodBrand = selectFromInventory[0][0]["BRAND"];
+    const prodName = selectFromInventory[0][0]["PRODUCT_NAME"];
+    const prodBarcode = selectFromInventory[0][0]["BARCODE"];
+    const prodPrice = selectFromInventory[0][0]["UNIT_PRICE"];
+    const prodQuant = selectFromInventory[0][0]["QUANTITY"];
     const newQuant = Number(prodQuant) - 1;
 
-    await auditSheet.addRow([
-      prodBrand,
-      prodBarcode,
-      prodName,
-      prodPrice,
-      timestamp,
-    ]);
-    await sheetHistory.addRow([
-      prodBrand,
-      prodBarcode,
-      prodName,
-      prodPrice,
-      timestamp,
-    ]);
-    sheetRows[rowNumber]["QUANTITY"] = Number(prodQuant) - 1;
-    await sheetRows[rowNumber].save();
+    const insertQuery1 = `INSERT INTO PENDING_AUDIT (BRAND, BARCODE, PRODUCT_NAME, UNIT_PRICE, TIMESTAMP) VALUES (?, ?, ?, ?, ?)`;
+    await connection
+      .query(insertQuery1, [
+        prodBrand,
+        prodBarcode,
+        prodName,
+        prodPrice,
+        timestamp,
+      ])
+      .catch((err) => console.log(err));
+
+    const insertQuery2 = `INSERT INTO AUDIT_HISTORY (BRAND, BARCODE, PRODUCT_NAME, UNIT_PRICE, TIMESTAMP) VALUES (?, ?, ?, ?, ?)`;
+    await connection
+      .query(insertQuery2, [
+        prodBrand,
+        prodBarcode,
+        prodName,
+        prodPrice,
+        timestamp,
+      ])
+      .catch((err) => console.log(err));
+
+    const updateQueryDetails =
+      "UPDATE INVENTORY_SUMMARY SET QUANTITY = ? WHERE BARCODE = ?";
+    await connection
+      .query(updateQueryDetails, [`QUANTITY - 1`, message.content])
+      .catch((err) => consolFe.log(err));
+
+    connection.end();
 
     const embed = new EmbedBuilder()
       .setTitle(`PENDING AUDIT #${prodBarcode}`)
