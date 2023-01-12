@@ -17,12 +17,27 @@ module.exports = async (req, res) => {
     full_name,
     proof_of_payment,
     payment_type,
+    amount,
     status,
     reference_number,
     verifier,
   } = req.body;
 
   if (reference_number === "none") {
+    const queryRefDetails =
+      "SELECT STATUS FROM Pending_Payment WHERE _id = ?";
+    const personalDetails = await connection
+      .query(queryRefDetails, [id])
+      .catch((err) => console.log(err));
+
+    if (personalDetails[0][0]["STATUS"] === "verifying") {
+      connection.end();
+      return res.status(200).send({
+        ok: false,
+        message: "Already verifying.",
+      });
+    }
+
     const updateQuery = "UPDATE Pending_Payment SET STATUS = ? WHERE _id = ?";
     await connection
       .query(updateQuery, [status, id])
@@ -33,29 +48,38 @@ module.exports = async (req, res) => {
       ok: true,
       message: "Status Updated.",
     });
-  } else {
-    const insertQuery =
-      "INSERT INTO Approved_Payments (_id, TIMESTAMP, MEMBER_ID, FULL_NAME, REF_NUMBER, PROOF_OF_PAYMENT, PAYMENT_TYPE, VERIFIER) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-    await connection
-      .query(insertQuery, [
-        id,
-        timestamp,
-        member_id,
-        full_name,
-        reference_number,
-        proof_of_payment,
-        payment_type,
-        verifier,
-      ])
-      .catch((err) => console.log(err));
-
-    const deleteQuery = "DELETE FROM Pending_Payment WHERE _id = ?";
-    await connection.query(deleteQuery, [id]).catch((err) => console.log(err));
-
-    connection.end();
-    return res.status(200).send({
-      ok: true,
-      message: "Payment approved.",
-    });
   }
+
+  const insertQuery =
+    "INSERT INTO Approved_Payments (_id, TIMESTAMP, MEMBER_ID, FULL_NAME, REF_NUMBER, PROOF_OF_PAYMENT, PAYMENT_TYPE, AMOUNT, VERIFIER) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+  await connection
+    .query(insertQuery, [
+      id,
+      timestamp,
+      member_id,
+      full_name,
+      reference_number,
+      proof_of_payment,
+      payment_type,
+      amount,
+      verifier,
+    ])
+    .catch((err) => console.log(err));
+
+  const deleteQuery = "DELETE FROM Pending_Payment WHERE _id = ?";
+  await connection.query(deleteQuery, [id]).catch((err) => console.log(err));
+
+  if (payment_type === "Deposit Fee") {
+    const queryBalanceDeetails =
+      "UPDATE Referral_Details SET REFERRAL_BALANCE = REFERRAL_BALANCE + ? WHERE MEMBER_ID  = ?";
+    await connection
+      .query(queryBalanceDeetails, [Number(amount), member_id])
+      .catch((err) => consolFe.log(err));
+  }
+
+  connection.end();
+  return res.status(200).send({
+    ok: true,
+    message: "Payment approved.",
+  });
 };
