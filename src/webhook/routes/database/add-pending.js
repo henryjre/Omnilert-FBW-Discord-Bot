@@ -32,7 +32,7 @@ module.exports = async (req, res) => {
   } = req.body;
 
   const pendingId = await nanoid.customAlphabet(
-    "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz-",
+    "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
     10
   );
   const timestamp = Date.now();

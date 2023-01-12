@@ -10,17 +10,51 @@ module.exports = async (req, res) => {
     port: process.env.sqlPort,
   });
 
-  const { timestamp, member_id } = req.body;
+  const {
+    id,
+    timestamp,
+    member_id,
+    full_name,
+    proof_of_payment,
+    payment_type,
+    reference_number,
+    verifier,
+  } = req.body;
 
-  const queryBalanceDeetails =
-    "UPDATE Pending_Payment SET STATUS = ? WHERE TIMESTAMP = ? AND MEMBER_ID = ?";
-  await connection
-    .query(queryBalanceDeetails, [`verifying`, timestamp, member_id])
-    .catch((err) => consolFe.log(err));
+  if (reference_number === "none") {
+    const updateQuery = "UPDATE Pending_Payment SET STATUS = ? WHERE _id = ?";
+    await connection
+      .query(updateQuery, [`verifying`, id])
+      .catch((err) => consolFe.log(err));
 
-  connection.end();
-  return res.status(200).send({
-    ok: true,
-    message: "Status Updated.",
-  });
+    connection.end();
+    return res.status(200).send({
+      ok: true,
+      message: "Status Updated.",
+    });
+  } else {
+    const insertQuery =
+      "INSERT INTO Approved_Payments (_id, TIMESTAMP, MEMBER_ID, FULL_NAME, REF_NUMBER, PROOF_OF_PAYMENT, PAYMENT_TYPE, VERIFIER) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    await connection
+      .query(insertQuery, [
+        id,
+        timestamp,
+        member_id,
+        full_name,
+        reference_number,
+        proof_of_payment,
+        payment_type,
+        verifier,
+      ])
+      .catch((err) => console.log(err));
+
+    const deleteQuery = "DELETE FROM Pending_Payment WHERE _id = ?";
+    await connection.query(deleteQuery, [id]).catch((err) => console.log(err));
+
+    connection.end();
+    return res.status(200).send({
+      ok: true,
+      message: "Payment approved.",
+    });
+  }
 };
