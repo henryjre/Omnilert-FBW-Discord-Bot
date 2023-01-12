@@ -30,17 +30,17 @@ module.exports = async (req, res) => {
       .query(queryRefDetails, [id])
       .catch((err) => console.log(err));
       
-    // if (personalDetails[0][0]["STATUS"] === "verifying") {
-    //   connection.end();
-    //   return res.status(200).send({
-    //     ok: false,
-    //     message: "Already verifying.",
-    //   });
-    // }
+    if (personalDetails[0][0]["STATUS"] === "verifying") {
+      connection.end();
+      return res.status(200).send({
+        ok: false,
+        message: "Already verifying.",
+      });
+    }
 
-    const updateQuery = "UPDATE Pending_Payment SET STATUS = ? WHERE _id = ?";
+    const updateQuery = "UPDATE Pending_Payment SET STATUS = ?, VERIFIER = ? WHERE _id = ?";
     await connection
-      .query(updateQuery, [status, id])
+      .query(updateQuery, [status, verifier, id])
       .catch((err) => consolFe.log(err));
 
     connection.end();
@@ -74,7 +74,7 @@ module.exports = async (req, res) => {
       "UPDATE Referral_Details SET REFERRAL_BALANCE = REFERRAL_BALANCE + ? WHERE MEMBER_ID  = ?";
     await connection
       .query(queryBalanceDeetails, [Number(amount), member_id])
-      .catch((err) => consolFe.log(err));
+      .catch((err) => console.log(err));
   }
 
   connection.end();
