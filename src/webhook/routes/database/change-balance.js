@@ -16,7 +16,7 @@ module.exports = async (req, res) => {
     "SELECT REFERRAL_BALANCE FROM Referral_Details WHERE MEMBER_ID = ?";
   const referralDetails = await connection
     .query(queryRefDetails, [member_id])
-    .catch((err) => consolFe.log(err));
+    .catch((err) => console.log(err));
 
   const balance = referralDetails[0][0]["REFERRAL_BALANCE"];
   let remBal;
@@ -37,7 +37,7 @@ module.exports = async (req, res) => {
     "UPDATE Referral_Details SET REFERRAL_BALANCE = ? WHERE MEMBER_ID = ?";
   await connection
     .query(queryBalanceDeetails, [remBal, member_id])
-    .catch((err) => consolFe.log(err));
+    .catch((err) => console.log(err));
 
   connection.end();
   return res.status(200).send({

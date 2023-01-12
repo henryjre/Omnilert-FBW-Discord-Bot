@@ -70,7 +70,7 @@ module.exports = {
       "UPDATE INVENTORY_SUMMARY SET QUANTITY = QUANTITY - 1 WHERE BARCODE = ?";
     await connection
       .query(updateQueryDetails, [barcode])
-      .catch((err) => consolFe.log(err));
+      .catch((err) => console.log(err));
 
     const insertQuery = `INSERT INTO PENDING_AUDIT (BRAND, BARCODE, PRODUCT_NAME, UNIT_PRICE, TIMESTAMP) VALUES (?, ?, ?, ?, ?)`;
     await connection

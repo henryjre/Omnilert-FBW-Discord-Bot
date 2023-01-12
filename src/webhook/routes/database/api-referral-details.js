@@ -15,7 +15,7 @@ module.exports = async (req, res) => {
   const queryRefDetails = "SELECT * FROM Referral_Details WHERE MEMBER_ID = ?";
   const referralDetails = await connection
     .query(queryRefDetails, [member_id])
-    .catch((err) => consolFe.log(err));
+    .catch((err) => console.log(err));
 
   connection.end();
   res.send(referralDetails[0][0]);

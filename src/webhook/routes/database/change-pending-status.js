@@ -41,7 +41,7 @@ module.exports = async (req, res) => {
     const updateQuery = "UPDATE Pending_Payment SET STATUS = ?, VERIFIER = ? WHERE _id = ?";
     await connection
       .query(updateQuery, [status, verifier, id])
-      .catch((err) => consolFe.log(err));
+      .catch((err) => console.log(err));
 
     connection.end();
     return res.status(200).send({
