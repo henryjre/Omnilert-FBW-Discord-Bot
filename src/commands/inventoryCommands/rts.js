@@ -67,9 +67,9 @@ module.exports = {
     const negativePrice = -prodPrice;
 
     const updateQueryDetails =
-      "UPDATE INVENTORY_SUMMARY SET QUANTITY = ? WHERE BARCODE = ?";
+      "UPDATE INVENTORY_SUMMARY SET QUANTITY = QUANTITY - 1 WHERE BARCODE = ?";
     await connection
-      .query(updateQueryDetails, [`QUANTITY + 1`, barcode])
+      .query(updateQueryDetails, [barcode])
       .catch((err) => consolFe.log(err));
 
     const insertQuery = `INSERT INTO PENDING_AUDIT (BRAND, BARCODE, PRODUCT_NAME, UNIT_PRICE, TIMESTAMP) VALUES (?, ?, ?, ?, ?)`;
