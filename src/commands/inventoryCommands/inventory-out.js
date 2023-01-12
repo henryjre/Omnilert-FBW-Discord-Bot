@@ -84,7 +84,7 @@ module.exports = {
       "UPDATE INVENTORY_SUMMARY SET QUANTITY = ? WHERE BARCODE = ?";
     await connection
       .query(updateQueryDetails, [`QUANTITY - 1`, message.content])
-      .catch((err) => consolFe.log(err));
+      .catch((err) => console.log(err));
 
     connection.end();
 
