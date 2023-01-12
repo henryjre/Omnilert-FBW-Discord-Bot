@@ -17,6 +17,7 @@ module.exports = async (req, res) => {
     full_name,
     proof_of_payment,
     payment_type,
+    status,
     reference_number,
     verifier,
   } = req.body;
@@ -24,7 +25,7 @@ module.exports = async (req, res) => {
   if (reference_number === "none") {
     const updateQuery = "UPDATE Pending_Payment SET STATUS = ? WHERE _id = ?";
     await connection
-      .query(updateQuery, [`verifying`, id])
+      .query(updateQuery, [status, id])
       .catch((err) => consolFe.log(err));
 
     connection.end();
