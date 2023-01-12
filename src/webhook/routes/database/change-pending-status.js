@@ -24,29 +24,30 @@ module.exports = async (req, res) => {
   } = req.body;
 
   if (reference_number === "none") {
-    const queryRefDetails = "SELECT STATUS FROM Pending_Payment WHERE _id = ?";
+    const queryRefDetails =
+      "SELECT STATUS FROM Pending_Payment WHERE _id = ?";
     const personalDetails = await connection
       .query(queryRefDetails, [id])
       .catch((err) => console.log(err));
+      
+    // if (personalDetails[0][0]["STATUS"] === "verifying") {
+    //   connection.end();
+    //   return res.status(200).send({
+    //     ok: false,
+    //     message: "Already verifying.",
+    //   });
+    // }
 
-    if (personalDetails[0][0]["STATUS"] === "pending") {
-      const updateQuery = "UPDATE Pending_Payment SET STATUS = ? WHERE _id = ?";
-      await connection
-        .query(updateQuery, [status, id])
-        .catch((err) => consolFe.log(err));
+    const updateQuery = "UPDATE Pending_Payment SET STATUS = ? WHERE _id = ?";
+    await connection
+      .query(updateQuery, [status, id])
+      .catch((err) => consolFe.log(err));
 
-      connection.end();
-      return res.status(200).send({
-        ok: true,
-        message: "Status Updated.",
-      });
-    } else if (personalDetails[0][0]["STATUS"] === "verifying") {
-      connection.end();
-      return res.status(200).send({
-        ok: false,
-        message: "Already verifying.",
-      });
-    }
+    connection.end();
+    return res.status(200).send({
+      ok: true,
+      message: "Status Updated.",
+    });
   }
 
   const insertQuery =
