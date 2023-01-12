@@ -10,13 +10,13 @@ module.exports = async (req, res) => {
     port: process.env.sqlPort,
   });
 
-  const queryPaymentDetails = "SELECT * FROM Pending_Payment LIMIT 20";
+  const queryPaymentDetails = "SELECT * FROM Pending_Payment ORDER BY TIMESTAMP ASC LIMIT 20";
   const pendingPaymentDetails = await connection
     .query(queryPaymentDetails)
     .catch((err) => console.log(err));
 
   const queryMemberDetails =
-    "SELECT * FROM Pending_Membership LIMIT 20";
+    "SELECT * FROM Pending_Membership ORDER BY TIMESTAMP ASC LIMIT 20";
   const pendingMemberDetails = await connection
     .query(queryMemberDetails)
     .catch((err) => console.log(err));
