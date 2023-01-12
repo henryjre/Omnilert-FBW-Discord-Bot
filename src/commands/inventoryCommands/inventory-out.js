@@ -81,9 +81,9 @@ module.exports = {
       .catch((err) => console.log(err));
 
     const updateQueryDetails =
-      "UPDATE INVENTORY_SUMMARY SET QUANTITY = ? WHERE BARCODE = ?";
+      "UPDATE INVENTORY_SUMMARY SET QUANTITY = QUANTITY - 1 WHERE BARCODE = ?";
     await connection
-      .query(updateQueryDetails, [`QUANTITY - 1`, message.content])
+      .query(updateQueryDetails, [message.content])
       .catch((err) => console.log(err));
 
     connection.end();
