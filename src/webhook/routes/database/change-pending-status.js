@@ -24,10 +24,19 @@ module.exports = async (req, res) => {
   } = req.body;
 
   if (reference_number === "none") {
-    const queryRefDetails = "SELECT STATUS, VERIFIER FROM Pending_Payment WHERE _id = ?";
+    const queryRefDetails =
+      "SELECT STATUS, VERIFIER FROM Pending_Payment WHERE _id = ?";
     const personalDetails = await connection
       .query(queryRefDetails, [id])
       .catch((err) => console.log(err));
+
+    if (personalDetails[0].length <= 0) {
+      connection.end();
+      return res.status(404).send({
+        ok: false,
+        message: "🔴 Oops! Could not find the item you were getting.",
+      });
+    }
 
     if (
       personalDetails[0][0]["STATUS"] === "verifying" &&
@@ -43,9 +52,9 @@ module.exports = async (req, res) => {
       personalDetails[0][0]["VERIFIER"].length <= 0
     ) {
       connection.end();
-      return res.status(200).send({
+      return res.status(400).send({
         ok: false,
-        message: "Already verifying.",
+        message: "🔴 Oops! That payment has already been get.",
       });
     }
 
