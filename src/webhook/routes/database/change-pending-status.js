@@ -24,13 +24,24 @@ module.exports = async (req, res) => {
   } = req.body;
 
   if (reference_number === "none") {
-    const queryRefDetails =
-      "SELECT STATUS FROM Pending_Payment WHERE _id = ?";
+    const queryRefDetails = "SELECT STATUS FROM Pending_Payment WHERE _id = ?";
     const personalDetails = await connection
       .query(queryRefDetails, [id])
       .catch((err) => console.log(err));
-      
-    if (personalDetails[0][0]["STATUS"] === "verifying") {
+
+    if (
+      personalDetails[0][0]["STATUS"] === "verifying" &&
+      personalDetails[0][0]["VERIFIER"].length > 0
+    ) {
+      connection.end();
+      return res.status(200).send({
+        ok: true,
+        message: "On-hold verifying.",
+      });
+    } else if (
+      personalDetails[0][0]["STATUS"] === "verifying" &&
+      personalDetails[0][0]["VERIFIER"].length <= 0
+    ) {
       connection.end();
       return res.status(200).send({
         ok: false,
@@ -38,7 +49,8 @@ module.exports = async (req, res) => {
       });
     }
 
-    const updateQuery = "UPDATE Pending_Payment SET STATUS = ?, VERIFIER = ? WHERE _id = ?";
+    const updateQuery =
+      "UPDATE Pending_Payment SET STATUS = ?, VERIFIER = ? WHERE _id = ?";
     await connection
       .query(updateQuery, [status, verifier, id])
       .catch((err) => console.log(err));
