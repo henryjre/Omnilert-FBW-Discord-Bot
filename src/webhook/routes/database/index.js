@@ -1,20 +1,21 @@
 const database = require('express').Router();
 
+/////////////////////folders
+const payment_approval = require('./payment approval')
+/////////////////////files
 const addPendingMember = require('./add-pending');
 const addTransactionHistory = require('./add-transaction-history');
 const api_personalDetails = require('./api-personal-details');
 const api_referralDetails = require('./api-referral-details');
 const api_txHistory = require('./api-transaction-history');
 const changeBalance = require('./change-balance');
-const pendingDetails = require('./get-pending-verifications');
-const pendingStatus = require('./change-pending-status');
-const duplicatePayment = require('./find-pending-duplicate');
 
-database.get('/members/get-pending', pendingDetails);
+///////////////use folders
+database.use('/pending-payments', payment_approval);
+database.use('/pending-members', payment_approval);
 
+/////////////files
 database.post('/members/pending', addPendingMember);
-database.post('/members/change-pending-status', pendingStatus);
-database.post('/members/find-duplicate-payment', duplicatePayment);
 database.post('/transactions/add-tx-history', addTransactionHistory);
 database.post('/transactions/history', api_txHistory);
 database.post('/members/personal-details', api_personalDetails);
