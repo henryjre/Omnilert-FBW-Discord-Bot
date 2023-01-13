@@ -24,7 +24,7 @@ module.exports = async (req, res) => {
   } = req.body;
 
   if (reference_number === "none") {
-    const queryRefDetails = "SELECT STATUS FROM Pending_Payment WHERE _id = ?";
+    const queryRefDetails = "SELECT STATUS, VERIFIER FROM Pending_Payment WHERE _id = ?";
     const personalDetails = await connection
       .query(queryRefDetails, [id])
       .catch((err) => console.log(err));
