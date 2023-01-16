@@ -2,7 +2,7 @@
 const mysql = require("mysql2/promise");
 require("dotenv").config({ path: "src/.env" });
 // const { client } = require("../index");
-const { nanoid } = require("nanoid");
+const nanoid = require("nanoid");
 
 module.exports = async (req, res) => {
   const connection = await mysql.createConnection({

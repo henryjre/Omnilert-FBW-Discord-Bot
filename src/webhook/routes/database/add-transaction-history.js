@@ -1,6 +1,6 @@
 require("dotenv").config({ path: "src/.env" });
 const mysql = require("mysql2/promise");
-const { nanoid } = require("nanoid");
+const nanoid = require("nanoid");
 
 module.exports = async (req, res) => {
   const {

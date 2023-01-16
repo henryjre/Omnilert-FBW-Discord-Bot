@@ -13,7 +13,7 @@ module.exports = async (req, res) => {
   const { member_id } = req.body;
 
   const queryTransDetails =
-    "SELECT * FROM Transaction_History WHERE MEMBER_ID = ? ORDER BY TXN_DATE DESC LIMIT 10";
+    "SELECT * FROM Transaction_History WHERE MEMBER_ID = ? ORDER BY TXN_DATE DESC LIMIT 50";
   const transDetails = await connection
     .query(queryTransDetails, [member_id])
     .catch((err) => console.log(err));
