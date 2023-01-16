@@ -49,7 +49,7 @@ module.exports = async (req, res) => {
       });
     } else if (
       personalDetails[0][0]["STATUS"] === "verifying" &&
-      personalDetails[0][0]["VERIFIER"].length <= 0
+      personalDetails[0][0]["VERIFIER"] != null
     ) {
       connection.end();
       return res.status(400).send({

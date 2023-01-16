@@ -2,7 +2,7 @@
 const mysql = require("mysql2/promise");
 require("dotenv").config({ path: "src/.env" });
 // const { client } = require("../index");
-const nanoid = require("nanoid");
+const nanoid = require("nanoid/async");
 
 module.exports = async (req, res) => {
   const connection = await mysql.createConnection({
@@ -31,11 +31,24 @@ module.exports = async (req, res) => {
     payment_type,
   } = req.body;
 
-  const pendingId = await nanoid.customAlphabet(
+  const customID = nanoid.customAlphabet(
     "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
     10
   );
-  const timestamp = Date.now();
+  const pendingId = await customID();
+  const timestamp = Date.now(); 
+
+  const pendingPaymentQuery = `INSERT INTO Pending_Payment (_id, TIMESTAMP, MEMBER_ID, FULL_NAME, PROOF_OF_PAYMENT, PAYMENT_TYPE) VALUES (?, ?, ?, ?, ?, ?)`;
+  await connection
+    .query(pendingPaymentQuery, [
+      pendingId,
+      timestamp,
+      member_id,
+      full_name,
+      payment_image,
+      payment_type,
+    ])
+    .catch((err) => console.log(err));
 
   if (payment_type === "Membership Fee") {
     const pendingUserQuery = `INSERT INTO Pending_Membership (_id, TIMESTAMP, MEMBER_ID, FULL_NAME, BIRTHDATE, GENDER, EMAIL, MOBILE_NUMBER, ADDRESS, ID_TYPE, FRONT_ID, BACK_ID, SELFIE_WITH_ID, REFERRER_ID, APPROVAL_TOKEN) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
@@ -59,18 +72,6 @@ module.exports = async (req, res) => {
       ])
       .catch((err) => console.log(err));
   }
-
-  const pendingPaymentQuery = `INSERT INTO Pending_Payment (_id, TIMESTAMP, MEMBER_ID, FULL_NAME, PROOF_OF_PAYMENT, PAYMENT_TYPE) VALUES (?, ?, ?, ?, ?, ?)`;
-  await connection
-    .query(pendingPaymentQuery, [
-      pendingId,
-      timestamp,
-      member_id,
-      full_name,
-      payment_image,
-      payment_type,
-    ])
-    .catch((err) => console.log(err));
 
   connection.end();
   return res.status(200).send({

@@ -1,6 +1,6 @@
 require("dotenv").config({ path: "src/.env" });
 const mysql = require("mysql2/promise");
-const nanoid = require("nanoid");
+const nanoid = require("nanoid/async");
 
 module.exports = async (req, res) => {
   const {
@@ -21,10 +21,11 @@ module.exports = async (req, res) => {
   });
 
   const txnId = `tx-${date}`;
-  const leviosaTxnId = await nanoid.customAlphabet(
-    "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+  const customID = nanoid.customAlphabet(
+    "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
     10
   );
+  const leviosaTxnId = await customID();
 
   const queryTransDetails =
     "INSERT INTO Transaction_History (_id, TRANSACTION_ID, MEMBER_ID, TXN_DATE, TXN_DESCRIPTION, AMOUNT, TXN_DETAILS, MEMBER_BALANCE) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
