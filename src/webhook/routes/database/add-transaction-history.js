@@ -1,6 +1,6 @@
 require("dotenv").config({ path: "src/.env" });
 const mysql = require("mysql2/promise");
-const nanoid = require("nano-id");
+const { customAlphabet } = require("nano-id");
 
 module.exports = async (req, res) => {
   const {
@@ -21,7 +21,7 @@ module.exports = async (req, res) => {
   });
 
   const txnId = `tx-${date}`;
-  const leviosaTxnId = await nanoid.customAlphabet(
+  const leviosaTxnId = await customAlphabet(
     "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ",
     10
   );

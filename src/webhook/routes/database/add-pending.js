@@ -2,7 +2,7 @@
 const mysql = require("mysql2/promise");
 require("dotenv").config({ path: "src/.env" });
 // const { client } = require("../index");
-const nanoid = require("nano-id");
+const { customAlphabet } = require("nano-id");
 
 module.exports = async (req, res) => {
   const connection = await mysql.createConnection({
@@ -31,7 +31,7 @@ module.exports = async (req, res) => {
     payment_type,
   } = req.body;
 
-  const pendingId = await nanoid.customAlphabet(
+  const pendingId = await customAlphabet(
     "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
     10
   );
