@@ -96,6 +96,26 @@ module.exports = async (req, res) => {
     await connection
       .query(queryBalanceDeetails, [Number(amount), member_id])
       .catch((err) => console.log(err));
+
+    const findBalance =
+      "SELECT REFERRAL_BALANCE FROM Referral_Details WHERE MEMBER_ID  = ?";
+    const balanceArray = await connection
+      .query(findBalance, [member_id])
+      .catch((err) => console.log(err));
+
+    const newBalance = balanceArray[0][0]["REFERRAL_BALANCE"];
+
+    const queryTransDetails =
+      "UPDATE Transaction_History SET TXN_DATE = ?, AMOUNT = ?, MEMBER_BALANCE = ?, STATUS = ? WHERE _id = ?";
+    await connection
+      .query(queryTransDetails, [
+        timestamp,
+        amount,
+        newBalance,
+        "approved",
+        id
+      ])
+      .catch((err) => console.log(err));
   }
 
   connection.end();

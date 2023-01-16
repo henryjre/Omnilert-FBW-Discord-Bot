@@ -36,7 +36,13 @@ module.exports = async (req, res) => {
     10
   );
   const pendingId = await customID();
-  const timestamp = Date.now(); 
+  const timestamp = Date.now();
+
+  const customTransactionId = nanoid.customAlphabet(
+    "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+    10
+  );
+  const leviosaTxnId = await customID();
 
   const pendingPaymentQuery = `INSERT INTO Pending_Payment (_id, TIMESTAMP, MEMBER_ID, FULL_NAME, PROOF_OF_PAYMENT, PAYMENT_TYPE) VALUES (?, ?, ?, ?, ?, ?)`;
   await connection
@@ -50,7 +56,7 @@ module.exports = async (req, res) => {
     ])
     .catch((err) => console.log(err));
 
-  if (payment_type === "Membership Fee") {
+  if (payment_type === "Membership Fee") {  
     const pendingUserQuery = `INSERT INTO Pending_Membership (_id, TIMESTAMP, MEMBER_ID, FULL_NAME, BIRTHDATE, GENDER, EMAIL, MOBILE_NUMBER, ADDRESS, ID_TYPE, FRONT_ID, BACK_ID, SELFIE_WITH_ID, REFERRER_ID, APPROVAL_TOKEN) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
     await connection
       .query(pendingUserQuery, [
@@ -72,6 +78,17 @@ module.exports = async (req, res) => {
       ])
       .catch((err) => console.log(err));
   }
+
+  const queryTransDetails =
+    "INSERT INTO Transaction_History (_id, TRANSACTION_ID, MEMBER_ID, TXN_DESCRIPTION) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+  await connection
+    .query(queryTransDetails, [
+      pendingId,
+      leviosaTxnId,
+      member_id,
+      payment_type,
+    ])
+    .catch((err) => console.log(err));
 
   connection.end();
   return res.status(200).send({
