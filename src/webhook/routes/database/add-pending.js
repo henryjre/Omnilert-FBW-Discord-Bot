@@ -80,7 +80,7 @@ module.exports = async (req, res) => {
   }
 
   const queryTransDetails =
-    "INSERT INTO Transaction_History (_id, TRANSACTION_ID, MEMBER_ID, TXN_DESCRIPTION) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    "INSERT INTO Transaction_History (_id, TRANSACTION_ID, MEMBER_ID, TXN_DESCRIPTION) VALUES (?, ?, ?, ?)";
   await connection
     .query(queryTransDetails, [
       pendingId,
