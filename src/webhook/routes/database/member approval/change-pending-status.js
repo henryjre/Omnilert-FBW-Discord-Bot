@@ -114,9 +114,111 @@ module.exports = async (req, res) => {
   await connection.query(deleteQuery, [id]).catch((err) => console.log(err));
 
   connection.end();
+
+  //////////////////////////////1ST DEGREE REFER
+  await connection.query(
+    `UPDATE Referral_Details SET REFERRAL_BALANCE =  REFERRAL_BALANCE + 1500, firstRef = firstRef + 1 WHERE MEMBER_ID = ?`,
+    [referrer_id]
+  );
+
+  const firstProfile = await connection.query(
+    `SELECT REFERRER_ID FROM Referral_Details WHERE MEMBER_ID = ?`,
+    [referrer_id]
+  );
+  if (firstProfile[0][0]["REFERRER_ID"] === "none") {
+    return res.status(200).send({
+      ok: true,
+      message: "Member approved.",
+      token: approval_token,
+    });
+  }
+  const secondRefId = firstProfile[0][0]["REFERRER_ID"];
+
+  /////////////////////////////2ND DEGREE REFER
+  await connection.query(
+    `UPDATE Referral_Details SET REFERRAL_BALANCE = REFERRAL_BALANCE + 500, secondRef = secondRef + 1 WHERE MEMBER_ID = ?`,
+    [secondRefId]
+  );
+
+  const secondProfile = await connection.query(
+    `SELECT REFERRER_ID FROM Referral_Details WHERE MEMBER_ID = ?`,
+    [secondRefId]
+  );
+  if (secondProfile[0][0]["REFERRER_ID"] === "none") {
+    return res.status(200).send({
+      ok: true,
+      message: "Member approved.",
+      token: approval_token,
+    });
+  }
+  const thirdRefId = secondProfile[0][0]["REFERRER_ID"];
+
+  /////////////////////////////3RD DEGREE REFER
+  await connection.query(
+    `UPDATE Referral_Details SET REFERRAL_BALANCE = REFERRAL_BALANCE + 200, thirdRef = thirdRef + 1 WHERE MEMBER_ID = ?`,
+    [thirdRefId]
+  );
+
+  const thirdProfile = await connection.query(
+    `SELECT REFERRER_ID FROM Referral_Details WHERE MEMBER_ID = ?`,
+    [thirdRefId]
+  );
+  if (thirdProfile[0][0]["REFERRER_ID"] === "none") {
+    return res.status(200).send({
+      ok: true,
+      message: "Member approved.",
+      token: approval_token,
+    });
+  }
+  const fourthRefId = thirdProfile[0][0]["REFERRER_ID"];
+
+  /////////////////////////////4TH DEGREE REFER
+  await connection.query(
+    `UPDATE Referral_Details SET REFERRAL_BALANCE = REFERRAL_BALANCE + 100, fourthRef = fourthRef + 1 WHERE MEMBER_ID = ?`,
+    [fourthRefId]
+  );
+
+  const fourthProfile = await connection.query(
+    `SELECT REFERRER_ID FROM Referral_Details WHERE MEMBER_ID = ?`,
+    [fourthRefId]
+  );
+  if (fourthProfile[0][0]["REFERRER_ID"] === "none") {
+    return res.status(200).send({
+      ok: true,
+      message: "Member approved.",
+      token: approval_token,
+    });
+  }
+  const fifthRefId = fourthProfile[0][0]["REFERRER_ID"];
+
+  /////////////////////////////5TH DEGREE REFER
+  await connection.query(
+    `UPDATE Referral_Details SET REFERRAL_BALANCE = REFERRAL_BALANCE + 50, fifthRef = fifthRef + 1 WHERE MEMBER_ID = ?`,
+    [fifthRefId]
+  );
+
+  const fifthProfile = await connection.query(
+    `SELECT REFERRER_ID FROM Referral_Details WHERE MEMBER_ID = ?`,
+    [fifthRefId]
+  );
+  if (fifthProfile[0][0]["REFERRER_ID"] === "none") {
+    return res.status(200).send({
+      ok: true,
+      message: "Member approved.",
+      token: approval_token,
+    });
+  }
+  const sixthRefId = fifthProfile[0][0]["REFERRER_ID"];
+
+  ////////////////////////////5TH DEGREE REFER
+  await connection.query(
+    `UPDATE Referral_Details SET REFERRAL_BALANCE = REFERRAL_BALANCE + 20, sixthRef = sixthRef + 1 WHERE MEMBER_ID = ?`,
+    [sixthRefId]
+  );
+
   return res.status(200).send({
     ok: true,
     message: "Member approved.",
-    token: approval_token
+    token: approval_token,
   });
 };

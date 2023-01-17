@@ -90,7 +90,7 @@ module.exports = async (req, res) => {
   const deleteQuery = "DELETE FROM Pending_Payment WHERE _id = ?";
   await connection.query(deleteQuery, [id]).catch((err) => console.log(err));
 
-  if (payment_type === "Deposit Fee") {
+  if (payment_type === "Balance Top-up") {
     const queryBalanceDeetails =
       "UPDATE Referral_Details SET REFERRAL_BALANCE = REFERRAL_BALANCE + ? WHERE MEMBER_ID  = ?";
     await connection
@@ -104,13 +104,14 @@ module.exports = async (req, res) => {
       .catch((err) => console.log(err));
 
     const newBalance = balanceArray[0][0]["REFERRAL_BALANCE"];
+    const historyAmount = `+${amount}`
 
     const queryTransDetails =
       "UPDATE Transaction_History SET TXN_DATE = ?, AMOUNT = ?, MEMBER_BALANCE = ?, STATUS = ? WHERE _id = ?";
     await connection
       .query(queryTransDetails, [
         timestamp,
-        amount,
+        Number(historyAmount),
         newBalance,
         "approved",
         id
