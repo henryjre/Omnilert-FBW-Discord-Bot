@@ -19,7 +19,7 @@ module.exports = async (req, res) => {
 
   if (personalDetails[0].length <= 0) {
     connection.end();
-    return res.send(personalDetails[0])
+    return res.send("none")
   }
 
   connection.end();
