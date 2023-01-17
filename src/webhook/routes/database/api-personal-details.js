@@ -17,6 +17,8 @@ module.exports = async (req, res) => {
     .query(queryRefDetails, [member_id])
     .catch((err) => console.log(err));
 
+    console.log("wow")
+
   if (personalDetails[0].length <= 0) {
     connection.end();
     return res.send("none")
