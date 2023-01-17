@@ -17,6 +17,11 @@ module.exports = async (req, res) => {
     .query(queryRefDetails, [member_id])
     .catch((err) => console.log(err));
 
+  if (personalDetails[0].length <= 0) {
+    connection.end();
+    return res.send(personalDetails[0])
+  }
+
   connection.end();
-  res.send(personalDetails[0][0]);
+  return res.send(personalDetails[0][0]);
 };

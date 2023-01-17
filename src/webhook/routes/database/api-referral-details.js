@@ -18,5 +18,5 @@ module.exports = async (req, res) => {
     .catch((err) => console.log(err));
 
   connection.end();
-  res.send(referralDetails[0][0]);
+  return res.send(referralDetails[0][0]);
 };
