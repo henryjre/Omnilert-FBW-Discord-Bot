@@ -15,6 +15,9 @@ const nodemailer = require("nodemailer");
 module.exports = async (req, res) => {
   const { order } = req.body;
 
+  console.lot(order)
+  return;
+
   const filePath = path.join(__dirname, "./email_htmls/orderCreate.html");
   const source = fs.readFileSync(filePath, "utf-8").toString();
   let template = handlebars.compile(source);
