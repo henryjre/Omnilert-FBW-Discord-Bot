@@ -15,53 +15,12 @@ const nodemailer = require("nodemailer");
 module.exports = async (req, res) => {
   const { order } = req.body;
 
-  console.log(order)
-  return;
-
-  const filePath = path.join(__dirname, "./email_htmls/orderCreate.html");
-  const source = fs.readFileSync(filePath, "utf-8").toString();
-  let template = handlebars.compile(source);
-  const replacements = {
-    orderId: queryOrder.number,
-    orderDate: orderDate,
-    memberName: `${queryOrder.shippingInfo.shipmentDetails.firstName} ${queryOrder.shippingInfo.shipmentDetails.lastName}`,
-    memberPhone: queryOrder.shippingInfo.shipmentDetails.phone,
-    memberEmail: queryOrder.shippingInfo.shipmentDetails.email,
-    leviosaId: queryOrder.customField.value,
-    shippingAddress: `${address.addressLine}, ${address.addressLine2}, ${address.city}, Philippines ${address.postalCode}`,
-    itemsArray: JSON.stringify(lineItemsArray),
-  };
-  const htmlToSend = template(replacements);
-
-  let transporter = nodemailer.createTransport({
-    host: "smtp.zoho.com",
-    port: 465,
-    secure: true, //ssl
-    auth: {
-      user: "info@leviosanetwork.com",
-      pass: zmailPass,
-    },
-    from: "info@leviosanetwork.com",
-  });
-
-  const mailOptions = {
-    from: "Leviosa Network <info@leviosanetwork.com>",
-    to: queryOrder.shippingInfo.shipmentDetails.email,
-    subject: `Thanks for shopping with us (#${queryOrder.number})`,
-    html: htmlToSend,
-  };
-
-  await transporter
-    .sendMail(mailOptions)
-    .then((results) => console.log(results));
-
-  const lineItemsArray = JSON.parse(`{{itemsArray}}`);
   const lineItemsTable = document.getElementById("lineItems");
-  lineItemsArray.forEach((item) => {
-    const image = item.imageUrl;
+  order.lineItems.forEach((item) => {
+    const image = "https://static.wixstatic.com/media/" + item.mediaItem.id;
     const itemName = item.name;
     const itemQuantity = item.quantity;
-    const itemPrice = item.price;
+    const itemPrice = item.priceData.totalPrice;
 
     const lineItemRow = `<tr>
       <td
@@ -166,4 +125,43 @@ module.exports = async (req, res) => {
       </tr>`;
     lineItemsTable.innerHTML += lineItemRow;
   });
+  console.log(document);
+  return
+
+  const filePath = path.join(__dirname, "./email_htmls/orderCreate.html");
+  const source = fs.readFileSync(filePath, "utf-8").toString();
+  let template = handlebars.compile(source);
+  const replacements = {
+    orderId: queryOrder.number,
+    orderDate: orderDate,
+    memberName: `${queryOrder.shippingInfo.shipmentDetails.firstName} ${queryOrder.shippingInfo.shipmentDetails.lastName}`,
+    memberPhone: queryOrder.shippingInfo.shipmentDetails.phone,
+    memberEmail: queryOrder.shippingInfo.shipmentDetails.email,
+    leviosaId: queryOrder.customField.value,
+    shippingAddress: `${address.addressLine}, ${address.addressLine2}, ${address.city}, Philippines ${address.postalCode}`,
+    itemsArray: JSON.stringify(lineItemsArray),
+  };
+  const htmlToSend = template(replacements);
+
+  let transporter = nodemailer.createTransport({
+    host: "smtp.zoho.com",
+    port: 465,
+    secure: true, //ssl
+    auth: {
+      user: "info@leviosanetwork.com",
+      pass: zmailPass,
+    },
+    from: "info@leviosanetwork.com",
+  });
+
+  const mailOptions = {
+    from: "Leviosa Network <info@leviosanetwork.com>",
+    to: queryOrder.shippingInfo.shipmentDetails.email,
+    subject: `Thanks for shopping with us (#${queryOrder.number})`,
+    html: htmlToSend,
+  };
+
+  await transporter
+    .sendMail(mailOptions)
+    .then((results) => console.log(results));
 };
