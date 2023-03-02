@@ -15,7 +15,7 @@ const nodemailer = require("nodemailer");
 module.exports = async (req, res) => {
   const { order } = req.body;
 
-  console.lot(order)
+  console.log(order)
   return;
 
   const filePath = path.join(__dirname, "./email_htmls/orderCreate.html");
