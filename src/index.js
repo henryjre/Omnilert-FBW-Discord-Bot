@@ -32,8 +32,6 @@ client.handleEvents();
 client.handleCommands();
 client.handleComponents();
 
-client.login(process.env.token).then(() => {
-  require("./webhook/app.js");
-});
+client.login(process.env.token);
 
-module.exports = { client }
+module.exports = { client };

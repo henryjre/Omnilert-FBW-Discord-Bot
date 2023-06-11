@@ -15,7 +15,7 @@ module.exports = (client) => {
       const { commands, commandArray } = client;
 
       switch (folder) {
-        case "slashCommands":
+        case "staffCommands":
           for (const file of commandFiles) {
             const command = require(`../../commands/${folder}/${file}`);
             commands.set(command.data.name, command);
