@@ -71,12 +71,6 @@ module.exports = {
       .query(updateWorkShiftString, [timeOut, workId])
       .catch((err) => console.log(err));
 
-    const queryWorkLogString =
-      "SELECT * FROM WORK_LOGS WHERE TIMESTAMP < ? AND TIMESTAMP > ? AND DISCORD_ID = ?";
-    const workLogs = await connection
-      .query(queryWorkLogString, [timeOut, timeIn, userId])
-      .catch((err) => console.log(err));
-
     connection.release();
 
     const duration = timeOut - timeIn;
@@ -96,15 +90,10 @@ module.exports = {
       `${hours} hours and ${minutes} minutes`,
     ]);
 
-    var description = "";
-    workLogs[0].forEach((log, index) => {
-      description += `\n**${index + 1}** ${log.LOG}`;
-    });
-
     const embed = new EmbedBuilder()
       .setTitle(`🔴 LOG OUT`)
       .setDescription(
-        `👤 **User:** ${interaction.user.username}\n⏱️ **Time In:** ${timeInStamp}\n⏱️ **Time Out:** ${timeStamp}\n⏱️ **Duration:** ${hours} hours and ${minutes} minutes`
+        `👤 **User:** ${interaction.user.username}\n⏱️ **Time In:** ${timeInStamp}\n⏱️ **Time Out:** ${timeStamp}\n⏳ **Duration:** ${hours} hours and ${minutes} minutes`
       )
       .setColor("Red")
       // .setTimestamp(timeStamp)
@@ -113,26 +102,8 @@ module.exports = {
         text: "Leviosa Network",
       });
 
-    const summaryEmbed = new EmbedBuilder()
-      .setTitle(`🔵 WORK SUMMARY`)
-      .setAuthor({
-        name: interaction.user.username,
-      })
-      .setDescription(
-        `👤 **User:** ${interaction.user.username}\n⏱️ **Time In:** ${timeInStamp}\n⏱️ **Time Out:** ${timeStamp}\n⏱️ **Duration:** ${hours} hours and ${minutes} minutes\n\n🧾 **Work Logs:**${description}`
-      )
-      .setColor("Blue")
-      .setFooter({
-        iconURL: interaction.user.displayAvatarURL(),
-        text: "Leviosa Network",
-      });
-
     await interaction.reply({
       embeds: [embed],
-    });
-
-    await client.channels.cache.get("1117121221608354015").send({
-      embeds: [summaryEmbed],
     });
 
     function convertMilliseconds(milliseconds) {
