@@ -27,7 +27,7 @@ module.exports = {
     const queryWorkShiftString =
       "SELECT * FROM WORK_HOURS WHERE DISCORD_ID = ? AND TIME_OUT IS NULL";
     const workShift = await connection
-      .query(queryWorkShiftString, [userId])
+      .query(queryWorkShiftString, [interaction.user.id])
       .catch((err) => console.log(err));
 
     if (workShift[0].length <= 0) {
