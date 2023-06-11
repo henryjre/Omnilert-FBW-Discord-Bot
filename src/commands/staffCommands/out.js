@@ -49,6 +49,7 @@ module.exports = {
       await interaction.reply({
         content: `🔴 ERROR: No work log in found.`,
       });
+      connection.release();
       return;
     }
 

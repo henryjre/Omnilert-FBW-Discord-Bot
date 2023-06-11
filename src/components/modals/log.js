@@ -24,6 +24,20 @@ module.exports = {
       .getConnection()
       .catch((err) => console.log(err));
 
+    const queryWorkShiftString =
+      "SELECT * FROM WORK_HOURS WHERE DISCORD_ID = ? AND TIME_OUT IS NULL";
+    const workShift = await connection
+      .query(queryWorkShiftString, [userId])
+      .catch((err) => console.log(err));
+
+    if (workShift[0].length <= 0) {
+      await interaction.reply({
+        content: `🔴 ERROR: No work log in found.`,
+      });
+      connection.release();
+      return;
+    }
+
     const firstLog = interaction.fields.getTextInputValue("logInput1");
     const secondLog = interaction.fields.getTextInputValue("logInput2");
     const thirdLog = interaction.fields.getTextInputValue("logInput3");
@@ -82,10 +96,6 @@ module.exports = {
       .setTimestamp(Date.now());
 
     await interaction.reply({
-      embeds: [embed],
-    });
-
-    await client.channels.cache.get("1117141358264713237").send({
       embeds: [embed],
     });
   },
