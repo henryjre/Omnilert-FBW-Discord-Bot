@@ -10,6 +10,8 @@ module.exports = {
     .setName("in")
     .setDescription("Log in to start work shift."),
   async execute(interaction, client) {
+    client.commands.get("reminder").execute(interaction, client, 0);
+
     const pool = mysql.createPool({
       host: process.env.logSqlHost,
       user: process.env.logSqlUsername,

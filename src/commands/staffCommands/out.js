@@ -75,6 +75,7 @@ module.exports = {
 
     const duration = timeOut - timeIn;
     const { hours, minutes } = convertMilliseconds(duration);
+    const minutesOnly = Math.floor(duration / 60000);
 
     const doc = new GoogleSpreadsheet(process.env.sheetId);
     await doc.useServiceAccountAuth(creds);
@@ -87,7 +88,7 @@ module.exports = {
       interaction.user.username,
       timeInStamp,
       timeStamp,
-      `${hours} hours and ${minutes} minutes`,
+      `${minutesOnly} minutes`,
     ]);
 
     const embed = new EmbedBuilder()
@@ -105,6 +106,8 @@ module.exports = {
     await interaction.reply({
       embeds: [embed],
     });
+
+    client.commands.get("reminder").execute(interaction, client, 1);
 
     function convertMilliseconds(milliseconds) {
       const totalSeconds = Math.floor(milliseconds / 1000);

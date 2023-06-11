@@ -13,5 +13,17 @@ module.exports = {
     if (message.channelId === "1049166582829559918") {
       return client.commands.get("rts").execute(message, client);
     }
+
+    const channelIds = [
+      "1117386962580541473",
+      "1117386986374823977",
+      "1117387017089728512",
+      "1117387044696641607",
+      "1053860453853433860",
+    ];
+
+    if (channelIds.includes(message.channelId)) {
+      return client.commands.get("reminder").execute(message, client, 0);
+    }
   },
 };
