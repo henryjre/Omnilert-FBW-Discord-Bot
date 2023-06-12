@@ -19,11 +19,11 @@ module.exports = {
 
     if (type === 0) {
       console.log(`Resetting reminders for ${author.username}`);
-      reminder[channelId] = schedule.scheduleJob("*/45 * * * *", () => {
+      reminder[channelId] = schedule.scheduleJob("0 */46 * * * *", () => {
         remindUser();
       });
 
-      penalty[channelId] = schedule.scheduleJob("0 * * * *", () => {
+      penalty[channelId] = schedule.scheduleJob("0 1 * * * *", () => {
         penalizeUser(author);
       });
     } else {
