@@ -57,10 +57,15 @@ module.exports = {
       client.channels.cache.get(channelId).send({
         content: `Cancelled reminders for ${author.username}`,
       });
+      checkSchedules();
     }
 
     (function checkSchedules() {
       const scheduledJobs = schedule.scheduledJobs;
+      if (scheduledJobs.length <= 0) {
+        console.log("No schedules found");
+        return;
+      }
       for (const jobName in scheduledJobs) {
         const job = scheduledJobs[jobName];
         const nextRuntime = new Date(job.nextInvocation()).toLocaleDateString(
@@ -75,7 +80,7 @@ module.exports = {
             hour12: true,
           }
         );
-        console.log(`Job name: ${jobName}`);
+        console.log(`Schedule name: ${jobName}`);
         console.log(`Next run time: ${nextRuntime}`);
       }
     })();
