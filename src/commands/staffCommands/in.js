@@ -24,12 +24,30 @@ module.exports = {
       queueLimit: 0,
     });
 
+    const connection = await pool
+      .getConnection()
+      .catch((err) => console.log(err));
+
     const id = nanoid();
     const userId = interaction.user.id;
     const timeIn = Date.now();
 
+    const queryIn =
+      "SELECT * FROM WORK_HOURS WHERE DISCORD_ID = ? AND TIME_OUT IS NULL";
+    const workShift = await connection
+      .query(queryIn, [userId])
+      .catch((err) => console.log(err));
+
+    if (workShift[0].length <= 0) {
+      await interaction.reply({
+        content: `🔴 ERROR: You currently have a running shift. Please use /out to log out before logging in.`,
+      });
+      connection.release();
+      return;
+    }
+
     const timeStamp = new Date(timeIn).toLocaleDateString("en-PH", {
-      timeZone: 'Asia/Manila',
+      timeZone: "Asia/Manila",
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -40,9 +58,11 @@ module.exports = {
 
     const queryWorkShiftString =
       "INSERT INTO WORK_HOURS (ID, DISCORD_ID, TIME_IN) VALUES (?, ?, ?)";
-    await pool
+    await connection
       .query(queryWorkShiftString, [id, userId, timeIn])
       .catch((err) => console.log(err));
+
+    connection.release();
 
     const embed = new EmbedBuilder()
       .setTitle(`🟢 LOG IN`)
@@ -50,28 +70,13 @@ module.exports = {
         `👤 **User:** ${interaction.user.username}\n⏱️ **Time In:** ${timeStamp}`
       )
       .setColor("Green")
-      // .setTimestamp(timeStamp)
       .setFooter({
         iconURL: interaction.user.displayAvatarURL(),
         text: "Leviosa Network",
       });
-    // .addFields([
-    //   {
-    //     name: `User`,
-    //     value: `👤 ${interaction.user.username}`,
-    //   },
-    //   {
-    //     name: `Time In`,
-    //     value: `⏱️ ${timeStamp}`,
-    //   },
-    // ]);
 
     await interaction.editReply({
       embeds: [embed],
     });
-
-    // await client.channels.cache.get("1117121221608354015").send({
-    //   embeds: [embed],
-    // });
   },
 };
