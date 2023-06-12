@@ -13,6 +13,8 @@ module.exports = {
     .setName("out")
     .setDescription("Log out of your current shift."),
   async execute(interaction, client) {
+    await interaction.deferReply();
+
     const pool = mysql.createPool({
       host: process.env.logSqlHost,
       user: process.env.logSqlUsername,
@@ -38,6 +40,8 @@ module.exports = {
       minute: "numeric",
       hour12: true,
     });
+
+    client.commands.get("reminder").execute(interaction, client, 1);
 
     const queryWorkShiftString =
       "SELECT * FROM WORK_HOURS WHERE DISCORD_ID = ? AND TIME_OUT IS NULL";
@@ -80,7 +84,7 @@ module.exports = {
     const doc = new GoogleSpreadsheet(process.env.sheetId);
     await doc.useServiceAccountAuth(creds);
     await doc.loadInfo();
-///
+    ///
     const logSheet = doc.sheetsByTitle["LOGS"];
 
     await logSheet.addRow([
@@ -103,11 +107,9 @@ module.exports = {
         text: "Leviosa Network",
       });
 
-    await interaction.reply({
+    await interaction.editReply({
       embeds: [embed],
     });
-
-    client.commands.get("reminder").execute(interaction, client, 1);
 
     function convertMilliseconds(milliseconds) {
       const totalSeconds = Math.floor(milliseconds / 1000);

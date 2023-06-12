@@ -10,6 +10,8 @@ module.exports = {
     .setName("in")
     .setDescription("Log in to start work shift."),
   async execute(interaction, client) {
+    await interaction.deferReply();
+
     client.commands.get("reminder").execute(interaction, client, 0);
 
     const pool = mysql.createPool({
@@ -63,7 +65,7 @@ module.exports = {
     //   },
     // ]);
 
-    await interaction.reply({
+    await interaction.editReply({
       embeds: [embed],
     });
 
