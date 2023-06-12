@@ -51,7 +51,7 @@ module.exports = {
       .catch((err) => console.log(err));
 
     if (workShift[0].length <= 0) {
-      await interaction.reply({
+      await interaction.editReply({
         content: `🔴 ERROR: No work log in found.`,
       });
       connection.release();
