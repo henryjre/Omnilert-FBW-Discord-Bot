@@ -80,7 +80,7 @@ module.exports = {
     const doc = new GoogleSpreadsheet(process.env.sheetId);
     await doc.useServiceAccountAuth(creds);
     await doc.loadInfo();
-
+///
     const logSheet = doc.sheetsByTitle["LOGS"];
 
     await logSheet.addRow([
