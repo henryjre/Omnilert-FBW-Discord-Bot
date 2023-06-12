@@ -12,8 +12,6 @@ module.exports = {
   async execute(interaction, client) {
     await interaction.deferReply();
 
-    client.commands.get("reminder").execute(interaction, client, 0);
-
     const pool = mysql.createPool({
       host: process.env.logSqlHost,
       user: process.env.logSqlUsername,
@@ -39,12 +37,14 @@ module.exports = {
       .catch((err) => console.log(err));
 
     if (workShift[0].length > 0) {
-      await interaction.reply({
+      await interaction.deferReply({
         content: `🔴 ERROR: You currently have a running shift. Please use /out to log out before logging in.`,
       });
       connection.release();
       return;
     }
+
+    client.commands.get("reminder").execute(interaction, client, 0);
 
     const timeStamp = new Date(timeIn).toLocaleDateString("en-PH", {
       timeZone: "Asia/Manila",
