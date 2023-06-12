@@ -12,26 +12,69 @@ module.exports = {
     const author = message.type === 0 ? message.author : message.user;
     const channelId = message.channelId;
 
-    let timeStampOnStart = Date.now();
+    let reminderTimestampOnStart = Date.now();
+    let penaltyTimestampOnStart = Date.now();
+
+    function calculateNextReminder() {
+      const nextSchedule = new Date(reminderTimestampOnStart + 2 * 60000);
+      return nextSchedule;
+    }
+
+    function calculateNextPenalty() {
+      const nextSchedule = new Date(
+        penaltyTimestampOnStart + (60 * 60 + 60) * 1000
+      );
+      return nextSchedule;
+    }
 
     !reminder[channelId] ? {} : reminder[channelId].cancel();
     !penalty[channelId] ? {} : penalty[channelId].cancel();
 
     if (type === 0) {
       console.log(`Resetting reminders for ${author.username}`);
-      reminder[channelId] = schedule.scheduleJob("0 */46 * * * *", () => {
-        remindUser();
-      });
+      reminder[channelId] = schedule.scheduleJob(
+        `REMINDER: ${author.username}`,
+        calculateNextReminder(),
+        () => {
+          remindUser();
+          const nextSchedule = calculateNextReminder();
+          job.reschedule(nextSchedule);
+        }
+      );
 
-      penalty[channelId] = schedule.scheduleJob("0 1 * * * *", () => {
-        penalizeUser(author);
-      });
+      penalty[channelId] = schedule.scheduleJob(
+        `PENALTY: ${author.username}`,
+        calculateNextPenalty(),
+        () => {
+          penalizeUser(author);
+          const nextSchedule = calculateNextReminder();
+          job.reschedule(nextSchedule);
+        }
+      );
     } else {
       client.channels.cache.get(channelId).send({
         content: `Cancelled reminders for ${author.username}`,
       });
       reminder[channelId].cancel();
       penalty[channelId].cancel();
+    }
+
+    const scheduledJobs = schedule.scheduledJobs;
+    for (const jobName in scheduledJobs) {
+      const job = scheduledJobs[jobName];
+      const nextRuntime = new Date(job.nextInvocation()).toLocaleDateString(
+        "en-PH",
+        {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "numeric",
+          hour12: true,
+        }
+      );
+      console.log(`Job name: ${jobName}`);
+      console.log(`Next run time: ${nextRuntime}`);
     }
 
     async function penalizeUser(author) {
