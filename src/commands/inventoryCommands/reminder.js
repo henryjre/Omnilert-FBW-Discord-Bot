@@ -66,6 +66,7 @@ module.exports = {
         const nextRuntime = new Date(job.nextInvocation()).toLocaleDateString(
           "en-PH",
           {
+            timeZone: "Asia/Manila",
             year: "numeric",
             month: "short",
             day: "numeric",
@@ -90,6 +91,7 @@ module.exports = {
       const timeOnStart = new Date(timeStampOnStart).toLocaleDateString(
         "en-PH",
         {
+          timeZone: "Asia/Manila",
           year: "numeric",
           month: "short",
           day: "numeric",
@@ -99,6 +101,7 @@ module.exports = {
         }
       );
       const penaltyDate = new Date().toLocaleDateString("en-PH", {
+        timeZone: "Asia/Manila",
         year: "numeric",
         month: "short",
         day: "numeric",
