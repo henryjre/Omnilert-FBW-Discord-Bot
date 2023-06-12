@@ -45,7 +45,7 @@ module.exports = {
         penalizeUser(author);
       });
     } else {
-      message.reply({ content: "Reminders have been cancelled." });
+      message.editReply({ content: "Reminders have been cancelled." });
       reminder[channelId].cancel();
       penalty[channelId].cancel();
     }
