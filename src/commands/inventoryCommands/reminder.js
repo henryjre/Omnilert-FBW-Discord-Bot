@@ -37,7 +37,7 @@ module.exports = {
     }
 
     if (type === 0) {
-      reminder[channelId] = schedule.scheduleJob("*/10 * * * * *", () => {
+      reminder[channelId] = schedule.scheduleJob("*/45 * * * *", () => {
         remindUser();
       });
 
