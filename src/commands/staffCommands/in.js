@@ -37,7 +37,7 @@ module.exports = {
       .catch((err) => console.log(err));
 
     if (workShift[0].length > 0) {
-      await interaction.deferReply({
+      await interaction.editReply({
         content: `🔴 ERROR: You currently have a running shift. Please use /out to log out before logging in.`,
       });
       connection.release();
