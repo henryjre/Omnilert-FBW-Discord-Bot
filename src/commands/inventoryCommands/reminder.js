@@ -38,7 +38,7 @@ module.exports = {
         () => {
           remindUser();
           const nextSchedule = calculateNextReminder();
-          job.reschedule(nextSchedule);
+          reminder[channelId].reschedule(nextSchedule);
           checkSchedules();
         }
       );
@@ -49,7 +49,7 @@ module.exports = {
         () => {
           penalizeUser(author);
           const nextSchedule = calculateNextReminder();
-          job.reschedule(nextSchedule);
+          reminder[channelId].reschedule(nextSchedule);
           checkSchedules();
         }
       );
