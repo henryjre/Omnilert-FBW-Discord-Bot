@@ -14,27 +14,8 @@ module.exports = {
 
     let timeStampOnStart = Date.now();
 
-    switch (channelId) {
-      case "1117386962580541473":
-        !reminder[channelId] ? {} : reminder[channelId].cancel();
-        !penalty[channelId] ? {} : penalty[channelId].cancel();
-        break;
-      case "1117386986374823977":
-        !reminder[channelId] ? {} : reminder[channelId].cancel();
-        !penalty[channelId] ? {} : penalty[channelId].cancel();
-        break;
-      case "1117387017089728512":
-        !reminder[channelId] ? {} : reminder[channelId].cancel();
-        !penalty[channelId] ? {} : penalty[channelId].cancel();
-        break;
-      case "1117387044696641607":
-        !reminder[channelId] ? {} : reminder[channelId].cancel();
-        !penalty[channelId] ? {} : penalty[channelId].cancel();
-        break;
-
-      default:
-        break;
-    }
+    !reminder[channelId] ? {} : reminder[channelId].cancel();
+    !penalty[channelId] ? {} : penalty[channelId].cancel();
 
     if (type === 0) {
       console.log(`Resetting reminders for ${author.username}`);
