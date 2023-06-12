@@ -44,6 +44,10 @@ module.exports = {
       penalty[channelId] = schedule.scheduleJob("0 * * * *", () => {
         penalizeUser(author);
       });
+    } else {
+      message.reply({ content: "Reminders have been cancelled." });
+      reminder[channelId].cancel();
+      penalty[channelId].cancel();
     }
 
     async function penalizeUser(author) {

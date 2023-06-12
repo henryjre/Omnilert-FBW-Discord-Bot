@@ -33,6 +33,7 @@ module.exports = {
     const timeOut = Date.now();
 
     const timeStamp = new Date(timeOut).toLocaleDateString("en-PH", {
+      timeZone: 'Asia/Manila',
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -61,6 +62,7 @@ module.exports = {
     const timeIn = workShift[0][0].TIME_IN;
 
     const timeInStamp = new Date(timeIn).toLocaleDateString("en-PH", {
+      timeZone: "Asia/Manila",
       year: "numeric",
       month: "short",
       day: "numeric",

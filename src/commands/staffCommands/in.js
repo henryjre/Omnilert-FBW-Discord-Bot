@@ -29,6 +29,7 @@ module.exports = {
     const timeIn = Date.now();
 
     const timeStamp = new Date(timeIn).toLocaleDateString("en-PH", {
+      timeZone: 'Asia/Manila',
       year: "numeric",
       month: "short",
       day: "numeric",
