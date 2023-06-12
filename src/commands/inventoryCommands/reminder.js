@@ -27,7 +27,9 @@ module.exports = {
         penalizeUser(author);
       });
     } else {
-      console.log(`Cancelled reminders for ${author.username}`);
+      client.channels.cache.get(channelId).send({
+        content: `Cancelled reminders for ${author.username}`,
+      });
       reminder[channelId].cancel();
       penalty[channelId].cancel();
     }
