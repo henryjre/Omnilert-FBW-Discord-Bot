@@ -38,7 +38,7 @@ module.exports = {
       .query(queryIn, [userId])
       .catch((err) => console.log(err));
 
-    if (workShift[0].length <= 0) {
+    if (workShift[0].length > 0) {
       await interaction.reply({
         content: `🔴 ERROR: You currently have a running shift. Please use /out to log out before logging in.`,
       });
