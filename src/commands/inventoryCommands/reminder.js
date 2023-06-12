@@ -39,6 +39,7 @@ module.exports = {
           remindUser();
           const nextSchedule = calculateNextReminder();
           job.reschedule(nextSchedule);
+          checkSchedules();
         }
       );
 
@@ -49,6 +50,7 @@ module.exports = {
           penalizeUser(author);
           const nextSchedule = calculateNextReminder();
           job.reschedule(nextSchedule);
+          checkSchedules();
         }
       );
     } else {
@@ -59,23 +61,25 @@ module.exports = {
       penalty[channelId].cancel();
     }
 
-    const scheduledJobs = schedule.scheduledJobs;
-    for (const jobName in scheduledJobs) {
-      const job = scheduledJobs[jobName];
-      const nextRuntime = new Date(job.nextInvocation()).toLocaleDateString(
-        "en-PH",
-        {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-          hour: "numeric",
-          minute: "numeric",
-          hour12: true,
-        }
-      );
-      console.log(`Job name: ${jobName}`);
-      console.log(`Next run time: ${nextRuntime}`);
-    }
+    (function checkSchedules() {
+      const scheduledJobs = schedule.scheduledJobs;
+      for (const jobName in scheduledJobs) {
+        const job = scheduledJobs[jobName];
+        const nextRuntime = new Date(job.nextInvocation()).toLocaleDateString(
+          "en-PH",
+          {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+            hour: "numeric",
+            minute: "numeric",
+            hour12: true,
+          }
+        );
+        console.log(`Job name: ${jobName}`);
+        console.log(`Next run time: ${nextRuntime}`);
+      }
+    })();
 
     async function penalizeUser(author) {
       const doc = new GoogleSpreadsheet(process.env.sheetId);
