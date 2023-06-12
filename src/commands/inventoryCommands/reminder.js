@@ -37,6 +37,7 @@ module.exports = {
     }
 
     if (type === 0) {
+      console.log(`Resetting reminders for ${author.username}`);
       reminder[channelId] = schedule.scheduleJob("*/45 * * * *", () => {
         remindUser();
       });
@@ -45,7 +46,7 @@ module.exports = {
         penalizeUser(author);
       });
     } else {
-      message.followUp({ content: "Reminders have been cancelled." });
+      console.log(`Cancelled reminders for ${author.username}`);
       reminder[channelId].cancel();
       penalty[channelId].cancel();
     }
