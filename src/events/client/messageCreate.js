@@ -4,6 +4,9 @@ module.exports = {
     if (message.author.bot) {
       return;
     }
+    if (message.member.roles.cache.has("1117791688832860182")) {
+      return;
+    }
     if (message.channelId === "1049166465049309224") {
       return client.commands.get("inventory-out").execute(message, client);
     }
