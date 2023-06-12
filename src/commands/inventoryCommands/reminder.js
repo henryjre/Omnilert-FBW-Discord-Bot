@@ -16,11 +16,13 @@ module.exports = {
     let penaltyTimestampOnStart = Date.now();
 
     function calculateNextReminder() {
+      reminderTimestampOnStart = Date.now();
       const nextSchedule = new Date(reminderTimestampOnStart + 46 * 60000);
       return nextSchedule;
     }
 
     function calculateNextPenalty() {
+      penaltyTimestampOnStart = Date.now();
       const nextSchedule = new Date(
         penaltyTimestampOnStart + (60 * 60 + 60) * 1000
       );
@@ -66,6 +68,7 @@ module.exports = {
         console.log("No schedules found");
         return;
       }
+      console.log("-----------------------------------------");
       for (const jobName in scheduledJobs) {
         const job = scheduledJobs[jobName];
         const nextRuntime = new Date(job.nextInvocation()).toLocaleDateString(
@@ -83,6 +86,7 @@ module.exports = {
         console.log(`Schedule name: ${jobName}`);
         console.log(`Next run time: ${nextRuntime}`);
       }
+      console.log("-----------------------------------------");
     }
 
     checkSchedules();
@@ -93,9 +97,11 @@ module.exports = {
       await doc.loadInfo();
 
       const penaltyTimeStamp = Date.now();
-      const duration = Math.ceil((penaltyTimeStamp - timeStampOnStart) / 60000);
+      const duration = Math.ceil(
+        (penaltyTimeStamp - penaltyTimestampOnStart) / 60000
+      );
 
-      const timeOnStart = new Date(timeStampOnStart).toLocaleDateString(
+      const timeOnStart = new Date(penaltyTimestampOnStart).toLocaleDateString(
         "en-PH",
         {
           timeZone: "Asia/Manila",
@@ -142,8 +148,6 @@ module.exports = {
         content: author.toString(),
         embeds: [penaltyEmbed],
       });
-
-      timeStampOnStart = penaltyTimeStamp;
     }
 
     function remindUser() {
