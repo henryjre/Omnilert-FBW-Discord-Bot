@@ -60,7 +60,7 @@ module.exports = {
       checkSchedules();
     }
 
-    (function checkSchedules() {
+    function checkSchedules() {
       const scheduledJobs = schedule.scheduledJobs;
       if (scheduledJobs.length <= 0) {
         console.log("No schedules found");
@@ -83,7 +83,9 @@ module.exports = {
         console.log(`Schedule name: ${jobName}`);
         console.log(`Next run time: ${nextRuntime}`);
       }
-    })();
+    }
+
+    checkSchedules();
 
     async function penalizeUser(author) {
       const doc = new GoogleSpreadsheet(process.env.sheetId);
