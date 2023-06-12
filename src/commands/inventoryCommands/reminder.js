@@ -16,7 +16,7 @@ module.exports = {
     let penaltyTimestampOnStart = Date.now();
 
     function calculateNextReminder() {
-      const nextSchedule = new Date(reminderTimestampOnStart + 2 * 60000);
+      const nextSchedule = new Date(reminderTimestampOnStart + 46 * 60000);
       return nextSchedule;
     }
 
