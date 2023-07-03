@@ -9,7 +9,8 @@ let penalty = {};
 module.exports = {
   name: "reminder",
   async execute(message, client, type) {
-    const author = message.type === 0 ? message.author : message.user;
+
+    const author = message.type === 2 ? message.user : message.author;
     const channelId = message.channelId;
 
     let reminderTimestampOnStart = Date.now();

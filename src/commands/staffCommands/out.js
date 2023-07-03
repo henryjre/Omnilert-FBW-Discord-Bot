@@ -94,7 +94,7 @@ module.exports = {
       interaction.user.username,
       timeInStamp,
       timeStamp,
-      `${minutesOnly} minutes`,
+      `${minutesOnly}`,
     ]);
 
     const embed = new EmbedBuilder()
