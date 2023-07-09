@@ -17,16 +17,18 @@ module.exports = {
       return client.commands.get("rts").execute(message, client);
     }
 
-    const channelIds = [
-      "1117386962580541473",
-      "1117386986374823977",
-      "1117387017089728512",
-      "1117387044696641607",
-      "1118180874136059964"
-    ];
+    const channelIds = {
+      "1117386962580541473": "762612635605663767",
+      "1117386986374823977": "851719358430576641",
+      "1117387017089728512": "719135399859060796",
+      "1117387044696641607": "748568303219245117",
+      "1118180874136059964": "1120869673974649035",
+    };
 
-    if (channelIds.includes(message.channelId)) {
-      return client.commands.get("reminder").execute(message, client, 0);
+    if (Object.keys(channelIds).includes(message.channelId)) {
+      if (message.author.id === channelIds[message.channelId]) {
+        return client.commands.get("reminder").execute(message, client, 0);
+      }
     }
   },
 };
