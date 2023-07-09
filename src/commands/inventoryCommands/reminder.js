@@ -4,14 +4,34 @@ const { EmbedBuilder, channelLink } = require("discord.js");
 const { GoogleSpreadsheet } = require("google-spreadsheet");
 const creds = require("../../secret-key.json");
 
+const mysql = require("mysql2/promise");
+require("dotenv").config({ path: "src/.env" });
+
 let reminder = {};
 let penalty = {};
 module.exports = {
   name: "reminder",
   async execute(message, client, type) {
-
     const author = message.type === 2 ? message.user : message.author;
     const channelId = message.channelId;
+
+    const pool = mysql.createPool({
+      host: process.env.logSqlHost,
+      user: process.env.logSqlUsername,
+      password: process.env.logSqlPassword,
+      database: process.env.logSqlDatabase,
+      waitForConnections: true,
+      connectionLimit: 10,
+      queueLimit: 0,
+    });
+
+    const queryWorkShiftString =
+      "SELECT * FROM WORK_HOURS WHERE DISCORD_ID = ? AND TIME_OUT IS NULL";
+    const workShift = await pool
+      .query(queryWorkShiftString, [author.id])
+      .catch((err) => console.log(err));
+
+    if (workShift[0].length <= 0) return;
 
     let reminderTimestampOnStart = Date.now();
     let penaltyTimestampOnStart = Date.now();
