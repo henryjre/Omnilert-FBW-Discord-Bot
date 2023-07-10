@@ -15,23 +15,25 @@ module.exports = {
     const author = message.type === 2 ? message.user : message.author;
     const channelId = message.channelId;
 
-    const pool = mysql.createPool({
-      host: process.env.logSqlHost,
-      user: process.env.logSqlUsername,
-      password: process.env.logSqlPassword,
-      database: process.env.logSqlDatabase,
-      waitForConnections: true,
-      connectionLimit: 10,
-      queueLimit: 0,
-    });
+    if (type === 0) {
+      const pool = mysql.createPool({
+        host: process.env.logSqlHost,
+        user: process.env.logSqlUsername,
+        password: process.env.logSqlPassword,
+        database: process.env.logSqlDatabase,
+        waitForConnections: true,
+        connectionLimit: 10,
+        queueLimit: 0,
+      });
 
-    const queryWorkShiftString =
-      "SELECT * FROM WORK_HOURS WHERE DISCORD_ID = ? AND TIME_OUT IS NULL";
-    const workShift = await pool
-      .query(queryWorkShiftString, [author.id])
-      .catch((err) => console.log(err));
+      const queryWorkShiftString =
+        "SELECT * FROM WORK_HOURS WHERE DISCORD_ID = ? AND TIME_OUT IS NULL";
+      const workShift = await pool
+        .query(queryWorkShiftString, [author.id])
+        .catch((err) => console.log(err));
 
-    if (workShift[0].length <= 0) return;
+      if (workShift[0].length <= 0) return;
+    }
 
     let reminderTimestampOnStart = Date.now();
     let penaltyTimestampOnStart = Date.now();
