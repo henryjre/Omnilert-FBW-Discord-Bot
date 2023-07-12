@@ -34,4 +34,5 @@ client.handleComponents();
 
 client.login(process.env.token);
 
-module.exports = { client };
+module.exports = client;
+require("./webhook/app.js");
