@@ -2,10 +2,10 @@ const { EmbedBuilder } = require("discord.js");
 const client = require("../../../../index");
 
 module.exports = (req, res) => {
-  const { log } = req.query;
+  const { event } = req.query;
 
   const embed = new EmbedBuilder()
-    .setTitle("✅ Inventory Added")
+    .setTitle("⚠️ Account Frozen")
     .setDescription(log)
     .setColor("#32CD32")
     .setTimestamp(Date.now());
