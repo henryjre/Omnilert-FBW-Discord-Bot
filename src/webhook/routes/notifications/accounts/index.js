@@ -3,4 +3,4 @@ const frozen = require("./frozen");
 
 accounts.post("/frozen", frozen);
 
-module.exports = inventory;
+module.exports = accounts;
