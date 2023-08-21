@@ -6,7 +6,7 @@ const PORT = process.env.PORT || 3000;
 const authenticate = require("./auth");
 app.use(authenticate);
 
-app.use("/", routes);
+app.use("/api", routes);
 
 // Turn on that server!
 app.listen(PORT, () => {

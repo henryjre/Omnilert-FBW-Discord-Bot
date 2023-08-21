@@ -1,7 +1,6 @@
-const inventory = require("express").Router();
-const logs = require("./logs");
+const accounts = require("express").Router();
+const frozen = require("./frozen");
 
-
-inventory.post("/logs", logs);
+accounts.post("/frozen", frozen);
 
 module.exports = inventory;
