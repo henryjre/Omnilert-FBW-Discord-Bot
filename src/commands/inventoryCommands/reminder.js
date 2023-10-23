@@ -7,7 +7,13 @@ const creds = require("../../secret-key.json");
 const mysql = require("mysql2/promise");
 require("dotenv").config({ path: "src/.env" });
 
+const fs = require("fs");
+const path = require("path");
+const caCertificatePath = path.join(__dirname, "../../DO_Certificate.crt");
+const caCertificate = fs.readFileSync(caCertificatePath);
+
 let reminder = {};
+let hourlyReminders = {};
 let penalty = {};
 module.exports = {
   name: "reminder",
@@ -18,12 +24,17 @@ module.exports = {
     if (type === 0) {
       const pool = mysql.createPool({
         host: process.env.logSqlHost,
+        port: process.env.logSqlPort,
         user: process.env.logSqlUsername,
         password: process.env.logSqlPassword,
         database: process.env.logSqlDatabase,
         waitForConnections: true,
         connectionLimit: 10,
         queueLimit: 0,
+        ssl: {
+          ca: caCertificate,
+          rejectUnauthorized: true,
+        },
       });
 
       const queryWorkShiftString =
@@ -36,34 +47,53 @@ module.exports = {
     }
 
     let reminderTimestampOnStart = Date.now();
+    let hourRemindetTimestampOnStart = Date.now();
     let penaltyTimestampOnStart = Date.now();
 
-    function calculateNextReminder() {
+    function calculateHourlyReminder() {
+      hourRemindetTimestampOnStart = Date.now();
+      const nextSchedule = new Date(hourRemindetTimestampOnStart + 60 * 60000);
+      return nextSchedule;
+    }
+
+    function calculateHourAndHalfReminder() {
       reminderTimestampOnStart = Date.now();
-      const nextSchedule = new Date(reminderTimestampOnStart + 46 * 60000);
+      const nextSchedule = new Date(reminderTimestampOnStart + 90 * 60000);
       return nextSchedule;
     }
 
     function calculateNextPenalty() {
       penaltyTimestampOnStart = Date.now();
       const nextSchedule = new Date(
-        penaltyTimestampOnStart + (60 * 60 + 60) * 1000
+        penaltyTimestampOnStart + (2 * 60 * 60 + 60) * 1000
       );
       return nextSchedule;
     }
 
     !reminder[channelId] ? {} : reminder[channelId].cancel();
+    !hourlyReminders[channelId] ? {} : hourlyReminders[channelId].cancel();
     !penalty[channelId] ? {} : penalty[channelId].cancel();
 
     if (type === 0) {
       console.log(`Resetting reminders for ${author.username}`);
       reminder[channelId] = schedule.scheduleJob(
-        `REMINDER: ${author.username}`,
-        calculateNextReminder(),
+        `IN 1 HOUR AND 30 MINS: ${author.username}`,
+        calculateHourAndHalfReminder(),
         () => {
-          remindUser();
-          const nextSchedule = calculateNextReminder();
+          remindUserHourAndHalf();
+          const nextSchedule = calculateHourAndHalfReminder();
           reminder[channelId].reschedule(nextSchedule);
+          checkSchedules();
+        }
+      );
+
+      hourlyReminders[channelId] = schedule.scheduleJob(
+        `IN 1 HOUR: ${author.username}`,
+        calculateHourlyReminder(),
+        () => {
+          remindUserHourly();
+          const nextSchedule = calculateHourlyReminder();
+          hourlyReminders[channelId].reschedule(nextSchedule);
           checkSchedules();
         }
       );
@@ -73,8 +103,8 @@ module.exports = {
         calculateNextPenalty(),
         () => {
           penalizeUser(author);
-          const nextSchedule = calculateNextReminder();
-          reminder[channelId].reschedule(nextSchedule);
+          const nextSchedule = calculateNextPenalty();
+          penalty[channelId].reschedule(nextSchedule);
           checkSchedules();
         }
       );
@@ -173,13 +203,32 @@ module.exports = {
       });
     }
 
-    function remindUser() {
+    function remindUserHourAndHalf() {
       const reminderEmbed = new EmbedBuilder()
-        .setTitle(`🔔 REMINDER`)
+        .setTitle(`🔔 HALF HOUR REMINDER`)
         .setDescription(
-          `This is a reminder that you have 15 minutes to send an update to this channel before penalty.`
+          `This is a reminder that you have 30 minutes to send an update to this channel before penalty.`
         )
         .setColor("Yellow")
+        .setTimestamp(Date.now())
+        .setFooter({
+          iconURL: client.user.displayAvatarURL(),
+          text: "Leviosa Network",
+        });
+
+      client.channels.cache.get(message.channelId).send({
+        content: author.toString(),
+        embeds: [reminderEmbed],
+      });
+    }
+
+    function remindUserHourly() {
+      const reminderEmbed = new EmbedBuilder()
+        .setTitle(`🔔 HOURLY REMINDER`)
+        .setDescription(
+          `This is a reminder that you have 1 hour and 30 minutes to send an update to this channel before penalty.`
+        )
+        .setColor("BLUE")
         .setTimestamp(Date.now())
         .setFooter({
           iconURL: client.user.displayAvatarURL(),

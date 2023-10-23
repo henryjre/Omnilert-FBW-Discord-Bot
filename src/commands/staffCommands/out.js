@@ -3,6 +3,11 @@ const { customAlphabet } = require("nanoid");
 const mysql = require("mysql2/promise");
 require("dotenv").config({ path: "src/.env" });
 
+const fs = require("fs");
+const path = require("path");
+const caCertificatePath = path.join(__dirname, "../../DO_Certificate.crt");
+const caCertificate = fs.readFileSync(caCertificatePath);
+
 const { GoogleSpreadsheet } = require("google-spreadsheet");
 const creds = require("../../secret-key.json");
 
@@ -17,12 +22,17 @@ module.exports = {
 
     const pool = mysql.createPool({
       host: process.env.logSqlHost,
+      port: process.env.logSqlPort,
       user: process.env.logSqlUsername,
       password: process.env.logSqlPassword,
       database: process.env.logSqlDatabase,
       waitForConnections: true,
       connectionLimit: 10,
       queueLimit: 0,
+      ssl: {
+        ca: caCertificate,
+        rejectUnauthorized: true,
+      },
     });
 
     const connection = await pool
@@ -33,7 +43,7 @@ module.exports = {
     const timeOut = Date.now();
 
     const timeStamp = new Date(timeOut).toLocaleDateString("en-PH", {
-      timeZone: 'Asia/Manila',
+      timeZone: "Asia/Manila",
       year: "numeric",
       month: "short",
       day: "numeric",

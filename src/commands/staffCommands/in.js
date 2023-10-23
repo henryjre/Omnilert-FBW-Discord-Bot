@@ -5,6 +5,11 @@ require("dotenv").config({ path: "src/.env" });
 
 const nanoid = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 13);
 
+const fs = require("fs");
+const path = require("path");
+const caCertificatePath = path.join(__dirname, "../../DO_Certificate.crt");
+const caCertificate = fs.readFileSync(caCertificatePath);
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("in")
@@ -14,12 +19,17 @@ module.exports = {
 
     const pool = mysql.createPool({
       host: process.env.logSqlHost,
+      port: process.env.logSqlPort,
       user: process.env.logSqlUsername,
       password: process.env.logSqlPassword,
       database: process.env.logSqlDatabase,
       waitForConnections: true,
       connectionLimit: 10,
       queueLimit: 0,
+      ssl: {
+        ca: caCertificate,
+        rejectUnauthorized: true,
+      },
     });
 
     const connection = await pool
