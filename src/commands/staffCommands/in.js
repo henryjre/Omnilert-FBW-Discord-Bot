@@ -56,7 +56,7 @@ module.exports = {
 
     client.commands.get("reminder").execute(interaction, client, 0);
 
-    const timeStamp = new Date(timeIn).toLocaleDateString("en-PH", {
+    const timeOpts = {
       timeZone: "Asia/Manila",
       year: "numeric",
       month: "short",
@@ -64,7 +64,13 @@ module.exports = {
       hour: "numeric",
       minute: "numeric",
       hour12: true,
-    });
+    };
+
+    const timeStamp = new Date(timeIn).toLocaleDateString("en-PH", timeOpts);
+
+    const nextPenalty = new Date(
+      timeIn + (2 * 60 * 60 + 60) * 1000
+    ).toLocaleDateString("en-PH", timeOpts);
 
     const queryWorkShiftString =
       "INSERT INTO WORK_HOURS (ID, DISCORD_ID, TIME_IN) VALUES (?, ?, ?)";
@@ -77,7 +83,7 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setTitle(`🟢 LOG IN`)
       .setDescription(
-        `👤 **User:** ${interaction.user.username}\n⏱️ **Time In:** ${timeStamp}`
+        `👤 **User:** ${interaction.user.username}\n⏱️ **Time In:** ${timeStamp}\n\n **Penalty Time:** ${nextPenalty}`
       )
       .setColor("Green")
       .setFooter({
