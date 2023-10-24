@@ -81,8 +81,6 @@ module.exports = {
         calculateHourAndHalfReminder(),
         () => {
           remindUserHourAndHalf();
-          const nextSchedule = calculateHourAndHalfReminder();
-          reminder[channelId].reschedule(nextSchedule);
           checkSchedules();
         }
       );
@@ -92,8 +90,6 @@ module.exports = {
         calculateHourlyReminder(),
         () => {
           remindUserHourly();
-          const nextSchedule = calculateHourlyReminder();
-          hourlyReminders[channelId].reschedule(nextSchedule);
           checkSchedules();
         }
       );
@@ -105,6 +101,10 @@ module.exports = {
           penalizeUser(author);
           const nextSchedule = calculateNextPenalty();
           penalty[channelId].reschedule(nextSchedule);
+          const nextHourly = calculateHourlyReminder();
+          hourlyReminders[channelId].reschedule(nextHourly);
+          const nextHalfHour = calculateHourAndHalfReminder();
+          reminder[channelId].reschedule(nextHalfHour);
           checkSchedules();
         }
       );
