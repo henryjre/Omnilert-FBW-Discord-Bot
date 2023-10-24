@@ -5,7 +5,7 @@ module.exports = (req, res) => {
   const { data } = req.body;
 
   const embed = new EmbedBuilder()
-    .setTitle(`✅ DEPOSIT APPROVED`)
+    .setTitle(`🟢 DEPOSIT APPROVED`)
     .setColor("#3498db")
     .setFooter({
       text: `Approved By: ${data.verifier_name}`,

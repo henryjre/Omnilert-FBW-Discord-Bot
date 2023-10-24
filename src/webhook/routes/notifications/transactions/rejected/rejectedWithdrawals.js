@@ -4,34 +4,20 @@ const client = require("../../../../../index");
 module.exports = (req, res) => {
   const { data } = req.body;
 
+  const stringToConcat = [];
+  data.forEach((member) => {
+    stringToConcat.push(
+      `**Transaction ID:** ${member.transaction_id}\n**Name:** ${member.member_name}\n**Leviosa ID:** ${member.leviosa_id}\n**Amount:** ${member.amount}\n**Reason:** ${member.reason}\n\n`
+    );
+  });
+
   const embed = new EmbedBuilder()
-    .setTitle(`NEW PENDING WITHDRAWAL`)
+    .setTitle(`🔴 WITHDRAWALS REJECTED`)
+    .setDescription(`${stringToConcat.join("")}`)
     .setColor("#8e44ad")
-    .addFields([
-      {
-        name: `TRANSACTION ID`,
-        value: `🆔 | ${data.transaction_id}`,
-      },
-      {
-        name: `MEMBER NAME`,
-        value: `📛 | ${data.member_name}`,
-      },
-      {
-        name: `LEVIOSA ID`,
-        value: `🪪 | ${data.leviosa_id}`,
-      },
-      {
-        name: `BANK NAME`,
-        value: `🏦 | ${data.bank_name}`,
-      },
-      {
-        name: `WITHDRAWAL AMOUNT`,
-        value: `💸 | ${data.amount}`,
-      },
-    ])
     .setTimestamp(Date.now());
 
-  client.channels.cache.get("1166249568011288647").send({
+  client.channels.cache.get("1166275653843288076").send({
     embeds: [embed],
   });
 

@@ -12,7 +12,7 @@ module.exports = (req, res) => {
   });
 
   const embed = new EmbedBuilder()
-    .setTitle(`✅ WITHDRAWALS APPROVED`)
+    .setTitle(`🟢 WITHDRAWALS APPROVED`)
     .setDescription(`${stringToConcat.join("")}`)
     .setColor("#8e44ad")
     .setTimestamp(Date.now());

@@ -5,7 +5,7 @@ module.exports = (req, res) => {
   const { data } = req.body;
 
   const embed = new EmbedBuilder()
-    .setTitle(`✅ MEMBER APPROVED`)
+    .setTitle(`🟢 MEMBER APPROVED`)
     .setColor("#ff6723")
     .setFooter({
       text: `Approved By: ${data.verifier_name}`,
@@ -34,7 +34,7 @@ module.exports = (req, res) => {
     ])
     .setTimestamp(Date.now());
 
-  client.channels.cache.get("1166248117201551410").send({
+  client.channels.cache.get("1166273482443735050").send({
     embeds: [embed],
   });
 

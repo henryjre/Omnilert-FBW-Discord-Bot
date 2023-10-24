@@ -2,23 +2,19 @@ const { EmbedBuilder } = require("discord.js");
 const client = require("../../../../../index");
 
 module.exports = (req, res) => {
-  const { data } = req.body
+  const { data } = req.body;
 
   const embed = new EmbedBuilder()
-    .setTitle(`NEW PENDING MEMBER`)
+    .setTitle(`🔴 MEMBER REJECTED`)
     .setColor("#ff6723")
+    .setDescription(`**Reason for Rejection:**\n\n${data.reason}\n\n`)
+    .setFooter({
+      text: `Approved By: ${data.verifier_name}`,
+    })
     .addFields([
-      {
-        name: `DATABASE ID`,
-        value: `🆔 | ${data.transaction_id}`,
-      },
       {
         name: `NAME`,
         value: `📛 | ${data.member_name}`,
-      },
-      {
-        name: `MOBILE NUMBER`,
-        value: `📞 | ${data.mobile_number}`,
       },
       {
         name: `EMAIL ADDRESS`,
@@ -31,7 +27,7 @@ module.exports = (req, res) => {
     ])
     .setTimestamp(Date.now());
 
-  client.channels.cache.get("1166248117201551410").send({
+  client.channels.cache.get("1166275440755867740").send({
     embeds: [embed],
   });
 

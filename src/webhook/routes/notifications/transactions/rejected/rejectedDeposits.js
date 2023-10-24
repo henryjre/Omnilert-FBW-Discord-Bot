@@ -5,8 +5,12 @@ module.exports = (req, res) => {
   const { data } = req.body;
 
   const embed = new EmbedBuilder()
-    .setTitle(`NEW PENDING DEPOSIT`)
+    .setTitle(`🔴 DEPOSIT REJECTED`)
     .setColor("#3498db")
+    .setDescription(`**Reason for Rejection:**\n\n${data.reason}\n\n`)
+    .setFooter({
+      text: `Rejected By: ${data.verifier_name}`,
+    })
     .addFields([
       {
         name: `TRANSACTION ID`,
@@ -27,7 +31,7 @@ module.exports = (req, res) => {
     ])
     .setTimestamp(Date.now());
 
-  client.channels.cache.get("1166249431390232647").send({
+  client.channels.cache.get("1166275542392242226").send({
     embeds: [embed],
   });
 

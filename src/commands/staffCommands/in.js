@@ -83,7 +83,7 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setTitle(`🟢 LOG IN`)
       .setDescription(
-        `👤 **User:** ${interaction.user.username}\n⏱️ **Time In:** ${timeStamp}\n\n **Penalty Time:** ${nextPenalty}`
+        `👤 **User:** ${interaction.user.username}\n⏱️ **Time In:** ${timeStamp}\n⏱️ **Penalty Time:** ${nextPenalty}`
       )
       .setColor("Green")
       .setFooter({
