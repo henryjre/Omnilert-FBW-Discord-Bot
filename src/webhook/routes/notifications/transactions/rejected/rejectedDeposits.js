@@ -7,7 +7,7 @@ module.exports = (req, res) => {
   const embed = new EmbedBuilder()
     .setTitle(`🔴 DEPOSIT REJECTED`)
     .setColor("#3498db")
-    .setDescription(`**Reason for Rejection:**\n\n${data.reason}\n\n`)
+    .setDescription(`**Reason for Rejection:**\n${data.reason}`)
     .setFooter({
       text: `Rejected By: ${data.verifier_name}`,
     })
