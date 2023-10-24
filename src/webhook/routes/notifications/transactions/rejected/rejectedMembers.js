@@ -9,7 +9,7 @@ module.exports = (req, res) => {
     .setColor("#ff6723")
     .setDescription(`**Reason for Rejection:**\n${data.reason}`)
     .setFooter({
-      text: `Approved By: ${data.verifier_name}`,
+      text: `Rejected By: ${data.verifier_name}`,
     })
     .addFields([
       {
