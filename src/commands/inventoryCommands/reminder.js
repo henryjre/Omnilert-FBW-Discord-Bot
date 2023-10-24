@@ -228,7 +228,7 @@ module.exports = {
         .setDescription(
           `This is a reminder that you have 1 hour and 30 minutes to send an update to this channel before penalty.`
         )
-        .setColor("BLUE")
+        .setColor("Blue")
         .setTimestamp(Date.now())
         .setFooter({
           iconURL: client.user.displayAvatarURL(),
