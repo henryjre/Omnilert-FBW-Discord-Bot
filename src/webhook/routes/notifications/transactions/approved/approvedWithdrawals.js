@@ -1,5 +1,11 @@
 const { EmbedBuilder } = require("discord.js");
 const client = require("../../../../../index");
+const pesoFormatter = new Intl.NumberFormat("en-PH", {
+  style: "currency",
+  currency: "PHP",
+  maximumFractionDigits: 2,
+  minimumFractionDigits: 2,
+});
 
 module.exports = (req, res) => {
   const { data } = req.body;
@@ -7,7 +13,7 @@ module.exports = (req, res) => {
   const stringToConcat = [];
   data.forEach((member) => {
     stringToConcat.push(
-      `**Transaction ID:** ${member.transaction_id}\n**Name:** ${member.member_name}\n**Leviosa ID:** ${member.leviosa_id}\n**Amount:** ${member.amount}\n\n`
+      `**Transaction ID:** ${member.transaction_id}\n**Name:** ${member.member_name}\n**Leviosa ID:** ${member.leviosa_id}\n**Amount:** ${pesoFormatter.format(Number(member.amount))}\n\n`
     );
   });
 

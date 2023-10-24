@@ -1,5 +1,11 @@
 const { EmbedBuilder } = require("discord.js");
 const client = require("../../../../../index");
+const pesoFormatter = new Intl.NumberFormat("en-PH", {
+  style: "currency",
+  currency: "PHP",
+  maximumFractionDigits: 2,
+  minimumFractionDigits: 2,
+});
 
 module.exports = (req, res) => {
   const { data } = req.body;
@@ -25,7 +31,7 @@ module.exports = (req, res) => {
       },
       {
         name: `DEPOSIT AMOUNT`,
-        value: `💸 | ${data.amount}`,
+        value: `💸 | ${pesoFormatter.format(Number(data.amount))}`,
       },
     ])
     .setTimestamp(Date.now());
