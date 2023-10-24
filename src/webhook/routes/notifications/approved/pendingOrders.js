@@ -1,8 +1,8 @@
 const { EmbedBuilder } = require("discord.js");
-const client = require("../../../../index");
+const client = require("../../../../../index");
 
 module.exports = (req, res) => {
-  const { data } = req.query;
+  const { data } = req.body;
 
   const pickupEmbed = new EmbedBuilder()
     .setTitle(`NEW ORDER`)
@@ -69,7 +69,7 @@ module.exports = (req, res) => {
     embedToSend = shippingEmbed;
   }
 
-  client.channels.cache.get("1166249568011288647").send({
+  client.channels.cache.get("1166249657605820427").send({
     embeds: [embedToSend],
   });
 

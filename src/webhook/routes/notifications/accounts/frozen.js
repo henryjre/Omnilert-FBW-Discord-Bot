@@ -2,7 +2,7 @@ const { EmbedBuilder } = require("discord.js");
 const client = require("../../../../index");
 
 module.exports = (req, res) => {
-  const { event } = req.query;
+  const { event } = req.body;
 
   const embed = new EmbedBuilder()
     .setTitle("⚠️ Account Frozen")

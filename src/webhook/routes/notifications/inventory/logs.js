@@ -2,7 +2,7 @@ const { EmbedBuilder } = require("discord.js");
 const client = require("../../../../index");
 
 module.exports = (req, res) => {
-  const { logs } = req.query;
+  const { logs } = req.body;
 
   for (const log of logs) {
     const embed = new EmbedBuilder()

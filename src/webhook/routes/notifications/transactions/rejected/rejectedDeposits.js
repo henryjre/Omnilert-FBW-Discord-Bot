@@ -1,8 +1,8 @@
 const { EmbedBuilder } = require("discord.js");
-const client = require("../../../../index");
+const client = require("../../../../../index");
 
 module.exports = (req, res) => {
-  const { data } = req.query;
+  const { data } = req.body;
 
   const embed = new EmbedBuilder()
     .setTitle(`NEW PENDING DEPOSIT`)

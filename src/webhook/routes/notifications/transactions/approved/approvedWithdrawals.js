@@ -1,0 +1,26 @@
+const { EmbedBuilder } = require("discord.js");
+const client = require("../../../../../index");
+
+module.exports = (req, res) => {
+  const { data } = req.body;
+
+  const stringToConcat = [];
+  data.forEach((member) => {
+    stringToConcat.push(
+      `**Transaction ID:** ${member.transaction_id}\n**Name:** ${member.member_name}\n**Leviosa ID:** ${member.leviosa_id}\n**Amount:** ${member.amount}\n\n`
+    );
+  });
+
+  const embed = new EmbedBuilder()
+    .setTitle(`✅ WITHDRAWALS APPROVED`)
+    .setDescription(`${stringToConcat.join("")}`)
+    .setColor("#8e44ad")
+    .setTimestamp(Date.now());
+
+  client.channels.cache.get("1166273732302622730").send({
+    embeds: [embed],
+  });
+
+  res.status(200).json({ ok: true, message: "success" });
+  return;
+};
