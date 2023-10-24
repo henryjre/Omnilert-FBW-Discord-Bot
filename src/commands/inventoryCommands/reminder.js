@@ -51,14 +51,14 @@ module.exports = {
     let penaltyTimestampOnStart = Date.now();
 
     function calculateHourlyReminder() {
-      hourRemindetTimestampOnStart = Date.now();
-      const nextSchedule = new Date(hourRemindetTimestampOnStart + 60 * 60000);
+      // hourRemindetTimestampOnStart = Date.now();
+      const nextSchedule = new Date(penaltyTimestampOnStart + 60 * 60000);
       return nextSchedule;
     }
 
     function calculateHourAndHalfReminder() {
-      reminderTimestampOnStart = Date.now();
-      const nextSchedule = new Date(reminderTimestampOnStart + 90 * 60000);
+      // reminderTimestampOnStart = Date.now();
+      const nextSchedule = new Date(penaltyTimestampOnStart + 90 * 60000);
       return nextSchedule;
     }
 
@@ -226,7 +226,7 @@ module.exports = {
       const reminderEmbed = new EmbedBuilder()
         .setTitle(`🔔 HOURLY REMINDER`)
         .setDescription(
-          `This is a reminder that you have 1 hour and 30 minutes to send an update to this channel before penalty.`
+          `This is a reminder that you have 1 hour to send an update to this channel before penalty.`
         )
         .setColor("Blue")
         .setTimestamp(Date.now())
