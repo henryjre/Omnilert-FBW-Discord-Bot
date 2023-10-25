@@ -65,6 +65,7 @@ module.exports = {
         content: `🔴 ERROR: No work log in found.`,
       });
       connection.release();
+      pool.end()
       return;
     }
 
@@ -88,6 +89,7 @@ module.exports = {
       .catch((err) => console.log(err));
 
     connection.release();
+    pool.end();
 
     const duration = timeOut - timeIn;
     const { hours, minutes } = convertMilliseconds(duration);

@@ -35,6 +35,7 @@ module.exports = {
         content: `🔴 ERROR: No work log in found.`,
       });
       connection.release();
+      pool.end();
       return;
     }
 
@@ -65,6 +66,7 @@ module.exports = {
     }
 
     connection.release();
+    pool.end();
 
     // const convertedImage1 =
     //   firstImageLog.length > 0 ? `[See Attachment](${firstImageLog})` : "";

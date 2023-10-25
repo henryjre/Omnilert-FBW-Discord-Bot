@@ -51,6 +51,7 @@ module.exports = {
         content: `🔴 ERROR: You currently have a running shift. Please use /out to log out before logging in.`,
       });
       connection.release();
+      pool.end();
       return;
     }
 
@@ -79,6 +80,7 @@ module.exports = {
       .catch((err) => console.log(err));
 
     connection.release();
+    pool.end();
 
     const embed = new EmbedBuilder()
       .setTitle(`🟢 LOG IN`)

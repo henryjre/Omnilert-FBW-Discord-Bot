@@ -43,6 +43,8 @@ module.exports = {
         .query(queryWorkShiftString, [author.id])
         .catch((err) => console.log(err));
 
+      pool.end();
+
       if (workShift[0].length <= 0) return;
     }
 
