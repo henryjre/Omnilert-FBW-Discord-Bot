@@ -62,7 +62,7 @@ module.exports = {
       totalSum += parseInt(filtreredRows[i], 10);
     }
 
-    const totalHours = Math.floor(totalSum / 60);
+    const totalHours = (totalSum / 60).toFixed(2);
     const minimumHours = 30;
     let description;
     if (totalHours >= minimumHours) {
