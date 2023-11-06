@@ -46,7 +46,7 @@ module.exports = {
       const responseData = await response.json();
 
       if (!response.ok) {
-        return await interaction.reply({
+        return await interaction.editReply({
           content: "🔴 FETCH ERROR: " + responseData.error,
         });
       }
@@ -56,6 +56,7 @@ module.exports = {
       const productMedia = product.mediaItems.map(
         (obj) => `https://static.wixstatic.com/media/${obj.id}`
       );
+
       const productRedPrice = Number(product.price);
       const productMainPrice = Number(
         product.additionalInfoSections[0].description
@@ -148,28 +149,40 @@ module.exports = {
         priceY
       );
 
-      const Image1 = await fetch(productMedia[1]);
-      const fetchBuffer1 = await Image1.arrayBuffer();
-      const sharp1 = await sharp(Buffer.from(fetchBuffer1))
-        .toFormat("png")
-        .toBuffer();
-      const img1 = await loadImage(sharp1);
+      const images = [];
 
-      const Image2 = await fetch(productMedia[2]);
-      const fetchBuffer2 = await Image2.arrayBuffer();
-      const sharp2 = await sharp(Buffer.from(fetchBuffer2))
-        .toFormat("png")
-        .toBuffer();
-      const img2 = await loadImage(sharp2);
+      if (productMedia[1]) {
+        const Image1 = await fetch(productMedia[1]);
+        const fetchBuffer1 = await Image1.arrayBuffer();
+        const sharp1 = await sharp(Buffer.from(fetchBuffer1))
+          .toFormat("png")
+          .toBuffer();
+        const img1 = await loadImage(sharp1);
+        images.push(img1);
+      }
 
-      const Image3 = await fetch(productMedia[3]);
-      const fetchBuffer3 = await Image3.arrayBuffer();
-      const sharp3 = await sharp(Buffer.from(fetchBuffer3))
-        .toFormat("png")
-        .toBuffer();
-      const img3 = await loadImage(sharp3);
+      if (productMedia[2]) {
+        const Image2 = await fetch(productMedia[2]);
+        const fetchBuffer2 = await Image2.arrayBuffer();
+        const sharp2 = await sharp(Buffer.from(fetchBuffer2))
+          .toFormat("png")
+          .toBuffer();
+        const img2 = await loadImage(sharp2);
 
-      const images = [img1, img2, img3];
+        images.push(img2);
+      }
+
+      if (productMedia[3]) {
+        const Image3 = await fetch(productMedia[3]);
+        const fetchBuffer3 = await Image3.arrayBuffer();
+        const sharp3 = await sharp(Buffer.from(fetchBuffer3))
+          .toFormat("png")
+          .toBuffer();
+        const img3 = await loadImage(sharp3);
+
+        images.push(img3);
+      }
+
       const cornerXValues = [250, 400, 550]; // Adjust the positions as needed
       await createRoundedCornerImage(images, cornerXValues, 680, 140, 20);
 
