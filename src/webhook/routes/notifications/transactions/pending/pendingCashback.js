@@ -13,8 +13,8 @@ module.exports = (req, res) => {
         value: `🆔 | ${data.tiktok_id}`,
       },
       {
-        name: `CASHBACK`,
-        value: `💸 | ${data.cashback_reward}`,
+        name: `CASHBACK (₱)`,
+        value: `${data.cashback_reward}`,
       },
       {
         name: `GCASH NAME`,
@@ -22,7 +22,7 @@ module.exports = (req, res) => {
       },
       {
         name: `GCASH NUMBER`,
-        value: `📞 | ${data.gcash_number}`,
+        value: `${data.gcash_number}`,
       },
     ])
     .setTimestamp(Date.now());
