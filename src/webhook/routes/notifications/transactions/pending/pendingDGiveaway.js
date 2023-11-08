@@ -27,7 +27,7 @@ module.exports = (req, res) => {
     ])
     .setTimestamp(Date.now());
 
-  client.channels.cache.get("1171463711156862986").send({
+  client.channels.cache.get("1171798094900379740").send({
     embeds: [embed],
   });
 

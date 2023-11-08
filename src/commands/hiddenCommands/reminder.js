@@ -1,5 +1,5 @@
 const schedule = require("node-schedule");
-const { EmbedBuilder, channelLink } = require("discord.js");
+const { EmbedBuilder } = require("discord.js");
 
 const { GoogleSpreadsheet } = require("google-spreadsheet");
 const creds = require("../../secret-key.json");

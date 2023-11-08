@@ -1,4 +1,9 @@
-const { Client, Collection, GatewayIntentBits } = require("discord.js");
+const {
+  Client,
+  Collection,
+  GatewayIntentBits,
+  Partials,
+} = require("discord.js");
 const fs = require("fs");
 
 require("dotenv").config({ path: "src/.env" });
@@ -11,6 +16,7 @@ const client = new Client({
     GatewayIntentBits.GuildMessageReactions,
     GatewayIntentBits.GuildIntegrations,
   ],
+  partials: [Partials.Channel, Partials.Message, Partials.Reaction],
 });
 
 client.commands = new Collection();
