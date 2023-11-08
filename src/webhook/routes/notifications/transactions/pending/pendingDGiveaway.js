@@ -5,16 +5,16 @@ module.exports = (req, res) => {
   const { data } = req.body;
 
   const embed = new EmbedBuilder()
-    .setTitle(`NEW CASHBACK REQUEST`)
-    .setColor("#e8fbd4")
+    .setTitle(`NEW DAILY GIVEAWAY CLAIM`)
+    .setColor("#afa8ed")
     .addFields([
       {
         name: `TIKTOK ORDER ID`,
         value: `${data.tiktok_id}`,
       },
       {
-        name: `CASHBACK (₱)`,
-        value: `${data.cashback_reward}`,
+        name: `AMOUNT (₱)`,
+        value: `${data.amount}`,
       },
       {
         name: `GCASH NAME`,
