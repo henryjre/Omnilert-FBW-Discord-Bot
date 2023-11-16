@@ -3,7 +3,8 @@ const { EmbedBuilder } = require("discord.js");
 module.exports = {
   name: "approveCashback",
   async execute(reactedMessage, user, client) {
-    if (user.id !== "748568303219245117") return; //Denji user id
+    const allowedUsers = ["993912789745795114", "864920050691866654", "1120869673974649035"]
+    if (!allowedUsers.includes(user.id)) return; //Denji user id
     let cashbackEmbed = reactedMessage.embeds[0].data;
 
     const reqTime = new Date(cashbackEmbed.timestamp).toLocaleDateString(
