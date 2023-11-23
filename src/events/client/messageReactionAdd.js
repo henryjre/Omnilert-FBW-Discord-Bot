@@ -17,5 +17,11 @@ module.exports = {
         .get("approveGiveaway")
         .execute(message, user, client);
     }
+
+    if (message.channelId === "1176497779040858173") {
+      return client.commands
+        .get("approveCommission")
+        .execute(reaction, user, client);
+    }
   },
 };

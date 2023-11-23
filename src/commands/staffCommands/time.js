@@ -9,14 +9,6 @@ module.exports = {
     .setName("time")
     .setDescription("Check your total work time."),
   async execute(interaction, client) {
-    await interaction.deferReply();
-
-    const doc = new GoogleSpreadsheet(process.env.sheetId);
-    await doc.useServiceAccountAuth(creds);
-    await doc.loadInfo();
-    ///
-    const logSheet = doc.sheetsByTitle["LOGS"];
-
     const eligible = [
       "762612635605663767",
       "851719358430576641",
@@ -29,21 +21,25 @@ module.exports = {
     const userName = interaction.user.username;
 
     if (!eligible.includes(userId)) {
-      await interaction.editReply({
+      await interaction.reply({
         content: "You cannot use this command.",
+        ephemeral: true,
       });
       return;
     }
 
-    function getLatestPastMonday() {
-      const today = moment();
-      const dayOfWeek = today.isoWeekday(); // 1 for Monday, 2 for Tuesday, etc.
-      const daysSinceMonday = (dayOfWeek - 1 + 7) % 7; // Calculate the number of days since the last Monday
-      const latestPastMonday = today.subtract(daysSinceMonday, "days");
-      return latestPastMonday;
-    }
+    await interaction.deferReply();
 
-    const latestMonday = getLatestPastMonday();
+    const doc = new GoogleSpreadsheet(process.env.sheetId);
+    await doc.useServiceAccountAuth(creds);
+    await doc.loadInfo();
+    ///
+    const logSheet = doc.sheetsByTitle["LOGS"];
+
+    const currentDate = moment("Nov 26, 2023", "MMM DD, YYYY");
+
+    const daysUntilMonday = (currentDate.day() + 7 - 1) % 7;
+    const latestMonday = currentDate.subtract(daysUntilMonday, "days");
 
     const rows = await logSheet.getRows();
 
@@ -62,16 +58,26 @@ module.exports = {
       totalSum += parseInt(filtreredRows[i], 10);
     }
 
-    const totalHours = (totalSum / 60).toFixed(2);
+    console.log(totalSum);
+
+    const totalHours = Math.floor(totalSum / 60);
+    const minutes = totalSum % 60;
+
     const minimumHours = 30;
+    const minimumMinutes = 1800;
     let description;
-    if (totalHours >= minimumHours) {
+    if (totalSum >= minimumMinutes) {
       description = `✅ You have reached the minimum required hours for this week.`;
     } else {
-      const hoursRemaining = minimumHours - totalHours;
-      description = `❌ You need **${hoursRemaining}** more ${
-        hoursRemaining === 1 ? "hour" : "hours"
-      } reached the minimum required hours for this week.`;
+      const hoursRemaining = minimumMinutes - totalSum;
+      const neededHours = Math.floor(hoursRemaining / 60);
+      const neededMinutes = hoursRemaining % 60;
+
+      description = `❌ You need **${neededHours} ${
+        neededHours === 1 ? "hour" : "hours"
+      } and ${neededMinutes} ${
+        neededMinutes === 1 ? "minute" : "minutes"
+      }** more to reach the minimum required time for this week.`;
     }
 
     const embed = new EmbedBuilder()
@@ -80,8 +86,8 @@ module.exports = {
       .setColor(totalHours > minimumHours ? "#33ff00" : "#ff0000")
       .addFields([
         {
-          name: `CURRENT WORKING HOURS`,
-          value: `⏱️ ${totalHours} hours`,
+          name: `CURRENT WORK DURATION`,
+          value: `⏱️ ${totalHours} hours and ${minutes} minutes`,
         },
       ]);
 

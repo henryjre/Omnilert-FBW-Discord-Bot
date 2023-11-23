@@ -1,12 +1,53 @@
-const { InteractionType } = require("discord.js");
+const { InteractionType, Collection, EmbedBuilder } = require("discord.js");
 module.exports = {
   name: "interactionCreate",
   async execute(interaction, client) {
     if (interaction.isChatInputCommand()) {
-      const { commands } = client;
+      const { commands, cooldowns } = client;
       const { commandName } = interaction;
       const command = commands.get(commandName);
       if (!command) return;
+
+      if (!cooldowns.has(command.data.name)) {
+        cooldowns.set(command.data.name, new Collection());
+      }
+
+      const now = Date.now();
+      const timestamps = cooldowns.get(command.data.name);
+      const defaultCooldownDuration = 3;
+      const cooldownAmount =
+        (command.cooldown ?? defaultCooldownDuration) * 1000;
+
+      if (timestamps.has(interaction.user.id)) {
+        const expirationTime =
+          timestamps.get(interaction.user.id) + cooldownAmount;
+
+        if (now < expirationTime) {
+          const expiredTimestamp = Math.round(expirationTime / 1000);
+          const cooldownEmbed = new EmbedBuilder()
+            .setTitle(`PLEASE WAIT`)
+            .setColor("Blurple")
+            .setDescription(
+              `You are on a cooldown for \`${command.data.name}\` command. You can use it again <t:${expiredTimestamp}:R>`
+            );
+
+          await interaction
+            .reply({
+              embeds: [cooldownEmbed],
+              ephemeral: true,
+            })
+            .then(() => {
+              setTimeout(() => {
+                interaction.deleteReply();
+              }, 60000);
+            });
+
+          return;
+        }
+      }
+
+      timestamps.set(interaction.user.id, now);
+      setTimeout(() => timestamps.delete(interaction.user.id), cooldownAmount);
 
       try {
         await command.execute(interaction, client);

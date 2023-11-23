@@ -1,5 +1,6 @@
 const { SlashCommandBuilder } = require("discord.js");
 module.exports = {
+  cooldown: 10,
   data: new SlashCommandBuilder()
     .setName("ping")
     .setDescription("Returns my ping!"),
@@ -10,7 +11,7 @@ module.exports = {
 
     const id = new Date().getTime();
 
-    console.log(id)
+    console.log(id);
 
     const newMessage = `API Latency: ${client.ws.ping}\nClient Ping: ${
       message.createdTimestamp - interaction.createdTimestamp

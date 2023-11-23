@@ -1,0 +1,190 @@
+const {
+  SlashCommandBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  EmbedBuilder,
+  ComponentType,
+} = require("discord.js");
+const mysql = require("mysql2/promise");
+require("dotenv").config({ path: "src/.env" });
+
+const fs = require("fs");
+const path = require("path");
+const caCertificatePath = path.join(__dirname, "../../DO_Certificate.crt");
+const caCertificate = fs.readFileSync(caCertificatePath);
+
+const pesoFormatter = new Intl.NumberFormat("en-PH", {
+  style: "currency",
+  currency: "PHP",
+  maximumFractionDigits: 2,
+  minimumFractionDigits: 2,
+});
+
+module.exports = {
+  cooldown: 90,
+  data: new SlashCommandBuilder()
+    .setName("withdraw")
+    .setDescription("Withdraw your commission balance.")
+    .addNumberOption((option) =>
+      option
+        .setName("amount")
+        .setDescription("The amount of your withdrawal in peso.")
+        .setRequired(true)
+    ),
+  async execute(interaction, client) {
+    const validRoles = ["1117440696891220050"];
+
+    if (
+      !interaction.member.roles.cache.some((r) => validRoles.includes(r.id))
+    ) {
+      await interaction.reply({
+        content: `🔴 ERROR: You cannot use this command.`,
+        ephemeral: true,
+      });
+      return;
+    }
+
+    await interaction.deferReply();
+
+    const withdrawalAmount = interaction.options.getNumber("amount");
+    const streamerId = interaction.user.id;
+
+    const pool = mysql.createPool({
+      host: process.env.logSqlHost,
+      port: process.env.logSqlPort,
+      user: process.env.logSqlUsername,
+      password: process.env.logSqlPassword,
+      database: process.env.logSqlDatabase,
+      waitForConnections: true,
+      connectionLimit: 10,
+      queueLimit: 0,
+      ssl: {
+        ca: caCertificate,
+        rejectUnauthorized: true,
+      },
+    });
+
+    const connection = await pool
+      .getConnection()
+      .catch((err) => console.log(err));
+
+    const findStreamerQuery =
+      "SELECT * FROM Tiktok_Livestreamers WHERE STREAMER_ID = ?";
+    const [streamerData] = await connection
+      .query(findStreamerQuery, [streamerId])
+      .catch((err) => console.log(err));
+
+    await connection.release();
+    await pool.end();
+
+    const balance = streamerData[0].BALANCE;
+    const liab = streamerData[0].LIABILITIES;
+
+    let withdrawalFees = withdrawalAmount * 0.1;
+    if (liab === 0) {
+      withdrawalFees = 0;
+    } else if (liab < withdrawalFees) {
+      withdrawalFees = liab;
+    }
+
+    if (balance < withdrawalAmount) {
+      const errorEmbed = new EmbedBuilder()
+        .setTitle(`WITHDRAWAL`)
+        .setAuthor({
+          iconURL: interaction.user.displayAvatarURL(),
+          name: "Livestreamer: " + interaction.user.globalName,
+        })
+        .setColor("Red")
+        .setDescription(
+          `🔴 Not enough balance to withdraw \`${pesoFormatter.format(
+            withdrawalAmount
+          )}\`.`
+        )
+        .addFields([
+          {
+            name: "CURRENT RUNNING BALANCE",
+            value: pesoFormatter.format(balance),
+          },
+        ])
+        .setTimestamp(Date.now());
+
+      await interaction.editReply({
+        embeds: [errorEmbed],
+        components: [],
+      });
+      return;
+    }
+
+    const remBal = balance - withdrawalAmount;
+    const remLiab = liab - withdrawalFees;
+
+    const withdrawalEmbed = new EmbedBuilder()
+      .setTitle(`WITHDRAWAL REQUEST`)
+      .setColor("#fae6fa")
+      .setDescription(
+        `**NOTES:**\n**\`WITHDRAWAL FEES\`** refers to your current liabilities.\n**\`TOTAL AMOUNT\`** is the amount that you requested minus the withdrawal fees.\n\u200b`
+      )
+      .addFields([
+        {
+          name: "CURRENT BALANCE",
+          value: `💰 ${pesoFormatter.format(balance)}`,
+        },
+        {
+          name: "CURRENT LIABILITIES",
+          value: `💸 ${pesoFormatter.format(liab)}\n\u200b`,
+        },
+        {
+          name: "WITHDRAWAL AMOUNT",
+          value: `💵 ${pesoFormatter.format(withdrawalAmount)}`,
+        },
+        {
+          name: "WITHDRAWAL FEES",
+          value: `🪙 ${pesoFormatter.format(withdrawalFees)}\n\u200b`,
+        },
+        {
+          name: "REMAINING BALANCE",
+          value: `💰 ${pesoFormatter.format(remBal)}`,
+        },
+        {
+          name: "REMAINING LIABILITIES",
+          value: `💸 ${pesoFormatter.format(remLiab)}`,
+        },
+      ])
+      .setTimestamp(Date.now());
+
+    const confirm = new ButtonBuilder()
+      .setCustomId("confirmWithdrawal")
+      .setLabel("Confirm")
+      .setStyle(ButtonStyle.Success)
+      .setDisabled(false);
+
+    const cancel = new ButtonBuilder()
+      .setCustomId("cancelWithdrawal")
+      .setLabel("Cancel")
+      .setStyle(ButtonStyle.Danger)
+      .setDisabled(false);
+
+    const buttonRow = new ActionRowBuilder().addComponents(confirm, cancel);
+
+    const replyMessage = await interaction.editReply({
+      embeds: [withdrawalEmbed],
+      components: [buttonRow],
+      fetchReply: true,
+    });
+
+    const collector = await replyMessage.createMessageComponentCollector({
+      componentType: ComponentType.Button,
+      time: 60000,
+    });
+
+    collector.on("end", async (i) => {
+      await replyMessage.edit({
+        embeds: [withdrawalEmbed],
+        components: [],
+      });
+    });
+
+    return;
+  },
+};

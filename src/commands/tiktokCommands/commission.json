@@ -1,0 +1,107 @@
+[
+  {
+    "min": 0,
+    "max": 999,
+    "commission": 200
+  },
+  {
+    "min": 1000,
+    "max": 1999,
+    "commission": 250
+  },
+  {
+    "min": 2000,
+    "max": 2999,
+    "commission": 380
+  },
+  {
+    "min": 3000,
+    "max": 3999,
+    "commission": 550
+  },
+  {
+    "min": 4000,
+    "max": 4999,
+    "commission": 710
+  },
+  {
+    "min": 5000,
+    "max": 5999,
+    "commission": 850
+  },
+  {
+    "min": 6000,
+    "max": 6999,
+    "commission": 1000
+  },
+  {
+    "min": 7000,
+    "max": 7999,
+    "commission": 1080
+  },
+  {
+    "min": 8000,
+    "max": 8999,
+    "commission": 1180
+  },
+  {
+    "min": 9000,
+    "max": 9999,
+    "commission": 1250
+  },
+  {
+    "min": 10000,
+    "max": 10999,
+    "commission": 1300
+  },
+  {
+    "min": 11000,
+    "max": 11999,
+    "commission": 1380
+  },
+  {
+    "min": 12000,
+    "max": 12999,
+    "commission": 1420
+  },
+  {
+    "min": 13000,
+    "max": 13999,
+    "commission": 1500
+  },
+  {
+    "min": 14000,
+    "max": 14999,
+    "commission": 1550
+  },
+  {
+    "min": 15000,
+    "max": 15999,
+    "commission": 1600
+  },
+  {
+    "min": 16000,
+    "max": 16999,
+    "commission": 1690
+  },
+  {
+    "min": 17000,
+    "max": 17999,
+    "commission": 1780
+  },
+  {
+    "min": 18000,
+    "max": 18999,
+    "commission": 1850
+  },
+  {
+    "min": 19000,
+    "max": 19999,
+    "commission": 1920
+  },
+  {
+    "min": 20000,
+    "max": null,
+    "commission": "Manual Computation"
+  }
+]

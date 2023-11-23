@@ -33,6 +33,18 @@ module.exports = {
         )
     ),
   async execute(interaction, client) {
+    const validRoles = ["1117440638032564316"];
+
+    if (
+      !interaction.member.roles.cache.some((r) => validRoles.includes(r.id))
+    ) {
+      await interaction.reply({
+        content: `🔴 ERROR: You cannot use this command.`,
+        ephemeral: true,
+      });
+      return;
+    }
+
     const orderId = interaction.options.getString("order-id");
     const amount = interaction.options.getNumber("amount");
 

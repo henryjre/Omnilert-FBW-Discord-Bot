@@ -1,50 +1,43 @@
 const { EmbedBuilder } = require("discord.js");
+const moment = require("moment");
 
 module.exports = {
-  name: "approveCashback",
-  async execute(reactedMessage, user, client) {
+  name: "approveCommission",
+  async execute(reaction, user, client) {
     const member = reaction.message.guild.members.cache.get(user.id);
 
     const validRoles = ["1174612428206641182"];
 
     if (!member.roles.cache.some((r) => validRoles.includes(r.id))) return;
-    let cashbackEmbed = reactedMessage.embeds[0].data;
 
-    const reqTime = new Date(cashbackEmbed.timestamp).toLocaleDateString(
-      "en-PH",
-      {
-        timeZone: "Asia/Manila",
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "numeric",
-        minute: "numeric",
-        hour12: true,
-      }
+    let withdrawalEmbed = reaction.message.embeds[0].data;
+
+    const reqTime = moment(withdrawalEmbed.timestamp).format(
+      "MMM D, YYYY, h:mm A"
     );
 
-    cashbackEmbed.fields.push({
+    withdrawalEmbed.fields.push({
       name: "REQUEST DATE",
       value: reqTime,
     });
 
     const newEmbed = new EmbedBuilder()
-      .setTitle("✅ APPROVED CASHBACK")
-      .setColor(cashbackEmbed.color)
+      .setTitle("✅ APPROVED COMMISSION WITHDRAWAL")
+      .setColor("Green")
       .setTimestamp(Date.now())
       .setFooter({
         text: `APPROVED BY: ${user.globalName}`,
       })
-      .addFields(cashbackEmbed.fields);
+      .addFields(withdrawalEmbed.fields);
 
     client.channels.cache
-      .get("1171463935904448613")
+      .get("1176498024684466247")
       .send({
         embeds: [newEmbed],
       })
       .then((msg) => {
         msg.react("✅");
-        reactedMessage.delete();
+        reaction.message.delete();
       });
   },
 };

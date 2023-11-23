@@ -11,6 +11,13 @@ module.exports = (client) => {
       const { buttons, selectMenus, modals } = client;
 
       switch (folder) {
+        case "liveStatsButtons":
+          for (const file of componentFiles) {
+            const button = require(`../../components/${folder}/${file}`);
+            buttons.set(button.data.name, button);
+          }
+          break;
+
         case "buttons":
           for (const file of componentFiles) {
             const button = require(`../../components/${folder}/${file}`);

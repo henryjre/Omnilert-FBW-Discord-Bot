@@ -47,9 +47,7 @@ module.exports = {
 
       if (workShift[0].length <= 0) return;
     }
-
-    let reminderTimestampOnStart = Date.now();
-    let hourRemindetTimestampOnStart = Date.now();
+    
     let penaltyTimestampOnStart = Date.now();
 
     function calculateHourlyReminder() {

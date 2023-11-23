@@ -23,7 +23,7 @@ module.exports = {
       .addFields([
         {
           name: `Field 1`,
-          value: `Value 1`,
+          value: interaction.user.toString(),
           inline: true,
         },
         {
