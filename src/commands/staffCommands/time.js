@@ -36,7 +36,7 @@ module.exports = {
     ///
     const logSheet = doc.sheetsByTitle["LOGS"];
 
-    const currentDate = moment("Nov 26, 2023", "MMM DD, YYYY");
+    const currentDate = moment();
 
     const daysUntilMonday = (currentDate.day() + 7 - 1) % 7;
     const latestMonday = currentDate.subtract(daysUntilMonday, "days");
@@ -57,8 +57,6 @@ module.exports = {
     for (let i = 0; i < filtreredRows.length; i++) {
       totalSum += parseInt(filtreredRows[i], 10);
     }
-
-    console.log(totalSum);
 
     const totalHours = Math.floor(totalSum / 60);
     const minutes = totalSum % 60;

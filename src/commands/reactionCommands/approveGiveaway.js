@@ -2,13 +2,13 @@ const { EmbedBuilder } = require("discord.js");
 
 module.exports = {
   name: "approveGiveaway",
-  async execute(reactedMessage, user, client) {
+  async execute(reaction, user, client) {
     const member = reaction.message.guild.members.cache.get(user.id);
 
     const validRoles = ["1174612428206641182"];
 
     if (!member.roles.cache.some((r) => validRoles.includes(r.id))) return;
-    let cashbackEmbed = reactedMessage.embeds[0].data;
+    let cashbackEmbed = reaction.message.embeds[0].data;
 
     const reqTime = new Date(cashbackEmbed.timestamp).toLocaleDateString(
       "en-PH",
@@ -44,7 +44,7 @@ module.exports = {
       })
       .then((msg) => {
         msg.react("✅");
-        reactedMessage.delete();
+        reaction.message.delete();
       });
   },
 };
