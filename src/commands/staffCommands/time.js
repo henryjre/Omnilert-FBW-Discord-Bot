@@ -4,6 +4,13 @@ const moment = require("moment");
 const { GoogleSpreadsheet } = require("google-spreadsheet");
 const creds = require("../../secret-key.json");
 
+const fs = require("fs");
+const path = require("path");
+const caCertificatePath = path.join(__dirname, "../../DO_Certificate.crt");
+const caCertificate = fs.readFileSync(caCertificatePath);
+
+const mysql = require("mysql2/promise");
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("time")
@@ -39,8 +46,11 @@ module.exports = {
     const currentDate = moment();
 
     const daysUntilMonday = (currentDate.day() + 7 - 1) % 7;
-    const latestMonday = currentDate.subtract(daysUntilMonday, "days");
+    const latestMonday = currentDate
+      .subtract(daysUntilMonday, "days")
+      .startOf("day");
 
+    console.log(latestMonday.format("MMM D, YYYY, h:mm A"));
     const rows = await logSheet.getRows();
 
     const filtreredRows = rows
