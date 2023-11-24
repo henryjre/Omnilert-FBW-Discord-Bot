@@ -4,11 +4,14 @@ module.exports = {
   name: "approveGiveaway",
   async execute(reaction, user, client) {
     const member = reaction.message.guild.members.cache.get(user.id);
+    const message = await reaction.message.channel.messages.fetch(
+      reaction.message.id
+    );
 
     const validRoles = ["1174612428206641182"];
 
     if (!member.roles.cache.some((r) => validRoles.includes(r.id))) return;
-    let cashbackEmbed = reaction.message.embeds[0].data;
+    let cashbackEmbed = message.embeds[0].data;
 
     const reqTime = new Date(cashbackEmbed.timestamp).toLocaleDateString(
       "en-PH",
@@ -44,7 +47,7 @@ module.exports = {
       })
       .then((msg) => {
         msg.react("✅");
-        reaction.message.delete();
+        message.delete();
       });
   },
 };
