@@ -34,9 +34,7 @@ module.exports = {
     .addStringOption((option) =>
       option
         .setName("id")
-        .setDescription(
-          "The ID of the livestream. (See /stats command for ID)"
-        )
+        .setDescription("The ID of the livestream. (See /stats command for ID)")
         .setRequired(true)
         .setMinLength(13)
         .setMaxLength(13)
@@ -231,9 +229,18 @@ module.exports = {
     });
 
     collector.on("end", async (i) => {
-      await currentPage.edit({
-        embeds: [embed],
-        components: [],
+      collector.on("end", async (i) => {
+        const message = await currentPage.channel.messages.fetch(
+          currentPage.id
+        );
+
+        const currentEmbed = message.embeds[0].data;
+        if (currentEmbed.title === "LIVESTREAM DETAILS") {
+          await currentPage.edit({
+            embeds: [embed],
+            components: [],
+          });
+        }
       });
     });
 

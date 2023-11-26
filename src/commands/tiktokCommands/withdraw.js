@@ -199,10 +199,17 @@ module.exports = {
     });
 
     collector.on("end", async (i) => {
-      await replyMessage.edit({
-        embeds: [withdrawalEmbed],
-        components: [],
-      });
+      const message = await replyMessage.channel.messages.fetch(
+        replyMessage.id
+      );
+
+      const currentEmbed = message.embeds[0].data;
+      if (currentEmbed.title === "WITHDRAWAL REQUEST") {
+        await replyMessage.edit({
+          embeds: [withdrawalEmbed],
+          components: [],
+        });
+      }
     });
 
     return;

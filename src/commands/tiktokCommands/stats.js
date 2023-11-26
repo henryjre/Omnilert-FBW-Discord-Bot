@@ -73,7 +73,8 @@ module.exports = {
       "s.END_TIME " +
       "FROM Tiktok_Livestream_Orders o " +
       "JOIN Tiktok_Livestream_Schedules s ON o.STREAM_ID = s.STREAM_ID " +
-      "GROUP BY o.STREAM_ID";
+      "GROUP BY o.STREAM_ID " +
+      "ORDER BY s.END_TIME DESC";
 
     const findLiveOrders = await connection
       .query(findLiveOrdersQuery)
