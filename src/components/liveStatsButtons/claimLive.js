@@ -9,7 +9,10 @@ const mysql = require("mysql2/promise");
 const moment = require("moment");
 
 const { customAlphabet } = require("nanoid");
+const { time } = require("console");
 const nanoid = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 13);
+
+const timer = (ms) => new Promise((res) => setTimeout(res, ms));
 
 module.exports = {
   data: {
@@ -54,6 +57,8 @@ module.exports = {
       embeds: [claimingEmbed],
       components: [],
     });
+
+    await timer(1300);
 
     const pool = mysql.createPool({
       host: process.env.logSqlHost,
@@ -152,6 +157,8 @@ module.exports = {
       embeds: [claimedEmbed],
       components: [],
     });
+
+    await timer(2000);
 
     return client.commands
       .get("livestreamDashboard")

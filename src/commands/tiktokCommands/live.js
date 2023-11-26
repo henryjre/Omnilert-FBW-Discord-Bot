@@ -25,7 +25,7 @@ const pesoFormatter = new Intl.NumberFormat("en-PH", {
 });
 
 module.exports = {
-  cooldown: 90,
+  // cooldown: 90,
   data: new SlashCommandBuilder()
     .setName("live")
     .setDescription(
@@ -225,23 +225,19 @@ module.exports = {
 
     const collector = await currentPage.createMessageComponentCollector({
       componentType: ComponentType.Button,
-      time: 60000,
+      time: 10000,
     });
 
     collector.on("end", async (i) => {
-      collector.on("end", async (i) => {
-        const message = await currentPage.channel.messages.fetch(
-          currentPage.id
-        );
+      const message = await currentPage.channel.messages.fetch(currentPage.id);
 
-        const currentEmbed = message.embeds[0].data;
-        if (currentEmbed.title === "LIVESTREAM DETAILS") {
-          await currentPage.edit({
-            embeds: [embed],
-            components: [],
-          });
-        }
-      });
+      const currentEmbed = message.embeds[0].data;
+      if (currentEmbed.title === "LIVESTREAM DETAILS") {
+        await currentPage.edit({
+          embeds: [embed],
+          components: [],
+        });
+      }
     });
 
     function calculateCommission(netSales) {

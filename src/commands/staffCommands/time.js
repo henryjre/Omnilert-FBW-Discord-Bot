@@ -91,7 +91,7 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setTitle(`WORK TIME CHECK`)
       .setDescription(description)
-      .setColor(totalHours > minimumHours ? "#33ff00" : "#ff0000")
+      .setColor(totalSum >= minimumMinutes ? "Green" : "Red")
       .addFields([
         {
           name: `CURRENT WORK DURATION`,

@@ -69,15 +69,17 @@ module.exports = {
       "o.STREAM_ID, " +
       "GROUP_CONCAT(o.ORDER_STATUS) AS ORDER_STATUSES, " +
       "SUM(CASE WHEN o.ORDER_STATUS = 'CANCELLED' THEN 0 ELSE o.ORDER_SUBTOTAL END) AS NET_ORDER_SUBTOTAL, " +
+      "s.CLAIMED, " +
       "s.START_TIME, " +
       "s.END_TIME " +
       "FROM Tiktok_Livestream_Orders o " +
       "JOIN Tiktok_Livestream_Schedules s ON o.STREAM_ID = s.STREAM_ID " +
+      "WHERE s.STREAMER_ID = ? " +
       "GROUP BY o.STREAM_ID " +
       "ORDER BY s.END_TIME DESC";
 
     const findLiveOrders = await connection
-      .query(findLiveOrdersQuery)
+      .query(findLiveOrdersQuery, [interaction.user.id])
       .catch((err) => console.error(err));
 
     connection.release();
@@ -99,9 +101,28 @@ module.exports = {
       order.ORDER_STATUSES = order.ORDER_STATUSES.split(",");
       order.NET_ORDER_SUBTOTAL = Number(order.NET_ORDER_SUBTOTAL);
 
+      if (order.CLAIMED === 1) {
+        order.CLAIMABLE = "🔴 Already Claimed";
+      } else if (
+        order.ORDER_STATUSES.filter(
+          (obj) => obj !== "CANCELLED" && obj !== "COMPLETED"
+        ).length <= 0 &&
+        order.CLAIMED !== 1
+      ) {
+        order.CLAIMABLE = "🟢 Ready to claim";
+      } else if (
+        order.ORDER_STATUSES.filter(
+          (obj) => obj !== "CANCELLED" && obj !== "COMPLETED"
+        ).length > 0
+      ) {
+        order.CLAIMABLE = "🟡 Cannot claim yet.";
+      }
+
       const commission = calculateCommission(Number(order.NET_ORDER_SUBTOTAL));
       order.NET_COMMISSION = commission;
     });
+
+    console.log(findLiveOrders[0]);
 
     const livestreams = findLiveOrders[0];
     const batchSize = 3; // Number of elements in each subgroup
@@ -168,7 +189,11 @@ module.exports = {
               str.NET_ORDER_SUBTOTAL
             )}\n💰 **Net Commission:** ${pesoFormatter.format(
               str.NET_COMMISSION
-            )}${
+            )}\n\u200b`,
+          },
+          {
+            name: "CLAIM STATUS",
+            value: `${str.CLAIMABLE}${
               index !== stream.length - 1
                 ? "\n\n════════════════════════════\n\u200b"
                 : ""

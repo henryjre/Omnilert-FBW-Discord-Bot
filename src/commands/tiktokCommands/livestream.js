@@ -67,10 +67,9 @@ module.exports = {
       return;
     }
 
-    const startDate = convertTime(start);
-    const endDate = convertTime(end);
+    const timeDates = convertTime(start, end);
 
-    if (isNaN(startDate.hour) || isNaN(endDate.hour)) {
+    if (timeDates === null) {
       const errorEmbed = new EmbedBuilder()
         .setTitle(`LIVESTREAM ERROR`)
         .setColor("Red")
@@ -84,24 +83,7 @@ module.exports = {
       return;
     }
 
-    if (
-      endDate.hour - startDate.hour < 0
-      // endDate.hour - startDate.hour > 3
-    ) {
-      const errorEmbed = new EmbedBuilder()
-        .setTitle(`LIVESTREAM ERROR`)
-        .setColor("Red")
-        .setDescription(
-          "🔴 Invalid duration. Did you perhaps input the wrong end time?"
-        );
-
-      await interaction.editReply({
-        embeds: [errorEmbed],
-      });
-      return;
-    }
-
-    if (endDate.hour - startDate.hour < 1.5) {
+    if (timeDates.end.hour - timeDates.start.hour < 1.5) {
       const errorEmbed = new EmbedBuilder()
         .setTitle(`LIVESTREAM ERROR`)
         .setColor("Red")
@@ -115,21 +97,8 @@ module.exports = {
       return;
     }
 
-    const startTime = moment().set({
-      hour: startDate.hour,
-      minute: startDate.minute,
-      second: 0,
-      millisecond: 0,
-    });
-    const endTime = moment().set({
-      hour: endDate.hour,
-      minute: endDate.minute,
-      second: 0,
-      millisecond: 0,
-    });
-
-    const apiStartTime = startTime.unix();
-    const apiEndTime = endTime.unix();
+    const apiStartTime = timeDates.start.unix();
+    const apiEndTime = timeDates.end.unix();
 
     const liveId = streamer.id + "_" + moment().format("MMDDYY");
     const streamerName = streamer.globalName;
@@ -419,14 +388,36 @@ module.exports = {
       }
     }
 
-    function convertTime(time12h) {
+    // function convertTime(time12h) {
+    //   try {
+    //     const momentObj = moment(time12h, ["h:mm A", "hh:mm A"]);
+
+    //     console.log(momentObj.format("MMMM D, YYYY, h:mm A"));
+
+    //     const hour = momentObj.hour();
+    //     const minute = momentObj.minute();
+
+    //     return { hour, minute };
+    //   } catch (error) {
+    //     console.error(`Error: ${error.message}`);
+    //     return null; // or throw the error if you prefer
+    //   }
+    // }
+
+    function convertTime(startTime12h, endTime12h) {
       try {
-        const momentObj = moment(time12h, ["h:mm A", "hh:mm A"]);
+        const momentStart = moment(startTime12h, ["h:mm A", "hh:mm A"]);
+        const momentEnd = moment(endTime12h, ["h:mm A", "hh:mm A"]);
 
-        const hour = momentObj.hour();
-        const minute = momentObj.minute();
+        // If end time is before start time, adjust the date for start time to the previous day
+        if (momentEnd.isBefore(momentStart)) {
+          momentStart.subtract(1, "day");
+        }
 
-        return { hour, minute };
+        return {
+          start: momentStart,
+          end: momentEnd,
+        };
       } catch (error) {
         console.error(`Error: ${error.message}`);
         return null; // or throw the error if you prefer

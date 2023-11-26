@@ -15,6 +15,7 @@ const mysql = require("mysql2/promise");
 const moment = require("moment");
 
 const { customAlphabet } = require("nanoid");
+const { networkInterfaces } = require("os");
 const nanoid = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 13);
 
 const pesoFormatter = new Intl.NumberFormat("en-PH", {
@@ -23,6 +24,8 @@ const pesoFormatter = new Intl.NumberFormat("en-PH", {
   maximumFractionDigits: 2,
   minimumFractionDigits: 2,
 });
+
+const timer = (ms) => new Promise((res) => setTimeout(res, ms));
 
 module.exports = {
   data: {
@@ -35,6 +38,8 @@ module.exports = {
       interaction.message.embeds[0].data.fields[2].value.match(/[\d,.]+/);
     const fees =
       interaction.message.embeds[0].data.fields[3].value.match(/[\d,.]+/);
+    const netAmount =
+      interaction.message.embeds[0].data.fields[4].value.match(/[\d,.]+/);
 
     const pendingSubmitEmbed = new EmbedBuilder()
       .setTitle(`SUBMITTING REQUEST`)
@@ -47,12 +52,15 @@ module.exports = {
       components: [],
     });
 
+    await timer(1200);
+
     const bankName = interaction.fields.getTextInputValue("bankName");
     const accountName = interaction.fields.getTextInputValue("accountName");
     const accountNumber = interaction.fields.getTextInputValue("accountNumber");
 
     const withdrawalAmount = parseFloat(totalAmount[0].replace(/,/g, ""));
     const withdrawalFees = parseFloat(fees[0].replace(/,/g, ""));
+    const netWithdrawal = parseFloat(netAmount[0].replace(/,/g, ""));
     const claimDate = moment().format("YYYY-MM-DD HH:mm:ss");
 
     const pool = mysql.createPool({
@@ -78,7 +86,7 @@ module.exports = {
       "UPDATE Tiktok_Livestreamers SET BALANCE = (BALANCE - ?), LIABILITIES = (LIABILITIES - ?), WITHDRAWALS = (WITHDRAWALS - 1) WHERE STREAMER_ID = ?";
     await connection
       .execute(updateBalanceQuery, [
-        withdrawalAmount,
+        netWithdrawal,
         withdrawalFees,
         interaction.user.id,
       ])
@@ -89,7 +97,7 @@ module.exports = {
       .query(insertQuery1, [
         nanoid(),
         interaction.user.id,
-        withdrawalAmount,
+        netWithdrawal,
         withdrawalFees,
         claimDate,
       ])
@@ -115,12 +123,16 @@ module.exports = {
           value: accountNumber + "\n\u200b",
         },
         {
-          name: "WITHDRAWAL AMOUNT (₱)",
-          value: String(withdrawalAmount),
+          name: "WITHDRAWAL AMOUNT",
+          value: pesoFormatter.format(withdrawalAmount),
         },
         {
-          name: "WITHDRAWAL FEES (LIABILITIES)",
+          name: "LIABILITY PAYMENT",
           value: pesoFormatter.format(withdrawalFees),
+        },
+        {
+          name: "🟢 NET WITHDRAWAL (₱)",
+          value: String(netWithdrawal),
         },
       ])
       .setTimestamp(Date.now())

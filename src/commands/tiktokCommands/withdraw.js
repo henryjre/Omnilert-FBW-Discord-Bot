@@ -136,6 +136,8 @@ module.exports = {
       return;
     }
 
+    const netWithdrawal = withdrawalAmount - withdrawalFees;
+
     const remBal = balance - withdrawalAmount;
     const remLiab = liab - withdrawalFees;
 
@@ -156,11 +158,15 @@ module.exports = {
         },
         {
           name: "WITHDRAWAL AMOUNT",
-          value: `💵 ${pesoFormatter.format(withdrawalAmount)}`,
+          value: `🪙 ${pesoFormatter.format(withdrawalAmount)}`,
         },
         {
-          name: "WITHDRAWAL FEES",
-          value: `🪙 ${pesoFormatter.format(withdrawalFees)}\n\u200b`,
+          name: "LIABILITY PAYMENT",
+          value: `🪙 ${pesoFormatter.format(withdrawalFees)}`,
+        },
+        {
+          name: "NET WITHDRAWAL",
+          value: `💵 ${pesoFormatter.format(netWithdrawal)}\n\u200b`,
         },
         {
           name: "REMAINING BALANCE",
