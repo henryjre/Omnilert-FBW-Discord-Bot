@@ -40,7 +40,7 @@ client.handleEvents();
 client.handleCommands();
 client.handleComponents();
 
-client.login(process.env.testingBotToken);
+client.login(process.env.token);
 
 module.exports = client;
 require("./webhook/app.js");
