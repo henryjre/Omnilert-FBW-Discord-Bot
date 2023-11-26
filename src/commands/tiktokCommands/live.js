@@ -35,7 +35,7 @@ module.exports = {
       option
         .setName("id")
         .setDescription(
-          "The ID of the livestream. (See /live-stats command for ID)"
+          "The ID of the livestream. (See /stats command for ID)"
         )
         .setRequired(true)
         .setMinLength(13)

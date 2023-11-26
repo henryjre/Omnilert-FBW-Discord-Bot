@@ -78,6 +78,26 @@ module.exports = {
     await connection.release();
     await pool.end();
 
+    const withdrawals = streamerData[0].WITHDRAWALS;
+
+    if (withdrawals <= 0) {
+      const errorEmbed = new EmbedBuilder()
+        .setTitle(`WITHDRAWAL ERROR`)
+        .setAuthor({
+          iconURL: interaction.user.displayAvatarURL(),
+          name: "Livestreamer: " + interaction.user.globalName,
+        })
+        .setColor("Red")
+        .setDescription(`🔴 Withdrawal limit reached.`)
+        .setTimestamp(Date.now());
+
+      await interaction.editReply({
+        embeds: [errorEmbed],
+        components: [],
+      });
+      return;
+    }
+
     const balance = streamerData[0].BALANCE;
     const liab = streamerData[0].LIABILITIES;
 

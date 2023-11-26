@@ -4,6 +4,7 @@ require("dotenv").config({ path: "src/.env" });
 
 const fs = require("fs");
 const path = require("path");
+const { error } = require("console");
 const caCertificatePath = path.join(__dirname, "../../DO_Certificate.crt");
 const caCertificate = fs.readFileSync(caCertificatePath);
 
@@ -44,11 +45,21 @@ module.exports = {
       return;
     }
 
-    await interaction.deferReply();
-
     const liabAmount = interaction.options.getNumber("amount");
     const streamer = interaction.options.getUser("livestreamer");
     const streamerId = streamer.id;
+
+    const streamerMember = interaction.guild.members.cache.get(streamerId);
+
+    if (!streamerMember.roles.cache.has("1117440696891220050")) {
+      await interaction.reply({
+        content: `🔴 ERROR: ${streamer.toString()} is not a <@&1117440696891220050>.`,
+        ephemeral: true,
+      });
+      return;
+    }
+
+    await interaction.deferReply();
 
     const pool = mysql.createPool({
       host: process.env.logSqlHost,

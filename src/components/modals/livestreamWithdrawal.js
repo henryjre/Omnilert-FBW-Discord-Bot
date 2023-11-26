@@ -75,7 +75,7 @@ module.exports = {
       .catch((err) => console.log(err));
 
     const updateBalanceQuery =
-      "UPDATE Tiktok_Livestreamers SET BALANCE = (BALANCE - ?), LIABILITIES = (LIABILITIES - ?) WHERE STREAMER_ID = ?";
+      "UPDATE Tiktok_Livestreamers SET BALANCE = (BALANCE - ?), LIABILITIES = (LIABILITIES - ?), WITHDRAWALS = (WITHDRAWALS - 1) WHERE STREAMER_ID = ?";
     await connection
       .execute(updateBalanceQuery, [
         withdrawalAmount,
@@ -147,7 +147,7 @@ module.exports = {
 
     const buttonRow = new ActionRowBuilder().addComponents(viewDash);
 
-    await interaction.editReply({
+    return await interaction.editReply({
       embeds: [claimedEmbed],
       components: [buttonRow],
     });

@@ -5,12 +5,15 @@ module.exports = {
   name: "approveCommission",
   async execute(reaction, user, client) {
     const member = reaction.message.guild.members.cache.get(user.id);
+    const message = await reaction.message.channel.messages.fetch(
+      reaction.message.id
+    );
 
     const validRoles = ["1174612428206641182"];
 
     if (!member.roles.cache.some((r) => validRoles.includes(r.id))) return;
 
-    let withdrawalEmbed = reaction.message.embeds[0].data;
+    let withdrawalEmbed = message.embeds[0].data;
 
     const reqTime = moment(withdrawalEmbed.timestamp).format(
       "MMM D, YYYY, h:mm A"
@@ -37,7 +40,7 @@ module.exports = {
       })
       .then((msg) => {
         msg.react("✅");
-        reaction.message.delete();
+        message.delete();
       });
   },
 };

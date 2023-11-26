@@ -19,7 +19,7 @@ module.exports = {
     .setDescription("Save the tiktok livestream statistics.")
     .addUserOption((option) =>
       option
-        .setName("livestreamer")
+        .setName("streamer")
         .setDescription("The streamer of the livestream to end.")
         .setRequired(true)
     )
@@ -49,7 +49,7 @@ module.exports = {
     }
     await interaction.deferReply();
 
-    const streamer = interaction.options.getUser("livestreamer");
+    const streamer = interaction.options.getUser("streamer");
     const start = interaction.options.getString("start-time");
     const end = interaction.options.getString("end-time");
 
@@ -85,8 +85,7 @@ module.exports = {
     }
 
     if (
-      endDate.hour - startDate.hour <
-      0
+      endDate.hour - startDate.hour < 0
       // endDate.hour - startDate.hour > 3
     ) {
       const errorEmbed = new EmbedBuilder()
