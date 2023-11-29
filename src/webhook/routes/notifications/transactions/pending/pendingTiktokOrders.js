@@ -6,6 +6,13 @@ const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
 const crypto = require("crypto");
 
+const pesoFormatter = new Intl.NumberFormat("en-PH", {
+  style: "currency",
+  currency: "PHP",
+  maximumFractionDigits: 2,
+  minimumFractionDigits: 2,
+});
+
 module.exports = async (req, res) => {
   const { data } = req.body;
 
@@ -44,24 +51,24 @@ module.exports = async (req, res) => {
 
   let description = "";
   order.line_items.forEach((item) => {
-    description += `▫️ ${item.product_name}\n`;
+    description += `▪️ ${item.product_name}\n`;
   });
 
   const embed = new EmbedBuilder()
-    .setTitle(`NEW TIKTOK ORDER`)
-    .setColor("#e74c3c")
+    .setTitle(`🛒 NEW TIKTOK ORDER`)
+    .setColor("Random")
     .addFields([
       {
         name: `ORDER ID`,
-        value: `🆔 | ${orderId}`,
+        value: `\`${orderId}\``,
       },
       {
         name: `ORDER SUBTOTAL`,
-        value: `📛 | ${subtotal}`,
+        value: `\`${pesoFormatter.format(subtotal)}\``,
       },
       {
         name: `ORDER ITEMS`,
-        value: description,
+        value: `\`\`\`${description}\`\`\``,
       },
     ])
     .setTimestamp(Date.now());
@@ -81,7 +88,7 @@ module.exports = async (req, res) => {
     } else {
       let maskedStr =
         numberStr.substring(0, 4) +
-        "*".repeat(length - 8) +
+        "▪️".repeat(length - 8) +
         numberStr.substring(length - 4);
       return maskedStr;
     }

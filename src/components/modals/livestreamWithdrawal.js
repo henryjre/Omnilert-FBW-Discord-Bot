@@ -15,7 +15,6 @@ const mysql = require("mysql2/promise");
 const moment = require("moment");
 
 const { customAlphabet } = require("nanoid");
-const { networkInterfaces } = require("os");
 const nanoid = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 13);
 
 const pesoFormatter = new Intl.NumberFormat("en-PH", {
