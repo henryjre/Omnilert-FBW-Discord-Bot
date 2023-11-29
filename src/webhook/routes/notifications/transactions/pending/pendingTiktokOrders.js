@@ -4,7 +4,7 @@ const client = require("../../../../../index");
 require("dotenv").config({ path: "src/.env" });
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
-  const crypto = require("crypto");
+const crypto = require("crypto");
 
 module.exports = async (req, res) => {
   const { data } = req.body;
@@ -86,7 +86,7 @@ module.exports = async (req, res) => {
 
   async function getOrder(ids, options) {
     const currentTimestamp = Math.floor(new Date().getTime() / 1000);
-
+    const apiUrl = "https://open-api.tiktokglobalshop.com/";
     const urlPath = `/order/202309/orders?app_key=${options.tiktokAppKey}&shop_cipher=${options.tiktokShopCipher}&timestamp=${currentTimestamp}&ids=${ids}`;
 
     const signReqOptions = {
