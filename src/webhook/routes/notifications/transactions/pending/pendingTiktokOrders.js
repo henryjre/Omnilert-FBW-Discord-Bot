@@ -20,21 +20,22 @@ module.exports = async (req, res) => {
 
   const response = await fetch(url, options).catch((err) => {
     console.log("TIKTOK ORDER FETCH ERROR");
-    return res.status(200).json({ ok: true, message: "success" });
+    return res.status(200).json({ ok: true, message: "fetch error" });
   });
   const responseData = await response.json();
 
   if (!response.ok) {
     console.log("TIKTOK ORDER FETCH NOT OK");
-    return res.status(200).json({ ok: true, message: "success" });
+    return res.status(200).json({ ok: true, message: "fetch error: fetch not ok" });
   }
 
   const order = await getOrder(data.order_id, responseData.secrets);
 
-  if (order.buyer_message.includes("DPD"))
-    return res.status(200).json({ ok: true, message: "success" });
   if (order === null)
-    return res.status(200).json({ ok: true, message: "success" });
+    return res.status(200).json({ ok: true, message: "no order found" });
+
+  if (order.buyer_message && order.buyer_message.includes("DPD"))
+    return res.status(200).json({ ok: true, message: "dpd winner order" });
 
   const orderId = maskOrderId(data.order_id);
   const subtotal = order.payment.sub_total;
