@@ -26,10 +26,12 @@ module.exports = async (req, res) => {
 
   if (!response.ok) {
     console.log("TIKTOK ORDER FETCH NOT OK");
-    return res.status(200).json({ ok: true, message: "fetch error: fetch not ok" });
+    return res
+      .status(200)
+      .json({ ok: true, message: "fetch error: fetch not ok" });
   }
 
-  const order = await getOrder(data.order_id, responseData.secrets);
+  const { order } = await getOrder(data.order_id, responseData.secrets);
 
   if (order === null)
     return res.status(200).json({ ok: true, message: "no order found" });
