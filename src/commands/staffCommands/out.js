@@ -64,8 +64,8 @@ module.exports = {
       await interaction.editReply({
         content: `🔴 ERROR: No work log in found.`,
       });
-      connection.release();
-      pool.end()
+      await connection.release();
+      await pool.end();
       return;
     }
 
@@ -82,48 +82,57 @@ module.exports = {
       hour12: true,
     });
 
-    const updateWorkShiftString =
-      "UPDATE WORK_HOURS SET TIME_OUT = ? WHERE ID = ?";
-    await connection
-      .query(updateWorkShiftString, [timeOut, workId])
-      .catch((err) => console.log(err));
+    try {
+      const duration = timeOut - timeIn;
+      const { hours, minutes } = convertMilliseconds(duration);
+      const minutesOnly = Math.floor(duration / 60000);
 
-    connection.release();
-    pool.end();
+      const doc = new GoogleSpreadsheet(process.env.sheetId);
+      await doc.useServiceAccountAuth(creds);
+      await doc.loadInfo();
+      ///
+      const logSheet = doc.sheetsByTitle["LOGS"];
 
-    const duration = timeOut - timeIn;
-    const { hours, minutes } = convertMilliseconds(duration);
-    const minutesOnly = Math.floor(duration / 60000);
+      await logSheet.addRow([
+        workId,
+        interaction.user.username,
+        timeInStamp,
+        timeStamp,
+        `${minutesOnly}`,
+      ]);
 
-    const doc = new GoogleSpreadsheet(process.env.sheetId);
-    await doc.useServiceAccountAuth(creds);
-    await doc.loadInfo();
-    ///
-    const logSheet = doc.sheetsByTitle["LOGS"];
+      const updateWorkShiftString =
+        "UPDATE WORK_HOURS SET TIME_OUT = ? WHERE ID = ?";
+      await connection
+        .query(updateWorkShiftString, [timeOut, workId])
+        .catch((err) => console.log(err));
 
-    await logSheet.addRow([
-      workId,
-      interaction.user.username,
-      timeInStamp,
-      timeStamp,
-      `${minutesOnly}`,
-    ]);
+      const embed = new EmbedBuilder()
+        .setTitle(`🔴 LOG OUT`)
+        .setDescription(
+          `👤 **User:** ${interaction.user.username}\n⏱️ **Time In:** ${timeInStamp}\n⏱️ **Time Out:** ${timeStamp}\n⏳ **Duration:** ${hours} hours and ${minutes} minutes`
+        )
+        .setColor("Red")
+        // .setTimestamp(timeStamp)
+        .setFooter({
+          iconURL: interaction.user.displayAvatarURL(),
+          text: "Leviosa Network",
+        });
 
-    const embed = new EmbedBuilder()
-      .setTitle(`🔴 LOG OUT`)
-      .setDescription(
-        `👤 **User:** ${interaction.user.username}\n⏱️ **Time In:** ${timeInStamp}\n⏱️ **Time Out:** ${timeStamp}\n⏳ **Duration:** ${hours} hours and ${minutes} minutes`
-      )
-      .setColor("Red")
-      // .setTimestamp(timeStamp)
-      .setFooter({
-        iconURL: interaction.user.displayAvatarURL(),
-        text: "Leviosa Network",
+      await interaction.editReply({
+        embeds: [embed],
       });
-
-    await interaction.editReply({
-      embeds: [embed],
-    });
+    } catch (error) {
+      console.log(error);
+      await interaction.editReply({
+        content:
+          "There was an error while recording your work time, please try again.",
+        ephemeral: true,
+      });
+    } finally {
+      await connection.release();
+      await pool.end();
+    }
 
     function convertMilliseconds(milliseconds) {
       const totalSeconds = Math.floor(milliseconds / 1000);

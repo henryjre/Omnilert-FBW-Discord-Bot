@@ -38,7 +38,13 @@ module.exports = async (req, res) => {
       .json({ ok: true, message: "fetch error: fetch not ok" });
   }
 
-  const { order } = await getOrder(data.order_id, responseData.secrets);
+  const { ok, message, order } = await getOrder(
+    data.order_id,
+    responseData.secrets
+  );
+
+  if (!ok)
+    return res.status(200).json({ ok: true, message: "no order found" });
 
   if (order === null)
     return res.status(200).json({ ok: true, message: "no order found" });
