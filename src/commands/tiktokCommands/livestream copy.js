@@ -448,6 +448,11 @@ module.exports = {
         ]).utcOffset(philippinesOffset);
 
         console.log({
+          start: momentStart.format("MMMM D, YYYY h:mm A"),
+          end: momentEnd.format("MMMM D, YYYY h:mm A"),
+        });
+
+        console.log({
           start: momentStart.unix(),
           end: momentEnd.unix(),
         });
