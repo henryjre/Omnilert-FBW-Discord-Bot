@@ -73,9 +73,9 @@ module.exports = {
       .catch((err) => console.log(err));
 
     try {
-      const insertQuery1 = `INSERT INTO Tiktok_Livestreamers (STREAMER_ID, BALANCE, LIABILITIES) VALUES (?, ?, ?)`;
+      const insertQuery1 = `INSERT INTO Tiktok_Livestreamers (STREAMER_ID, BALANCE, LIABILITIES, WITHDRAWALS) VALUES (?, ?, ?)`;
       await connection
-        .query(insertQuery1, [streamerId, 0, 0])
+        .query(insertQuery1, [streamerId, 0, 0, 2])
         .catch((err) => console.log(err));
 
       streamerMember.roles.add("1117440696891220050");

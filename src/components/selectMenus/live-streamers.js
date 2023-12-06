@@ -1,4 +1,16 @@
-const { EmbedBuilder } = require("discord.js");
+const {
+  EmbedBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+} = require("discord.js");
+
+const fs = require("fs");
+const path = require("path");
+const caCertificatePath = path.join(__dirname, "../../DO_Certificate.crt");
+const caCertificate = fs.readFileSync(caCertificatePath);
+
+const mysql = require("mysql2/promise");
 const moment = require("moment");
 
 const pesoFormatter = new Intl.NumberFormat("en-PH", {
@@ -8,16 +20,68 @@ const pesoFormatter = new Intl.NumberFormat("en-PH", {
   minimumFractionDigits: 2,
 });
 
-const commissionRates = require("../tiktokCommands/commission.json");
+const commissionRates = require("../../commands/tiktokCommands/commission.json");
 
 module.exports = {
-  name: "livestreamDashboard",
-  async execute(interaction, client, pool) {
-    const streamerId = interaction.user.id;
+  data: {
+    name: `live-streamers`,
+  },
+  async execute(interaction, client) {
+    if (interaction.user.id !== interaction.message.interaction.user.id) {
+      await interaction.reply({
+        content: "You cannot use this menu.",
+        ephemeral: true,
+      });
+      return;
+    }
+
+    if (interaction.values.length <= 0) return;
+
+    await interaction.deferUpdate();
+
+    const streamerId = interaction.values[0];
+    const discordUser = await client.users.fetch(streamerId);
+
+    const claimedEmbed = new EmbedBuilder()
+      .setTitle(`RETRIEVING DASHBOARD`)
+      .setFooter({
+        iconURL: discordUser.displayAvatarURL(),
+        text: discordUser.globalName,
+      })
+      .setColor("#e8fbd4")
+      .setDescription("⌛ Retrieving dashboard... Please wait.");
+
+    await interaction.editReply({
+      embeds: [claimedEmbed],
+      components: [],
+    });
+
+    const pool = mysql.createPool({
+      host: process.env.logSqlHost,
+      port: process.env.logSqlPort,
+      user: process.env.logSqlUsername,
+      password: process.env.logSqlPassword,
+      database: process.env.logSqlDatabase,
+      waitForConnections: true,
+      connectionLimit: 10,
+      queueLimit: 0,
+      ssl: {
+        ca: caCertificate,
+        rejectUnauthorized: true,
+      },
+    });
 
     const connection = await pool
       .getConnection()
       .catch((err) => console.log(err));
+
+    const backButton = new ButtonBuilder()
+      .setCustomId("allDashboardBackButton")
+      .setLabel("‹ Back")
+      .setStyle(ButtonStyle.Secondary)
+      .setDisabled(false);
+
+    const backButtonRow = new ActionRowBuilder().addComponents(backButton);
 
     try {
       // Query to get BALANCE from Tiktok_Livestreamers
@@ -30,12 +94,17 @@ module.exports = {
         const noOrdersEmbed = new EmbedBuilder()
           .setTitle(`NO DASHBOARD FOUND`)
           .setColor("Red")
+          .setFooter({
+            iconURL: discordUser.displayAvatarURL(),
+            text: discordUser.globalName,
+          })
           .setDescription(
             "🔴 Please contact <@748568303219245117> or <@864920050691866654> for this error."
           );
 
         await interaction.editReply({
           embeds: [noOrdersEmbed],
+          components: [backButtonRow],
         });
       }
       const balance = balanceRows[0].BALANCE;
@@ -89,11 +158,15 @@ module.exports = {
       const embed = new EmbedBuilder()
         .setTitle("📊 STREAMER DASHBOARD")
         .setColor("#1f3095")
+        .setFooter({
+          iconURL: discordUser.displayAvatarURL(),
+          text: discordUser.globalName,
+        })
         .setTimestamp(Date.now())
         .addFields([
           {
             name: "LIVESTREAMER",
-            value: "🪪 | " + interaction.user.toString(),
+            value: "🪪 | " + discordUser.toString(),
           },
           {
             name: "CURRENT BALANCE",
@@ -127,14 +200,14 @@ module.exports = {
 
       await interaction.editReply({
         embeds: [embed],
-        components: [],
+        components: [backButtonRow],
       });
     } catch (error) {
       const errorEmbed = new EmbedBuilder()
-        .setTitle(`RETRIEVING DASHBOARD`)
+        .setTitle(`RETRIEVING DASHBOARD FAILED`)
         .setAuthor({
-          iconURL: interaction.user.displayAvatarURL(),
-          name: "Livestreamer: " + interaction.user.globalName,
+          iconURL: discordUser.displayAvatarURL(),
+          name: "Livestreamer: " + discordUser.globalName,
         })
         .setColor("Red")
         .setDescription(
@@ -144,7 +217,7 @@ module.exports = {
 
       await interaction.editReply({
         embeds: [errorEmbed],
-        components: [],
+        components: [backButtonRow],
       });
       console.log(error);
     } finally {

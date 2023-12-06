@@ -43,8 +43,7 @@ module.exports = async (req, res) => {
     responseData.secrets
   );
 
-  if (!ok)
-    return res.status(200).json({ ok: true, message: "no order found" });
+  if (!ok) return res.status(200).json({ ok: true, message: "no order found" });
 
   if (order === null)
     return res.status(200).json({ ok: true, message: "no order found" });
@@ -60,20 +59,27 @@ module.exports = async (req, res) => {
     description += `▪️ ${item.product_name}\n`;
   });
 
+  let title = `### 🛒 NEW TIKTOK ORDER`;
+  let name = "ORDER";
+  if (subtotal === 0) {
+    title = `### 🛒 NEW TIKTOK GIVEAWAY`;
+    name = "GIVEAWAY";
+  }
+
   const embed = new EmbedBuilder()
-    .setTitle(`🛒 NEW TIKTOK ORDER`)
-    .setColor("Random")
+    .setDescription(title)
+    .setColor("#2B2D31")
     .addFields([
       {
         name: `ORDER ID`,
         value: `\`${orderId}\``,
       },
       {
-        name: `ORDER SUBTOTAL`,
+        name: `${name} SUBTOTAL`,
         value: `\`${pesoFormatter.format(subtotal)}\``,
       },
       {
-        name: `ORDER ITEMS`,
+        name: `${name} ITEMS`,
         value: `\`\`\`${description}\`\`\``,
       },
     ])
