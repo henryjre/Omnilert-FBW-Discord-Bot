@@ -109,8 +109,8 @@ module.exports = {
       return;
     }
 
-    const apiStartTime = timeDates.start.unix();
-    const apiEndTime = timeDates.end.unix();
+    const apiStartTime = timeDates.start.utcOffset(8 * 60).unix();
+    const apiEndTime = timeDates.end.utcOffset(8 * 60).unix();
 
     const liveId = streamer.id + "_" + moment().format("MMDDYY");
     const streamerName = streamer.globalName;
@@ -294,16 +294,14 @@ module.exports = {
 
     function convertTime(startTime12h, endTime12h) {
       try {
-        const philippinesOffset = 8 * 60;
-
         const momentStart = moment(startTime12h, [
           "MMMM D, YYYY h:mm A",
           "MMMM D, YYYY hh:mm A",
-        ]).utcOffset(philippinesOffset);;
+        ]);
         const momentEnd = moment(endTime12h, [
           "MMMM D, YYYY h:mm A",
           "MMMM D, YYYY hh:mm A",
-        ]).utcOffset(philippinesOffset);;
+        ]);
 
         return {
           start: momentStart,
