@@ -26,13 +26,17 @@ module.exports = {
     .addStringOption((option) =>
       option
         .setName("start-time")
-        .setDescription("[HH:MM AM/PM] The beginning time of the livestream.")
+        .setDescription(
+          "The beginning time of the livestream. E.G. January 1, 2023 8:00 AM"
+        )
         .setRequired(true)
     )
     .addStringOption((option) =>
       option
         .setName("end-time")
-        .setDescription("[HH:MM AM/PM] The ending time of the livestream.")
+        .setDescription(
+          "The ending time of the livestream. E.G. January 30, 2023 10:00 PM"
+        )
         .setRequired(true)
     ),
   async execute(interaction, client) {
@@ -406,13 +410,19 @@ module.exports = {
 
     function convertTime(startTime12h, endTime12h) {
       try {
-        const momentStart = moment(startTime12h, ["h:mm A", "hh:mm A"]);
-        const momentEnd = moment(endTime12h, ["h:mm A", "hh:mm A"]);
+        const momentStart = moment(startTime12h, [
+          "MMMM D, YYYY h:mm A",
+          "MMMM D, YYYY hh:mm A",
+        ]);
+        const momentEnd = moment(endTime12h, [
+          "MMMM D, YYYY h:mm A",
+          "MMMM D, YYYY hh:mm A",
+        ]);
 
         // If end time is before start time, adjust the date for start time to the previous day
-        if (momentEnd.isBefore(momentStart)) {
-          momentStart.subtract(1, "day");
-        }
+        // if (momentEnd.isBefore(momentStart)) {
+        //   momentStart.subtract(1, "day");
+        // }
 
         return {
           start: momentStart,
