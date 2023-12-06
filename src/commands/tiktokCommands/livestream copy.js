@@ -435,7 +435,7 @@ module.exports = {
     function convertTime(startTime12h, endTime12h) {
       console.log(startTime12h, endTime12h);
       try {
-        const philippinesOffset = "+0800"; // UTC+8 in the format "+0800"
+        const philippinesOffset = 8 * 60;
 
         const momentStart = moment(startTime12h, [
           "MMMM D, YYYY h:mm A",
