@@ -63,7 +63,7 @@ module.exports = {
       return;
     }
 
-    await interaction.deferReply();
+    // await interaction.deferReply();
 
     if (!interaction.member.roles.cache.has("1117440696891220050")) {
       const errorEmbed = new EmbedBuilder()
@@ -109,8 +109,12 @@ module.exports = {
       return;
     }
 
-    const apiStartTime = timeDates.start.utcOffset(8 * 60).unix();
-    const apiEndTime = timeDates.end.utcOffset(8 * 60).unix();
+    const apiStartTime = timeDates.start.utcOffset("+0800").unix();
+    const apiEndTime = timeDates.end.utcOffset("+0800").unix();
+
+    console.log(apiStartTime, apiEndTime);
+
+    return;
 
     const liveId = streamer.id + "_" + moment().format("MMDDYY");
     const streamerName = streamer.globalName;
