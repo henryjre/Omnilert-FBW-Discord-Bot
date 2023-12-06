@@ -217,6 +217,10 @@ module.exports = {
       responseData.secrets
     );
 
+    const embedStartDate = timeDates.start.format("MMM D, YYYY, h:mm A");
+    const embedEndDate = timeDates.end.format("MMM D, YYYY, h:mm A");
+    const livestreamId = nanoid();
+
     let embed;
     let ordersToSave;
     if (!ordersResponse || ordersResponse.code !== 0) {
@@ -229,9 +233,30 @@ module.exports = {
       ordersResponse.data.orders.length <= 0
     ) {
       embed = new EmbedBuilder()
-        .setTitle(`🟠 TIKTOK LIVESTREAM SAVED`)
+        .setTitle(`🟠 TIKTOK LIVESTREAM SAVEDD`)
         .setColor("Orange")
-        .setDescription("No orders found within that livestream period.");
+        .setDescription("No orders found within that livestream period.")
+        .addFields([
+          {
+            name: `LIVESTREAM ID`,
+            value: livestreamId,
+          },
+          {
+            name: `LIVE STREAMER`,
+            value: streamer.globalName,
+          },
+          {
+            name: `STREAM START`,
+            value: "⏱️ | " + embedStartDate,
+          },
+          {
+            name: `STREAM END`,
+            value: "⏱️ | " + embedEndDate,
+          },
+        ])
+        .setFooter({
+          text: `Command by: ${interaction.user.globalName}`,
+        });
 
       ordersToSave = [];
     } else {
@@ -271,8 +296,32 @@ module.exports = {
         streamerName,
         createdDate,
       ]);
+
+      embed = new EmbedBuilder()
+        .setTitle(`🟢 TIKTOK LIVESTREAM SAVED`)
+        .addFields([
+          {
+            name: `LIVESTREAM ID`,
+            value: livestreamId,
+          },
+          {
+            name: `LIVE STREAMER`,
+            value: streamer.globalName,
+          },
+          {
+            name: `STREAM START`,
+            value: "⏱️ | " + embedStartDate,
+          },
+          {
+            name: `STREAM END`,
+            value: "⏱️ | " + embedEndDate,
+          },
+        ])
+        .setColor("#78B159")
+        .setFooter({
+          text: `Command by: ${interaction.user.globalName}`,
+        });
     }
-    const livestreamId = nanoid();
 
     if (ordersToSave.length > 0) {
       const insertQueryOrders =
@@ -297,34 +346,6 @@ module.exports = {
 
     connection.release();
     pool.end();
-
-    const embedStartDate = timeDates.start.format("MMM D, YYYY, h:mm A");
-    const embedEndDate = timeDates.end.format("MMM D, YYYY, h:mm A");
-
-    embed = new EmbedBuilder()
-      .setTitle(`🟢 TIKTOK LIVESTREAM SAVED`)
-      .addFields([
-        {
-          name: `LIVESTREAM ID`,
-          value: livestreamId,
-        },
-        {
-          name: `LIVE STREAMER`,
-          value: streamer.globalName,
-        },
-        {
-          name: `STREAM START`,
-          value: "⏱️ | " + embedStartDate,
-        },
-        {
-          name: `STREAM END`,
-          value: "⏱️ | " + embedEndDate,
-        },
-      ])
-      .setColor("#78B159")
-      .setFooter({
-        text: `Command by: ${interaction.user.globalName}`,
-      });
 
     await interaction.editReply({
       embeds: [embed],
