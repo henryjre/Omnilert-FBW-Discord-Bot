@@ -64,7 +64,7 @@ module.exports = {
       return;
     }
 
-    await interaction.deferReply();
+    // await interaction.deferReply();
 
     if (!interaction.member.roles.cache.has("1117440696891220050")) {
       const errorEmbed = new EmbedBuilder()
@@ -215,7 +215,8 @@ module.exports = {
       responseData.secrets
     );
 
-    console.log(ordersResponse);
+    console.log(apiStartTime, apiEndTime, ordersResponse);
+    return
 
     let orders = [];
     if (!ordersResponse || ordersResponse.code !== 0) {
