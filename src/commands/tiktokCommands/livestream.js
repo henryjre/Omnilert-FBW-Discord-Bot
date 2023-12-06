@@ -183,10 +183,9 @@ module.exports = {
       pool.end();
       return;
     }
+    console.log(apiStartTime, apiEndTime);
 
     const ordersResponse = await getOrdersLists(apiStartTime, apiEndTime);
-
-    console.log(ordersResponse);
 
     let orders;
     if (!ordersResponse.orders || ordersResponse.orders.length <= 0) {
