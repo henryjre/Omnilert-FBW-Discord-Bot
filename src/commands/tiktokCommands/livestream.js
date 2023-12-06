@@ -233,7 +233,7 @@ module.exports = {
       ordersResponse.data.orders.length <= 0
     ) {
       embed = new EmbedBuilder()
-        .setTitle(`🟠 TIKTOK LIVESTREAM SAVEDD`)
+        .setTitle(`🟠 TIKTOK LIVESTREAM SAVED`)
         .setColor("Orange")
         .setDescription("No orders found within that livestream period.")
         .addFields([
