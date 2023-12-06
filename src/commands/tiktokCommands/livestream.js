@@ -327,7 +327,7 @@ module.exports = {
       const insertQueryOrders =
         "INSERT INTO Tiktok_Livestream_Orders (ORDER_ID, STREAM_ID, ORDER_STATUS, ORDER_SUBTOTAL, LIVE_ID, STREAMER, CREATED_DATE) VALUES ?";
       await connection
-        .query(insertQueryOrders, [ordersMapped])
+        .query(insertQueryOrders, [ordersToSave])
         .catch((err) => console.log(err));
     }
 

@@ -103,16 +103,24 @@ module.exports = {
       return;
     }
 
+    // const findLiveOrdersQuery =
+    //   "SELECT " +
+    //   "o.STREAM_ID, " +
+    //   "GROUP_CONCAT(o.ORDER_STATUS) AS ORDER_STATUSES, " +
+    //   "SUM(CASE WHEN o.ORDER_STATUS = 'CANCELLED' THEN 0 ELSE o.ORDER_SUBTOTAL END) AS NET_ORDER_SUBTOTAL, " +
+    //   "s.START_TIME, " +
+    //   "s.END_TIME " +
+    //   "FROM Tiktok_Livestream_Orders o " +
+    //   "JOIN Tiktok_Livestream_Schedules s ON o.STREAM_ID = s.STREAM_ID " +
+    //   "WHERE o.STREAM_ID = ?";
+
     const findLiveOrdersQuery =
-      "SELECT " +
-      "o.STREAM_ID, " +
-      "GROUP_CONCAT(o.ORDER_STATUS) AS ORDER_STATUSES, " +
-      "SUM(CASE WHEN o.ORDER_STATUS = 'CANCELLED' THEN 0 ELSE o.ORDER_SUBTOTAL END) AS NET_ORDER_SUBTOTAL, " +
-      "s.START_TIME, " +
-      "s.END_TIME " +
-      "FROM Tiktok_Livestream_Orders o " +
-      "JOIN Tiktok_Livestream_Schedules s ON o.STREAM_ID = s.STREAM_ID " +
-      "WHERE o.STREAM_ID = ?";
+      "SELECT s.STREAM_ID, s.START_TIME, s.END_TIME, GROUP_CONCAT(o.ORDER_STATUS) AS ORDER_STATUSES, " +
+      "SUM(CASE WHEN o.ORDER_STATUS = 'CANCELLED' THEN 0 ELSE o.ORDER_SUBTOTAL END) AS NET_ORDER_SUBTOTAL " +
+      "FROM Tiktok_Livestream_Schedules s " +
+      "LEFT JOIN Tiktok_Livestream_Orders o ON s.STREAM_ID = o.STREAM_ID " +
+      "WHERE s.STREAM_ID = ? ";
+
     const orders = await connection
       .query(findLiveOrdersQuery, [streamId])
       .catch((err) => console.log(err));
@@ -121,8 +129,12 @@ module.exports = {
     pool.end();
 
     orders[0].forEach((order) => {
-      order.ORDER_STATUSES = order.ORDER_STATUSES.split(",");
-      order.NET_ORDER_SUBTOTAL = Number(order.NET_ORDER_SUBTOTAL);
+      order.ORDER_STATUSES = order.ORDER_STATUSES
+        ? order.ORDER_STATUSES.split(",")
+        : [];
+      order.NET_ORDER_SUBTOTAL = order.NET_ORDER_SUBTOTAL
+        ? Number(order.NET_ORDER_SUBTOTAL)
+        : 0;
 
       const commission = calculateCommission(Number(order.NET_ORDER_SUBTOTAL));
       order.NET_COMMISSION = commission;
