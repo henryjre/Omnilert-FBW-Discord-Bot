@@ -64,7 +64,7 @@ module.exports = {
       return;
     }
 
-    // await interaction.deferReply();
+    await interaction.deferReply();
 
     if (!interaction.member.roles.cache.has("1117440696891220050")) {
       const errorEmbed = new EmbedBuilder()
