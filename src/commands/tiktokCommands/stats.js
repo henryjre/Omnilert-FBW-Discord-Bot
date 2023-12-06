@@ -100,6 +100,13 @@ module.exports = {
     findLiveOrders[0].forEach((order) => {
       order.ORDER_STATUSES = order.ORDER_STATUSES.split(",");
       order.NET_ORDER_SUBTOTAL = Number(order.NET_ORDER_SUBTOTAL);
+      const commission = calculateCommission(Number(order.NET_ORDER_SUBTOTAL));
+      order.NET_COMMISSION = commission;
+
+      if (Number(order.NET_ORDER_SUBTOTAL) === 0) {
+        order.CLAIMABLE = "🟢 Ready to claim";
+        return;
+      }
 
       if (order.CLAIMED === 1) {
         order.CLAIMABLE = "🔴 Already Claimed";
@@ -117,9 +124,6 @@ module.exports = {
       ) {
         order.CLAIMABLE = "🟡 Cannot claim yet.";
       }
-
-      const commission = calculateCommission(Number(order.NET_ORDER_SUBTOTAL));
-      order.NET_COMMISSION = commission;
     });
 
     console.log(findLiveOrders[0]);
