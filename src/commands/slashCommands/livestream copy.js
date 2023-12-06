@@ -4,6 +4,7 @@ require("dotenv").config({ path: "src/.env" });
 const moment = require("moment");
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
+const crypto = require("crypto");
 const { customAlphabet } = require("nanoid");
 const nanoid = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 13);
 
@@ -184,12 +185,48 @@ module.exports = {
       return;
     }
 
-    const ordersResponse = await getOrdersLists(apiStartTime, apiEndTime);
+    const url = `https://leviosa.ph/_functions/getTiktokSecrets`;
+    const options = {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": process.env.apiKey,
+      },
+    };
+
+    const response = await fetch(url, options).catch((err) => {
+      interaction.editReply({
+        content:
+          "🔴 FETCH ERROR: An error has occured while fetching secret tokens.",
+      });
+      return;
+    });
+    const responseData = await response.json();
+
+    if (!response.ok) {
+      return await interaction.editReply({
+        content: "🔴 FETCH ERROR: " + responseData.error,
+      });
+    }
+    const ordersResponse = await getOrdersLists(
+      apiStartTime,
+      apiEndTime,
+      "",
+      responseData.secrets
+    );
 
     console.log(ordersResponse);
 
-    let orders;
-    if (ordersResponse.orders || ordersResponse.orders.length <= 0) {
+    let orders = [];
+    if (!ordersResponse || ordersResponse.code !== 0) {
+      return await interaction.editReply({
+        content:
+          "🔴 FETCH ERROR: There was an error while fetching tiktok livestream orders.",
+      });
+    } else if (
+      !ordersResponse.data.orders ||
+      ordersResponse.data.orders.length <= 0
+    ) {
       const errorEmbed = new EmbedBuilder()
         .setTitle(`NO LIVESTREAM ORDERS`)
         .setColor("Orange")
@@ -201,9 +238,31 @@ module.exports = {
         embeds: [errorEmbed],
       });
     } else {
-      orders = ordersResponse.orders;
-    }
+      let nextPageToken = ordersResponse.data.next_page_token;
+      let ordersToPush = ordersResponse.data.orders.filter(
+        (order) => Number(order.payment.sub_total) !== 0
+      );
+      orders = [...orders, ...ordersToPush];
+      while (nextPageToken.length > 0) {
+        const newResponse = await getOrdersLists(
+          apiStartTime,
+          apiEndTime,
+          nextPageToken,
+          responseData.secrets
+        );
+        if (!newResponse || newResponse.code !== 0) {
+          break;
+        }
 
+        if (newResponse.data.orders && newResponse.data.orders.length > 0) {
+          nextPageToken = newResponse.data.next_page_token;
+          ordersToPush = newResponse.data.orders;
+          orders = [...orders, ...ordersToPush];
+        } else {
+          break;
+        }
+      }
+    }
     const livestreamId = nanoid();
 
     const ordersMapped = orders.map((obj) => [
@@ -270,28 +329,110 @@ module.exports = {
       embeds: [embed],
     });
 
-    async function getOrdersLists(start, end) {
-      const url = `https://leviosa.ph/_functions/getTiktokOrderLists?startTime=${start}&endTime=${end}`;
-      const options = {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": process.env.apiKey,
+    async function getOrdersLists(start, end, nextPage, options) {
+      const currentTimestamp = Math.floor(new Date().getTime() / 1000);
+      const urlPath = `/order/202309/orders/search?app_key=${options.tiktokAppKey}&shop_cipher=${options.tiktokShopCipher}&timestamp=${currentTimestamp}&page_token=${nextPage}&page_size=100`;
+      const apiUrl = "https://open-api.tiktokglobalshop.com";
+
+      const signReqOptions = {
+        url: urlPath,
+        headers: { "content-type": "application/json" },
+        body: {
+          create_time_ge: start,
+          create_time_lt: end,
         },
       };
 
-      const response = await fetch(url, options).catch((err) => {
-        interaction.editReply({
-          content:
-            "🔴 FETCH ERROR: An error has occured while fetching secret tokens.",
-        });
-        return;
-      });
+      const sign = await signRequest(signReqOptions);
 
-      const responseData = await response.json();
-      console.log(responseData);
-      return responseData;
+      try {
+        const response = await fetch(apiUrl + urlPath + `&sign=${sign}`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-tts-access-token": options.tiktokAccessToken,
+          },
+          body: JSON.stringify(signReqOptions.body),
+        });
+
+        const responseJson = await response.json();
+        return responseJson;
+      } catch (error) {
+        console.log(error);
+        return null;
+      }
     }
+
+    async function signRequest(request) {
+      const secretKey = responseData.secrets.tiktokAppSecret;
+      const signature = CalSign(request, secretKey);
+      return signature;
+
+      function CalSign(req, secret) {
+        const urlParts = req.url.split("?");
+        const path = urlParts[0];
+        const queryString = urlParts[1] || "";
+
+        const queryParameters = {};
+        queryString.split("&").forEach((param) => {
+          const parts = param.split("=");
+          const key = decodeURIComponent(parts.shift());
+          const value = decodeURIComponent(parts.join("=")); // Join the remaining parts to form the value
+          queryParameters[key] = value;
+        });
+
+        // Extract all query parameters excluding 'sign' and 'access_token'
+        const keys = Object.keys(queryParameters).filter(
+          (k) => k !== "sign" && k !== "access_token"
+        );
+
+        // Reorder the parameters' key in alphabetical order
+        keys.sort();
+
+        // Concatenate all the parameters in the format of {key}{value}
+        let input = "";
+        for (const key of keys) {
+          input += key + queryParameters[key];
+        }
+
+        // Append the request path
+        input = path + input;
+
+        // If the request header Content-type is not multipart/form-data, append the body to the end
+        const contentType = req.headers["content-type"];
+        if (contentType !== "multipart/form-data") {
+          if (req.body) {
+            const body = JSON.stringify(req.body);
+            input += body;
+          }
+        }
+
+        // Wrap the string generated in step 5 with the App secret
+        input = secret + input + secret;
+
+        return generateSHA256(input, secret);
+      }
+
+      function generateSHA256(input, secret) {
+        return crypto.createHmac("sha256", secret).update(input).digest("hex");
+      }
+    }
+
+    // function convertTime(time12h) {
+    //   try {
+    //     const momentObj = moment(time12h, ["h:mm A", "hh:mm A"]);
+
+    //     console.log(momentObj.format("MMMM D, YYYY, h:mm A"));
+
+    //     const hour = momentObj.hour();
+    //     const minute = momentObj.minute();
+
+    //     return { hour, minute };
+    //   } catch (error) {
+    //     console.error(`Error: ${error.message}`);
+    //     return null; // or throw the error if you prefer
+    //   }
+    // }
 
     function convertTime(startTime12h, endTime12h) {
       try {
@@ -303,6 +444,11 @@ module.exports = {
           "MMMM D, YYYY h:mm A",
           "MMMM D, YYYY hh:mm A",
         ]);
+
+        // If end time is before start time, adjust the date for start time to the previous day
+        // if (momentEnd.isBefore(momentStart)) {
+        //   momentStart.subtract(1, "day");
+        // }
 
         return {
           start: momentStart,
