@@ -113,7 +113,7 @@ module.exports = {
     const apiStartTime = timeDates.start.unix();
     const apiEndTime = timeDates.end.unix();
 
-    console.log(apiStartTime, apiEndTime)
+    console.log(apiStartTime, apiEndTime);
 
     const liveId = streamer.id + "_" + moment().format("MMDDYY");
     const streamerName = streamer.globalName;
@@ -439,12 +439,16 @@ module.exports = {
       try {
         const momentStart = moment(startTime12h, [
           "MMMM D, YYYY h:mm A",
+          "MMMM DD, YYYY h:mm A",
           "MMMM D, YYYY hh:mm A",
+          "MMMM DD, YYYY hh:mm A",
         ]);
 
         const momentEnd = moment(endTime12h, [
           "MMMM D, YYYY h:mm A",
+          "MMMM DD, YYYY h:mm A",
           "MMMM D, YYYY hh:mm A",
+          "MMMM DD, YYYY hh:mm A",
         ]);
 
         console.log({
