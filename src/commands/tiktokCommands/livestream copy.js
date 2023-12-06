@@ -110,8 +110,8 @@ module.exports = {
       return;
     }
 
-    const apiStartTime = timeDates.start.unix();
-    const apiEndTime = timeDates.end.unix();
+    const apiStartTime = timeDates.start.unix() - 8 * 60 * 60;
+    const apiEndTime = timeDates.end.unix() - 8 * 60 * 60;
 
     console.log(apiStartTime, apiEndTime);
 
@@ -439,27 +439,13 @@ module.exports = {
       try {
         const momentStart = moment(startTime12h, [
           "MMMM D, YYYY h:mm A",
-          "MMMM DD, YYYY h:mm A",
           "MMMM D, YYYY hh:mm A",
-          "MMMM DD, YYYY hh:mm A",
         ]);
 
         const momentEnd = moment(endTime12h, [
           "MMMM D, YYYY h:mm A",
-          "MMMM DD, YYYY h:mm A",
           "MMMM D, YYYY hh:mm A",
-          "MMMM DD, YYYY hh:mm A",
         ]);
-
-        console.log({
-          start: momentStart.format("MMMM D, YYYY h:mm A"),
-          end: momentEnd.format("MMMM D, YYYY h:mm A"),
-        });
-
-        console.log({
-          start: momentStart.valueOf() / 1000,
-          end: momentEnd.valueOf() / 1000,
-        });
 
         return {
           start: momentStart,
