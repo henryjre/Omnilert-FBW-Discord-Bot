@@ -215,6 +215,8 @@ module.exports = {
       responseData.secrets
     );
 
+   console.log(ordersResponse)
+
     let orders = [];
     if (!ordersResponse || ordersResponse.code !== 0) {
       return await interaction.editReply({
