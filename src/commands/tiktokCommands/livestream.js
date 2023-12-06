@@ -189,7 +189,7 @@ module.exports = {
     console.log(ordersResponse);
 
     let orders;
-    if (ordersResponse.orders || ordersResponse.orders.length <= 0) {
+    if (!ordersResponse.orders || ordersResponse.orders.length <= 0) {
       const errorEmbed = new EmbedBuilder()
         .setTitle(`NO LIVESTREAM ORDERS`)
         .setColor("Orange")
