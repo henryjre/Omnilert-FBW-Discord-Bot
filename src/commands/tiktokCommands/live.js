@@ -25,7 +25,7 @@ const pesoFormatter = new Intl.NumberFormat("en-PH", {
 });
 
 module.exports = {
-  // cooldown: 90,
+  cooldown: 90,
   data: new SlashCommandBuilder()
     .setName("live")
     .setDescription(
