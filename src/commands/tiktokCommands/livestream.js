@@ -64,7 +64,7 @@ module.exports = {
       return;
     }
 
-    // await interaction.deferReply();
+    await interaction.deferReply();
 
     if (!interaction.member.roles.cache.has("1117440696891220050")) {
       const errorEmbed = new EmbedBuilder()
@@ -215,7 +215,7 @@ module.exports = {
       responseData.secrets
     );
 
-   console.log(ordersResponse)
+    console.log(ordersResponse);
 
     let orders = [];
     if (!ordersResponse || ordersResponse.code !== 0) {
@@ -236,7 +236,10 @@ module.exports = {
       });
     } else {
       let nextPageToken = ordersResponse.data.next_page_token;
-      orders = [...orders, ...ordersResponse.data.orders];
+      let ordersToPush = ordersResponse.data.orders.filter(
+        (order) => Number(order.payment.sub_total) !== 0
+      );
+      orders = [...orders, ...ordersToPush];
       while (nextPageToken) {
         const newResponse = await getOrdersLists(
           apiStartTime,
@@ -245,7 +248,11 @@ module.exports = {
           responseData.secrets
         );
         if (newResponse && newResponse.code === 0) {
-          orders = [...orders, ...newResponse.data.orders];
+          nextPageToken = newResponse.data.next_page_token;
+          ordersToPush = newResponse.data.orders.filter(
+            (order) => Number(order.payment.sub_total) !== 0
+          );
+          orders = [...orders, ...ordersToPush];
         }
       }
     }
@@ -283,8 +290,8 @@ module.exports = {
     connection.release();
     pool.end();
 
-    const embedStartDate = startTime.format("MMM D, YYYY, h:mm A");
-    const embedEndDate = endTime.format("MMM D, YYYY, h:mm A");
+    const embedStartDate = timeDates.start.format("MMM D, YYYY, h:mm A");
+    const embedEndDate = timeDates.end.format("MMM D, YYYY, h:mm A");
 
     const embed = new EmbedBuilder()
       .setTitle(`🟢 TIKTOK LIVESTREAM SAVED`)
