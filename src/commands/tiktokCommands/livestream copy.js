@@ -436,19 +436,16 @@ module.exports = {
 
     function convertTime(startTime12h, endTime12h) {
       try {
+        const philippinesOffset = 8 * 60;
+
         const momentStart = moment(startTime12h, [
           "MMMM D, YYYY h:mm A",
           "MMMM D, YYYY hh:mm A",
-        ]);
+        ]).utcOffset(philippinesOffset);
         const momentEnd = moment(endTime12h, [
           "MMMM D, YYYY h:mm A",
           "MMMM D, YYYY hh:mm A",
-        ]);
-
-        // If end time is before start time, adjust the date for start time to the previous day
-        // if (momentEnd.isBefore(momentStart)) {
-        //   momentStart.subtract(1, "day");
-        // }
+        ]).utcOffset(philippinesOffset);
 
         return {
           start: momentStart,
