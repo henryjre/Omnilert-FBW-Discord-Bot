@@ -29,7 +29,7 @@ module.exports = {
         .setDescription(
           "The beginning time of the livestream. E.G. January 1, 2023 8:00 AM"
         )
-        .setRequired(true)
+        .setRequired(false)
     )
     .addStringOption((option) =>
       option
@@ -37,7 +37,7 @@ module.exports = {
         .setDescription(
           "The ending time of the livestream. E.G. January 30, 2023 10:00 PM"
         )
-        .setRequired(true)
+        .setRequired(false)
     ),
   async execute(interaction, client) {
     const validRoles = ["1176496361802301462"];
@@ -56,6 +56,14 @@ module.exports = {
     const streamer = interaction.options.getUser("streamer");
     const start = interaction.options.getString("start-time");
     const end = interaction.options.getString("end-time");
+
+    if (!start || !end) {
+      await interaction.editReply({
+        content: "Input valid start time and end time.",
+        ephemeral: true,
+      });
+      return;
+    }
 
     if (!interaction.member.roles.cache.has("1117440696891220050")) {
       const errorEmbed = new EmbedBuilder()
