@@ -223,7 +223,10 @@ module.exports = {
         content:
           "🔴 FETCH ERROR: There was an error while fetching tiktok livestream orders.",
       });
-    } else if (ordersResponse.data.orders.length <= 0) {
+    } else if (
+      !ordersResponse.data.orders ||
+      ordersResponse.data.orders.length <= 0
+    ) {
       const errorEmbed = new EmbedBuilder()
         .setTitle(`NO LIVESTREAM ORDERS`)
         .setColor("Orange")
