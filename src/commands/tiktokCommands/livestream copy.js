@@ -435,17 +435,15 @@ module.exports = {
     function convertTime(startTime12h, endTime12h) {
       console.log(startTime12h, endTime12h);
       try {
-        const philippinesOffset = 8 * 60;
-
         const momentStart = moment(startTime12h, [
           "MMMM D, YYYY h:mm A",
           "MMMM D, YYYY hh:mm A",
-        ]).utcOffset(philippinesOffset);
+        ]);
 
         const momentEnd = moment(endTime12h, [
           "MMMM D, YYYY h:mm A",
           "MMMM D, YYYY hh:mm A",
-        ]).utcOffset(philippinesOffset);
+        ]);
 
         console.log({
           start: momentStart.format("MMMM D, YYYY h:mm A"),
