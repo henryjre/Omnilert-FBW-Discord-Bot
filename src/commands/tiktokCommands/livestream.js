@@ -243,19 +243,23 @@ module.exports = {
         (order) => Number(order.payment.sub_total) !== 0
       );
       orders = [...orders, ...ordersToPush];
-      while (nextPageToken) {
+      while (nextPageToken.length > 0) {
         const newResponse = await getOrdersLists(
           apiStartTime,
           apiEndTime,
-          "",
+          nextPageToken,
           responseData.secrets
         );
-        if (newResponse && newResponse.code === 0) {
+        if (!newResponse || newResponse.code !== 0) {
+          break;
+        }
+
+        if (newResponse.data.orders && newResponse.data.orders.length > 0) {
           nextPageToken = newResponse.data.next_page_token;
-          ordersToPush = newResponse.data.orders.filter(
-            (order) => Number(order.payment.sub_total) !== 0
-          );
+          ordersToPush = newResponse.data.orders;
           orders = [...orders, ...ordersToPush];
+        } else {
+          break;
         }
       }
     }
@@ -349,9 +353,10 @@ module.exports = {
             "x-tts-access-token": options.tiktokAccessToken,
           },
           body: JSON.stringify(signReqOptions.body),
-        }).then((response) => response.json());
+        });
 
-        return response;
+        const responseJson = await response.json();
+        return responseJson;
       } catch (error) {
         console.log(error);
         return null;
