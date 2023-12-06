@@ -51,19 +51,20 @@ module.exports = {
       });
       return;
     }
-    await interaction.deferReply();
 
     const streamer = interaction.options.getUser("streamer");
     const start = interaction.options.getString("start-time");
     const end = interaction.options.getString("end-time");
 
     if (!start || !end) {
-      await interaction.editReply({
+      await interaction.reply({
         content: "Input valid start time and end time.",
         ephemeral: true,
       });
       return;
     }
+
+    await interaction.deferReply();
 
     if (!interaction.member.roles.cache.has("1117440696891220050")) {
       const errorEmbed = new EmbedBuilder()
