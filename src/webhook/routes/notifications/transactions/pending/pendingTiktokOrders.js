@@ -52,7 +52,7 @@ module.exports = async (req, res) => {
     return res.status(200).json({ ok: true, message: "dpd winner order" });
 
   const orderId = maskOrderId(data.order_id);
-  const subtotal = order.payment.sub_total;
+  const subtotal = Number(order.payment.sub_total);
 
   let description = "";
   order.line_items.forEach((item) => {
