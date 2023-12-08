@@ -65,8 +65,11 @@ module.exports = {
     }
 
     await interaction.deferReply();
-
-    if (!interaction.member.roles.cache.has("1117440696891220050")) {
+    if (
+      !interaction.guild.members.cache
+        .get(streamer.id)
+        .roles.cache.has("1117440696891220050")
+    ) {
       const errorEmbed = new EmbedBuilder()
         .setTitle(`INVALID LIVESTREAMER`)
         .setColor("Red")
