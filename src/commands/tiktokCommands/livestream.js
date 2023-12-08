@@ -119,6 +119,8 @@ module.exports = {
     const streamerName = streamer.globalName;
     const createdDate = moment().format("YYYY-MM-DD HH:mm:ss");
 
+    console.log(streamerName, liveId);
+
     const pool = mysql.createPool({
       host: process.env.logSqlHost,
       port: process.env.logSqlPort,
