@@ -93,9 +93,7 @@ module.exports = {
     const findLiveOrders = await connection
       .query(findOrdersForScheduleQuery, [interaction.user.id])
       .catch((err) => console.error(err));
-
-    console.log(findLiveOrders[0]);
-
+      
     connection.release();
     pool.end();
 

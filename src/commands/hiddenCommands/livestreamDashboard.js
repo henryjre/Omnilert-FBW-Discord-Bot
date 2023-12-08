@@ -68,21 +68,31 @@ module.exports = {
         }`;
       }
 
-      // Query to get length of rows and sum of ORDER_SUBTOTAL where ORDER_STATUS is not 'CANCELLED' from Tiktok_Livestream_Orders
-      const orderStats = await connection.execute(
-        "SELECT COUNT(*) AS rowCount, SUM(CASE WHEN ORDER_STATUS = 'CANCELLED' THEN 0 ELSE ORDER_SUBTOTAL END) AS totalSubtotal FROM Tiktok_Livestream_Orders WHERE LIVE_ID LIKE ? GROUP BY STREAM_ID",
-        [`%${streamerId}%`]
-      );
+      const findLiveOrdersQuery =
+        "SELECT s.STREAM_ID, COUNT(o.ORDER_ID) AS ORDER_COUNT, " +
+        "SUM(CASE WHEN o.ORDER_STATUS = 'CANCELLED' THEN 0 ELSE o.ORDER_SUBTOTAL END) AS NET_ORDER_SUBTOTAL " +
+        "FROM Tiktok_Livestream_Schedules s " +
+        "LEFT JOIN Tiktok_Livestream_Orders o ON s.STREAM_ID = o.STREAM_ID " +
+        "WHERE s.LIVE_ID LIKE ? " +
+        "GROUP BY s.STREAM_ID";
+
+      const orderStats = await connection.execute(findLiveOrdersQuery, [
+        `%${streamerId}%`,
+      ]);
 
       let totalOrders = 0;
       let totalSubtotal = 0;
       let totalCommission = 0;
 
       orderStats[0].forEach((order) => {
-        totalOrders += order.rowCount;
-        totalSubtotal += Number(order.totalSubtotal);
+        totalOrders += order.ORDER_COUNT;
+        totalSubtotal += order.NET_ORDER_SUBTOTAL
+          ? Number(order.NET_ORDER_SUBTOTAL)
+          : 0;
 
-        const commission = calculateCommission(Number(order.totalSubtotal));
+        const commission = calculateCommission(
+          Number(order.NET_ORDER_SUBTOTAL)
+        );
         totalCommission += commission;
       });
 
