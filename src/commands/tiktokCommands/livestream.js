@@ -116,9 +116,8 @@ module.exports = {
     const apiStartTime = timeDates.start.unix() - 8 * 60 * 60;
     const apiEndTime = timeDates.end.unix() - 8 * 60 * 60;
 
-    console.log(apiStartTime, apiEndTime);
-
-    const liveId = streamer.id + "_" + moment().format("MMDDYY");
+    const liveId =
+      streamer.id + "_" + moment.unix(apiStartTime).format("MMDDYY");
     const streamerName = streamer.globalName;
     const createdDate = moment().format("YYYY-MM-DD HH:mm:ss");
 
