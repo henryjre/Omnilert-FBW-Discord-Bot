@@ -62,7 +62,7 @@ module.exports = async (req, res) => {
   let title = `### 🛒 NEW TIKTOK ORDER`;
   let name = "ORDER";
   if (subtotal === 0) {
-    title = `### 🛒 NEW TIKTOK GIVEAWAY`;
+    title = `### 🧧 NEW TIKTOK GIVEAWAY`;
     name = "GIVEAWAY";
   }
 

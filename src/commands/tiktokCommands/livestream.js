@@ -13,6 +13,15 @@ const path = require("path");
 const caCertificatePath = path.join(__dirname, "../../DO_Certificate.crt");
 const caCertificate = fs.readFileSync(caCertificatePath);
 
+const commissionRates = require("./commission.json");
+
+const pesoFormatter = new Intl.NumberFormat("en-PH", {
+  style: "currency",
+  currency: "PHP",
+  maximumFractionDigits: 2,
+  minimumFractionDigits: 2,
+});
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("livestream")
@@ -225,7 +234,7 @@ module.exports = {
     const embedEndDate = timeDates.end.format("MMM D, YYYY, h:mm A");
     const livestreamId = nanoid();
 
-    let embed;
+    let embed = { color: "#78B159", emoji: "🟢", description: "" };
     let ordersToSave;
     if (!ordersResponse || ordersResponse.code !== 0) {
       return await interaction.editReply({
@@ -236,31 +245,9 @@ module.exports = {
       !ordersResponse.data.orders ||
       ordersResponse.data.orders.length <= 0
     ) {
-      embed = new EmbedBuilder()
-        .setTitle(`🟠 TIKTOK LIVESTREAM SAVED`)
-        .setColor("Orange")
-        .setDescription("No orders found within that livestream period.")
-        .addFields([
-          {
-            name: `LIVESTREAM ID`,
-            value: livestreamId,
-          },
-          {
-            name: `LIVE STREAMER`,
-            value: streamer.globalName,
-          },
-          {
-            name: `STREAM START`,
-            value: "⏱️ | " + embedStartDate,
-          },
-          {
-            name: `STREAM END`,
-            value: "⏱️ | " + embedEndDate,
-          },
-        ])
-        .setFooter({
-          text: `Command by: ${interaction.user.globalName}`,
-        });
+      embed.color = "Orange";
+      embed.description = "No orders found within that livestream period.";
+      embed.emoji = "🟠";
 
       ordersToSave = [];
     } else {
@@ -300,32 +287,16 @@ module.exports = {
         streamerName,
         createdDate,
       ]);
-
-      embed = new EmbedBuilder()
-        .setTitle(`🟢 TIKTOK LIVESTREAM SAVED`)
-        .addFields([
-          {
-            name: `LIVESTREAM ID`,
-            value: livestreamId,
-          },
-          {
-            name: `LIVE STREAMER`,
-            value: streamer.globalName,
-          },
-          {
-            name: `STREAM START`,
-            value: "⏱️ | " + embedStartDate,
-          },
-          {
-            name: `STREAM END`,
-            value: "⏱️ | " + embedEndDate,
-          },
-        ])
-        .setColor("#78B159")
-        .setFooter({
-          text: `Command by: ${interaction.user.globalName}`,
-        });
     }
+
+    let livestreamStats = {
+      totalOrders: 0,
+      pending: 0,
+      cancelled: 0,
+      completed: 0,
+      netSubtotal: 0,
+      netCommission: 0,
+    };
 
     if (ordersToSave.length > 0) {
       const insertQueryOrders =
@@ -333,7 +304,27 @@ module.exports = {
       await connection
         .query(insertQueryOrders, [ordersToSave])
         .catch((err) => console.log(err));
+
+      ordersToSave.forEach((order) => {
+        const order_status = order[2];
+        const order_subtotal = order[3];
+
+        if (order_status === "CANCELLED") {
+          livestreamStats.cancelled += 1;
+        } else if (order_status === "COMPLETED") {
+          livestreamStats.completed += 1;
+          livestreamStats.netSubtotal += order_subtotal;
+        } else {
+          livestreamStats.pending += 1;
+          livestreamStats.netSubtotal += order_subtotal;
+        }
+
+        livestreamStats.totalOrders += 1;
+      });
     }
+
+    const commission = calculateCommission(livestreamStats.netSubtotal);
+    livestreamStats.netCommission = commission;
 
     const insertQueryLive =
       "INSERT INTO Tiktok_Livestream_Schedules (STREAM_ID, STREAMER_ID, STREAMER_NAME, START_TIME, END_TIME, LIVE_ID) VALUES (?, ?, ?, ?, ?, ?)";
@@ -351,8 +342,46 @@ module.exports = {
     connection.release();
     pool.end();
 
+    const embedToSend = new EmbedBuilder()
+      .setTitle(`${embed.emoji} TIKTOK LIVESTREAM SAVED`)
+      .setDescription(embed.description)
+      .addFields([
+        {
+          name: `LIVESTREAM ID`,
+          value: livestreamId,
+        },
+        {
+          name: `LIVE STREAMER`,
+          value: streamer.globalName,
+        },
+        {
+          name: `ORDER DETAILS`,
+          value: `**Total Orders:** ${livestreamStats.totalOrders}\n**Pending:** ${livestreamStats.pending}\n**Completed:** ${livestreamStats.completed}\n**Cancelled:** ${livestreamStats.cancelled}`,
+        },
+        {
+          name: `ORDER NET SUBTOTAL`,
+          value: pesoFormatter.format(livestreamStats.netSubtotal),
+        },
+        {
+          name: `ORDER NET COMMISSION`,
+          value: pesoFormatter.format(livestreamStats.netCommission),
+        },
+        {
+          name: `STREAM START`,
+          value: "⏱️ | " + embedStartDate,
+        },
+        {
+          name: `STREAM END`,
+          value: "⏱️ | " + embedEndDate,
+        },
+      ])
+      .setColor(embed.color)
+      .setFooter({
+        text: `Command by: ${interaction.user.globalName}`,
+      });
+
     await interaction.editReply({
-      embeds: [embed],
+      embeds: [embedToSend],
     });
 
     async function getOrdersLists(start, end, nextPage, options) {
@@ -481,6 +510,29 @@ module.exports = {
         console.error(`Error: ${error.message}`);
         return null; // or throw the error if you prefer
       }
+    }
+
+    function calculateCommission(netSales) {
+      for (const commissionRange of commissionRates) {
+        const { min, max, commission } = commissionRange;
+
+        if (
+          (min <= netSales && netSales <= max) ||
+          (min <= netSales && max === null)
+        ) {
+          if (commission === "Manual Computation") {
+            return netSales * 0.1;
+          } else {
+            return commission;
+          }
+        }
+      }
+
+      if (netSales >= 20000) {
+        return netSales * 0.1;
+      }
+
+      return "No commission applicable for the given netSales";
     }
   },
 };
