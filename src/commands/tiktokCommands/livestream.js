@@ -230,6 +230,8 @@ module.exports = {
       responseData.secrets
     );
 
+    console.log(ordersResponse)
+
     const embedStartDate = timeDates.start.format("MMM D, YYYY, h:mm A");
     const embedEndDate = timeDates.end.format("MMM D, YYYY, h:mm A");
     const livestreamId = nanoid();
