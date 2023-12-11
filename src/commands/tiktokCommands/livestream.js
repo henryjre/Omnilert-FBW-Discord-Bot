@@ -344,7 +344,6 @@ module.exports = {
 
     const embedToSend = new EmbedBuilder()
       .setTitle(`${embed.emoji} TIKTOK LIVESTREAM SAVED`)
-      .setDescription(embed.description)
       .addFields([
         {
           name: `LIVESTREAM ID`,
@@ -379,6 +378,10 @@ module.exports = {
       .setFooter({
         text: `Command by: ${interaction.user.globalName}`,
       });
+
+      if (embed.description.length > 0) {
+        embedToSend.setDescription(embed.description)
+      }
 
     await interaction.editReply({
       embeds: [embedToSend],
