@@ -247,10 +247,6 @@ module.exports = {
       !ordersResponse.data.orders ||
       ordersResponse.data.orders.length <= 0
     ) {
-      embed.color = "Orange";
-      embed.description = "No orders found within that livestream period.";
-      embed.emoji = "🟠";
-
       ordersToSave = [];
     } else {
       let orders = [];
@@ -323,6 +319,10 @@ module.exports = {
 
         livestreamStats.totalOrders += 1;
       });
+    } else {
+      embed.color = "Orange";
+      embed.description = "No orders found within that livestream period.";
+      embed.emoji = "🟠";
     }
 
     const commission = calculateCommission(livestreamStats.netSubtotal);
