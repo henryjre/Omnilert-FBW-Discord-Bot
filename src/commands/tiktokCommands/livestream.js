@@ -230,7 +230,7 @@ module.exports = {
       responseData.secrets
     );
 
-    console.log(ordersResponse)
+    console.log(apiStartTime, apiEndTime, ordersResponse);
 
     const embedStartDate = timeDates.start.format("MMM D, YYYY, h:mm A");
     const embedEndDate = timeDates.end.format("MMM D, YYYY, h:mm A");
@@ -381,9 +381,9 @@ module.exports = {
         text: `Command by: ${interaction.user.globalName}`,
       });
 
-      if (embed.description.length > 0) {
-        embedToSend.setDescription(embed.description)
-      }
+    if (embed.description.length > 0) {
+      embedToSend.setDescription(embed.description);
+    }
 
     await interaction.editReply({
       embeds: [embedToSend],
