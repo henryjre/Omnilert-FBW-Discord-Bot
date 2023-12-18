@@ -110,7 +110,7 @@ module.exports = {
       const embed = new EmbedBuilder()
         .setTitle(`🔴 LOG OUT`)
         .setDescription(
-          `👤 **User:** ${interaction.user.username}\n⏱️ **Time In:** ${timeInStamp}\n⏱️ **Time Out:** ${timeStamp}\n⏳ **Duration:** ${hours} hours and ${minutes} minutes`
+          `👤 **User:** ${interaction.user.globalName}\n⏱️ **Time In:** ${timeInStamp}\n⏱️ **Time Out:** ${timeStamp}\n⏳ **Duration:** ${hours} hours and ${minutes} minutes`
         )
         .setColor("Red")
         // .setTimestamp(timeStamp)

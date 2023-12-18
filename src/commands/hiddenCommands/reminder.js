@@ -75,7 +75,7 @@ module.exports = {
     !penalty[channelId] ? {} : penalty[channelId].cancel();
 
     if (type === 0) {
-      console.log(`Resetting reminders for ${author.username}`);
+      console.log(`Resetting reminders for ${author.globalName}`);
       reminder[channelId] = schedule.scheduleJob(
         `IN 1 HOUR AND 30 MINS: ${author.username}`,
         calculateHourAndHalfReminder(),
@@ -110,7 +110,7 @@ module.exports = {
       );
     } else {
       client.channels.cache.get(channelId).send({
-        content: `Cancelled reminders for ${author.username}`,
+        content: `Cancelled reminders for ${author.globalName}`,
       });
       checkSchedules();
     }
