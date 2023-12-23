@@ -18,7 +18,7 @@ module.exports = (client) => {
           }
           break;
 
-        case "buttons":
+        case "coreButtons":
           for (const file of componentFiles) {
             const button = require(`../../components/${folder}/${file}`);
             buttons.set(button.data.name, button);
@@ -32,7 +32,21 @@ module.exports = (client) => {
           }
           break;
 
+        case "coreMenus":
+          for (const file of componentFiles) {
+            const menu = require(`../../components/${folder}/${file}`);
+            selectMenus.set(menu.data.name, menu);
+          }
+          break;
+
         case "modals":
+          for (const file of componentFiles) {
+            const modal = require(`../../components/${folder}/${file}`);
+            modals.set(modal.data.name, modal);
+          }
+          break;
+
+        case "coreModals":
           for (const file of componentFiles) {
             const modal = require(`../../components/${folder}/${file}`);
             modals.set(modal.data.name, modal);

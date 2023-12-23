@@ -20,7 +20,6 @@ module.exports = {
 
     await interaction.deferUpdate();
 
-    await interaction.guild.members.fetch();
     const streamers = interaction.guild.roles.cache
       .get("1117440696891220050")
       .members.map((m) =>

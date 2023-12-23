@@ -1,0 +1,50 @@
+const {
+  ActionRowBuilder,
+  ModalBuilder,
+  TextInputBuilder,
+  TextInputStyle,
+} = require("discord.js");
+
+module.exports = {
+  data: {
+    name: `votingRightsUpvote`,
+  },
+  async execute(interaction, client) {
+    if (interaction.user.id === "864920050691866654") {
+      await interaction.reply({
+        content: `🔴 ERROR: You cannot use this button.`,
+        ephemeral: true,
+      });
+      return;
+    }
+    const modal = buildModal();
+    await interaction.showModal(modal);
+
+    function buildModal() {
+      const modal = new ModalBuilder()
+        .setCustomId("vrUpvoteModal")
+        .setTitle(`Upvote`);
+
+      const firstInput = new TextInputBuilder()
+        .setCustomId(`pbrInput`)
+        .setLabel(`Performance Based Rate`)
+        .setStyle(TextInputStyle.Short)
+        .setPlaceholder("Rate the performance of the member between 1 to 50.")
+        .setRequired(true);
+
+      const secondInput = new TextInputBuilder()
+        .setCustomId(`remarksInput`)
+        .setLabel(`Remarks`)
+        .setStyle(TextInputStyle.Paragraph)
+        .setPlaceholder("Add remarks to justify your Upvote and PBR choice.")
+        .setRequired(true);
+
+      const firstActionRow = new ActionRowBuilder().addComponents(firstInput);
+      const secondActionRow = new ActionRowBuilder().addComponents(secondInput);
+
+      modal.addComponents(firstActionRow, secondActionRow);
+
+      return modal;
+    }
+  },
+};

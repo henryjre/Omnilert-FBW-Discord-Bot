@@ -5,12 +5,7 @@ const {
   ButtonStyle,
 } = require("discord.js");
 
-const fs = require("fs");
-const path = require("path");
-const caCertificatePath = path.join(__dirname, "../../DO_Certificate.crt");
-const caCertificate = fs.readFileSync(caCertificatePath);
-
-const mysql = require("mysql2/promise");
+const pool = require("../../sqlConnectionPool");
 const moment = require("moment");
 
 const pesoFormatter = new Intl.NumberFormat("en-PH", {
@@ -54,21 +49,6 @@ module.exports = {
     await interaction.editReply({
       embeds: [claimedEmbed],
       components: [],
-    });
-
-    const pool = mysql.createPool({
-      host: process.env.logSqlHost,
-      port: process.env.logSqlPort,
-      user: process.env.logSqlUsername,
-      password: process.env.logSqlPassword,
-      database: process.env.logSqlDatabase,
-      waitForConnections: true,
-      connectionLimit: 10,
-      queueLimit: 0,
-      ssl: {
-        ca: caCertificate,
-        rejectUnauthorized: true,
-      },
     });
 
     const connection = await pool
@@ -233,7 +213,6 @@ module.exports = {
     } finally {
       // Close the connection after executing queries
       await connection.release();
-      await pool.end();
     }
 
     function calculateCommission(netSales) {

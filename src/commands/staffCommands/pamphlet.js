@@ -3,12 +3,10 @@ const {
   createCanvas,
   loadImage,
   registerFont,
-  createImageData,
 } = require("canvas");
 const sharp = require("sharp");
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
-require("dotenv").config({ path: "src/.env" });
 
 const pesoFormatter = new Intl.NumberFormat("en-PH", {
   style: "currency",

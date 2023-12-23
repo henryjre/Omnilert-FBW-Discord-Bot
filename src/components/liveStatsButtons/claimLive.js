@@ -1,15 +1,9 @@
 const { EmbedBuilder } = require("discord.js");
 
-const fs = require("fs");
-const path = require("path");
-const caCertificatePath = path.join(__dirname, "../../DO_Certificate.crt");
-const caCertificate = fs.readFileSync(caCertificatePath);
-
-const mysql = require("mysql2/promise");
+const pool = require("../../sqlConnectionPool");
 const moment = require("moment");
 
 const { customAlphabet } = require("nanoid");
-const { time } = require("console");
 const nanoid = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 13);
 
 const timer = (ms) => new Promise((res) => setTimeout(res, ms));
@@ -60,21 +54,6 @@ module.exports = {
 
     await timer(1300);
 
-    const pool = mysql.createPool({
-      host: process.env.logSqlHost,
-      port: process.env.logSqlPort,
-      user: process.env.logSqlUsername,
-      password: process.env.logSqlPassword,
-      database: process.env.logSqlDatabase,
-      waitForConnections: true,
-      connectionLimit: 10,
-      queueLimit: 0,
-      ssl: {
-        ca: caCertificate,
-        rejectUnauthorized: true,
-      },
-    });
-
     const connection = await pool
       .getConnection()
       .catch((err) => console.log(err));
@@ -107,7 +86,6 @@ module.exports = {
         components: [],
       });
       await connection.release();
-      await pool.end();
       return;
     }
 

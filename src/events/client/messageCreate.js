@@ -17,6 +17,12 @@ module.exports = {
       return client.commands.get("rts").execute(message, client);
     }
 
+    // const thread = message.guild.channels.cache.filter(
+    //   (x) => x.isThread() && x.id === message.channel.id
+    // );
+
+    // console.log(thread.parentId);
+
     const channelIds = {
       "1117386962580541473": "762612635605663767",
       "1117386986374823977": "851719358430576641",
@@ -26,6 +32,7 @@ module.exports = {
       "1185979531216027730": "756483149411909693",
       "1185979300936155136": "938140159541665842",
       "1185979374198071436": "752713584148086795",
+      "1187702101963440178": "1187593501609832508",
     };
 
     if (Object.keys(channelIds).includes(message.channelId)) {

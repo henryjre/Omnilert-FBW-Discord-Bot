@@ -6,14 +6,8 @@ const {
   EmbedBuilder,
   ComponentType,
 } = require("discord.js");
-const mysql = require("mysql2/promise");
-require("dotenv").config({ path: "src/.env" });
 
-const fs = require("fs");
-const path = require("path");
-const caCertificatePath = path.join(__dirname, "../../DO_Certificate.crt");
-const caCertificate = fs.readFileSync(caCertificatePath);
-
+const pool = require("../../sqlConnectionPool");
 const pesoFormatter = new Intl.NumberFormat("en-PH", {
   style: "currency",
   currency: "PHP",
@@ -39,7 +33,7 @@ module.exports = {
       !interaction.member.roles.cache.some((r) => validRoles.includes(r.id))
     ) {
       await interaction.reply({
-        content: `🔴 ERROR: You cannot use this command.`,
+        content: `🔴 ERROR: This command can only be used by <@&1117440696891220050>.`,
         ephemeral: true,
       });
       return;
@@ -49,21 +43,6 @@ module.exports = {
 
     const withdrawalAmount = interaction.options.getNumber("amount");
     const streamerId = interaction.user.id;
-
-    const pool = mysql.createPool({
-      host: process.env.logSqlHost,
-      port: process.env.logSqlPort,
-      user: process.env.logSqlUsername,
-      password: process.env.logSqlPassword,
-      database: process.env.logSqlDatabase,
-      waitForConnections: true,
-      connectionLimit: 10,
-      queueLimit: 0,
-      ssl: {
-        ca: caCertificate,
-        rejectUnauthorized: true,
-      },
-    });
 
     const connection = await pool
       .getConnection()
@@ -76,7 +55,6 @@ module.exports = {
       .catch((err) => console.log(err));
 
     await connection.release();
-    await pool.end();
 
     const withdrawals = streamerData[0].WITHDRAWALS;
 

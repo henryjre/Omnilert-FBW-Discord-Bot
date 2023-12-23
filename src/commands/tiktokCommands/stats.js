@@ -6,16 +6,9 @@ const {
   EmbedBuilder,
   ComponentType,
 } = require("discord.js");
-const { customAlphabet } = require("nanoid");
-const mysql = require("mysql2/promise");
-require("dotenv").config({ path: "src/.env" });
 const moment = require("moment");
 
-const fs = require("fs");
-const path = require("path");
-const caCertificatePath = path.join(__dirname, "../../DO_Certificate.crt");
-const caCertificate = fs.readFileSync(caCertificatePath);
-
+const pool = require("../../sqlConnectionPool");
 const commissionRates = require("./commission.json");
 
 const pesoFormatter = new Intl.NumberFormat("en-PH", {
@@ -36,7 +29,7 @@ module.exports = {
       !interaction.member.roles.cache.some((r) => validRoles.includes(r.id))
     ) {
       await interaction.reply({
-        content: `🔴 ERROR: You cannot use this command.`,
+        content: `🔴 ERROR: This command can only be used by <@&1117440696891220050>.`,
         ephemeral: true,
       });
       return;
@@ -44,21 +37,6 @@ module.exports = {
     await interaction.deferReply();
 
     // const streamerName = interaction.user.globalName;
-
-    const pool = mysql.createPool({
-      host: process.env.logSqlHost,
-      port: process.env.logSqlPort,
-      user: process.env.logSqlUsername,
-      password: process.env.logSqlPassword,
-      database: process.env.logSqlDatabase,
-      waitForConnections: true,
-      connectionLimit: 10,
-      queueLimit: 0,
-      ssl: {
-        ca: caCertificate,
-        rejectUnauthorized: true,
-      },
-    });
 
     const connection = await pool
       .getConnection()
@@ -93,9 +71,8 @@ module.exports = {
     const findLiveOrders = await connection
       .query(findOrdersForScheduleQuery, [interaction.user.id])
       .catch((err) => console.error(err));
-      
+
     connection.release();
-    pool.end();
 
     if (findLiveOrders[0].length <= 0) {
       const noOrdersEmbed = new EmbedBuilder()

@@ -1,7 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
 const { customAlphabet } = require("nanoid");
-const mysql = require("mysql2/promise");
-require("dotenv").config({ path: "src/.env" });
+const pool = require("../../sqlConnectionPool");
 
 const nanoid = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 13);
 
@@ -10,16 +9,6 @@ module.exports = {
     name: "log",
   },
   async execute(interaction, client) {
-    const pool = mysql.createPool({
-      host: process.env.logSqlHost,
-      user: process.env.logSqlUsername,
-      password: process.env.logSqlPassword,
-      database: process.env.logSqlDatabase,
-      waitForConnections: true,
-      connectionLimit: 10,
-      queueLimit: 0,
-    });
-
     const connection = await pool
       .getConnection()
       .catch((err) => console.log(err));
@@ -35,7 +24,6 @@ module.exports = {
         content: `🔴 ERROR: No work log in found.`,
       });
       connection.release();
-      pool.end();
       return;
     }
 
@@ -66,7 +54,6 @@ module.exports = {
     }
 
     connection.release();
-    pool.end();
 
     // const convertedImage1 =
     //   firstImageLog.length > 0 ? `[See Attachment](${firstImageLog})` : "";

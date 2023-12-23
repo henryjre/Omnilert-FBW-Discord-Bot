@@ -4,14 +4,8 @@ const {
   ButtonStyle,
   EmbedBuilder,
 } = require("discord.js");
-require("dotenv").config({ path: "src/.env" });
 
-const fs = require("fs");
-const path = require("path");
-const caCertificatePath = path.join(__dirname, "../../DO_Certificate.crt");
-const caCertificate = fs.readFileSync(caCertificatePath);
-
-const mysql = require("mysql2/promise");
+const pool = require("../../sqlConnectionPool");
 const moment = require("moment");
 
 const { customAlphabet } = require("nanoid");
@@ -62,21 +56,6 @@ module.exports = {
     const netWithdrawal = parseFloat(netAmount[0].replace(/,/g, ""));
     const claimDate = moment().format("YYYY-MM-DD HH:mm:ss");
 
-    const pool = mysql.createPool({
-      host: process.env.logSqlHost,
-      port: process.env.logSqlPort,
-      user: process.env.logSqlUsername,
-      password: process.env.logSqlPassword,
-      database: process.env.logSqlDatabase,
-      waitForConnections: true,
-      connectionLimit: 10,
-      queueLimit: 0,
-      ssl: {
-        ca: caCertificate,
-        rejectUnauthorized: true,
-      },
-    });
-
     const connection = await pool
       .getConnection()
       .catch((err) => console.log(err));
@@ -103,7 +82,6 @@ module.exports = {
       .catch((err) => console.log(err));
 
     await connection.release();
-    await pool.end();
 
     const newEmbed = new EmbedBuilder()
       .setTitle("⌛ NEW COMMISSION WITHDRAWAL")

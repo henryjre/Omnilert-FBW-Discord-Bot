@@ -1,17 +1,8 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
-const { customAlphabet } = require("nanoid");
-const mysql = require("mysql2/promise");
-require("dotenv").config({ path: "src/.env" });
-
-const fs = require("fs");
-const path = require("path");
-const caCertificatePath = path.join(__dirname, "../../DO_Certificate.crt");
-const caCertificate = fs.readFileSync(caCertificatePath);
+const pool = require("../../sqlConnectionPool");
 
 const { GoogleSpreadsheet } = require("google-spreadsheet");
 const creds = require("../../secret-key.json");
-
-const nanoid = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 13);
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -20,27 +11,14 @@ module.exports = {
   async execute(interaction, client) {
     await interaction.deferReply();
 
-    const pool = mysql.createPool({
-      host: process.env.logSqlHost,
-      port: process.env.logSqlPort,
-      user: process.env.logSqlUsername,
-      password: process.env.logSqlPassword,
-      database: process.env.logSqlDatabase,
-      waitForConnections: true,
-      connectionLimit: 10,
-      queueLimit: 0,
-      ssl: {
-        ca: caCertificate,
-        rejectUnauthorized: true,
-      },
-    });
-
     const connection = await pool
       .getConnection()
       .catch((err) => console.log(err));
 
     const userId = interaction.user.id;
     const timeOut = Date.now();
+
+    const member = interaction.guild.members.cache.get(userId);
 
     const timeStamp = new Date(timeOut).toLocaleDateString("en-PH", {
       timeZone: "Asia/Manila",
@@ -65,7 +43,6 @@ module.exports = {
         content: `🔴 ERROR: No work log in found.`,
       });
       await connection.release();
-      await pool.end();
       return;
     }
 
@@ -91,7 +68,16 @@ module.exports = {
       await doc.useServiceAccountAuth(creds);
       await doc.loadInfo();
       ///
-      const logSheet = doc.sheetsByTitle["LOGS"];
+      let logSheet;
+      const validRoles = ["1185935514042388520"];
+
+      if (
+        interaction.member.roles.cache.some((r) => validRoles.includes(r.id))
+      ) {
+        logSheet = doc.sheetsByTitle["LOGS"];
+      } else {
+        logSheet = doc.sheetsByTitle["SUB_MEMBER_LOGS"];
+      }
 
       await logSheet.addRow([
         workId,
@@ -110,7 +96,7 @@ module.exports = {
       const embed = new EmbedBuilder()
         .setTitle(`🔴 LOG OUT`)
         .setDescription(
-          `👤 **User:** ${interaction.user.globalName}\n⏱️ **Time In:** ${timeInStamp}\n⏱️ **Time Out:** ${timeStamp}\n⏳ **Duration:** ${hours} hours and ${minutes} minutes`
+          `👤 **User:** ${member.nickname}\n⏱️ **Time In:** ${timeInStamp}\n⏱️ **Time Out:** ${timeStamp}\n⏳ **Duration:** ${hours} hours and ${minutes} minutes`
         )
         .setColor("Red")
         // .setTimestamp(timeStamp)
@@ -131,7 +117,6 @@ module.exports = {
       });
     } finally {
       await connection.release();
-      await pool.end();
     }
 
     function convertMilliseconds(milliseconds) {

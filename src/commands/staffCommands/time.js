@@ -1,39 +1,27 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
-require("dotenv").config({ path: "src/.env" });
 const moment = require("moment");
 const { GoogleSpreadsheet } = require("google-spreadsheet");
 const creds = require("../../secret-key.json");
-
-const fs = require("fs");
-const path = require("path");
-const caCertificatePath = path.join(__dirname, "../../DO_Certificate.crt");
-const caCertificate = fs.readFileSync(caCertificatePath);
-
-const mysql = require("mysql2/promise");
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("time")
     .setDescription("Check your total work time."),
   async execute(interaction, client) {
-    const eligible = [
-      "762612635605663767",
-      "851719358430576641",
-      "1120869673974649035",
-      "748568303219245117",
-      "719135399859060796",
-    ];
+    const validRoles = ["1185935514042388520", "1187702183802720327"];
 
-    const userId = interaction.user.id;
-    const userName = interaction.user.username;
-
-    if (!eligible.includes(userId)) {
+    if (
+      !interaction.member.roles.cache.some((r) => validRoles.includes(r.id))
+    ) {
       await interaction.reply({
-        content: "You cannot use this command.",
+        content: `🔴 ERROR: This command can only be used by <@&1185935514042388520> & <@&1187702183802720327>.`,
         ephemeral: true,
       });
       return;
     }
+
+    const userId = interaction.user.id;
+    const userName = interaction.user.username;
 
     await interaction.deferReply();
 
@@ -41,7 +29,14 @@ module.exports = {
     await doc.useServiceAccountAuth(creds);
     await doc.loadInfo();
     ///
-    const logSheet = doc.sheetsByTitle["LOGS"];
+    let logSheet;
+    const coreRole = ["1185935514042388520"];
+
+    if (interaction.member.roles.cache.some((r) => coreRole.includes(r.id))) {
+      logSheet = doc.sheetsByTitle["LOGS"];
+    } else {
+      logSheet = doc.sheetsByTitle["SUB_MEMBER_LOGS"];
+    }
 
     const currentDate = moment();
 

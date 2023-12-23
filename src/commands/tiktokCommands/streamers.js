@@ -12,13 +12,13 @@ module.exports = {
     .setName("streamers")
     .setDescription("Show all of the streamers' dashboard."),
   async execute(interaction, client, type) {
-    const validRoles = ["1177271188997804123"];
+    const validRoles = ["1176496361802301462"];
 
     if (
       !interaction.member.roles.cache.some((r) => validRoles.includes(r.id))
     ) {
       await interaction.reply({
-        content: `🔴 ERROR: You cannot use this command.`,
+        content: `🔴 ERROR: This command can only be used by <@&1176496361802301462>.`,
         ephemeral: true,
       });
       return;
@@ -26,7 +26,6 @@ module.exports = {
 
     await interaction.deferReply();
 
-    await interaction.guild.members.fetch();
     const streamers = interaction.guild.roles.cache
       .get("1117440696891220050")
       .members.map((m) =>

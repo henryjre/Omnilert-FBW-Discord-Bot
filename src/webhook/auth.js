@@ -1,5 +1,3 @@
-require("dotenv").config({ path: "src/.env" });
-
 const checkAuthenticationSomehow = (req) => {
   const providedApiKey = req.headers["x-api-key"];
   if (providedApiKey && providedApiKey === process.env.apiKey) {

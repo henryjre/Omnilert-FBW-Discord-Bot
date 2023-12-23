@@ -1,7 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
 const client = require("../../../../../index");
 
-require("dotenv").config({ path: "src/.env" });
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
 const crypto = require("crypto");

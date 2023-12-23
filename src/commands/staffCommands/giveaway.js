@@ -1,7 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
-require("dotenv").config({ path: "src/.env" });
 
 const pesoFormatter = new Intl.NumberFormat("en-PH", {
   style: "currency",
@@ -39,7 +38,7 @@ module.exports = {
       !interaction.member.roles.cache.some((r) => validRoles.includes(r.id))
     ) {
       await interaction.reply({
-        content: `🔴 ERROR: You cannot use this command.`,
+        content: `🔴 ERROR: This command can only be used by <@&1117440638032564316>.`,
         ephemeral: true,
       });
       return;

@@ -8,11 +8,13 @@ const pesoFormatter = new Intl.NumberFormat("en-PH", {
   minimumFractionDigits: 2,
 });
 
+const pool = require("../../sqlConnectionPool");
+
 const commissionRates = require("../tiktokCommands/commission.json");
 
 module.exports = {
   name: "livestreamDashboard",
-  async execute(interaction, client, pool) {
+  async execute(interaction, client) {
     const streamerId = interaction.user.id;
 
     const connection = await pool
@@ -160,7 +162,6 @@ module.exports = {
     } finally {
       // Close the connection after executing queries
       await connection.release();
-      await pool.end();
     }
 
     function calculateCommission(netSales) {

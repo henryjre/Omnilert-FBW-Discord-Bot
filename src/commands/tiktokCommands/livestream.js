@@ -1,6 +1,4 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
-const mysql = require("mysql2/promise");
-require("dotenv").config({ path: "src/.env" });
 const moment = require("moment");
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
@@ -8,11 +6,7 @@ const crypto = require("crypto");
 const { customAlphabet } = require("nanoid");
 const nanoid = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 13);
 
-const fs = require("fs");
-const path = require("path");
-const caCertificatePath = path.join(__dirname, "../../DO_Certificate.crt");
-const caCertificate = fs.readFileSync(caCertificatePath);
-
+const pool = require("../../sqlConnectionPool");
 const commissionRates = require("./commission.json");
 
 const pesoFormatter = new Intl.NumberFormat("en-PH", {
@@ -55,7 +49,7 @@ module.exports = {
       !interaction.member.roles.cache.some((r) => validRoles.includes(r.id))
     ) {
       await interaction.reply({
-        content: `🔴 ERROR: You cannot use this command.`,
+        content: `🔴 ERROR: This command can only be used by <@&1176496361802301462>.`,
         ephemeral: true,
       });
       return;
@@ -132,21 +126,6 @@ module.exports = {
 
     console.log(streamerName, liveId);
 
-    const pool = mysql.createPool({
-      host: process.env.logSqlHost,
-      port: process.env.logSqlPort,
-      user: process.env.logSqlUsername,
-      password: process.env.logSqlPassword,
-      database: process.env.logSqlDatabase,
-      waitForConnections: true,
-      connectionLimit: 10,
-      queueLimit: 0,
-      ssl: {
-        ca: caCertificate,
-        rejectUnauthorized: true,
-      },
-    });
-
     const connection = await pool
       .getConnection()
       .catch((err) => console.log(err));
@@ -196,7 +175,6 @@ module.exports = {
         embeds: [dupeEmbed],
       });
       connection.release();
-      pool.end();
       return;
     }
 
@@ -342,7 +320,6 @@ module.exports = {
       .catch((err) => console.log(err));
 
     connection.release();
-    pool.end();
 
     const embedToSend = new EmbedBuilder()
       .setTitle(`${embed.emoji} TIKTOK LIVESTREAM SAVED`)

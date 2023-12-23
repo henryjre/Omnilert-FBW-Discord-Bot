@@ -3,14 +3,7 @@ const { EmbedBuilder } = require("discord.js");
 
 const { GoogleSpreadsheet } = require("google-spreadsheet");
 const creds = require("../../secret-key.json");
-
-const mysql = require("mysql2/promise");
-require("dotenv").config({ path: "src/.env" });
-
-const fs = require("fs");
-const path = require("path");
-const caCertificatePath = path.join(__dirname, "../../DO_Certificate.crt");
-const caCertificate = fs.readFileSync(caCertificatePath);
+const pool = require("../../sqlConnectionPool");
 
 let reminder = {};
 let hourlyReminders = {};
@@ -20,34 +13,18 @@ module.exports = {
   async execute(message, client, type) {
     const author = message.type === 2 ? message.user : message.author;
     const channelId = message.channelId;
+    const member = interaction.guild.members.cache.get(author.id);
 
     if (type === 0) {
-      const pool = mysql.createPool({
-        host: process.env.logSqlHost,
-        port: process.env.logSqlPort,
-        user: process.env.logSqlUsername,
-        password: process.env.logSqlPassword,
-        database: process.env.logSqlDatabase,
-        waitForConnections: true,
-        connectionLimit: 10,
-        queueLimit: 0,
-        ssl: {
-          ca: caCertificate,
-          rejectUnauthorized: true,
-        },
-      });
-
       const queryWorkShiftString =
         "SELECT * FROM WORK_HOURS WHERE DISCORD_ID = ? AND TIME_OUT IS NULL";
       const workShift = await pool
         .query(queryWorkShiftString, [author.id])
         .catch((err) => console.log(err));
 
-      pool.end();
-
       if (workShift[0].length <= 0) return;
     }
-    
+
     let penaltyTimestampOnStart = Date.now();
 
     function calculateHourlyReminder() {
@@ -75,7 +52,7 @@ module.exports = {
     !penalty[channelId] ? {} : penalty[channelId].cancel();
 
     if (type === 0) {
-      console.log(`Resetting reminders for ${author.globalName}`);
+      console.log(`Resetting reminders for ${member.nickname}`);
       reminder[channelId] = schedule.scheduleJob(
         `IN 1 HOUR AND 30 MINS: ${author.username}`,
         calculateHourAndHalfReminder(),
@@ -110,7 +87,7 @@ module.exports = {
       );
     } else {
       client.channels.cache.get(channelId).send({
-        content: `Cancelled reminders for ${author.globalName}`,
+        content: `Cancelled reminders for ${member.nickname}`,
       });
       checkSchedules();
     }

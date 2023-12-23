@@ -1,14 +1,9 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 const { customAlphabet } = require("nanoid");
-const mysql = require("mysql2/promise");
-require("dotenv").config({ path: "src/.env" });
 
 const nanoid = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 13);
 
-const fs = require("fs");
-const path = require("path");
-const caCertificatePath = path.join(__dirname, "../../DO_Certificate.crt");
-const caCertificate = fs.readFileSync(caCertificatePath);
+const pool = require("../../sqlConnectionPool");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -17,21 +12,6 @@ module.exports = {
   async execute(interaction, client) {
     await interaction.deferReply();
 
-    const pool = mysql.createPool({
-      host: process.env.logSqlHost,
-      port: process.env.logSqlPort,
-      user: process.env.logSqlUsername,
-      password: process.env.logSqlPassword,
-      database: process.env.logSqlDatabase,
-      waitForConnections: true,
-      connectionLimit: 10,
-      queueLimit: 0,
-      ssl: {
-        ca: caCertificate,
-        rejectUnauthorized: true,
-      },
-    });
-
     const connection = await pool
       .getConnection()
       .catch((err) => console.log(err));
@@ -39,6 +19,8 @@ module.exports = {
     const id = nanoid();
     const userId = interaction.user.id;
     const timeIn = Date.now();
+
+    const member = interaction.guild.members.cache.get(userId);
 
     const queryIn =
       "SELECT * FROM WORK_HOURS WHERE DISCORD_ID = ? AND TIME_OUT IS NULL";
@@ -51,7 +33,6 @@ module.exports = {
         content: `🔴 ERROR: You currently have a running shift. Please use /out to log out before logging in.`,
       });
       connection.release();
-      pool.end();
       return;
     }
 
@@ -80,12 +61,11 @@ module.exports = {
       .catch((err) => console.log(err));
 
     connection.release();
-    pool.end();
 
     const embed = new EmbedBuilder()
       .setTitle(`🟢 LOG IN`)
       .setDescription(
-        `👤 **User:** ${interaction.user.globalName}\n⏱️ **Time In:** ${timeStamp}\n⏱️ **Penalty Time:** ${nextPenalty}`
+        `👤 **User:** ${member.nickname}\n⏱️ **Time In:** ${timeStamp}\n⏱️ **Penalty Time:** ${nextPenalty}`
       )
       .setColor("Green")
       .setFooter({
