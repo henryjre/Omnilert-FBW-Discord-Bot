@@ -13,7 +13,7 @@ module.exports = {
   async execute(message, client, type) {
     const author = message.type === 2 ? message.user : message.author;
     const channelId = message.channelId;
-    const member = interaction.guild.members.cache.get(author.id);
+    const member = message.guild.members.cache.get(author.id);
 
     if (type === 0) {
       const queryWorkShiftString =
