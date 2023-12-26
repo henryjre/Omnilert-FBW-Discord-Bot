@@ -77,8 +77,34 @@ module.exports = {
         iconURL: interactionMember.displayAvatarURL(),
       });
 
+    const anonymousRemarksEmbed = new EmbedBuilder()
+      .setDescription("## Downvote Remarks")
+      .addFields([
+        {
+          name: "Voted Member",
+          value: member.nickname,
+        },
+        {
+          name: "PBR Vote",
+          value: pbrDetails,
+        },
+        {
+          name: "Remarks",
+          value: `${remarks}`,
+        },
+      ])
+      .setTimestamp(Date.now())
+      .setColor("Red")
+      .setAuthor({
+        name: "Anonymous",
+      });
+
     await shenonUser.send({
       embeds: [votingRightsEmbed],
+    });
+
+    await client.channels.cache.get("1189222831368716368").send({
+      embeds: [anonymousRemarksEmbed],
     });
 
     await interaction.followUp({

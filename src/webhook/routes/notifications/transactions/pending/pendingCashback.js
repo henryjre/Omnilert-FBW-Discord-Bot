@@ -1,4 +1,10 @@
-const { EmbedBuilder } = require("discord.js");
+const {
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  EmbedBuilder,
+} = require("discord.js");
+
 const client = require("../../../../../index");
 
 module.exports = (req, res) => {
@@ -27,8 +33,23 @@ module.exports = (req, res) => {
     ])
     .setTimestamp(Date.now());
 
+  const approve = new ButtonBuilder()
+    .setCustomId("approveCashback")
+    .setLabel("Approve")
+    .setStyle(ButtonStyle.Success)
+    .setDisabled(false);
+
+  const reject = new ButtonBuilder()
+    .setCustomId("appealCashback")
+    .setLabel("Appeal")
+    .setStyle(ButtonStyle.Danger)
+    .setDisabled(false);
+
+  const buttonRow = new ActionRowBuilder().addComponents(approve, reject);
+
   client.channels.cache.get("1171463711156862986").send({
     embeds: [embed],
+    components: [buttonRow],
   });
 
   res.status(200).json({ ok: true, message: "success" });

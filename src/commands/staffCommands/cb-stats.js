@@ -42,7 +42,7 @@ module.exports = {
     });
     const responseData = await response.json();
 
-    if (!response.ok) {z
+    if (!response.ok) {
       return await interaction.editReply({
         content: "🔴 FETCH ERROR: " + responseData.error,
       });
