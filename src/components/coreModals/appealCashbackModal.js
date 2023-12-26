@@ -10,16 +10,16 @@ module.exports = {
       interaction.message.id
     );
 
-    let messageEmbed = interaction.message.embeds[0];
+    const messageEmbed = interaction.message.embeds[0];
 
     messageEmbed.data.fields.push({
       name: "Appeal Reason",
       value: appealReason,
     });
     messageEmbed.data.color = 15746887;
-    messageEmbed.title = "🔴 Cashback Appealed";
+    messageEmbed.data.title = "🔴 Cashback Appealed";
 
-    messageEmbed.footer = {
+    messageEmbed.data.footer = {
       text: `APPEALED BY: ${member.nickname}`,
     };
 
