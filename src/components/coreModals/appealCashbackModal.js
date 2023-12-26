@@ -36,7 +36,7 @@ module.exports = {
         return;
       });
 
-      console.log(response)
+    console.log(response);
 
     if (!response.ok) {
       interaction.followUp({
@@ -59,7 +59,7 @@ module.exports = {
     await client.channels.cache
       .get("1171463935904448613")
       .send({
-        embeds: [newEmbed],
+        embeds: [messageEmbed],
       })
       .then((msg) => {
         msg.react("✅");
