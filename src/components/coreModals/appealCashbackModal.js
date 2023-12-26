@@ -12,6 +12,27 @@ module.exports = {
 
     let messageEmbed = interaction.message.embeds[0];
 
+    messageEmbed.data.fields.push({
+      name: "Appeal Reason",
+      value: appealReason,
+    });
+    messageEmbed.data.color = 15746887;
+    messageEmbed.title = "🔴 Cashback Appealed";
+
+    messageEmbed.footer = {
+      text: `APPEALED BY: ${member.nickname}`,
+    };
+
+    await client.channels.cache
+      .get("1171463935904448613")
+      .send({
+        embeds: [messageEmbed],
+      })
+      .then((msg) => {
+        msg.react("✅");
+        message.delete();
+      });
+
     const url = `https://www.leviosa.ph/_functions/approveOrAppealCashback`;
     const options = {
       method: "POST",
@@ -44,26 +65,5 @@ module.exports = {
       });
       return;
     }
-
-    messageEmbed.data.fields.push({
-      name: "Appeal Reason",
-      value: appealReason,
-    });
-    messageEmbed.data.color = 15746887;
-    messageEmbed.title = "🔴 Cashback Appealed";
-
-    messageEmbed.footer = {
-      text: `APPEALED BY: ${member.nickname}`,
-    };
-
-    await client.channels.cache
-      .get("1171463935904448613")
-      .send({
-        embeds: [messageEmbed],
-      })
-      .then((msg) => {
-        msg.react("✅");
-        message.delete();
-      });
   },
 };
