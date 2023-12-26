@@ -31,10 +31,12 @@ module.exports = {
       .catch((err) => {
         interaction.followUp({
           content:
-            "🔴 FETCH ERROR: An error has occured while fetching secret tokens.",
+            "🔴 FETCH ERROR: An error has occured while fetching the request.",
         });
         return;
       });
+
+      console.log(response)
 
     if (!response.ok) {
       interaction.followUp({
