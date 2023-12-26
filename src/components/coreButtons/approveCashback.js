@@ -26,39 +26,6 @@ module.exports = {
 
     let cashbackEmbed = interaction.message.embeds[0].data;
 
-    const url = `https://www.leviosa.ph/_functions/approveOrAppealCashback`;
-    const options = {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": process.env.apiKey,
-      },
-      body: JSON.stringify({
-        order_id: cashbackEmbed.fields[0].value,
-        type: "approve",
-      }),
-    };
-
-    const response = await fetch(url, options)
-      .then((res) => res.json())
-      .catch((err) => {
-        console.log(err)
-        interaction.followUp({
-          content:
-            "🔴 FETCH ERROR: An error has occured while fetching the request.",
-        });
-        return;
-      });
-
-      console.log(response)
-
-    if (!response.ok) {
-      interaction.followUp({
-        content: `🔴 ERROR: ${response.message}.`,
-      });
-      return;
-    }
-
     const reqTime = new Date(cashbackEmbed.timestamp).toLocaleDateString(
       "en-PH",
       {
@@ -79,7 +46,7 @@ module.exports = {
 
     const newEmbed = new EmbedBuilder()
       .setTitle("✅ APPROVED CASHBACK")
-      .setColor(cashbackEmbed.color)
+      .setColor("Green")
       .setTimestamp(Date.now())
       .setFooter({
         text: `APPROVED BY: ${interactionMember.nickname}`,
@@ -95,5 +62,36 @@ module.exports = {
         msg.react("✅");
         message.delete();
       });
+
+    const url = `https://www.leviosa.ph/_functions/approveOrAppealCashback`;
+    const options = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": process.env.apiKey,
+      },
+      body: JSON.stringify({
+        order_id: cashbackEmbed.fields[0].value,
+        type: "approve",
+      }),
+    };
+
+    const response = await fetch(url, options)
+      .then((res) => res.json())
+      .catch((err) => {
+        console.log(err);
+        interaction.followUp({
+          content:
+            "🔴 FETCH ERROR: An error has occured while fetching the request.",
+        });
+        return;
+      });
+
+    if (!response.ok) {
+      interaction.followUp({
+        content: `🔴 ERROR: ${response.message}.`,
+      });
+      return;
+    }
   },
 };
