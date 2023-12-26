@@ -1,6 +1,6 @@
 module.exports = {
   data: {
-    name: `proposalResolutionModal`,
+    name: `appealCashbackModal`,
   },
   async execute(interaction, client) {
     await interaction.deferUpdate();
