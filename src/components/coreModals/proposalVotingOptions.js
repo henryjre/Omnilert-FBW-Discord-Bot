@@ -16,15 +16,17 @@ module.exports = {
     const votingOptions = interaction.fields.getTextInputValue("optionsInput");
 
     const selectMenuOptions = votingOptions.split(",").map((opt, i) => {
-      return new StringSelectMenuOptionBuilder()
-        .setLabel(opt)
-        .setValue(`option${i}_0`);
+      return new StringSelectMenuOptionBuilder().setLabel(opt).setValue(opt);
     });
 
     let embed = interaction.message.embeds[0];
 
     embed.data.color = 5793266; //5763720
     embed.data.description = "This proposal is now open for voting.";
+    embed.data.fields.push({
+      name: "Number of Votes",
+      value: "0",
+    });
 
     const menu = new StringSelectMenuBuilder()
       .setCustomId("voteProposalOptions")

@@ -1,4 +1,5 @@
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
+const proposalVotesFile = require("../coreMenus/voteProposalOptions");
 
 module.exports = {
   data: {
@@ -12,25 +13,21 @@ module.exports = {
       });
       return;
     }
+    
     await interaction.deferUpdate();
 
-    const selectMenuRow = interaction.message.components[1];
-    const selectMenuOptions = selectMenuRow.components[0].options;
+    const proposalVotes = proposalVotesFile.getProposalVotes();
 
-    const totalVotingRights = selectMenuOptions.reduce(
-      (accumulator, currentValue) => {
-        const numericValue = Number(currentValue.value.split("_")[1]);
-        return accumulator + numericValue;
-      },
-      0
-    );
+    const totalVotingRights = proposalVotes.reduce((accumulator, vote) => {
+      return accumulator + vote.votingRights;
+    }, 0);
 
     let result = [];
-    selectMenuOptions.forEach((option, index) => {
-      const percentage =
-        (Number(option.value.split("_")[1]) / totalVotingRights) * 100;
+
+    proposalVotes.forEach((vote, index) => {
+      const percentage = (vote.votingRights / totalVotingRights) * 100;
       result.push({
-        option: option.label,
+        option: vote.name,
         percentage: percentage.toFixed(2),
       });
     });
@@ -52,11 +49,6 @@ module.exports = {
 
     const buttonRow = new ActionRowBuilder().addComponents(addResolution);
 
-    await interaction.editReply({
-      embeds: [messageEmbed],
-      components: [buttonRow],
-    });
-
     const membersWhoVoted = await interaction.guild.roles.cache
       .get("1186987728336846958")
       .members.map((m) => m);
@@ -64,5 +56,12 @@ module.exports = {
     for (const member of membersWhoVoted) {
       await member.roles.remove("1186987728336846958");
     }
+
+    proposalVotesFile.clearProposalVotes();
+
+    await interaction.editReply({
+      embeds: [messageEmbed],
+      components: [buttonRow],
+    });
   },
 };

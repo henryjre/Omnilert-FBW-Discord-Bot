@@ -1,5 +1,6 @@
 const pool = require("../../sqlConnectionPool");
 
+let proposalVotes = [];
 module.exports = {
   data: {
     name: `voteProposalOptions`,
@@ -12,6 +13,7 @@ module.exports = {
       });
       return;
     }
+
     await interaction.deferUpdate();
 
     const member = await interaction.guild.members.cache.get(
@@ -26,13 +28,10 @@ module.exports = {
       return;
     }
 
-    let selectMenuRow = interaction.message.components[1];
-    const selectedIndex = selectMenuRow.components[0].options.findIndex(
-      (obj) => obj.value === interaction.values[0]
-    );
+    const selected = interaction.values[0];
 
     await interaction.followUp({
-      content: `You voted for: __**${selectMenuRow.components[0].options[selectedIndex].label}.**__`,
+      content: `You voted for: __**${selected}.**__`,
       ephemeral: true,
     });
 
@@ -47,22 +46,37 @@ module.exports = {
       String(interaction.user.id),
     ]);
 
+    await connection.release();
+
     const votingRights = selectMemberResult[0].VOTING_RIGHTS;
 
-    const selectedValue =
-      selectMenuRow.components[0].options[selectedIndex].value.split("_");
+    const selectedValueIndex = proposalVotes.findIndex(
+      (vote) => vote.name === selected
+    );
 
-    const newValue = Number(selectedValue[1]) + Number(votingRights);
+    if (selectedValueIndex === -1) {
+      proposalVotes.push({
+        name: selected,
+        votingRights: Number(votingRights),
+      });
+    } else {
+      proposalVotes[selectedValueIndex].votingRights += Number(votingRights);
+    }
 
-    selectMenuRow.components[0].options[
-      selectedIndex
-    ].value = `${selectedValue[0]}_${newValue}`;
+    let messageEmbed = interaction.message.embeds[0];
+
+    const embedVotes = messageEmbed.data.fields[3].value;
+    const newVotes = Number(embedVotes) + 1;
+    messageEmbed.data.fields[3].value = newVotes;
 
     await interaction.editReply({
-      embeds: interaction.message.embeds,
-      components: [interaction.message.components[0], selectMenuRow],
+      embeds: [messageEmbed],
     });
-
-    await connection.release();
+  },
+  getProposalVotes: function () {
+    return proposalVotes;
+  },
+  clearProposalVotes: function () {
+    proposalVotes = [];
   },
 };
