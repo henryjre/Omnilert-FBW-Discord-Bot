@@ -80,7 +80,7 @@ module.exports = {
       .setColor("Gold")
       .setFooter({
         iconURL: interaction.user.displayAvatarURL(),
-        text: "Leviosa Network",
+        text: "Leviosa Philippines",
       })
       .setTimestamp(Date.now());
 

@@ -171,7 +171,7 @@ module.exports = {
         .setTimestamp(Date.now())
         .setFooter({
           iconURL: client.user.displayAvatarURL(),
-          text: "Leviosa Network",
+          text: "Leviosa Philippines",
         });
 
       client.channels.cache.get(message.channelId).send({
@@ -190,7 +190,7 @@ module.exports = {
         .setTimestamp(Date.now())
         .setFooter({
           iconURL: client.user.displayAvatarURL(),
-          text: "Leviosa Network",
+          text: "Leviosa Philippines",
         });
 
       client.channels.cache.get(message.channelId).send({
@@ -209,7 +209,7 @@ module.exports = {
         .setTimestamp(Date.now())
         .setFooter({
           iconURL: client.user.displayAvatarURL(),
-          text: "Leviosa Network",
+          text: "Leviosa Philippines",
         });
 
       client.channels.cache.get(message.channelId).send({

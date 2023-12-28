@@ -70,7 +70,7 @@ module.exports = {
       .setColor("Green")
       .setFooter({
         iconURL: interaction.user.displayAvatarURL(),
-        text: "Leviosa Network",
+        text: "Leviosa Philippines",
       });
 
     await interaction.editReply({
