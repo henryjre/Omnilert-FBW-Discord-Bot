@@ -55,6 +55,13 @@ module.exports = {
       return;
     }
 
+    let titleName;
+    if (member.nickname.includes("-")) {
+      titleName = member.nickname.split("-")[0].trim();
+    } else {
+      titleName = member.nickname;
+    }
+
     const modal = buildModal(type);
     await interaction.showModal(modal);
 
@@ -64,11 +71,11 @@ module.exports = {
       if (type === "public") {
         modal
           .setCustomId("coreSuggestionPublic")
-          .setTitle(`Suggest to ${member.nickname} PUBLICLY`);
+          .setTitle(`Suggest to ${titleName} PUBLICLY`);
       } else {
         modal
           .setCustomId("coreSuggestionPrivate")
-          .setTitle(`Suggest to ${member.nickname} PRIVATELY`);
+          .setTitle(`Suggest to ${titleName} PRIVATELY`);
       }
 
       const secondInput = new TextInputBuilder()

@@ -1,5 +1,5 @@
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
-const proposalVotesFile = require("../coreMenus/voteProposalOptions");
+const proposalVotesFile = require("../coreModals/proposalVoteConfirm");
 
 module.exports = {
   data: {
@@ -13,7 +13,7 @@ module.exports = {
       });
       return;
     }
-    
+
     await interaction.deferUpdate();
 
     const proposalVotes = proposalVotesFile.getProposalVotes();

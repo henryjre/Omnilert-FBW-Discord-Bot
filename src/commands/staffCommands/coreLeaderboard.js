@@ -32,24 +32,37 @@ module.exports = {
       const user = interaction.guild.members.cache.get(member.MEMBER_ID);
 
       embedDescription.push({
-        name: `${user.nickname}`,
+        avatar: user.displayAvatarURL(),
+        name: user.nickname,
         votingRights: member.VOTING_RIGHTS,
-        pbr: member.pbr ? member.pbr : 0,
+        pbr: member.PBR ? member.PBR : 0,
       });
     }
 
     const embed = new EmbedBuilder()
-      .setTitle(`🏆 Core Leaderboards`)
+      // .setTitle(`🏆 Core Leaderboards`)
       .setDescription(
-        `${embedDescription
+        `## Core Leaderboards\n${embedDescription
           .map((member, index) => {
-            return `### ${index + 1}. ${member.name}\nVoting Rights: ${
+            const rank = index + 1;
+            let rankText;
+            if (rank === 1) {
+              rankText = `🥇`;
+            } else if (rank === 2) {
+              rankText = `🥈`;
+            } else if (rank === 3) {
+              rankText = `🥉`;
+            } else {
+              rankText = ``;
+            }
+            return `### ${rankText} ${member.name}\n\`\`\`Voting Rights: ${
               member.votingRights
-            }\nPBR: ${pesoFormatter.format(member.pbr)}\n`;
+            }\nPBR: ${pesoFormatter.format(member.pbr)}\`\`\`\n`;
           })
           .join("")}`
       )
-      .setColor("#2B2D31");
+      .setThumbnail(embedDescription[0].avatar)
+      .setColor("Blurple");
 
     await interaction.editReply({
       embeds: [embed],

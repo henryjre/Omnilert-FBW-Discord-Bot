@@ -46,9 +46,16 @@ module.exports = {
     await interaction.showModal(modal);
 
     function buildModal() {
+      let titleName;
+      if (member.nickname.includes("-")) {
+        titleName = member.nickname.split("-")[0].trim();
+      } else {
+        titleName = member.nickname;
+      }
+
       const modal = new ModalBuilder()
         .setCustomId("coreComplaint")
-        .setTitle(`File a complaint to ${member.nickname}`);
+        .setTitle(`File a complaint to ${titleName}`);
 
       const secondInput = new TextInputBuilder()
         .setCustomId(`userId`)
