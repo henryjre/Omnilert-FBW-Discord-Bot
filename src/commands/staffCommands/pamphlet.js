@@ -1,9 +1,5 @@
 const { SlashCommandBuilder, AttachmentBuilder } = require("discord.js");
-const {
-  createCanvas,
-  loadImage,
-  registerFont,
-} = require("canvas");
+const { createCanvas, loadImage, registerFont } = require("canvas");
 const sharp = require("sharp");
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
@@ -64,6 +60,13 @@ module.exports = {
         ((productMainPrice - productRedPrice) / productMainPrice) * 100
       )}%`;
 
+      registerFont("src/canvas/pamphlet/fonts/WixMadeforText-Regular.ttf", {
+        family: "MadeforRegular",
+      });
+      registerFont("src/canvas/pamphlet/fonts/WixMadeforText-Bold.ttf", {
+        family: "MadeforBold",
+      });
+
       const bgImage = await loadImage("src/canvas/pamphlet/pamphlet-bg.png");
 
       const canvas = createCanvas(bgImage.width, bgImage.height); //935, 1219
@@ -78,13 +81,6 @@ module.exports = {
         .toBuffer();
       const thumbnail = await loadImage(thumbnailSharp);
       ctx.drawImage(thumbnail, 270, 350, 400, 400);
-
-      registerFont("src/canvas/pamphlet/fonts/WixMadeforText-Regular.ttf", {
-        family: "MadeforRegular",
-      });
-      registerFont("src/canvas/pamphlet/fonts/WixMadeforText-Bold.ttf", {
-        family: "MadeforBold",
-      });
 
       ctx.font = "22px MadeforRegular";
       ctx.fillStyle = "#d8a727";

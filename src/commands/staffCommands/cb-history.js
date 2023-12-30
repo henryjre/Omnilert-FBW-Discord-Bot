@@ -56,18 +56,18 @@ module.exports = {
 
     const cashbacks = response.data;
 
-    const bgImage = await loadImage(
-      "src/canvas/cashbackHistory/cb-history-bg.png"
-    );
-    const canvas = createCanvas(bgImage.width, bgImage.height); //1080, 1920
-    const ctx = canvas.getContext("2d");
-
     registerFont("src/canvas/pamphlet/fonts/WixMadeforText-Regular.ttf", {
       family: "MadeforRegular",
     });
     registerFont("src/canvas/pamphlet/fonts/WixMadeforText-Bold.ttf", {
       family: "MadeforBold",
     });
+
+    const bgImage = await loadImage(
+      "src/canvas/cashbackHistory/cb-history-bg.png"
+    );
+    const canvas = createCanvas(bgImage.width, bgImage.height); //1080, 1920
+    const ctx = canvas.getContext("2d");
 
     ctx.drawImage(bgImage, 0, 0);
     ctx.fillStyle = "#FEFBEA";
@@ -138,7 +138,7 @@ module.exports = {
     });
 
     return await interaction.editReply({
-        content: `## Cashback Claim History Page ${page}`,
+      content: `## Cashback Claim History Page ${page}`,
       files: [attachment],
     });
   },
