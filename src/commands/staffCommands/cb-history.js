@@ -82,39 +82,59 @@ module.exports = {
 
     ctx.textAlign = "center";
     ctx.fillText(
-      moment(cashbacks[0]._createdDate).format("MMMM DD, YYYY"),
+      moment(cashbacks[0]._createdDate).add(8, "hours").format("MMMM DD, YYYY"),
       780,
       866
     );
-    ctx.fillText(moment(cashbacks[0]._createdDate).format("h:mm a"), 780, 906);
+    ctx.fillText(
+      moment(cashbacks[0]._createdDate).add(8, "hours").format("h:mm a"),
+      780,
+      906
+    );
 
     ctx.fillText(
-      moment(cashbacks[1]._createdDate).format("MMMM DD, YYYY"),
+      moment(cashbacks[1]._createdDate).add(8, "hours").format("MMMM DD, YYYY"),
       780,
       966
     );
-    ctx.fillText(moment(cashbacks[1]._createdDate).format("h:mm a"), 780, 1006);
+    ctx.fillText(
+      moment(cashbacks[1]._createdDate).add(8, "hours").format("h:mm a"),
+      780,
+      1006
+    );
 
     ctx.fillText(
-      moment(cashbacks[2]._createdDate).format("MMMM DD, YYYY"),
+      moment(cashbacks[2]._createdDate).add(8, "hours").format("MMMM DD, YYYY"),
       780,
       1069
     );
-    ctx.fillText(moment(cashbacks[2]._createdDate).format("h:mm a"), 780, 1109);
+    ctx.fillText(
+      moment(cashbacks[2]._createdDate).add(8, "hours").format("h:mm a"),
+      780,
+      1109
+    );
 
     ctx.fillText(
-      moment(cashbacks[3]._createdDate).format("MMMM DD, YYYY"),
+      moment(cashbacks[3]._createdDate).add(8, "hours").format("MMMM DD, YYYY"),
       780,
       1170
     );
-    ctx.fillText(moment(cashbacks[3]._createdDate).format("h:mm a"), 780, 1210);
+    ctx.fillText(
+      moment(cashbacks[3]._createdDate).add(8, "hours").format("h:mm a"),
+      780,
+      1210
+    );
 
     ctx.fillText(
-      moment(cashbacks[4]._createdDate).format("MMMM DD, YYYY"),
+      moment(cashbacks[4]._createdDate).add(8, "hours").format("MMMM DD, YYYY"),
       780,
       1271
     );
-    ctx.fillText(moment(cashbacks[4]._createdDate).format("h:mm a"), 780, 1311);
+    ctx.fillText(
+      moment(cashbacks[4]._createdDate).add(8, "hours").format("h:mm a"),
+      780,
+      1311
+    );
 
     ctx.font = "35px MadeforBold";
     ctx.textAlign = "left";
