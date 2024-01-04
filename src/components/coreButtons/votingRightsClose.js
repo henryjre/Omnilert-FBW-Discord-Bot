@@ -1,5 +1,6 @@
 const upvotesFile = require("../coreModals/vrUpvoteModal");
 const downvotesFile = require("../coreModals/vrDownvoteModal");
+const abstainFile = require("../coreModals/vrAbstainModal");
 const pool = require("../../sqlConnectionPool");
 
 const pesoFormatter = new Intl.NumberFormat("en-PH", {
@@ -14,15 +15,16 @@ module.exports = {
     name: `votingRightsClose`,
   },
   async execute(interaction, client) {
-    if (interaction.user.id !== "864920050691866654") {
-      await interaction.reply({
-        content: `🔴 ERROR: You cannot use this button.`,
-        ephemeral: true,
-      });
-      return;
-    }
+    // if (interaction.user.id !== "864920050691866654") {
+    //   await interaction.reply({
+    //     content: `🔴 ERROR: You cannot use this button.`,
+    //     ephemeral: true,
+    //   });
+    //   return;
+    // }
     const upvotes = upvotesFile.getUpvotes();
     const downvotes = downvotesFile.getDownVotes();
+    const abstains = abstainFile.getAbstains();
     const votes = [...upvotes, ...downvotes];
 
     await interaction.deferUpdate();
@@ -31,25 +33,30 @@ module.exports = {
       .getConnection()
       .catch((err) => console.log(err));
 
-    const selectQuery = `SELECT * FROM Core_Team WHERE MEMBER_ID = ?`;
-    for (const vote of votes) {
-      const [selectResult] = await connection.execute(selectQuery, [
-        vote.userId,
-      ]);
+    let finalPbr;
+    if (votes.length > 0) {
+      const selectQuery = `SELECT * FROM Core_Team WHERE MEMBER_ID = ?`;
+      for (const vote of votes) {
+        const [selectResult] = await connection.execute(selectQuery, [
+          vote.userId,
+        ]);
 
-      vote.votingRights = selectResult[0].VOTING_RIGHTS;
+        vote.votingRights = selectResult[0].VOTING_RIGHTS;
+      }
+
+      const sumOfVrPbr = votes.reduce(
+        (acc, obj) => acc + obj.votingRights * obj.pbr,
+        0
+      );
+      const totalVotingRights = votes.reduce(
+        (acc, obj) => acc + obj.votingRights,
+        0
+      );
+
+      finalPbr = parseFloat((sumOfVrPbr / totalVotingRights).toFixed(2));
+    } else if (votes.length <= 0) {
+      finalPbr = 0;
     }
-
-    const sumOfVrPbr = votes.reduce(
-      (acc, obj) => acc + obj.votingRights * obj.pbr,
-      0
-    );
-    const totalVotingRights = votes.reduce(
-      (acc, obj) => acc + obj.votingRights,
-      0
-    );
-
-    const finalPbr = parseFloat((sumOfVrPbr / totalVotingRights).toFixed(2));
 
     let messageEmbed = interaction.message.embeds[0];
     const votedUser = messageEmbed.data.fields[0].value;
@@ -64,7 +71,7 @@ module.exports = {
     messageEmbed.data.fields.push(
       {
         name: "Votes Summary",
-        value: `- *Upvotes*: **${upvotes.length}**\n- *Downvotes*: **${downvotes.length}**`,
+        value: `- *Upvotes*: **${upvotes.length}**\n- *Downvotes*: **${downvotes.length}**\n- *Abstains*: **${abstains.length}**`,
       },
       {
         name: "Final PBR",
@@ -88,5 +95,6 @@ module.exports = {
 
     upvotesFile.clearUpvotes();
     downvotesFile.clearDownvotes();
+    abstainFile.clearAbstains();
   },
 };

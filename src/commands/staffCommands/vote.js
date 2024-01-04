@@ -55,6 +55,11 @@ module.exports = {
       .setLabel("Downvote")
       .setStyle(ButtonStyle.Danger);
 
+    const abstain = new ButtonBuilder()
+      .setCustomId("votingRightsAbstain")
+      .setLabel("Abstain")
+      .setStyle(ButtonStyle.Secondary);
+
     const closeVote = new ButtonBuilder()
       .setCustomId("votingRightsClose")
       .setLabel("Close Voting")
@@ -63,6 +68,7 @@ module.exports = {
     const buttonRow = new ActionRowBuilder().addComponents(
       upvote,
       downvote,
+      abstain,
       closeVote
     );
 
@@ -72,6 +78,10 @@ module.exports = {
         {
           name: "Core Member",
           value: member.toString(),
+        },
+        {
+          name: "Number of Votes",
+          value: "0",
         },
       ])
       .setTimestamp(Date.now())

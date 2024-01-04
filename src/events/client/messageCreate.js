@@ -17,11 +17,13 @@ module.exports = {
       return client.commands.get("rts").execute(message, client);
     }
 
-    // const thread = message.guild.channels.cache.filter(
+    // const thread = message.guild.channels.cache.find(
     //   (x) => x.isThread() && x.id === message.channel.id
     // );
 
-    // console.log(thread.parentId);
+    // if (thread) {
+    //   console.log(thread.parentId);
+    // }
 
     const channelIds = {
       "1117386962580541473": "762612635605663767",

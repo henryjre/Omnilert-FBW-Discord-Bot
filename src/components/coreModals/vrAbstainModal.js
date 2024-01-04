@@ -1,10 +1,9 @@
 const { EmbedBuilder } = require("discord.js");
-const pool = require("../../sqlConnectionPool");
 
-let downvotesSubmissions = [];
+let abstainSubmissions = [];
 module.exports = {
   data: {
-    name: "vrDownvoteModal",
+    name: "vrAbstainModal",
   },
   async execute(interaction, client) {
     await interaction.deferUpdate();
@@ -19,30 +18,7 @@ module.exports = {
       return;
     }
 
-    const pbrDetails = interaction.fields.getTextInputValue("pbrInput");
     const remarks = interaction.fields.getTextInputValue("remarksInput");
-
-    const pbrCheck = Number(pbrDetails);
-
-    if (isNaN(pbrCheck)) {
-      await interaction.reply({
-        content: `🔴 ERROR: Vote not submitted. Please enter a valid number PBR.`,
-        ephemeral: true,
-      });
-      return;
-    } else if (pbrCheck < 1) {
-      await interaction.reply({
-        content: `🔴 ERROR: Vote not submitted. PBR must not be a negative value.`,
-        ephemeral: true,
-      });
-      return;
-    } else if (pbrCheck > 50) {
-      await interaction.reply({
-        content: `🔴 ERROR: Vote not submitted. PBR must not exceed 50.`,
-        ephemeral: true,
-      });
-      return;
-    }
 
     const messageEmbed = interaction.message.embeds[0];
     const votedUser = messageEmbed.data.fields[0].value;
@@ -63,15 +39,11 @@ module.exports = {
       interaction.guild.members.cache.get("864920050691866654");
 
     const votingRightsEmbed = new EmbedBuilder()
-      .setDescription("## Downvote Remarks")
+      .setDescription("## Abstain Remarks")
       .addFields([
         {
           name: "Voted Member",
           value: member.nickname,
-        },
-        {
-          name: "PBR Vote",
-          value: pbrDetails,
         },
         {
           name: "Remarks",
@@ -79,22 +51,18 @@ module.exports = {
         },
       ])
       .setTimestamp(Date.now())
-      .setColor("Red")
+      .setColor("Yellow")
       .setAuthor({
         name: interactionMember.nickname,
         iconURL: interactionMember.displayAvatarURL(),
       });
 
     const anonymousRemarksEmbed = new EmbedBuilder()
-      .setDescription("## Downvote Remarks")
+      .setDescription("## Abstain Remarks")
       .addFields([
         {
           name: "Voted Member",
           value: member.nickname,
-        },
-        {
-          name: "PBR Vote",
-          value: pbrDetails,
         },
         {
           name: "Remarks",
@@ -102,7 +70,7 @@ module.exports = {
         },
       ])
       .setTimestamp(Date.now())
-      .setColor("Red")
+      .setColor("Yellow")
       .setAuthor({
         name: "Anonymous",
       });
@@ -116,29 +84,19 @@ module.exports = {
     });
 
     await interaction.followUp({
-      content: "Your __**Downvote**__ was successfully submitted.",
+      content: "Your __**Abstain**__ was successfully submitted.",
       ephemeral: true,
     });
 
-    const connection = await pool
-      .getConnection()
-      .catch((err) => console.log(err));
-
-    const updateQuery = `UPDATE Core_Team SET VOTING_RIGHTS = (VOTING_RIGHTS - 1) WHERE MEMBER_ID = ?`;
-    await connection.execute(updateQuery, [userId]);
-
-    await connection.release();
-
-    downvotesSubmissions.push({
-      vote: "downvote",
+    abstainSubmissions.push({
+      vote: "abstain",
       userId: interaction.user.id,
-      pbr: pbrCheck,
     });
   },
-  getDownVotes: function () {
-    return downvotesSubmissions;
+  getAbstains: function () {
+    return abstainSubmissions;
   },
-  clearDownvotes: function () {
-    downvotesSubmissions = [];
+  clearAbstains: function () {
+    abstainSubmissions = [];
   },
 };

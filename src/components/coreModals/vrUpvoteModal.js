@@ -47,6 +47,14 @@ module.exports = {
 
     const messageEmbed = interaction.message.embeds[0];
     const votedUser = messageEmbed.data.fields[0].value;
+    const numberOfVotes = messageEmbed.data.fields[1].value;
+    const newVotes = Number(numberOfVotes) + 1;
+    messageEmbed.data.fields[1].value = String(newVotes);
+
+    await interaction.editReply({
+      embeds: [messageEmbed],
+    });
+
     const match = votedUser.match(/<@(\d+)>/);
     const userId = match && match[1];
 
