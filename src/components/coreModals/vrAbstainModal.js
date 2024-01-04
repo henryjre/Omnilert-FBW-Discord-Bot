@@ -18,7 +18,30 @@ module.exports = {
       return;
     }
 
+    const pbrDetails = interaction.fields.getTextInputValue("pbrInput");
     const remarks = interaction.fields.getTextInputValue("remarksInput");
+
+    const pbrCheck = Number(pbrDetails);
+
+    if (isNaN(pbrCheck)) {
+      await interaction.reply({
+        content: `🔴 ERROR: Vote not submitted. Please enter a valid number PBR.`,
+        ephemeral: true,
+      });
+      return;
+    } else if (pbrCheck < 1) {
+      await interaction.reply({
+        content: `🔴 ERROR: Vote not submitted. PBR must not be a negative value.`,
+        ephemeral: true,
+      });
+      return;
+    } else if (pbrCheck > 50) {
+      await interaction.reply({
+        content: `🔴 ERROR: Vote not submitted. PBR must not exceed 50.`,
+        ephemeral: true,
+      });
+      return;
+    }
 
     const messageEmbed = interaction.message.embeds[0];
     const votedUser = messageEmbed.data.fields[0].value;
@@ -46,6 +69,10 @@ module.exports = {
           value: member.nickname,
         },
         {
+          name: "PBR Vote",
+          value: pbrDetails,
+        },
+        {
           name: "Remarks",
           value: `${remarks}`,
         },
@@ -63,6 +90,10 @@ module.exports = {
         {
           name: "Voted Member",
           value: member.nickname,
+        },
+        {
+          name: "PBR Vote",
+          value: pbrDetails,
         },
         {
           name: "Remarks",
@@ -89,8 +120,9 @@ module.exports = {
     });
 
     abstainSubmissions.push({
-      vote: "abstain",
+      vote: "downvote",
       userId: interaction.user.id,
+      pbr: pbrCheck,
     });
   },
   getAbstains: function () {

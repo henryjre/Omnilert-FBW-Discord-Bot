@@ -25,16 +25,24 @@ module.exports = {
         .setCustomId("vrAbstainModal")
         .setTitle(`Abstain`);
 
+      const firstInput = new TextInputBuilder()
+        .setCustomId(`pbrInput`)
+        .setLabel(`Performance Based Rate`)
+        .setStyle(TextInputStyle.Short)
+        .setPlaceholder("Rate the performance of the member between 1 to 50.")
+        .setRequired(true);
+
       const secondInput = new TextInputBuilder()
         .setCustomId(`remarksInput`)
         .setLabel(`Remarks`)
         .setStyle(TextInputStyle.Paragraph)
-        .setPlaceholder("Add remarks to justify your Abstain vote.")
+        .setPlaceholder("Add remarks to justify your Downvote and PBR choice.")
         .setRequired(true);
 
+      const firstActionRow = new ActionRowBuilder().addComponents(firstInput);
       const secondActionRow = new ActionRowBuilder().addComponents(secondInput);
 
-      modal.addComponents(secondActionRow);
+      modal.addComponents(firstActionRow, secondActionRow);
 
       return modal;
     }

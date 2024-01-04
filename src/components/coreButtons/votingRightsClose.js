@@ -25,7 +25,7 @@ module.exports = {
     const upvotes = upvotesFile.getUpvotes();
     const downvotes = downvotesFile.getDownVotes();
     const abstains = abstainFile.getAbstains();
-    const votes = [...upvotes, ...downvotes];
+    const votes = [...upvotes, ...downvotes, ...abstains];
 
     await interaction.deferUpdate();
 
