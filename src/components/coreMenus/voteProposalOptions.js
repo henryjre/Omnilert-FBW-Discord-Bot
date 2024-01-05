@@ -1,4 +1,3 @@
-const pool = require("../../sqlConnectionPool");
 const {
   ActionRowBuilder,
   ModalBuilder,
@@ -26,7 +25,7 @@ module.exports = {
     );
 
     if (member.roles.cache.has("1186987728336846958")) {
-      await interaction.followUp({
+      await interaction.reply({
         content: `You already voted, cannot vote again.`,
         ephemeral: true,
       });
