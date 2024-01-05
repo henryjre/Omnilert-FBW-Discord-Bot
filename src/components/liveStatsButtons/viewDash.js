@@ -27,6 +27,6 @@ module.exports = {
 
     return client.commands
       .get("livestreamDashboard")
-      .execute(interaction, client, pool);
+      .execute(interaction, client);
   },
 };
