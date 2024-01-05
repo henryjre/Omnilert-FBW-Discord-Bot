@@ -49,7 +49,7 @@ module.exports = {
       messageEmbed.data.fields.push({
         name: "Votes Summary",
         value: `${result
-          .map((opt, i) => `- *${opt.option}*: **${opt.percentage}%**\n`)
+          .map((opt, i) => `- *${opt.option}*: **${opt.percentage.toFixed(2)}%**\n`)
           .join("")}`,
       });
       messageEmbed.data.description = "";
