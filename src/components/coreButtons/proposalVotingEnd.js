@@ -18,8 +18,6 @@ module.exports = {
 
     const proposalVotes = proposalVotesFile.getProposalVotes();
 
-    console.log(proposalVotes)
-
     let messageEmbed = interaction.message.embeds[0];
     if (proposalVotes.length > 0) {
       const totalVotingRights = proposalVotes.reduce((accumulator, vote) => {
@@ -43,8 +41,6 @@ module.exports = {
           result[voteIndex].percentage += Number(percentage)
         }
       });
-
-      console.log(result)
 
       messageEmbed.data.fields.push({
         name: "Votes Summary",
