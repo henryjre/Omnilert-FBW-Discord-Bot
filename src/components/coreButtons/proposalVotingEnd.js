@@ -27,11 +27,19 @@ module.exports = {
       let result = [];
 
       proposalVotes.forEach((vote, index) => {
-        const percentage = (vote.votingRights / totalVotingRights) * 100;
-        result.push({
-          option: vote.name,
-          percentage: percentage.toFixed(2),
-        });
+        const votePercentage = (vote.votingRights / totalVotingRights) * 100;
+        const percentage = votePercentage.toFixed(2);
+
+        let voteIndex = result.findIndex((v) => v.name === vote.name);
+
+        if (voteIndex === -1) {
+          result.push({
+            option: vote.name,
+            percentage: percentage,
+          });
+        } else {
+          result[voteIndex].percentage += percentage
+        }
       });
 
       messageEmbed.data.fields.push({
