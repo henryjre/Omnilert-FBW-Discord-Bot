@@ -32,15 +32,15 @@ module.exports = {
         const votePercentage = (vote.votingRights / totalVotingRights) * 100;
         const percentage = votePercentage.toFixed(2);
 
-        let voteIndex = result.findIndex((v) => v.name === vote.name);
+        let voteIndex = result.findIndex((v) => v.option === vote.name);
 
         if (voteIndex === -1) {
           result.push({
             option: vote.name,
-            percentage: percentage,
+            percentage: Number(percentage),
           });
         } else {
-          result[voteIndex].percentage += percentage
+          result[voteIndex].percentage += Number(percentage)
         }
       });
 
