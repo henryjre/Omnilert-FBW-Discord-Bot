@@ -37,10 +37,10 @@ module.exports = {
       "1187702101963440178": "1187593501609832508",
     };
 
-    // if (Object.keys(channelIds).includes(message.channelId)) {
-    //   if (message.author.id === channelIds[message.channelId]) {
-    //     return client.commands.get("reminder").execute(message, client, 0);
-    //   }
-    // }
+    if (Object.keys(channelIds).includes(message.channelId)) {
+      if (message.author.id === channelIds[message.channelId]) {
+        return client.commands.get("reminder").execute(message, client, 0);
+      }
+    }
   },
 };
