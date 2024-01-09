@@ -40,20 +40,33 @@ module.exports = {
 
     const currentDate = moment();
 
-    const daysUntilMonday = (currentDate.day() + 7 - 1) % 7;
-    const latestMonday = currentDate
-      .subtract(daysUntilMonday, "days")
+    // const daysUntilPreviousSaturday = (moment().day() + 7 - 6) % 7;
+    // const previousSaturday = moment()
+    //   .subtract(daysUntilPreviousSaturday, "days")
+    //   .subtract(1, "week")
+    //   .startOf("day");
+    // const previousFriday = previousSaturday
+    //   .clone()
+    //   .add(1, "week")
+    //   .subtract(1, "days")
+    //   .endOf("day");
+
+    // console.log(previousSaturday.format("MMM D, YYYY, h:mm A"));
+    // console.log(previousFriday.format("MMM D, YYYY, h:mm A"));
+
+    const daysUntilCutOff = (currentDate.day() + 7 - 6) % 7;
+    const latestCutOffDate = currentDate
+      .subtract(daysUntilCutOff, "days")
       .startOf("day");
 
-    console.log(latestMonday.format("MMM D, YYYY, h:mm A"));
     const rows = await logSheet.getRows();
 
     const filtreredRows = rows
       .filter(
         (r) =>
           r._rawData[1] === userName &&
-          moment(r._rawData[2], "MMM D, YYYY, h:mm A").isSameOrAfter(
-            latestMonday
+          moment(r._rawData[3], "MMM D, YYYY, h:mm A").isSameOrAfter(
+            latestCutOffDate
           )
       )
       .map((r) => r._rawData[4]);
@@ -66,8 +79,7 @@ module.exports = {
     const totalHours = Math.floor(totalSum / 60);
     const minutes = totalSum % 60;
 
-    const minimumHours = 30;
-    const minimumMinutes = 1800;
+    const minimumMinutes = 1200;
     let description;
     if (totalSum >= minimumMinutes) {
       description = `✅ You have reached the minimum required hours for this week.`;

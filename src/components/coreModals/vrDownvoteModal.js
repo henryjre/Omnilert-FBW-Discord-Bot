@@ -46,9 +46,9 @@ module.exports = {
 
     const messageEmbed = interaction.message.embeds[0];
     const votedUser = messageEmbed.data.fields[0].value;
-    const numberOfVotes = messageEmbed.data.fields[1].value;
+    const numberOfVotes = messageEmbed.data.fields[2].value;
     const newVotes = Number(numberOfVotes) + 1;
-    messageEmbed.data.fields[1].value = String(newVotes);
+    messageEmbed.data.fields[2].value = String(newVotes);
 
     await interaction.editReply({
       embeds: [messageEmbed],

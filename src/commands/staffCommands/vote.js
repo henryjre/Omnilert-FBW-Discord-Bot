@@ -6,6 +6,10 @@ const {
   EmbedBuilder,
 } = require("discord.js");
 
+const { GoogleSpreadsheet } = require("google-spreadsheet");
+const creds = require("../../secret-key.json");
+const moment = require("moment");
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("vote")
@@ -72,12 +76,55 @@ module.exports = {
       closeVote
     );
 
+    const doc = new GoogleSpreadsheet(process.env.sheetId);
+    await doc.useServiceAccountAuth(creds);
+    await doc.loadInfo();
+    const logSheet = doc.sheetsByTitle["LOGS"];
+
+    const daysUntilPreviousSaturday = (moment().day() + 7 - 6) % 7;
+    const previousSaturday = moment()
+      .subtract(daysUntilPreviousSaturday, "days")
+      .subtract(1, "week")
+      .startOf("day");
+    const previousFriday = previousSaturday
+      .clone()
+      .add(1, "week")
+      .subtract(1, "days")
+      .endOf("day");
+
+    const rows = await logSheet.getRows();
+
+    const filteredRows = rows
+      .filter(
+        (r) =>
+          r._rawData[1] === user.username &&
+          moment(r._rawData[3], "MMM D, YYYY, h:mm A").isSameOrAfter(
+            previousSaturday
+          ) &&
+          moment(r._rawData[3], "MMM D, YYYY, h:mm A").isSameOrBefore(
+            previousFriday
+          )
+      )
+      .map((r) => r._rawData[4]);
+
+    const totalSum = filteredRows.reduce(
+      (accumulator, currentValue) => accumulator + Number(currentValue),
+      0
+    );
+
+    const embedHours = Math.floor(totalSum / 60);
+    const embedMinutes = totalSum % 60;
+
     const votingRightsEmbed = new EmbedBuilder()
       .setTitle(`🗳️ VOTING RIGHTS`)
       .addFields([
         {
           name: "Core Member",
           value: member.toString(),
+        },
+        {
+          name: `Hours Rendered`,
+          value: `${embedHours} hours and ${embedMinutes} minutes`,
         },
         {
           name: "Number of Votes",

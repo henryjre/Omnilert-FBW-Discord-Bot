@@ -3,6 +3,10 @@ const downvotesFile = require("../coreModals/vrDownvoteModal");
 const abstainFile = require("../coreModals/vrAbstainModal");
 const pool = require("../../sqlConnectionPool");
 
+const { GoogleSpreadsheet } = require("google-spreadsheet");
+const creds = require("../../secret-key.json");
+const moment = require("moment");
+
 const pesoFormatter = new Intl.NumberFormat("en-PH", {
   style: "currency",
   currency: "PHP",
@@ -68,6 +72,16 @@ module.exports = {
 
     await connection.release();
 
+    const workDuration = messageEmbed.data.fields[1].value;
+    const [hours, minutes] = workDuration.match(/\d+/g).map(Number);
+    const totalSum = moment.duration({ hours, minutes }).asHours();
+
+    const totalHours = Number(totalSum);
+
+    const fixedPay = Number((totalHours * 30).toFixed(2));
+    const pbrPay = Number((totalHours * finalPbr).toFixed(2));
+    const totalPay = Number((fixedPay + pbrPay).toFixed(2));
+
     messageEmbed.data.fields.push(
       {
         name: "Votes Summary",
@@ -76,14 +90,37 @@ module.exports = {
       {
         name: "Final PBR",
         value: pesoFormatter.format(finalPbr),
+      },
+      {
+        name: `Fixed Salary`,
+        value: pesoFormatter.format(fixedPay),
+      },
+      {
+        name: `Performance Based Salary`,
+        value: pesoFormatter.format(pbrPay),
+      },
+      {
+        name: `Total Salary`,
+        value: pesoFormatter.format(totalPay),
       }
     );
     messageEmbed.data.color = 2392134; //5763720
+    messageEmbed.data.fields.splice(2, 1);
 
-    await interaction.editReply({
-      embeds: [messageEmbed],
-      components: [],
-    });
+    const message = await interaction.message.channel.messages.fetch(
+      interaction.message.id
+    );
+    await client.channels.cache
+      .get("1194283985870782565")
+      .send({
+        embeds: [messageEmbed],
+      })
+      .then((msg) => {
+        upvotesFile.clearUpvotes();
+        downvotesFile.clearDownvotes();
+        abstainFile.clearAbstains();
+        message.delete();
+      });
 
     const membersWhoVoted = await interaction.guild.roles.cache
       .get("1186987728336846958")
@@ -92,9 +129,5 @@ module.exports = {
     for (const member of membersWhoVoted) {
       await member.roles.remove("1186987728336846958");
     }
-
-    upvotesFile.clearUpvotes();
-    downvotesFile.clearDownvotes();
-    abstainFile.clearAbstains();
   },
 };
