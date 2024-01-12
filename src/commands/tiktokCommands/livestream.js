@@ -258,7 +258,7 @@ module.exports = {
         obj.id,
         livestreamId,
         obj.status,
-        obj.payment.sub_total,
+        Number(obj.payment.sub_total),
         liveId,
         streamerName,
         createdDate,
@@ -289,10 +289,10 @@ module.exports = {
           livestreamStats.cancelled += 1;
         } else if (order_status === "COMPLETED") {
           livestreamStats.completed += 1;
-          livestreamStats.netSubtotal += order_subtotal;
+          livestreamStats.netSubtotal += Number(order_subtotal);
         } else {
           livestreamStats.pending += 1;
-          livestreamStats.netSubtotal += order_subtotal;
+          livestreamStats.netSubtotal += Number(order_subtotal);
         }
 
         livestreamStats.totalOrders += 1;
