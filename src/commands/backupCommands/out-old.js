@@ -9,17 +9,6 @@ module.exports = {
     .setName("out")
     .setDescription("Log out of your current shift."),
   async execute(interaction, client) {
-    const thread = await interaction.channel;
-
-    if (!thread.isThread()) {
-      await interaction.reply({
-        content:
-          "Cannot find the channel. Please log out on your reportal thread channel.",
-        ephemeral: true,
-      });
-      return;
-    }
-
     await interaction.deferReply();
 
     const connection = await pool
@@ -41,7 +30,7 @@ module.exports = {
       hour12: true,
     });
 
-    client.commands.get("reportal").execute(interaction, thread.id, client, 1);
+    client.commands.get("reminder").execute(interaction, client, 1);
 
     const queryWorkShiftString =
       "SELECT * FROM WORK_HOURS WHERE DISCORD_ID = ? AND TIME_OUT IS NULL";
@@ -119,9 +108,6 @@ module.exports = {
       await interaction.editReply({
         embeds: [embed],
       });
-
-      await thread.setLocked(true);
-      await thread.setArchived(true);
     } catch (error) {
       console.log(error);
       await interaction.editReply({

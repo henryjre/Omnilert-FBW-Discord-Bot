@@ -26,13 +26,13 @@ module.exports = {
         .setRequired(true)
     ),
   async execute(interaction, client) {
-    const validRoles = ["1177271188997804123"];
+    const validRoles = ["1176496361802301462"];
 
     if (
       !interaction.member.roles.cache.some((r) => validRoles.includes(r.id))
     ) {
       await interaction.reply({
-        content: `🔴 ERROR: This command can only be used by <@&1177271188997804123>.`,
+        content: `🔴 ERROR: This command can only be used by <@&1176496361802301462>.`,
         ephemeral: true,
       });
       return;

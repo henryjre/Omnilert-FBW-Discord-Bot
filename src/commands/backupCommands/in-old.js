@@ -2,29 +2,21 @@ const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 const { customAlphabet } = require("nanoid");
 
 const nanoid = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 13);
-const moment = require("moment");
 
 const pool = require("../../sqlConnectionPool");
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName("login")
+    .setName("in")
     .setDescription("Log in to start work shift."),
   async execute(interaction, client) {
-    // await interaction.deferReply();
-
-    const id = nanoid();
-    const dateToday = moment().format("MMMM DD, YYYY");
-    const thread = await interaction.channel.threads.create({
-      name: `${id} - ${dateToday}`,
-      autoArchiveDuration: 1440,
-    });
-    return;
+    await interaction.deferReply();
 
     const connection = await pool
       .getConnection()
       .catch((err) => console.log(err));
 
+    const id = nanoid();
     const userId = interaction.user.id;
     const timeIn = Date.now();
 
