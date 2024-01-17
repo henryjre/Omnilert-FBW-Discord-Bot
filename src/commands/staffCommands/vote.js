@@ -21,6 +21,16 @@ module.exports = {
         .setName("user")
         .setDescription("The core member to be voted.")
         .setRequired(true)
+    )
+    .addStringOption((option) =>
+      option
+        .setName("type")
+        .setDescription("The voting type.")
+        .setRequired(true)
+        .addChoices(
+          { name: "👑 Voting Rights", value: "votingRights" },
+          { name: "💸 Performance-Based Rate", value: "pbr" }
+        )
     ),
 
   async execute(interaction, client) {
@@ -36,12 +46,20 @@ module.exports = {
       return;
     }
 
+    const type = interaction.options.getString("type");
     const user = interaction.options.getUser("user");
     const member = interaction.guild.members.cache.get(user.id);
 
-    if (!member.roles.cache.has("1185935514042388520")) {
+    let validRole;
+    if (type === "votingRights") {
+      validRole = "1196806310524629062";
+    } else {
+      validRole = "1185935514042388520";
+    }
+
+    if (!member.roles.cache.has(validRole)) {
       await interaction.reply({
-        content: `🔴 ERROR: ${member.nickname} is not a <@&1185935514042388520> member.`,
+        content: `🔴 ERROR: ${member.nickname} is not an <@&${validRole}>.`,
         ephemeral: true,
       });
       return;
@@ -49,90 +67,115 @@ module.exports = {
 
     await interaction.deferReply();
 
-    const upvote = new ButtonBuilder()
-      .setCustomId("votingRightsUpvote")
-      .setLabel("Upvote")
-      .setStyle(ButtonStyle.Success);
+    const buttonRow = new ActionRowBuilder();
 
-    const downvote = new ButtonBuilder()
-      .setCustomId("votingRightsDownvote")
-      .setLabel("Downvote")
-      .setStyle(ButtonStyle.Danger);
+    if (type === "votingRights") {
+      const upvote = new ButtonBuilder()
+        .setCustomId("votingRightsUpvote")
+        .setLabel("Upvote")
+        .setStyle(ButtonStyle.Success);
 
-    const abstain = new ButtonBuilder()
-      .setCustomId("votingRightsAbstain")
-      .setLabel("Abstain")
-      .setStyle(ButtonStyle.Secondary);
+      const downvote = new ButtonBuilder()
+        .setCustomId("votingRightsDownvote")
+        .setLabel("Downvote")
+        .setStyle(ButtonStyle.Danger);
+
+      const abstain = new ButtonBuilder()
+        .setCustomId("votingRightsAbstain")
+        .setLabel("Abstain")
+        .setStyle(ButtonStyle.Secondary);
+
+      buttonRow.addComponents(upvote, downvote, abstain);
+    } else {
+      const pbrButton = new ButtonBuilder()
+        .setCustomId("votingPbrButton")
+        .setLabel("Submit PBR")
+        .setStyle(ButtonStyle.Success);
+
+      buttonRow.addComponents(pbrButton);
+    }
 
     const closeVote = new ButtonBuilder()
       .setCustomId("votingRightsClose")
       .setLabel("Close Voting")
       .setStyle(ButtonStyle.Primary);
 
-    const buttonRow = new ActionRowBuilder().addComponents(
-      upvote,
-      downvote,
-      abstain,
-      closeVote
-    );
+    buttonRow.addComponents(closeVote);
 
-    const doc = new GoogleSpreadsheet(process.env.sheetId);
-    await doc.useServiceAccountAuth(creds);
-    await doc.loadInfo();
-    const logSheet = doc.sheetsByTitle["LOGS"];
+    const votingRightsEmbed = new EmbedBuilder().setTimestamp(Date.now());
 
-    const daysUntilPreviousSaturday = (moment().day() + 7 - 6) % 7;
-    const previousSaturday = moment()
-      .subtract(daysUntilPreviousSaturday, "days")
-      .subtract(1, "week")
-      .startOf("day");
-    const previousFriday = previousSaturday
-      .clone()
-      .add(1, "week")
-      .subtract(1, "days")
-      .endOf("day");
+    if (type === "votingRights") {
+      votingRightsEmbed
+        .setTitle(`🗳️ VOTING RIGHTS`)
+        .addFields([
+          {
+            name: "Member",
+            value: member.toString(),
+          },
+          {
+            name: "Number of Votes",
+            value: "0",
+          },
+        ])
+        .setColor("Blurple");
+    } else {
+      const doc = new GoogleSpreadsheet(process.env.sheetId);
+      await doc.useServiceAccountAuth(creds);
+      await doc.loadInfo();
+      const logSheet = doc.sheetsByTitle["LOGS"];
 
-    const rows = await logSheet.getRows();
+      const daysUntilPreviousSaturday = (moment().day() + 7 - 6) % 7;
+      const previousSaturday = moment()
+        .subtract(daysUntilPreviousSaturday, "days")
+        .subtract(1, "week")
+        .startOf("day");
+      const previousFriday = previousSaturday
+        .clone()
+        .add(1, "week")
+        .subtract(1, "days")
+        .endOf("day");
 
-    const filteredRows = rows
-      .filter(
-        (r) =>
-          r._rawData[1] === user.username &&
-          moment(r._rawData[3], "MMM D, YYYY, h:mm A").isSameOrAfter(
-            previousSaturday
-          ) &&
-          moment(r._rawData[3], "MMM D, YYYY, h:mm A").isSameOrBefore(
-            previousFriday
-          )
-      )
-      .map((r) => r._rawData[4]);
+      const rows = await logSheet.getRows();
 
-    const totalSum = filteredRows.reduce(
-      (accumulator, currentValue) => accumulator + Number(currentValue),
-      0
-    );
+      const filteredRows = rows
+        .filter(
+          (r) =>
+            r._rawData[1] === user.username &&
+            moment(r._rawData[3], "MMM D, YYYY, h:mm A").isSameOrAfter(
+              previousSaturday
+            ) &&
+            moment(r._rawData[3], "MMM D, YYYY, h:mm A").isSameOrBefore(
+              previousFriday
+            )
+        )
+        .map((r) => r._rawData[4]);
 
-    const embedHours = Math.floor(totalSum / 60);
-    const embedMinutes = totalSum % 60;
+      const totalSum = filteredRows.reduce(
+        (accumulator, currentValue) => accumulator + Number(currentValue),
+        0
+      );
 
-    const votingRightsEmbed = new EmbedBuilder()
-      .setTitle(`🗳️ VOTING RIGHTS`)
-      .addFields([
-        {
-          name: "Core Member",
-          value: member.toString(),
-        },
-        {
-          name: `Hours Rendered`,
-          value: `${embedHours} hours and ${embedMinutes} minutes`,
-        },
-        {
-          name: "Number of Votes",
-          value: "0",
-        },
-      ])
-      .setTimestamp(Date.now())
-      .setColor("Blurple");
+      const embedHours = Math.floor(totalSum / 60);
+      const embedMinutes = totalSum % 60;
+
+      votingRightsEmbed
+        .setTitle(`🗳️ PERFORMACE-BASED RATING`)
+        .addFields([
+          {
+            name: "Member",
+            value: member.toString(),
+          },
+          {
+            name: `Hours Rendered`,
+            value: `${embedHours} hours and ${embedMinutes} minutes`,
+          },
+          {
+            name: "Number of Votes",
+            value: "0",
+          },
+        ])
+        .setColor("Orange");
+    }
 
     await interaction.editReply({
       embeds: [votingRightsEmbed],

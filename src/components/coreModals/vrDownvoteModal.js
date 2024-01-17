@@ -8,47 +8,37 @@ module.exports = {
   },
   async execute(interaction, client) {
     await interaction.deferUpdate();
-    const interactionMember = interaction.guild.members.cache.get(
-      interaction.user.id
-    );
-    if (interactionMember.roles.cache.has("1186987728336846958")) {
-      await interaction.followUp({
-        content: `You already voted, cannot vote again.`,
-        ephemeral: true,
-      });
-      return;
-    }
 
-    const pbrDetails = interaction.fields.getTextInputValue("pbrInput");
+    // const pbrDetails = interaction.fields.getTextInputValue("pbrInput");
     const remarks = interaction.fields.getTextInputValue("remarksInput");
 
-    const pbrCheck = Number(pbrDetails);
+    // const pbrCheck = Number(pbrDetails);
 
-    if (isNaN(pbrCheck)) {
-      await interaction.reply({
-        content: `🔴 ERROR: Vote not submitted. Please enter a valid number PBR.`,
-        ephemeral: true,
-      });
-      return;
-    } else if (pbrCheck < 1) {
-      await interaction.reply({
-        content: `🔴 ERROR: Vote not submitted. PBR must not be a negative value.`,
-        ephemeral: true,
-      });
-      return;
-    } else if (pbrCheck > 50) {
-      await interaction.reply({
-        content: `🔴 ERROR: Vote not submitted. PBR must not exceed 50.`,
-        ephemeral: true,
-      });
-      return;
-    }
+    // if (isNaN(pbrCheck)) {
+    //   await interaction.reply({
+    //     content: `🔴 ERROR: Vote not submitted. Please enter a valid number PBR.`,
+    //     ephemeral: true,
+    //   });
+    //   return;
+    // } else if (pbrCheck < 1) {
+    //   await interaction.reply({
+    //     content: `🔴 ERROR: Vote not submitted. PBR must not be a negative value.`,
+    //     ephemeral: true,
+    //   });
+    //   return;
+    // } else if (pbrCheck > 50) {
+    //   await interaction.reply({
+    //     content: `🔴 ERROR: Vote not submitted. PBR must not exceed 50.`,
+    //     ephemeral: true,
+    //   });
+    //   return;
+    // }
 
     const messageEmbed = interaction.message.embeds[0];
     const votedUser = messageEmbed.data.fields[0].value;
-    const numberOfVotes = messageEmbed.data.fields[2].value;
+    const numberOfVotes = messageEmbed.data.fields[1].value;
     const newVotes = Number(numberOfVotes) + 1;
-    messageEmbed.data.fields[2].value = String(newVotes);
+    messageEmbed.data.fields[1].value = String(newVotes);
 
     await interaction.editReply({
       embeds: [messageEmbed],
@@ -69,10 +59,10 @@ module.exports = {
           name: "Voted Member",
           value: member.nickname,
         },
-        {
-          name: "PBR Vote",
-          value: pbrDetails,
-        },
+        // {
+        //   name: "PBR Vote",
+        //   value: pbrDetails,
+        // },
         {
           name: "Remarks",
           value: `${remarks}`,
@@ -92,10 +82,10 @@ module.exports = {
           name: "Voted Member",
           value: member.nickname,
         },
-        {
-          name: "PBR Vote",
-          value: pbrDetails,
-        },
+        // {
+        //   name: "PBR Vote",
+        //   value: pbrDetails,
+        // },
         {
           name: "Remarks",
           value: `${remarks}`,
@@ -132,7 +122,7 @@ module.exports = {
     downvotesSubmissions.push({
       vote: "downvote",
       userId: interaction.user.id,
-      pbr: pbrCheck,
+      // pbr: pbrCheck,
     });
   },
   getDownVotes: function () {

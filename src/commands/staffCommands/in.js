@@ -17,12 +17,6 @@ module.exports = {
     const member = interaction.guild.members.cache.get(interaction.user.id);
 
     const id = nanoid();
-    const thread = await interaction.channel.threads.create({
-      name: `${member.nickname} | ${threadId()}`,
-      reason: `Reportal ID: ${id}`,
-      autoArchiveDuration: 1440,
-    });
-    await thread.join();
 
     const connection = await pool
       .getConnection()
@@ -45,6 +39,13 @@ module.exports = {
       connection.release();
       return;
     }
+
+    const thread = await interaction.channel.threads.create({
+      name: `${member.nickname} | ${threadId()}`,
+      reason: `Reportal ID: ${id}`,
+      autoArchiveDuration: 1440,
+    });
+    await thread.join();
 
     client.commands.get("reportal").execute(interaction, thread.id, client, 0);
 

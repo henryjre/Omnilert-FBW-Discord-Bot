@@ -7,7 +7,7 @@ const {
 
 module.exports = {
   data: {
-    name: `votingRightsUpvote`,
+    name: `votingPbrButton`,
   },
   async execute(interaction, client) {
     if (interaction.user.id === "864920050691866654") {
@@ -17,32 +17,20 @@ module.exports = {
       });
       return;
     }
-
-    const interactionMember = interaction.guild.members.cache.get(
-      interaction.user.id
-    );
-    if (interactionMember.roles.cache.has("1186987728336846958")) {
-      await interaction.reply({
-        content: `You already voted, cannot vote again.`,
-        ephemeral: true,
-      });
-      return;
-    }
-
     const modal = buildModal();
     await interaction.showModal(modal);
 
     function buildModal() {
       const modal = new ModalBuilder()
-        .setCustomId("vrUpvoteModal")
+        .setCustomId("votingPbrModal")
         .setTitle(`Upvote`);
 
-      // const firstInput = new TextInputBuilder()
-      //   .setCustomId(`pbrInput`)
-      //   .setLabel(`Performance Based Rate`)
-      //   .setStyle(TextInputStyle.Short)
-      //   .setPlaceholder("Rate the performance of the member between 1 to 50.")
-      //   .setRequired(true);
+      const firstInput = new TextInputBuilder()
+        .setCustomId(`pbrInput`)
+        .setLabel(`Performance Based Rate`)
+        .setStyle(TextInputStyle.Short)
+        .setPlaceholder("Rate the performance of the member between 1 to 50.")
+        .setRequired(true);
 
       const secondInput = new TextInputBuilder()
         .setCustomId(`remarksInput`)
@@ -51,10 +39,10 @@ module.exports = {
         .setPlaceholder("Add remarks to justify your Upvote and PBR choice.")
         .setRequired(true);
 
-      // const firstActionRow = new ActionRowBuilder().addComponents(firstInput);
+      const firstActionRow = new ActionRowBuilder().addComponents(firstInput);
       const secondActionRow = new ActionRowBuilder().addComponents(secondInput);
 
-      modal.addComponents(secondActionRow);
+      modal.addComponents(firstActionRow, secondActionRow);
 
       return modal;
     }
