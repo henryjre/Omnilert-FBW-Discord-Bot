@@ -1,5 +1,12 @@
-const { EmbedBuilder } = require("discord.js");
-const schedule = require("node-schedule");
+const {
+  EmbedBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  ActionRowBuilder,
+  StringSelectMenuOptionBuilder,
+  StringSelectMenuBuilder,
+} = require("discord.js");
+// const schedule = require("node-schedule");
 
 let scheduledChecks = {};
 module.exports = {
@@ -20,9 +27,9 @@ module.exports = {
     const title = interaction.fields.getTextInputValue("titleInput");
     const details = interaction.fields.getTextInputValue("announcementInput");
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply();
 
-    const role = interaction.guild.roles.cache.get(
+    const role = await interaction.guild.roles.cache.get(
       channel === "1197101506638381188"
         ? "1185935514042388520"
         : "1196806310524629062"
@@ -35,11 +42,11 @@ module.exports = {
       .setColor("Green");
 
     const announcementEmbed = new EmbedBuilder()
-      .setDescription(`## 📢 ANNOUNCEMENT`)
+      .setDescription(`# 📢 ANNOUNCEMENT\n## ${title}`)
       .addFields([
         {
-          name: "Title",
-          value: title,
+          name: "Prepared By",
+          value: interaction.user.toString(),
         },
         {
           name: "Announcement Details",
@@ -47,19 +54,42 @@ module.exports = {
         },
       ])
       .setTimestamp(Date.now())
-      .setFooter({
-        iconURL: interaction.member.displayAvatarURL(),
-        text: `Announced By: ${interaction.member.nickname}`,
-      })
+      // .setThumbnail(interaction.member.displayAvatarURL())
       .setColor(role.color);
 
-    const proposalMessage = await client.channels.cache.get(channel).send({
-      content: role.toString(),
-      embeds: [announcementEmbed],
-    });
+    const membersWithRoles = role.members.map((m) =>
+      new StringSelectMenuOptionBuilder()
+        .setLabel(m.nickname)
+        .setValue(m.user.id)
+    );
+
+    const userMenu = new StringSelectMenuBuilder()
+      .setCustomId("announcementMenu")
+      .setOptions(membersWithRoles)
+      .setMaxValues(membersWithRoles.length)
+      .setPlaceholder("Select the target users of your announcement.");
+
+    const submit = new ButtonBuilder()
+      .setCustomId("announcementSubmit")
+      .setLabel("Announce")
+      .setStyle(ButtonStyle.Success);
+
+    const cancel = new ButtonBuilder()
+      .setCustomId("announcementCancel")
+      .setLabel("Cancel")
+      .setStyle(ButtonStyle.Danger);
+
+    const menuRow = new ActionRowBuilder().addComponents(userMenu);
+    const buttonRow = new ActionRowBuilder().addComponents(submit, cancel);
+
+    // const proposalMessage = await client.channels.cache.get(channel).send({
+    //   content: role.toString(),
+    //   embeds: [announcementEmbed],
+    // });
 
     await interaction.editReply({
-      embeds: [embed],
+      embeds: [announcementEmbed],
+      components: [menuRow, buttonRow],
     });
 
     // function calculateDayCheck() {
