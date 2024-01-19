@@ -10,7 +10,7 @@ module.exports = {
     const interactionMember = interaction.guild.members.cache.get(
       interaction.user.id
     );
-    if (interactionMember.roles.cache.has("1174612428206641182")) {
+    if (!interactionMember.roles.cache.has("1174612428206641182")) {
       await interaction.reply({
         content: `You cannot approve this cashback.`,
         ephemeral: true,
