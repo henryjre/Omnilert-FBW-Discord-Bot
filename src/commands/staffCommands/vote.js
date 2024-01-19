@@ -6,9 +6,7 @@ const {
   EmbedBuilder,
 } = require("discord.js");
 
-const { GoogleSpreadsheet } = require("google-spreadsheet");
-const creds = require("../../secret-key.json");
-const moment = require("moment");
+const pool = require("../../sqlConnectionPool");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -50,16 +48,18 @@ module.exports = {
     const user = interaction.options.getUser("user");
     const member = interaction.guild.members.cache.get(user.id);
 
-    let validRole;
+    let validRole, error;
     if (type === "votingRights") {
       validRole = "1196806310524629062";
+      error = `🔴 ERROR: ${member.nickname} is not a <@&${validRole}>.`;
     } else {
       validRole = "1185935514042388520";
+      error = `🔴 ERROR: ${member.nickname} is not an <@&${validRole}>.`;
     }
 
     if (!member.roles.cache.has(validRole)) {
       await interaction.reply({
-        content: `🔴 ERROR: ${member.nickname} is not an <@&${validRole}>.`,
+        content: error,
         ephemeral: true,
       });
       return;
@@ -119,47 +119,24 @@ module.exports = {
         ])
         .setColor("Blurple");
     } else {
-      const doc = new GoogleSpreadsheet(process.env.sheetId);
-      await doc.useServiceAccountAuth(creds);
-      await doc.loadInfo();
-      const logSheet = doc.sheetsByTitle["LOGS"];
+      const connection = await pool
+        .getConnection()
+        .catch((err) => console.log(err));
 
-      const daysUntilPreviousSaturday = (moment().day() + 7 - 6) % 7;
-      const previousSaturday = moment()
-        .subtract(daysUntilPreviousSaturday, "days")
-        .subtract(1, "week")
-        .startOf("day");
-      const previousFriday = previousSaturday
-        .clone()
-        .add(1, "week")
-        .subtract(1, "days")
-        .endOf("day");
+      const selectQuery = "SELECT * FROM Executives WHERE MEMBER_ID = ?";
+      const [executive] = await connection
+        .query(selectQuery, [user.id])
+        .catch((err) => console.log(err));
 
-      const rows = await logSheet.getRows();
+      await connection.release();
 
-      const filteredRows = rows
-        .filter(
-          (r) =>
-            r._rawData[1] === user.username &&
-            moment(r._rawData[3], "MMM D, YYYY, h:mm A").isSameOrAfter(
-              previousSaturday
-            ) &&
-            moment(r._rawData[3], "MMM D, YYYY, h:mm A").isSameOrBefore(
-              previousFriday
-            )
-        )
-        .map((r) => r._rawData[4]);
+      const totalTime = parseInt(executive[0].TIME_RENDERED);
 
-      const totalSum = filteredRows.reduce(
-        (accumulator, currentValue) => accumulator + Number(currentValue),
-        0
-      );
-
-      const embedHours = Math.floor(totalSum / 60);
-      const embedMinutes = totalSum % 60;
+      const totalHours = Math.floor(totalTime / 60);
+      const minutes = totalTime % 60;
 
       votingRightsEmbed
-        .setTitle(`🗳️ PERFORMACE-BASED RATING`)
+        .setTitle(`💸 PERFORMACE-BASED RATING`)
         .addFields([
           {
             name: "Member",
@@ -167,7 +144,7 @@ module.exports = {
           },
           {
             name: `Hours Rendered`,
-            value: `${embedHours} hours and ${embedMinutes} minutes`,
+            value: `${totalHours} hours and ${minutes} minutes`,
           },
           {
             name: "Number of Votes",

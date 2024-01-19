@@ -63,7 +63,7 @@ module.exports = {
     //   .getConnection()
     //   .catch((err) => console.log(err));
 
-    // const selectMemberQuery = "SELECT * FROM Core_Team WHERE MEMBER_ID = ?";
+    // const selectMemberQuery = "SELECT * FROM Board_Of_Directors WHERE MEMBER_ID = ?";
     // const [selectMemberResult] = await connection.execute(selectMemberQuery, [
     //   String(interaction.user.id),
     // ]);

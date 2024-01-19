@@ -80,13 +80,14 @@ module.exports = {
       await doc.loadInfo();
       ///
       let logSheet;
-      const validRoles = ["1185935514042388520"];
-
-      if (
-        interaction.member.roles.cache.some((r) => validRoles.includes(r.id))
-      ) {
+      let updateQuery;
+      if (interaction.member.roles.cache.has("1185935514042388520")) {
+        updateQuery =
+          "UPDATE Executives SET TIME_RENDERED = (TIME_RENDERED + ?) WHERE MEMBER_ID = ?";
         logSheet = doc.sheetsByTitle["LOGS"];
       } else {
+        updateQuery =
+          "UPDATE Sub_Members SET TIME_RENDERED = (TIME_RENDERED + ?) WHERE MEMBER_ID = ?";
         logSheet = doc.sheetsByTitle["SUB_MEMBER_LOGS"];
       }
 
@@ -102,6 +103,10 @@ module.exports = {
         "UPDATE WORK_HOURS SET TIME_OUT = ? WHERE ID = ?";
       await connection
         .query(updateWorkShiftString, [timeOut, workId])
+        .catch((err) => console.log(err));
+
+      await connection
+        .query(updateQuery, [minutesOnly, userId])
         .catch((err) => console.log(err));
 
       const embed = new EmbedBuilder()

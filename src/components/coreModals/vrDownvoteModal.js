@@ -114,7 +114,7 @@ module.exports = {
       .getConnection()
       .catch((err) => console.log(err));
 
-    const updateQuery = `UPDATE Core_Team SET VOTING_RIGHTS = (VOTING_RIGHTS - 1) WHERE MEMBER_ID = ?`;
+    const updateQuery = `UPDATE Board_Of_Directors SET VOTING_RIGHTS = (VOTING_RIGHTS - 1) WHERE MEMBER_ID = ?`;
     await connection.execute(updateQuery, [userId]);
 
     await connection.release();

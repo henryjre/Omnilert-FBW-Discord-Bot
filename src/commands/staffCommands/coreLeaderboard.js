@@ -21,7 +21,7 @@ module.exports = {
       .catch((err) => console.log(err));
 
     const selectQuery =
-      "SELECT * FROM Core_Team ORDER BY VOTING_RIGHTS DESC, PBR DESC";
+      "SELECT * FROM Board_Of_Directors ORDER BY VOTING_RIGHTS DESC, PBR DESC";
     const [lb] = await connection
       .query(selectQuery)
       .catch((err) => console.log(err));

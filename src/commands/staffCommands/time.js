@@ -1,7 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 const moment = require("moment");
-const { GoogleSpreadsheet } = require("google-spreadsheet");
-const creds = require("../../secret-key.json");
+const pool = require("../../sqlConnectionPool");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -21,93 +20,66 @@ module.exports = {
     }
 
     const userId = interaction.user.id;
-    const userName = interaction.user.username;
 
     await interaction.deferReply();
 
-    const doc = new GoogleSpreadsheet(process.env.sheetId);
-    await doc.useServiceAccountAuth(creds);
-    await doc.loadInfo();
-    ///
-    let logSheet;
-    const coreRole = ["1185935514042388520"];
-
-    if (interaction.member.roles.cache.some((r) => coreRole.includes(r.id))) {
-      logSheet = doc.sheetsByTitle["LOGS"];
+    let queryString;
+    if (interaction.member.roles.cache.has("1185935514042388520")) {
+      queryString = "SELECT * FROM Executives WHERE MEMBER_ID = ?";
     } else {
-      logSheet = doc.sheetsByTitle["SUB_MEMBER_LOGS"];
+      queryString = "SELECT TIME_RENDERED FROM Sub_Members WHERE MEMBER_ID = ?";
     }
 
-    const currentDate = moment();
+    const connection = await pool
+      .getConnection()
+      .catch((err) => console.log(err));
 
-    // const daysUntilPreviousSaturday = (moment().day() + 7 - 6) % 7;
-    // const previousSaturday = moment()
-    //   .subtract(daysUntilPreviousSaturday, "days")
-    //   .subtract(1, "week")
-    //   .startOf("day");
-    // const previousFriday = previousSaturday
-    //   .clone()
-    //   .add(1, "week")
-    //   .subtract(1, "days")
-    //   .endOf("day");
+    try {
+      const [user] = await connection.query(queryString, [userId]);
 
-    // console.log(previousSaturday.format("MMM D, YYYY, h:mm A"));
-    // console.log(previousFriday.format("MMM D, YYYY, h:mm A"));
+      const totalTime = parseInt(user[0].TIME_RENDERED);
 
-    const daysUntilCutOff = (currentDate.day() + 7 - 6) % 7;
-    const latestCutOffDate = currentDate
-      .subtract(daysUntilCutOff, "days")
-      .startOf("day");
+      const totalHours = Math.floor(totalTime / 60);
+      const minutes = totalTime % 60;
 
-    const rows = await logSheet.getRows();
+      const minimumMinutes = 1200;
+      let description;
+      if (totalTime >= minimumMinutes) {
+        description = `✅ You have reached the minimum required hours for this week.`;
+      } else {
+        const hoursRemaining = minimumMinutes - totalTime;
+        const neededHours = Math.floor(hoursRemaining / 60);
+        const neededMinutes = hoursRemaining % 60;
 
-    const filtreredRows = rows
-      .filter(
-        (r) =>
-          r._rawData[1] === userName &&
-          moment(r._rawData[3], "MMM D, YYYY, h:mm A").isSameOrAfter(
-            latestCutOffDate
-          )
-      )
-      .map((r) => r._rawData[4]);
+        description = `❌ You need **${neededHours} ${
+          neededHours === 1 ? "hour" : "hours"
+        } and ${neededMinutes} ${
+          neededMinutes === 1 ? "minute" : "minutes"
+        }** more to reach the minimum required time for this week.`;
+      }
 
-    let totalSum = 0;
-    for (let i = 0; i < filtreredRows.length; i++) {
-      totalSum += parseInt(filtreredRows[i], 10);
+      const embed = new EmbedBuilder()
+        .setTitle(`WORK TIME CHECK`)
+        .setDescription(description)
+        .setColor(totalTime >= minimumMinutes ? "Green" : "Red")
+        .addFields([
+          {
+            name: `CURRENT WORK DURATION`,
+            value: `⏱️ ${totalHours} hours and ${minutes} minutes`,
+          },
+        ]);
+
+      await interaction.editReply({
+        embeds: [embed],
+      });
+    } catch (error) {
+      console.log(error);
+      await interaction.editReply({
+        content: `🔴 ERROR: There was an error while fetching your hours rendered.`,
+      });
+      return;
+    } finally {
+      await connection.release();
     }
-
-    const totalHours = Math.floor(totalSum / 60);
-    const minutes = totalSum % 60;
-
-    const minimumMinutes = 1200;
-    let description;
-    if (totalSum >= minimumMinutes) {
-      description = `✅ You have reached the minimum required hours for this week.`;
-    } else {
-      const hoursRemaining = minimumMinutes - totalSum;
-      const neededHours = Math.floor(hoursRemaining / 60);
-      const neededMinutes = hoursRemaining % 60;
-
-      description = `❌ You need **${neededHours} ${
-        neededHours === 1 ? "hour" : "hours"
-      } and ${neededMinutes} ${
-        neededMinutes === 1 ? "minute" : "minutes"
-      }** more to reach the minimum required time for this week.`;
-    }
-
-    const embed = new EmbedBuilder()
-      .setTitle(`WORK TIME CHECK`)
-      .setDescription(description)
-      .setColor(totalSum >= minimumMinutes ? "Green" : "Red")
-      .addFields([
-        {
-          name: `CURRENT WORK DURATION`,
-          value: `⏱️ ${totalHours} hours and ${minutes} minutes`,
-        },
-      ]);
-
-    await interaction.editReply({
-      embeds: [embed],
-    });
   },
 };

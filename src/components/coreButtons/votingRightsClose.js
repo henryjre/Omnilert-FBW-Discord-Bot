@@ -48,7 +48,7 @@ module.exports = {
       const abstains = abstainFile.getAbstains();
       votes = [...upvotes, ...downvotes, ...abstains];
 
-      const updateQuery = `SELECT * FROM Core_Team WHERE MEMBER_ID = ?`;
+      const updateQuery = `SELECT * FROM Board_Of_Directors WHERE MEMBER_ID = ?`;
       const [core] = await connection.execute(updateQuery, [userId]);
 
       messageEmbed.data.fields.push(
@@ -80,7 +80,7 @@ module.exports = {
 
       let finalPbr;
       if (votes.length > 0) {
-        const selectQuery = `SELECT * FROM Core_Team WHERE MEMBER_ID = ?`;
+        const selectQuery = `SELECT * FROM Board_Of_Directors WHERE MEMBER_ID = ?`;
         for (const vote of votes) {
           const [selectResult] = await connection.execute(selectQuery, [
             vote.userId,
@@ -103,8 +103,8 @@ module.exports = {
         finalPbr = 0;
       }
 
-      const updateQuery = `UPDATE Core_Team SET PBR = ? WHERE MEMBER_ID = ?`;
-      await connection.execute(updateQuery, [finalPbr, userId]);
+      const updateQuery = `UPDATE Executives SET PBR = ?, TIME_RENDERED = ? WHERE MEMBER_ID = ?`;
+      await connection.execute(updateQuery, [finalPbr, 0, userId]);
 
       await connection.release();
 
