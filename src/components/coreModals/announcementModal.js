@@ -53,7 +53,7 @@ module.exports = {
           value: details,
         },
       ])
-      .setTimestamp(Date.now())
+      // .setTimestamp(Date.now())
       // .setThumbnail(interaction.member.displayAvatarURL())
       .setFooter({
         iconURL: interaction.user.displayAvatarURL(),
