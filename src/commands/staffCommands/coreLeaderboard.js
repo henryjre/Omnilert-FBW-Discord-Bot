@@ -49,7 +49,7 @@ module.exports = {
           "SELECT * FROM Board_Of_Directors ORDER BY VOTING_RIGHTS DESC";
       }
       const [lb] = await connection
-        .query(selectQuery)
+        .query(queryString)
         .catch((err) => console.log(err));
 
       let embedDescription = [];
