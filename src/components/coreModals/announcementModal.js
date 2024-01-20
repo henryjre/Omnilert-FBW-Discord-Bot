@@ -35,11 +35,11 @@ module.exports = {
         : "1196806310524629062"
     );
 
-    const embed = new EmbedBuilder()
-      .setDescription(
-        `## Announcement Submitted\nPlease check the <#${channel}> to check your announcement.`
-      )
-      .setColor("Green");
+    // const embed = new EmbedBuilder()
+    //   .setDescription(
+    //     `## Announcement Submitted\nPlease check the <#${channel}> to check your announcement.`
+    //   )
+    //   .setColor("Green");
 
     const announcementEmbed = new EmbedBuilder()
       .setDescription(`# 📢 ANNOUNCEMENT\n## ${title}`)
@@ -55,6 +55,10 @@ module.exports = {
       ])
       .setTimestamp(Date.now())
       // .setThumbnail(interaction.member.displayAvatarURL())
+      .setFooter({
+        iconURL: interaction.user.displayAvatarURL(),
+        text: `If you are notified by this announcement, please acknowledge by reacting.`,
+      })
       .setColor(role.color);
 
     const membersWithRoles = role.members.map((m) =>
