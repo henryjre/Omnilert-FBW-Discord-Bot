@@ -42,7 +42,7 @@ module.exports = {
     //   .setColor("Green");
 
     const announcementEmbed = new EmbedBuilder()
-      .setDescription(`# 📢 ANNOUNCEMENT\n## ${title}`)
+      .setDescription(`# 📢 ANNOUNCEMENT\n## *${title}*`)
       .addFields([
         {
           name: "Prepared By",
