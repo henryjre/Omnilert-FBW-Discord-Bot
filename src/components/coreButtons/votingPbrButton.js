@@ -23,7 +23,7 @@ module.exports = {
     function buildModal() {
       const modal = new ModalBuilder()
         .setCustomId("votingPbrModal")
-        .setTitle(`Upvote`);
+        .setTitle(`Sumit your PBR vote`);
 
       const firstInput = new TextInputBuilder()
         .setCustomId(`pbrInput`)

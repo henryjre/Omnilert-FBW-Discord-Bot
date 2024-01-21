@@ -1,8 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
 
 let pbrSubmissions = [];
-let votes = 0;
-let voteTimeout;
 module.exports = {
   data: {
     name: "votingPbrModal",
@@ -46,21 +44,15 @@ module.exports = {
       return;
     }
 
-    clearTimeout(voteTimeout);
-    votes += 1;
-
     const messageEmbed = interaction.message.embeds[0];
     const votedUser = messageEmbed.data.fields[0].value;
+    const numberOfVotes = messageEmbed.data.fields[2].value;
+    const newVotes = Number(numberOfVotes) + 1;
+    messageEmbed.data.fields[2].value = String(newVotes);
 
-    voteTimeout = setTimeout(async () => {
-      messageEmbed.data.fields[2].value = String(votes);
-
-      await interaction.editReply({
-        embeds: [messageEmbed],
-      });
-
-      votes = 0;
-    }, 1200);
+    await interaction.editReply({
+      embeds: [messageEmbed],
+    });
 
     const match = votedUser.match(/<@(\d+)>/);
     const userId = match && match[1];
