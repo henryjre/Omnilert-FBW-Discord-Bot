@@ -145,6 +145,9 @@ module.exports = async (req, res) => {
 
   await thread.send({
     embeds: [orderEmbed, buyerEmbed],
+  });
+
+  await thread.send({
     files: lineitemsImages,
   });
 
