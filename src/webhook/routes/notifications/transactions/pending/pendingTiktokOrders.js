@@ -114,23 +114,28 @@ module.exports = async (req, res) => {
       },
     ]);
 
+  const buyerFields = [
+    {
+      name: `BUYER ID`,
+      value: `\`${buyerId}\``,
+    },
+    {
+      name: `PAYMENT METHOD`,
+      value: `\`${paymentMethod}\``,
+    },
+  ];
+
+  if (buyerMessage) {
+    buyerFields.push({
+      name: `BUYER MESSAGE`,
+      value: `\`\`\`${buyerMessage}\`\`\``,
+    });
+  }
+
   const buyerEmbed = new EmbedBuilder()
     .setDescription(`### 👤 BUYER DETAILS`)
     .setColor("#2B2D31")
-    .addFields([
-      {
-        name: `BUYER ID`,
-        value: `\`${buyerId}\``,
-      },
-      {
-        name: `PAYMENT METHOD`,
-        value: `\`${paymentMethod}\``,
-      },
-      {
-        name: `BUYER MESSAGE`,
-        value: `\`\`\`${buyerMessage}\`\`\``,
-      },
-    ]);
+    .addFields(buyerFields);
 
   const thread = await channel.threads.create({
     name: `${orderId} | ${orderStatus}`,
