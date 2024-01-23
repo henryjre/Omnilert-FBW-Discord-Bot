@@ -4,6 +4,7 @@ const client = require("../../../../../index");
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
 const crypto = require("crypto");
+const moment = require("moment");
 
 const pesoFormatter = new Intl.NumberFormat("en-PH", {
   style: "currency",
@@ -50,8 +51,21 @@ module.exports = async (req, res) => {
   if (order.buyer_message && order.buyer_message.includes("DPD"))
     return res.status(200).json({ ok: true, message: "dpd winner order" });
 
+  const channel = client.channels.cache.get("1178932906014556171");
+
   const orderId = maskOrderId(data.order_id);
   const subtotal = Number(order.payment.sub_total);
+  const platformDiscount = Number(order.payment.platform_discount);
+  const sfSellerDiscount = Number(order.payment.shipping_fee_seller_discount);
+  const totalSubtotal = subtotal + platformDiscount - sfSellerDiscount;
+  const paymentMethod = order.payment_method_name;
+  const orderStatus = order.status;
+  const buyerMessage = order.buyer_message;
+  const buyerId = order.user_id;
+  const orderCreateTime = moment
+    .unix(order.create_time)
+    .format("MMMM DD, YYYY [at] h:mm A");
+  const lineitemsImages = order.line_items.map((item) => item.sku_image);
 
   let description = "";
   order.line_items.forEach((item) => {
@@ -65,7 +79,7 @@ module.exports = async (req, res) => {
     name = "GIVEAWAY";
   }
 
-  const embed = new EmbedBuilder()
+  const orderEmbed = new EmbedBuilder()
     .setDescription(title)
     .setColor("#2B2D31")
     .addFields([
@@ -74,21 +88,61 @@ module.exports = async (req, res) => {
         value: `\`${orderId}\``,
       },
       {
+        name: `ORDER CREATE TIME`,
+        value: `\`${orderCreateTime}\``,
+      },
+      {
         name: `${name} SUBTOTAL`,
         value: `\`${pesoFormatter.format(subtotal)}\``,
+      },
+      {
+        name: `${name} PLATFORM DISCOUNT`,
+        value: `\`${pesoFormatter.format(platformDiscount)}\``,
+      },
+      {
+        name: `${name} SHIPPING FEE SELLER DISCOUNT`,
+        value: `\`${pesoFormatter.format(sfSellerDiscount)}\``,
+      },
+      {
+        name: `${name} TOTAL SUBTOTAL`,
+        value: `\`${pesoFormatter.format(totalSubtotal)}\``,
       },
       {
         name: `${name} ITEMS`,
         value: `\`\`\`${description}\`\`\``,
       },
-    ])
-    .setTimestamp(Date.now());
+    ]);
 
-  client.channels.cache.get("1178932906014556171").send({
-    embeds: [embed],
+  const buyerEmbed = new EmbedBuilder()
+    .setDescription(`### 👤 BUYER DETAILS`)
+    .setColor("#2B2D31")
+    .addFields([
+      {
+        name: `BUYER ID`,
+        value: `\`${buyerId}\``,
+      },
+      {
+        name: `PAYMENT METHOD`,
+        value: `\`${paymentMethod}\``,
+      },
+      {
+        name: `BUYER MESSAGE`,
+        value: `\`\`\`${buyerMessage}\`\`\``,
+      },
+    ]);
+
+  const thread = await channel.threads.create({
+    name: `${orderId} | ${orderStatus}`,
+    autoArchiveDuration: 1440,
+  });
+  await thread.join();
+
+  await thread.send({
+    embeds: [orderEmbed, buyerEmbed],
+    files: [lineitemsImages],
   });
 
-  res.status(200).json({ ok: true, message: "success" });
+  res.status(200).json({ ok: true, message: "success", channelId: thread.id });
   return;
 
   function maskOrderId(number) {
