@@ -140,7 +140,7 @@ module.exports = async (req, res) => {
 
   await thread.send({
     embeds: [orderEmbed, buyerEmbed],
-    // files: [lineitemsImages],
+    files: lineitemsImages,
   });
 
   res.status(200).json({ ok: true, message: "success", channelId: thread.id });
