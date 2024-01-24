@@ -59,7 +59,7 @@ module.exports = async (req, res) => {
   const sfSellerDiscount = Number(order.payment.shipping_fee_seller_discount);
   const totalSubtotal = subtotal + platformDiscount - sfSellerDiscount;
   const paymentMethod = order.payment_method_name;
-  const orderStatus = order.status;
+  const orderStatus = order.status.replace("_", " ");
   const buyerMessage = order.buyer_message;
   const buyerId = order.user_id;
   const orderCreateTime = moment
@@ -147,7 +147,9 @@ module.exports = async (req, res) => {
     files: lineitemsImages,
   });
 
-  return res.status(200).json({ ok: true, message: "success", channelId: thread.id });
+  return res
+    .status(200)
+    .json({ ok: true, message: "success", channelId: thread.id });
 
   function maskOrderId(number) {
     let numberStr = number.toString();

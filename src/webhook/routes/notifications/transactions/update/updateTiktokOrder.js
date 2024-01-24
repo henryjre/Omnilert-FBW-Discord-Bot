@@ -6,7 +6,7 @@ module.exports = async (req, res) => {
   const { data } = req.body;
 
   const channelId = data.order.discordChannel;
-  const orderStatus = data.order.orderStatus;
+  const orderStatus = data.order.orderStatus.replace("_", " ");
   const orderId = maskOrderId(data.order._id);
   const updateTime = moment(Date.now()).format("MMMM DD, YYYY [at] h:mm A");
 
