@@ -245,24 +245,35 @@ module.exports = {
           break;
         }
 
-        if (newResponse.data.orders && newResponse.data.orders.length > 0) {
+        if (newResponse.data.orders.length > 0) {
           nextPageToken = newResponse.data.next_page_token;
-          ordersToPush = newResponse.data.orders;
+          ordersToPush = newResponse.data.orders.filter(
+            (order) => Number(order.payment.sub_total) !== 0
+          );
           orders = [...orders, ...ordersToPush];
         } else {
           break;
         }
       }
 
-      ordersToSave = orders.map((obj) => [
-        obj.id,
-        livestreamId,
-        obj.status,
-        Number(obj.payment.sub_total),
-        liveId,
-        streamerName,
-        createdDate,
-      ]);
+      ordersToSave = orders.map((obj) => {
+        const subtotal = Number(obj.payment.sub_total);
+        const platformDiscount = Number(obj.payment.platform_discount);
+        const sfSellerDiscount = Number(
+          obj.payment.shipping_fee_seller_discount
+        );
+        const totalSubtotal = subtotal + platformDiscount - sfSellerDiscount;
+
+        return [
+          obj.id,
+          livestreamId,
+          obj.status,
+          totalSubtotal,
+          liveId,
+          streamerName,
+          createdDate,
+        ];
+      });
     }
 
     let livestreamStats = {

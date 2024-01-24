@@ -66,7 +66,6 @@ module.exports = async (req, res) => {
     .unix(order.create_time)
     .format("MMMM DD, YYYY [at] h:mm A");
   const lineitemsImages = order.line_items.map((item) => item.sku_image);
-  console.log(lineitemsImages);
 
   let description = "";
   order.line_items.forEach((item) => {
@@ -145,14 +144,10 @@ module.exports = async (req, res) => {
 
   await thread.send({
     embeds: [orderEmbed, buyerEmbed],
-  });
-
-  await thread.send({
     files: lineitemsImages,
   });
 
-  res.status(200).json({ ok: true, message: "success", channelId: thread.id });
-  return;
+  return res.status(200).json({ ok: true, message: "success", channelId: thread.id });
 
   function maskOrderId(number) {
     let numberStr = number.toString();

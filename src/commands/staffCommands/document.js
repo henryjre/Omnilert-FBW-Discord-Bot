@@ -9,6 +9,9 @@ const {
   TextInputStyle,
 } = require("discord.js");
 
+const { customAlphabet } = require("nanoid");
+const nanoid = customAlphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 6);
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("doc")
@@ -166,13 +169,10 @@ module.exports = {
             text: `Prepared By: ${member.nickname}`,
           })
           .setTitle(title)
+          .setAuthor({
+            name: nanoid(),
+          })
           .setURL(attachment.url)
-          // .addFields([
-          //   {
-          //     name: "Document",
-          //     value: `[Click To Download](${attachment.url})`,
-          //   },
-          // ])
           .addFields(userFields)
           .setColor("Blue");
 
