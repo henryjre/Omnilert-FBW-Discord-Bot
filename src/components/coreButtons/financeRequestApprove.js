@@ -24,6 +24,10 @@ module.exports = {
 
     const messageEmbed = interaction.message.embeds[0];
 
+    const requestUser = messageEmbed.data.fields[0].value;
+    const match = requestUser.match(/<@(\d+)>/);
+    const userId = match && match[1];
+
     let channel;
     if (messageEmbed.data.title.includes("Expense Reimbursement")) {
       channel = "1199308508005408839";
@@ -31,15 +35,21 @@ module.exports = {
       channel = "1199308889242468472";
     }
 
-    const newEmbed = new EmbedBuilder(messageEmbed.data).setColor("Green");
+    const newEmbed = new EmbedBuilder(messageEmbed.data)
+      .setColor("Green")
+      .setFooter({
+        text: "APPROVED",
+      });
 
     await client.channels.cache
       .get(channel)
       .send({
+        content: `<@${userId}>`,
         embeds: [newEmbed],
       })
       .then((msg) => {
         message.delete();
+        msg.react("✅");
       });
   },
 };

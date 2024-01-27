@@ -16,16 +16,61 @@ const nanoid = customAlphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 6);
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName("doc")
-    .setDescription(
-      "Start a voting session for the voting rights of a core member."
-    )
-    .addAttachmentOption((option) =>
-      option
-        .setName("document")
-        .setDescription("The document to be signed")
-        .setRequired(true)
+    .setName("message")
+    .setDescription("Reply to/Start a conversation.")
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName("tiktok-chat")
+        .setDescription("Reply to/Start a tiktok chat conversation")
+        .addAttachmentOption((option) =>
+          option
+            .setName("image-1")
+            .setDescription("The image you want to send")
+            .setRequired(false)
+        )
+        .addAttachmentOption((option) =>
+          option
+            .setName("image-2")
+            .setDescription("The image you want to send")
+            .setRequired(false)
+        )
+        .addAttachmentOption((option) =>
+          option
+            .setName("image-3")
+            .setDescription("The image you want to send")
+            .setRequired(false)
+        )
     ),
+  // .addUserOption((option) =>
+  //   option
+  //     .setName("signing-user-1")
+  //     .setDescription("The first user to sign.")
+  //     .setRequired(false)
+  // )
+  // .addUserOption((option) =>
+  //   option
+  //     .setName("signing-user-2")
+  //     .setDescription("The second user to sign.")
+  //     .setRequired(false)
+  // )
+  // .addUserOption((option) =>
+  //   option
+  //     .setName("signing-user-3")
+  //     .setDescription("The third user to sign.")
+  //     .setRequired(false)
+  // )
+  // .addUserOption((option) =>
+  //   option
+  //     .setName("signing-user-4")
+  //     .setDescription("The fourth user to sign.")
+  //     .setRequired(false)
+  // )
+  // .addUserOption((option) =>
+  //   option
+  //     .setName("signing-user-5")
+  //     .setDescription("The fifth user to sign.")
+  //     .setRequired(false)
+  // ),
 
   async execute(interaction, client) {
     const validRoles = ["1185935514042388520"];
@@ -39,6 +84,17 @@ module.exports = {
       });
       return;
     }
+
+    // if (
+    //   interaction.options._hoistedOptions.filter((i) => i.type === 6).length <=
+    //   0
+    // ) {
+    //   await interaction.reply({
+    //     content: `🔴 ERROR: No user/s to sign found. Please mention user/s in the user parameter/s.`,
+    //     ephemeral: true,
+    //   });
+    //   return;
+    // }
 
     const attachment = interaction.options.getAttachment("document");
 
@@ -54,7 +110,7 @@ module.exports = {
 
     const modal = new ModalBuilder();
 
-    modal.setCustomId("signRequest").setTitle(`Request a document signature`);
+    modal.setCustomId("signRequest").setTitle(`Request a docment signature`);
 
     const title = new TextInputBuilder()
       .setCustomId(`title`)

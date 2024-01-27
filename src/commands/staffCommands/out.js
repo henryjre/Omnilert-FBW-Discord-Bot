@@ -125,6 +125,7 @@ module.exports = {
         embeds: [embed],
       });
 
+      await thread.members.remove(interaction.user.id)
       await thread.setLocked(true);
       await thread.setArchived(true);
     } catch (error) {

@@ -46,6 +46,13 @@ module.exports = (client) => {
           }
           break;
 
+        case "documentMenus":
+          for (const file of componentFiles) {
+            const menu = require(`../../components/${folder}/${file}`);
+            selectMenus.set(menu.data.name, menu);
+          }
+          break;
+
         case "modals":
           for (const file of componentFiles) {
             const modal = require(`../../components/${folder}/${file}`);

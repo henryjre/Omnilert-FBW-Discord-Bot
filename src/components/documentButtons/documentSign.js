@@ -81,9 +81,7 @@ module.exports = {
     );
 
     if (components[0].label === "Submit") {
-      if (
-        !messageEmbed.data.footer.text.includes(interaction.member.nickname)
-      ) {
+      if (!messageEmbed.data.fields[0].value.includes(interaction.user.id)) {
         await interaction.followUp({
           content: `You cannot use this button.`,
           ephemeral: true,

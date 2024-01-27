@@ -46,8 +46,9 @@ module.exports = {
       autoArchiveDuration: 1440,
     });
     await thread.join();
+    await thread.members.add(interaction.user.id)
 
-    client.commands.get("reportal").execute(interaction, thread.id, client, 0);
+    await client.commands.get("reportal").execute(interaction, thread.id, client, 0);
 
     const timeOpts = {
       timeZone: "Asia/Manila",

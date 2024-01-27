@@ -69,6 +69,15 @@ module.exports = {
     const components = interaction.message.components[0].components;
 
     if (components[1].label === "Cancel") {
+      const messageEmbed = interaction.message.embeds[0];
+      if (!messageEmbed.data.fields[0].value.includes(interaction.user.id)) {
+        await interaction.followUp({
+          content: `You cannot use this button.`,
+          ephemeral: true,
+        });
+        return;
+      }
+
       await interaction.deferUpdate();
       const cancelEmbed = new EmbedBuilder()
         .setTitle("Command Cancelled")
