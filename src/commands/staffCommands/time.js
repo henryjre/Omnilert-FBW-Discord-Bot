@@ -23,31 +23,110 @@ module.exports = {
 
     await interaction.deferReply();
 
-    let queryString;
-    if (interaction.member.roles.cache.has("1185935514042388520")) {
-      queryString = "SELECT * FROM Executives WHERE MEMBER_ID = ?";
-    } else {
-      queryString = "SELECT TIME_RENDERED FROM Sub_Members WHERE MEMBER_ID = ?";
-    }
+    // let queryString;
+    // if (interaction.member.roles.cache.has("1185935514042388520")) {
+    //   queryString = "SELECT * FROM Executives WHERE MEMBER_ID = ?";
+    // } else {
+    //   queryString = "SELECT TIME_RENDERED FROM Sub_Members WHERE MEMBER_ID = ?";
+    // }
+
+    const queryString = `
+    SELECT 
+      e.MEMBER_ID AS executive_member_id,
+      e.TIME_RENDERED AS executive_time_rendered,
+      e.NAME AS executive_name,
+      s.MEMBER_ID AS sub_member_id,
+      s.TIME_RENDERED AS sub_time_rendered,
+      s.DEPARTMENT_EXECUTIVE AS sub_department_executive,
+      COALESCE(e.TIME_RENDERED, 0) + COALESCE(SUM(s.TIME_RENDERED), 0) AS total_rendered_hours
+    FROM
+      Executives e
+    LEFT JOIN
+      Sub_Members s ON e.NAME = s.DEPARTMENT_EXECUTIVE
+    WHERE
+      e.MEMBER_ID = ? OR s.MEMBER_ID = ?
+    GROUP BY
+      e.MEMBER_ID, e.TIME_RENDERED, e.NAME, s.MEMBER_ID, s.TIME_RENDERED, s.DEPARTMENT_EXECUTIVE;
+    `;
 
     const connection = await pool
       .getConnection()
       .catch((err) => console.log(err));
 
     try {
-      const [user] = await connection.query(queryString, [userId]);
+      const [queryResult] = await connection.query(queryString, [
+        userId,
+        userId,
+      ]);
 
-      const totalTime = parseInt(user[0].TIME_RENDERED);
+      const formattedResult = {
+        department: {
+          departmentHead: queryResult[0].executive_name,
+          totalTimeRendered: parseInt(queryResult[0].total_rendered_hours),
+          executive: {
+            memberId: queryResult[0].executive_member_id,
+            timeRendered: queryResult[0].executive_time_rendered,
+          },
+          subMembers: queryResult
+            .filter((row) => row.sub_member_id !== null)
+            .map((row) => ({
+              memberId: row.sub_member_id,
+              timeRendered: row.sub_time_rendered,
+            })),
+        },
+      };
 
-      const totalHours = Math.floor(totalTime / 60);
-      const minutes = totalTime % 60;
+      const totalDepartmentTime = formattedResult.department.totalTimeRendered;
+      const totalHours = Math.floor(totalDepartmentTime / 60);
+      const minutes = totalDepartmentTime % 60;
+
+      const totalHeadTime = formattedResult.department.executive.timeRendered;
+      const totalHeadHours = Math.floor(totalHeadTime / 60);
+      const totalHeadMinutes = totalHeadTime % 60;
+
+      const embedFields = [
+        {
+          name: "Department Total Time",
+          value: `⏱️ ${totalHours} ${
+            totalHours === 1 ? "hour" : "hours"
+          } and ${minutes} ${minutes === 1 ? "minute" : "minutes"}`,
+        },
+        {
+          name: "Department Head",
+          value: `<@${
+            formattedResult.department.executive.memberId
+          }>・**\`⏱️ ${totalHeadHours} ${
+            totalHeadHours === 1 ? "hour" : "hours"
+          } and ${totalHeadMinutes} ${
+            totalHeadMinutes === 1 ? "minute" : "minutes"
+          }\`**`,
+        },
+      ];
+
+      if (formattedResult.department.subMembers.length > 0) {
+        embedFields.push({
+          name: "Associates",
+          value: formattedResult.department.subMembers.map((member) => {
+            const totalSubmemberHours = Math.floor(member.timeRendered / 60);
+            const totalSubmemberMinutes = member.timeRendered % 60;
+
+            return `<@${
+              member.memberId
+            }>・**\`⏱️ ${totalSubmemberHours} ${
+              totalSubmemberHours === 1 ? "hour" : "hours"
+            } and ${totalSubmemberMinutes} ${
+              totalSubmemberMinutes === 1 ? "minute" : "minutes"
+            }\`**`;
+          }),
+        });
+      }
 
       const minimumMinutes = 1200;
       let description;
-      if (totalTime >= minimumMinutes) {
-        description = `✅ You have reached the minimum required hours for this week.`;
+      if (totalDepartmentTime >= minimumMinutes) {
+        description = `✅ Your department have reached the minimum required time for this week.`;
       } else {
-        const hoursRemaining = minimumMinutes - totalTime;
+        const hoursRemaining = minimumMinutes - totalDepartmentTime;
         const neededHours = Math.floor(hoursRemaining / 60);
         const neededMinutes = hoursRemaining % 60;
 
@@ -59,15 +138,10 @@ module.exports = {
       }
 
       const embed = new EmbedBuilder()
-        .setTitle(`WORK TIME CHECK`)
+        .setTitle(`DEPARTMENT TIME`)
         .setDescription(description)
-        .setColor(totalTime >= minimumMinutes ? "Green" : "Red")
-        .addFields([
-          {
-            name: `CURRENT WORK DURATION`,
-            value: `⏱️ ${totalHours} hours and ${minutes} minutes`,
-          },
-        ]);
+        .setColor(totalDepartmentTime >= minimumMinutes ? "Green" : "Red")
+        .addFields(embedFields);
 
       await interaction.editReply({
         embeds: [embed],

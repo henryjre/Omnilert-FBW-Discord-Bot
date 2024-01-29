@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
-const moment = require("moment");
+const moment = require("moment-timezone");
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
 const crypto = require("crypto");
@@ -8,6 +8,7 @@ const nanoid = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 13);
 
 const pool = require("../../sqlConnectionPool");
 const commissionRates = require("./commission.json");
+const { time } = require("console");
 
 const pesoFormatter = new Intl.NumberFormat("en-PH", {
   style: "currency",
@@ -30,42 +31,32 @@ module.exports = {
       option
         .setName("start-time")
         .setDescription(
-          "The beginning time of the livestream. E.G. January 1, 2023 8:00 AM"
+          "The beginning time of the livestream. E.G. 17:56 2024-01-27"
         )
-        .setRequired(false)
+        .setRequired(true)
     )
     .addStringOption((option) =>
       option
-        .setName("end-time")
-        .setDescription(
-          "The ending time of the livestream. E.G. January 30, 2023 10:00 PM"
-        )
-        .setRequired(false)
+        .setName("duration")
+        .setDescription("The duration of the livestream in minutes.")
+        .setRequired(true)
     ),
   async execute(interaction, client) {
-    const validRoles = ["1176496361802301462"];
+    // const validRoles = ["1176496361802301462"];
 
-    if (
-      !interaction.member.roles.cache.some((r) => validRoles.includes(r.id))
-    ) {
-      await interaction.reply({
-        content: `🔴 ERROR: This command can only be used by <@&1176496361802301462>.`,
-        ephemeral: true,
-      });
-      return;
-    }
+    // if (
+    //   !interaction.member.roles.cache.some((r) => validRoles.includes(r.id))
+    // ) {
+    //   await interaction.reply({
+    //     content: `🔴 ERROR: This command can only be used by <@&1176496361802301462>.`,
+    //     ephemeral: true,
+    //   });
+    //   return;
+    // }
 
     const streamer = interaction.options.getUser("streamer");
     const start = interaction.options.getString("start-time");
-    const end = interaction.options.getString("end-time");
-
-    if (!start || !end) {
-      await interaction.reply({
-        content: "Input valid start time and end time.",
-        ephemeral: true,
-      });
-      return;
-    }
+    const duration = interaction.options.getString("duration");
 
     await interaction.deferReply();
     if (
@@ -86,14 +77,18 @@ module.exports = {
       return;
     }
 
-    const timeDates = convertTime(start, end);
+    const timeDates = convertTime(start, duration);
 
-    if (timeDates === null) {
+    if (
+      timeDates === null ||
+      !timeDates.start.isValid() ||
+      !timeDates.end.isValid()
+    ) {
       const errorEmbed = new EmbedBuilder()
         .setTitle(`LIVESTREAM ERROR`)
         .setColor("Red")
         .setDescription(
-          "🔴 Cannot parse the given time. Please make sure that `start-time` and `end-time` are in correct format: e.g. `3:55 AM` / `12:00 PM`"
+          "🔴 Cannot parse the given time. Please make sure that `start-time` and `end-time` are in correct format: e.g. `20:38 2024-01-26` / `9:58 2024-01-18`"
         );
 
       await interaction.editReply({
@@ -116,13 +111,17 @@ module.exports = {
       return;
     }
 
-    const apiStartTime = timeDates.start.unix() - 8 * 60 * 60;
-    const apiEndTime = timeDates.end.unix() - 8 * 60 * 60;
+    const apiStartTime = timeDates.start.unix();
+    const apiEndTime = timeDates.end.unix();
 
     const liveId =
-      streamer.id + "_" + moment.unix(apiStartTime).format("MMDDYY");
+      streamer.id +
+      "_" +
+      moment.unix(apiStartTime).tz("Asia/Manila").format("MMDDYY");
     const streamerName = streamer.globalName;
-    const createdDate = moment().format("YYYY-MM-DD HH:mm:ss");
+    const createdDate = moment()
+      .tz("Asia/Manila")
+      .format("YYYY-MM-DD HH:mm:ss");
 
     console.log(streamerName, liveId);
 
@@ -154,6 +153,7 @@ module.exports = {
               "⏱️ | " +
               moment
                 .unix(findDupe[0][0].START_TIME)
+                .tz("Asia/Manila")
                 .format("MMM D, YYYY, h:mm A"),
           },
           {
@@ -162,6 +162,7 @@ module.exports = {
               "⏱️ | " +
               moment
                 .unix(findDupe[0][0].END_TIME)
+                .tz("Asia/Manila")
                 .format("MMM D, YYYY, h:mm A"),
           },
         ])
@@ -466,34 +467,17 @@ module.exports = {
       }
     }
 
-    // function convertTime(time12h) {
-    //   try {
-    //     const momentObj = moment(time12h, ["h:mm A", "hh:mm A"]);
+    function convertTime(startTime12h, duration) {
+      const timeZone = "Asia/Manila";
 
-    //     console.log(momentObj.format("MMMM D, YYYY, h:mm A"));
-
-    //     const hour = momentObj.hour();
-    //     const minute = momentObj.minute();
-
-    //     return { hour, minute };
-    //   } catch (error) {
-    //     console.error(`Error: ${error.message}`);
-    //     return null; // or throw the error if you prefer
-    //   }
-    // }
-
-    function convertTime(startTime12h, endTime12h) {
-      console.log(startTime12h, endTime12h);
       try {
-        const momentStart = moment(startTime12h, [
-          "MMMM D, YYYY h:mm A",
-          "MMMM D, YYYY hh:mm A",
-        ]);
+        const momentStart = moment.tz(
+          startTime12h,
+          ["h:mm A YYYY-MM-DD", "hh:mm A YYYY-MM-DD"],
+          timeZone
+        );
 
-        const momentEnd = moment(endTime12h, [
-          "MMMM D, YYYY h:mm A",
-          "MMMM D, YYYY hh:mm A",
-        ]);
+        const momentEnd = momentStart.clone().add(duration, "minutes");
 
         return {
           start: momentStart,
