@@ -124,11 +124,13 @@ module.exports = {
         .getConnection()
         .catch((err) => console.log(err));
 
+      const parentChannel = await client.channels.cache.get(thread.parentId);
+
       try {
         const queryWorkShiftString =
           "SELECT * FROM WORK_HOURS WHERE DISCORD_ID = ? AND TIME_OUT IS NULL";
         const workShift = await connection
-          .query(queryWorkShiftString, [member.id])
+          .query(queryWorkShiftString, [member.user.id])
           .catch((err) => console.log(err));
 
         const workId = workShift[0][0].ID;
@@ -190,7 +192,7 @@ module.exports = {
           .catch((err) => console.log(err));
 
         await connection
-          .query(updateQuery, [minutesOnly, member.id])
+          .query(updateQuery, [minutesOnly, member.user.id])
           .catch((err) => console.log(err));
 
         const embed = new EmbedBuilder()
@@ -201,7 +203,7 @@ module.exports = {
           .setColor("Red")
           // .setTimestamp(timeStamp)
           .setFooter({
-            iconURL: interaction.user.displayAvatarURL(),
+            iconURL: member.user.displayAvatarURL(),
             text: "Leviosa Philippines",
           });
 
@@ -209,19 +211,19 @@ module.exports = {
           embeds: [embed],
         });
 
-        await thread.members.remove(interaction.user.id);
+        await thread.members.remove(member.user.id);
         await thread.setLocked(true);
         await thread.setArchived(true);
 
-        const threadCreatedMessages = parentChannel.messages
-          .fetch({ limit: 1 })
+        const threadCreatedMessages = await parentChannel.messages
+          .fetch()
           .then((messages) => {
             return messages.filter((m) => m.author.bot && m.type === 18);
           });
 
-        const lastThreadCreated = threadCreatedMessages.first();
+        const lastThreadCreated = await threadCreatedMessages.first();
 
-        await lastThreadCreated.delete();
+        await lastThreadCreated.delete(); 
         await parentChannel.setName(parentChannel.name.replace("🟢", "🔴"));
       } catch (error) {
         console.log(error);
@@ -230,6 +232,14 @@ module.exports = {
         });
       } finally {
         await connection.release();
+      }
+
+      function convertMilliseconds(milliseconds) {
+        const totalSeconds = Math.floor(milliseconds / 1000);
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+
+        return { hours, minutes };
       }
     }
 

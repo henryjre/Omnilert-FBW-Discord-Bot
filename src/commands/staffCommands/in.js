@@ -48,10 +48,6 @@ module.exports = {
     await thread.join();
     await thread.members.add(interaction.user.id);
 
-    await client.commands
-      .get("reportal")
-      .execute(interaction, thread.id, client, 0);
-
     const timeOpts = {
       timeZone: "Asia/Manila",
       year: "numeric",
@@ -64,9 +60,10 @@ module.exports = {
 
     const timeStamp = new Date(timeIn).toLocaleDateString("en-PH", timeOpts);
 
-    const nextPenalty = new Date(
-      timeIn + (2 * 60 * 60 + 60) * 1000
-    ).toLocaleDateString("en-PH", timeOpts);
+    const nextPenalty = new Date(timeIn + 30 * 60000).toLocaleDateString(
+      "en-PH",
+      timeOpts
+    );
 
     const queryWorkShiftString =
       "INSERT INTO WORK_HOURS (ID, DISCORD_ID, TIME_IN) VALUES (?, ?, ?)";
@@ -74,7 +71,7 @@ module.exports = {
       .query(queryWorkShiftString, [id, userId, timeIn])
       .catch((err) => console.log(err));
 
-    connection.release();
+    await connection.release();
 
     const threadEmbed = new EmbedBuilder()
       .setTitle(`🟢 LOG IN`)
@@ -105,5 +102,9 @@ module.exports = {
     await interaction.channel.setName(
       interaction.channel.name.replace("🔴", "🟢")
     );
+
+    await client.commands
+      .get("reportal")
+      .execute(interaction, thread.id, client, 0);
   },
 };

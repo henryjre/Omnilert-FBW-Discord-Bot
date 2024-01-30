@@ -131,12 +131,12 @@ module.exports = {
       await thread.setArchived(true);
 
       const threadCreatedMessages = await parentChannel.messages
-        .fetch({ limit: 1 })
+        .fetch()
         .then((messages) => {
           return messages.filter((m) => m.author.bot && m.type === 18);
         });
 
-      const lastThreadCreated = threadCreatedMessages.first();
+      const lastThreadCreated = await threadCreatedMessages.first();
 
       await lastThreadCreated.delete();
       await parentChannel.setName(parentChannel.name.replace("🟢", "🔴"));

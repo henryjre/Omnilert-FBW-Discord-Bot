@@ -331,7 +331,7 @@ module.exports = {
     let messagePayload = {
       embeds: [embedToSend],
     };
-    if (findDupe.length > 0) {
+    if (findDupe[0].length > 0) {
       const dupeEmbed = new EmbedBuilder()
         .setDescription(
           `## WARNING: 🟡 MULTIPLE LIVESTREAM RECORDED\n*This streamer already has a livestream schedule recorded for the specified date. If you think this is a mistake, please report to the Web Development Department.*`
@@ -371,7 +371,7 @@ module.exports = {
       };
     }
 
-    await interaction.editReply();
+    await interaction.editReply(messagePayload);
 
     async function getOrdersLists(start, end, nextPage, options) {
       const currentTimestamp = Math.floor(new Date().getTime() / 1000);
