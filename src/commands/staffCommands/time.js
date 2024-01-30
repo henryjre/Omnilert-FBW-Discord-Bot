@@ -110,14 +110,12 @@ module.exports = {
             const totalSubmemberHours = Math.floor(member.timeRendered / 60);
             const totalSubmemberMinutes = member.timeRendered % 60;
 
-            return `<@${
-              member.memberId
-            }>・**\`⏱️ ${totalSubmemberHours} ${
+            return `<@${member.memberId}>・**\`⏱️ ${totalSubmemberHours} ${
               totalSubmemberHours === 1 ? "hour" : "hours"
             } and ${totalSubmemberMinutes} ${
               totalSubmemberMinutes === 1 ? "minute" : "minutes"
-            }\`**`;
-          }),
+            }\`**\n`;
+          }).join(""),
         });
       }
 

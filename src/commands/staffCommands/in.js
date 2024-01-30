@@ -46,9 +46,11 @@ module.exports = {
       autoArchiveDuration: 1440,
     });
     await thread.join();
-    await thread.members.add(interaction.user.id)
+    await thread.members.add(interaction.user.id);
 
-    await client.commands.get("reportal").execute(interaction, thread.id, client, 0);
+    await client.commands
+      .get("reportal")
+      .execute(interaction, thread.id, client, 0);
 
     const timeOpts = {
       timeZone: "Asia/Manila",
@@ -99,5 +101,9 @@ module.exports = {
       embeds: [embed],
       ephemeral: true,
     });
+
+    await interaction.channel.setName(
+      interaction.channel.name.replace("🔴", "🟢")
+    );
   },
 };

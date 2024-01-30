@@ -5,19 +5,14 @@ module.exports = {
     .setName("embed")
     .setDescription("Returns an embed."),
   async execute(interaction, client) {
-    const thread = await client.channels.cache
-      .get("1178932906014556171")
-      .threads.create({
-        name: `Sample Thread`,
-        autoArchiveDuration: 1440,
-      });
-    await thread.join();
 
-    setTimeout(() => {
-      thread.setName("Thread Sample");
-    }, 5000);
+    const message = await interaction.channel.messages.fetch("1201510638980186153");
+    console.log(message)
+    const anotherMessage = await interaction.channel.messages.fetch("1201483174178467933");
+    console.log(anotherMessage)
+    return
 
-    return;
+
     const embed = new EmbedBuilder()
       .setTitle("EMBED")
       .setDescription("An embed description")

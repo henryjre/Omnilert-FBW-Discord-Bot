@@ -10,6 +10,7 @@ module.exports = {
     .setDescription("Log out of your current shift."),
   async execute(interaction, client) {
     const thread = await interaction.channel;
+    const parentChannel = await client.channels.cache.get(thread.parentId);
 
     if (!thread.isThread()) {
       await interaction.reply({
@@ -125,9 +126,20 @@ module.exports = {
         embeds: [embed],
       });
 
-      await thread.members.remove(interaction.user.id)
+      await thread.members.remove(interaction.user.id);
       await thread.setLocked(true);
       await thread.setArchived(true);
+
+      const threadCreatedMessages = parentChannel.messages
+        .fetch({ limit: 1 })
+        .then((messages) => {
+          return messages.filter((m) => m.author.bot && m.type === 18);
+        });
+
+      const lastThreadCreated = threadCreatedMessages.first();
+
+      await lastThreadCreated.delete();
+      await parentChannel.setName(parentChannel.name.replace("🟢", "🔴"));
     } catch (error) {
       console.log(error);
       await interaction.editReply({

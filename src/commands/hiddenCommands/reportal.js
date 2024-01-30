@@ -30,47 +30,45 @@ module.exports = {
 
     let penaltyTimestampOnStart = Date.now();
 
-    function calculateHourlyReminder() {
+    function calculate15MinuteReminder() {
       // hourRemindetTimestampOnStart = Date.now();
-      const nextSchedule = new Date(penaltyTimestampOnStart + 60 * 60000);
+      const nextSchedule = new Date(penaltyTimestampOnStart + 15 * 60000);
       // const nextSchedule = new Date(penaltyTimestampOnStart + 20 * 1000);
       return nextSchedule;
     }
 
-    function calculateHourAndHalfReminder() {
-      // reminderTimestampOnStart = Date.now();
-      const nextSchedule = new Date(penaltyTimestampOnStart + 90 * 60000);
-      return nextSchedule;
-    }
+    // function calculateHourAndHalfReminder() {
+    //   // reminderTimestampOnStart = Date.now();
+    //   const nextSchedule = new Date(penaltyTimestampOnStart + 90 * 60000);
+    //   return nextSchedule;
+    // }
 
     function calculateNextPenalty() {
       penaltyTimestampOnStart = Date.now();
-      const nextSchedule = new Date(
-        penaltyTimestampOnStart + (2 * 60 * 60 + 60) * 1000
-      );
+      const nextSchedule = new Date(penaltyTimestampOnStart + 30 * 60000);
       return nextSchedule;
     }
 
-    !reminder[channelId] ? {} : await reminder[channelId].cancel();
+    // !reminder[channelId] ? {} : await reminder[channelId].cancel();
     !hourlyReminders[channelId]
       ? {}
       : await hourlyReminders[channelId].cancel();
     !penalty[channelId] ? {} : await penalty[channelId].cancel();
 
     if (type === 0) {
-      console.log(`Resetting reminders for ${member.nickname}`);
-      reminder[channelId] = schedule.scheduleJob(
-        `IN 1 HOUR AND 30 MINS: ${author.username}`,
-        calculateHourAndHalfReminder(),
-        () => {
-          remindUserHourAndHalf();
-          checkSchedules();
-        }
-      );
+      // console.log(`Resetting reminders for ${member.nickname}`);
+      // reminder[channelId] = schedule.scheduleJob(
+      //   `IN 1 HOUR AND 30 MINS: ${author.username}`,
+      //   calculateHourAndHalfReminder(),
+      //   () => {
+      //     remindUserHourAndHalf();
+      //     checkSchedules();
+      //   }
+      // );
 
       hourlyReminders[channelId] = schedule.scheduleJob(
         `IN 1 HOUR: ${author.username}`,
-        calculateHourlyReminder(),
+        calculate15MinuteReminder(),
         () => {
           remindUserHourly();
           checkSchedules();
@@ -81,13 +79,7 @@ module.exports = {
         `PENALTY: ${author.username}`,
         calculateNextPenalty(),
         () => {
-          penalizeUser(author);
-          const nextSchedule = calculateNextPenalty();
-          penalty[channelId].reschedule(nextSchedule);
-          const nextHourly = calculateHourlyReminder();
-          hourlyReminders[channelId].reschedule(nextHourly);
-          const nextHalfHour = calculateHourAndHalfReminder();
-          reminder[channelId].reschedule(nextHalfHour);
+          penalizeUser();
           checkSchedules();
         }
       );
@@ -127,19 +119,23 @@ module.exports = {
 
     checkSchedules();
 
-    async function penalizeUser(author) {
-      const doc = new GoogleSpreadsheet(process.env.sheetId);
-      await doc.useServiceAccountAuth(creds);
-      await doc.loadInfo();
+    async function penalizeUser() {
+      const connection = await pool
+        .getConnection()
+        .catch((err) => console.log(err));
 
-      const penaltyTimeStamp = Date.now();
-      const duration = Math.ceil(
-        (penaltyTimeStamp - penaltyTimestampOnStart) / 60000
-      );
+      try {
+        const queryWorkShiftString =
+          "SELECT * FROM WORK_HOURS WHERE DISCORD_ID = ? AND TIME_OUT IS NULL";
+        const workShift = await connection
+          .query(queryWorkShiftString, [member.id])
+          .catch((err) => console.log(err));
 
-      const timeOnStart = new Date(penaltyTimestampOnStart).toLocaleDateString(
-        "en-PH",
-        {
+        const workId = workShift[0][0].ID;
+        const timeIn = workShift[0][0].TIME_IN;
+        const timeOut = Date.now();
+
+        const timeInStamp = new Date(timeIn).toLocaleDateString("en-PH", {
           timeZone: "Asia/Manila",
           year: "numeric",
           month: "short",
@@ -147,43 +143,94 @@ module.exports = {
           hour: "numeric",
           minute: "numeric",
           hour12: true,
-        }
-      );
-      const penaltyDate = new Date().toLocaleDateString("en-PH", {
-        timeZone: "Asia/Manila",
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "numeric",
-        minute: "numeric",
-        hour12: true,
-      });
-
-      const logSheet = doc.sheetsByTitle["PENALTY"];
-
-      await logSheet.addRow([
-        author.username,
-        timeOnStart,
-        penaltyDate,
-        `${duration} minutes`,
-      ]);
-
-      const penaltyEmbed = new EmbedBuilder()
-        .setTitle(`⛔ PENALTY`)
-        .setDescription(
-          `**Last Update:** ${timeOnStart}\n**Penalty Time:** ${penaltyDate}\n**Duration:** ${duration} minutes`
-        )
-        .setColor("Red")
-        .setTimestamp(Date.now())
-        .setFooter({
-          iconURL: client.user.displayAvatarURL(),
-          text: "Leviosa Philippines",
         });
 
-      thread.send({
-        content: author.toString(),
-        embeds: [penaltyEmbed],
-      });
+        const timeOutStamp = new Date(timeOut).toLocaleDateString("en-PH", {
+          timeZone: "Asia/Manila",
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "numeric",
+          hour12: true,
+        });
+
+        const duration = timeOut - timeIn;
+        const { hours, minutes } = convertMilliseconds(duration);
+        const minutesOnly = Math.floor(duration / 60000);
+
+        const doc = new GoogleSpreadsheet(process.env.sheetId);
+        await doc.useServiceAccountAuth(creds);
+        await doc.loadInfo();
+
+        let logSheet;
+        let updateQuery;
+        if (member.roles.cache.has("1185935514042388520")) {
+          updateQuery =
+            "UPDATE Executives SET TIME_RENDERED = (TIME_RENDERED + ?) WHERE MEMBER_ID = ?";
+          logSheet = doc.sheetsByTitle["LOGS"];
+        } else {
+          updateQuery =
+            "UPDATE Sub_Members SET TIME_RENDERED = (TIME_RENDERED + ?) WHERE MEMBER_ID = ?";
+          logSheet = doc.sheetsByTitle["SUB_MEMBER_LOGS"];
+        }
+
+        await logSheet.addRow([
+          workId,
+          member.user.username,
+          timeInStamp,
+          timeOutStamp,
+          `${minutesOnly}`,
+        ]);
+
+        const updateWorkShiftString =
+          "UPDATE WORK_HOURS SET TIME_OUT = ? WHERE ID = ?";
+        await connection
+          .query(updateWorkShiftString, [timeOut, workId])
+          .catch((err) => console.log(err));
+
+        await connection
+          .query(updateQuery, [minutesOnly, member.id])
+          .catch((err) => console.log(err));
+
+        const embed = new EmbedBuilder()
+          .setTitle(`🔴 LOG OUT`)
+          .setDescription(
+            `👤 **User:** ${member.nickname}\n⏱️ **Time In:** ${timeInStamp}\n⏱️ **Time Out:** ${timeOutStamp}\n⏳ **Duration:** ${hours} hours and ${minutes} minutes`
+          )
+          .setColor("Red")
+          // .setTimestamp(timeStamp)
+          .setFooter({
+            iconURL: interaction.user.displayAvatarURL(),
+            text: "Leviosa Philippines",
+          });
+
+        await thread.send({
+          embeds: [embed],
+        });
+
+        await thread.members.remove(interaction.user.id);
+        await thread.setLocked(true);
+        await thread.setArchived(true);
+
+        const threadCreatedMessages = parentChannel.messages
+          .fetch({ limit: 1 })
+          .then((messages) => {
+            return messages.filter((m) => m.author.bot && m.type === 18);
+          });
+
+        const lastThreadCreated = threadCreatedMessages.first();
+
+        await lastThreadCreated.delete();
+        await parentChannel.setName(parentChannel.name.replace("🟢", "🔴"));
+      } catch (error) {
+        console.log(error);
+        await thread.send({
+          content: `<@748568303219245117>, there was an error while recording the penalty for ${member.nickname}.`,
+        });
+      } finally {
+        await connection.release();
+      }
     }
 
     function remindUserHourAndHalf() {
@@ -207,11 +254,10 @@ module.exports = {
 
     function remindUserHourly() {
       const reminderEmbed = new EmbedBuilder()
-        .setTitle(`🔔 HOURLY REMINDER`)
         .setDescription(
-          `This is a reminder that you have 1 hour to send an update to this channel before penalty.`
+          `##  🔔 15-MINUTE REMINDER\nThis is a reminder that you have 15 minutes to send an update to this channel before you get automatically outed.`
         )
-        .setColor("Blue")
+        .setColor("Yellow")
         .setTimestamp(Date.now())
         .setFooter({
           iconURL: client.user.displayAvatarURL(),

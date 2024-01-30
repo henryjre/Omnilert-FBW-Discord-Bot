@@ -79,6 +79,7 @@ module.exports = {
       votes = pbrFile.getPbr();
 
       let finalPbr;
+      let remarksEmbed;
       if (votes.length > 0) {
         const selectQuery = `SELECT * FROM Board_Of_Directors WHERE MEMBER_ID = ?`;
         for (const vote of votes) {
@@ -99,8 +100,10 @@ module.exports = {
         );
 
         finalPbr = parseFloat((sumOfVrPbr / totalVotingRights).toFixed(2));
+        remarksEmbed = votes.map((vote) => vote.remarkEmbed);
       } else if (votes.length <= 0) {
         finalPbr = 0;
+        remarksEmbed = [];
       }
 
       const updateQuery = `UPDATE Executives SET PBR = ?, TIME_RENDERED = ? WHERE MEMBER_ID = ?`;
@@ -148,6 +151,10 @@ module.exports = {
           pbrFile.clearPbr();
           message.delete();
         });
+
+      await client.channels.cache.get("1196800785338613852").send({
+        embeds: remarksEmbed,
+      });
     }
 
     const membersWhoVoted = await interaction.guild.roles.cache

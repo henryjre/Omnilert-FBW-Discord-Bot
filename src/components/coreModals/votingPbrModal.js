@@ -92,10 +92,10 @@ module.exports = {
           name: "Voted Member",
           value: member.nickname,
         },
-        {
-          name: "PBR Vote",
-          value: pbrDetails,
-        },
+        // {
+        //   name: "PBR Vote",
+        //   value: pbrDetails,
+        // },
         {
           name: "Remarks",
           value: `${remarks}`,
@@ -111,9 +111,9 @@ module.exports = {
       embeds: [votingRightsEmbed],
     });
 
-    await client.channels.cache.get("1196800785338613852").send({
-      embeds: [anonymousRemarksEmbed],
-    });
+    // await client.channels.cache.get("1196800785338613852").send({
+    //   embeds: [anonymousRemarksEmbed],
+    // });
 
     await interaction.followUp({
       content: "Your __**PBR Vote**__ was successfully submitted.",
@@ -124,6 +124,7 @@ module.exports = {
       vote: "pbr",
       userId: interaction.user.id,
       pbr: pbrCheck,
+      remarkEmbed: anonymousRemarksEmbed,
     });
   },
   getPbr: function () {
