@@ -68,7 +68,7 @@ module.exports = {
         .setLabel(`Announcement Details`)
         .setStyle(TextInputStyle.Paragraph)
         .setPlaceholder("The details of your announcement.")
-        .setMaxLength(1024)
+        .setMaxLength(1000)
         .setRequired(true);
 
       const channelRow = new ActionRowBuilder().addComponents(channelInput);
