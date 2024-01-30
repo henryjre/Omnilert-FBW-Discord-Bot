@@ -18,6 +18,18 @@ module.exports = {
   async execute(interaction, client) {
     const member = interaction.guild.members.cache.get(interaction.user.id);
 
+    const amount = interaction.fields.getTextInputValue("amountInput");
+
+    const amountCheck = Number(amount);
+
+    if (isNaN(amountCheck)) {
+      await interaction.reply({
+        content: `🔴 ERROR: Request not submitted. Please enter a valid number for the amount **\`e.g. 100 / 50 / 1200 / 10000\`**.`,
+        ephemeral: true,
+      });
+      return;
+    }
+
     await interaction.deferReply();
 
     const keyMappings = {
