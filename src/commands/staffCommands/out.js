@@ -130,7 +130,7 @@ module.exports = {
       await thread.setLocked(true);
       await thread.setArchived(true);
 
-      const threadCreatedMessages = parentChannel.messages
+      const threadCreatedMessages = await parentChannel.messages
         .fetch({ limit: 1 })
         .then((messages) => {
           return messages.filter((m) => m.author.bot && m.type === 18);
