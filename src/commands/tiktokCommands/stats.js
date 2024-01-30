@@ -6,7 +6,7 @@ const {
   EmbedBuilder,
   ComponentType,
 } = require("discord.js");
-const moment = require("moment");
+const moment = require("moment-timezone");
 
 const pool = require("../../sqlConnectionPool");
 const commissionRates = require("./commission.json");
@@ -170,8 +170,10 @@ module.exports = {
             name: "DETAILS",
             value: `⏱️ **Start Time:** ${moment
               .unix(str.START_TIME)
+              .tz("Asia/Manila")
               .format("MMM D, YYYY, h:mm A")}\n⏱️ **End Time:** ${moment
               .unix(str.END_TIME)
+              .tz("Asia/Manila")
               .format("MMM D, YYYY, h:mm A")}\n\n**Pending Orders:** ${
               str.ORDER_STATUSES.filter(
                 (obj) => obj !== "CANCELLED" && obj !== "COMPLETED"

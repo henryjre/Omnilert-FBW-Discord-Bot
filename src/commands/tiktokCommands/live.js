@@ -6,7 +6,7 @@ const {
   EmbedBuilder,
   ComponentType,
 } = require("discord.js");
-const moment = require("moment");
+const moment = require("moment-timezone");
 const pool = require("../../sqlConnectionPool");
 
 const commissionRates = require("./commission.json");
@@ -144,12 +144,14 @@ module.exports = {
           name: `START TIME`,
           value: `⏱️ | ${moment
             .unix(liveStats.START_TIME)
+            .tz("Asia/Manila")
             .format("MMM D, YYYY, h:mm A")}`,
         },
         {
           name: `END TIME`,
           value: `⏱️ | ${moment
             .unix(liveStats.END_TIME)
+            .tz("Asia/Manila")
             .format("MMM D, YYYY, h:mm A")}\n\u200b`,
         },
         {
