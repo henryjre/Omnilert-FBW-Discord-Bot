@@ -42,16 +42,16 @@ module.exports = {
     //   .setColor("Green");
 
     const announcementEmbed = new EmbedBuilder()
-      .setDescription(`# 📢 ANNOUNCEMENT\n## *${title}*`)
+      .setDescription(`# 📢 ANNOUNCEMENT\n## *${title}*\n\n${details}`)
       .addFields([
         {
           name: "Prepared By",
           value: interaction.user.toString(),
         },
-        {
-          name: "Announcement Details",
-          value: details,
-        },
+        // {
+        //   name: "Announcement Details",
+        //   value: details,
+        // },
       ])
       // .setTimestamp(Date.now())
       // .setThumbnail(interaction.member.displayAvatarURL())
