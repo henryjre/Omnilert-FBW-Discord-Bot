@@ -119,8 +119,6 @@ module.exports = {
       }
     });
 
-    console.log(findLiveOrders[0]);
-
     const livestreams = findLiveOrders[0];
     const batchSize = 3; // Number of elements in each subgroup
     const groupedLivestreams = [];
