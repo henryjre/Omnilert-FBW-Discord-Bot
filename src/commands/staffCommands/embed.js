@@ -6,12 +6,8 @@ module.exports = {
     .setDescription("Returns an embed."),
   async execute(interaction, client) {
 
-    const message = await interaction.channel.messages.fetch("1201510638980186153");
-    console.log(message)
-    const anotherMessage = await interaction.channel.messages.fetch("1201483174178467933");
-    console.log(anotherMessage)
-    return
 
+    return;
 
     const embed = new EmbedBuilder()
       .setTitle("EMBED")

@@ -221,10 +221,17 @@ module.exports = {
             return messages.filter((m) => m.author.bot && m.type === 18);
           });
 
-        const lastThreadCreated = await threadCreatedMessages.first();
+        const lastThreadCreated = await threadCreatedMessages.find(
+          (t) => t.reference.channelId === thread.id
+        );
 
-        await lastThreadCreated.delete(); 
-        await parentChannel.setName(parentChannel.name.replace("🟢", "🔴"));
+        await lastThreadCreated.delete();
+
+        const channelThreads = parentChannel.threads;
+        const activeThreads = await channelThreads.fetchActive();
+        if (activeThreads.threads.size <= 0) {
+          await parentChannel.setName(parentChannel.name.replace("🟢", "🔴"));
+        }
       } catch (error) {
         console.log(error);
         await thread.send({
