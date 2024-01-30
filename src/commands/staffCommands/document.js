@@ -136,6 +136,9 @@ module.exports = {
             new StringSelectMenuOptionBuilder()
               .setLabel("Approved By")
               .setValue("Approved By"),
+            new StringSelectMenuOptionBuilder()
+              .setLabel("Received By")
+              .setValue("Received By"),
           ])
           .setPlaceholder("Select the role of the signing user.");
 
