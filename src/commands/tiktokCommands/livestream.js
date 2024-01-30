@@ -42,17 +42,17 @@ module.exports = {
         .setRequired(true)
     ),
   async execute(interaction, client) {
-    // const validRoles = ["1176496361802301462"];
+    const validRoles = ["1176496361802301462"];
 
-    // if (
-    //   !interaction.member.roles.cache.some((r) => validRoles.includes(r.id))
-    // ) {
-    //   await interaction.reply({
-    //     content: `🔴 ERROR: This command can only be used by <@&1176496361802301462>.`,
-    //     ephemeral: true,
-    //   });
-    //   return;
-    // }
+    if (
+      !interaction.member.roles.cache.some((r) => validRoles.includes(r.id))
+    ) {
+      await interaction.reply({
+        content: `🔴 ERROR: This command can only be used by <@&1176496361802301462>.`,
+        ephemeral: true,
+      });
+      return;
+    }
 
     const streamer = interaction.options.getUser("streamer");
     const start = interaction.options.getString("start-time");
@@ -123,8 +123,6 @@ module.exports = {
       .tz("Asia/Manila")
       .format("YYYY-MM-DD HH:mm:ss");
 
-    console.log(streamerName, liveId);
-
     const connection = await pool
       .getConnection()
       .catch((err) => console.log(err));
@@ -134,50 +132,6 @@ module.exports = {
     const findDupe = await connection
       .query(findDupeQuery, [liveId])
       .catch((err) => console.log(err));
-
-    if (findDupe[0].length > 0) {
-      const dupeEmbed = new EmbedBuilder()
-        .setTitle(`🟡 DUPLICATE LIVESTREAM`)
-        .addFields([
-          {
-            name: `LIVESTREAM ID`,
-            value: findDupe[0][0].STREAM_ID,
-          },
-          {
-            name: `LIVE STREAMER`,
-            value: findDupe[0][0].STREAMER_NAME,
-          },
-          {
-            name: `STREAM START`,
-            value:
-              "⏱️ | " +
-              moment
-                .unix(findDupe[0][0].START_TIME)
-                .tz("Asia/Manila")
-                .format("MMM D, YYYY, h:mm A"),
-          },
-          {
-            name: `STREAM END`,
-            value:
-              "⏱️ | " +
-              moment
-                .unix(findDupe[0][0].END_TIME)
-                .tz("Asia/Manila")
-                .format("MMM D, YYYY, h:mm A"),
-          },
-        ])
-        .setColor("#FCD53F")
-        .setFooter({
-          text: `Command by: ${interaction.user.globalName}`,
-        });
-
-      await interaction.editReply({
-        content: `🔴 ERROR: A Livestream with that schedule is already saved.`,
-        embeds: [dupeEmbed],
-      });
-      connection.release();
-      return;
-    }
 
     const url = `https://leviosa.ph/_functions/getTiktokSecrets`;
     const options = {
@@ -374,9 +328,50 @@ module.exports = {
       embedToSend.setDescription(embed.description);
     }
 
-    await interaction.editReply({
+    let messagePayload = {
       embeds: [embedToSend],
-    });
+    };
+    if (findDupe.length > 0) {
+      const dupeEmbed = new EmbedBuilder()
+        .setDescription(
+          `## WARNING: 🟡 MULTIPLE LIVESTREAM RECORDED\n*This streamer already has a livestream schedule recorded for the specified date. If you think this is a mistake, please report to the Web Development Department.*`
+        )
+        .addFields([
+          {
+            name: `RECORDED LIVESTREAM ID`,
+            value: findDupe[0][0].STREAM_ID,
+          },
+          {
+            name: `LIVE STREAMER`,
+            value: findDupe[0][0].STREAMER_NAME,
+          },
+          {
+            name: `STREAM START`,
+            value:
+              "⏱️ | " +
+              moment
+                .unix(findDupe[0][0].START_TIME)
+                .tz("Asia/Manila")
+                .format("MMM D, YYYY, h:mm A"),
+          },
+          {
+            name: `STREAM END`,
+            value:
+              "⏱️ | " +
+              moment
+                .unix(findDupe[0][0].END_TIME)
+                .tz("Asia/Manila")
+                .format("MMM D, YYYY, h:mm A"),
+          },
+        ])
+        .setColor("#FCD53F");
+
+      messagePayload = {
+        embeds: [dupeEmbed, embedToSend],
+      };
+    }
+
+    await interaction.editReply();
 
     async function getOrdersLists(start, end, nextPage, options) {
       const currentTimestamp = Math.floor(new Date().getTime() / 1000);
