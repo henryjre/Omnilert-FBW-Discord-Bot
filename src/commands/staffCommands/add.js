@@ -42,7 +42,7 @@ module.exports = {
             .setDescription("The amount of PBR ranging from 1 - 30 PHP.")
             .setRequired(true)
             .setMaxValue(30)
-            .setMinValue(1)
+            .setMinValue(0)
         )
     ),
   async execute(interaction, client) {
