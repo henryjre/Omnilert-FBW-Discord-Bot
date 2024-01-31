@@ -57,8 +57,6 @@ module.exports = {
       return;
     }
 
-    await interaction.deferReply();
-
     const subcommand = interaction.options.getSubcommand();
 
     switch (subcommand) {
@@ -71,6 +69,7 @@ module.exports = {
     }
 
     async function addSubmemberPbr() {
+      await interaction.deferReply({ ephemeral: true });
       const user = interaction.options.getUser("user");
       const pbr = interaction.options.getNumber("pbr-value");
 
@@ -81,7 +80,7 @@ module.exports = {
       if (!department) {
         await interaction.editReply({
           content:
-            "🔴 ERROR: Cannot add PBR to submember. You do not have a submember yet.",
+            "🔴 ERROR: Cannot add PBR to associates. You do not have an associate yet.",
         });
         return;
       }
@@ -94,7 +93,7 @@ module.exports = {
       if (!userMember.roles.cache.has(department.submember_role)) {
         await interaction.editReply({
           content:
-            "🔴 ERROR: You cannot add PBR to submember from another department.",
+            "🔴 ERROR: You cannot add PBR to associates from another department.",
         });
         return;
       }
@@ -121,7 +120,7 @@ module.exports = {
         await connection.query(updateQuery, [pbr, 0, user.id]);
 
         const embed = new EmbedBuilder()
-          .setTitle(`📝 SUB-MEMBER EVALUATION`)
+          .setTitle(`📝 ASSOCIATE EVALUATION`)
           .setColor(role.color)
           .addFields([
             {
@@ -150,8 +149,18 @@ module.exports = {
             },
           ]);
 
-        await interaction.editReply({
+        await client.channels.cache.get("1194283985870782565").send({
           embeds: [embed],
+        });
+
+        const successEmbed = new EmbedBuilder()
+          .setDescription(
+            "## SUCCESS\nYou have sucessfully added PBR to your associate."
+          )
+          .setColor("Green");
+
+        await interaction.editReply({
+          embeds: [successEmbed],
         });
         return;
       } catch (error) {
