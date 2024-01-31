@@ -40,14 +40,6 @@ module.exports = {
       return;
     }
 
-    const thread = await interaction.channel.threads.create({
-      name: `${member.nickname} | ${threadId()}`,
-      reason: `Reportal ID: ${id}`,
-      autoArchiveDuration: 1440,
-    });
-    await thread.join();
-    await thread.members.add(interaction.user.id);
-
     const timeOpts = {
       timeZone: "Asia/Manila",
       year: "numeric",
@@ -65,14 +57,6 @@ module.exports = {
       timeOpts
     );
 
-    const queryWorkShiftString =
-      "INSERT INTO WORK_HOURS (ID, DISCORD_ID, TIME_IN) VALUES (?, ?, ?)";
-    await connection
-      .query(queryWorkShiftString, [id, userId, timeIn])
-      .catch((err) => console.log(err));
-
-    await connection.release();
-
     const threadEmbed = new EmbedBuilder()
       .setTitle(`🟢 LOG IN`)
       .setDescription(
@@ -83,6 +67,14 @@ module.exports = {
         iconURL: interaction.user.displayAvatarURL(),
         text: "Leviosa Philippines",
       });
+
+    const thread = await interaction.channel.threads.create({
+      name: `${member.nickname} | ${threadId()}`,
+      reason: `Reportal ID: ${id}`,
+      autoArchiveDuration: 1440,
+    });
+    await thread.join();
+    await thread.members.add(interaction.user.id);
 
     const embed = new EmbedBuilder()
       .setDescription(
@@ -99,12 +91,20 @@ module.exports = {
       ephemeral: true,
     });
 
-    await interaction.channel.setName(
-      interaction.channel.name.replace("🔴", "🟢")
-    );
+    const queryWorkShiftString =
+      "INSERT INTO WORK_HOURS (ID, DISCORD_ID, TIME_IN) VALUES (?, ?, ?)";
+    await connection
+      .query(queryWorkShiftString, [id, userId, timeIn])
+      .catch((err) => console.log(err));
+
+    await connection.release();
 
     await client.commands
       .get("reportal")
       .execute(interaction, thread.id, client, 0);
+
+    await interaction.channel.setName(
+      interaction.channel.name.replace("🔴", "🟢")
+    );
   },
 };

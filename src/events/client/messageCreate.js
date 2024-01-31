@@ -17,25 +17,70 @@ module.exports = {
       return client.commands.get("rts").execute(message, client);
     }
 
-    const channelIds = {
-      "1117386962580541473": "762612635605663767",
-      "1117386986374823977": "851719358430576641",
-      "1117387017089728512": "719135399859060796",
-      "1117387044696641607": "748568303219245117",
-      "1118180874136059964": "1120869673974649035",
-      "1185979531216027730": "756483149411909693",
-      "1185979300936155136": "938140159541665842",
-      "1185979374198071436": "752713584148086795",
-      "1187702101963440178": "1187593501609832508",
-    };
+    const departments = [
+      {
+        department: "Operations",
+        userIds: ["762612635605663767", "1201413097697591327"],
+        officeChannelId: "1117386962580541473",
+      },
+      {
+        department: "Procurement",
+        userIds: ["851719358430576641"],
+        officeChannelId: "1117386986374823977",
+      },
+      {
+        department: "Design",
+        userIds: ["719135399859060796"],
+        officeChannelId: "1117387017089728512",
+      },
+      {
+        department: "Web Development",
+        userIds: ["748568303219245117"],
+        officeChannelId: "1117387044696641607",
+      },
+      {
+        department: "Finance",
+        userIds: ["1120869673974649035"],
+        officeChannelId: "1118180874136059964",
+      },
+      {
+        department: "Livestream",
+        userIds: ["938140159541665842"],
+        officeChannelId: "1185979300936155136",
+      },
+      {
+        department: "Tiktok Account",
+        userIds: ["752713584148086795", "1187593501609832508"],
+        officeChannelId: "1185979374198071436",
+      },
+      {
+        department: "Tiktok Seller Center",
+        userIds: ["756483149411909693"],
+        officeChannelId: "1185979531216027730",
+      },
+      {
+        department: "Lazada Seller Center",
+        userIds: ["841943205624283136"],
+        officeChannelId: "1197118556467376188",
+      },
+      {
+        department: "Shopee Seller Center",
+        userIds: ["1196432863751577690"],
+        officeChannelId: "1197118789855223888",
+      },
+    ];
 
     const thread = message.guild.channels.cache.find(
       (channel) => channel.isThread() && channel.id === message.channel.id
     );
 
     if (thread) {
-      if (Object.keys(channelIds).includes(thread.parentId)) {
-        if (message.author.id === channelIds[thread.parentId]) {
+      const department = departments.find(
+        (d) => d.officeChannelId === thread.parentId
+      );
+
+      if (department) {
+        if (department.userIds.includes(message.author.id)) {
           return client.commands
             .get("reportal")
             .execute(message, thread.id, client, 0);
