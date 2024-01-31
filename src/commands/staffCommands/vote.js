@@ -8,28 +8,47 @@ const {
 
 const pool = require("../../sqlConnectionPool");
 
+const { customAlphabet } = require("nanoid");
+const nanoid = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 10);
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("vote")
     .setDescription(
-      "Start a voting session for the voting rights of a core member."
+      "Start a voting session for the PBR or voting rights of an excecutive/director."
     )
-    .addUserOption((option) =>
-      option
-        .setName("user")
-        .setDescription("The core member to be voted.")
-        .setRequired(true)
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName("pbr")
+        .setDescription("Vote for the PBR of the executive.")
+        .addUserOption((option) =>
+          option
+            .setName("user")
+            .setDescription("The executive to be voted.")
+            .setRequired(true)
+        )
     )
-    .addStringOption((option) =>
-      option
-        .setName("type")
-        .setDescription("The voting type.")
-        .setRequired(true)
-        .addChoices(
-          { name: "👑 Voting Rights", value: "votingRights" },
-          { name: "💸 Performance-Based Rate", value: "pbr" }
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName("voting-rights")
+        .setDescription("Vote for the voting rights of the director.")
+        .addUserOption((option) =>
+          option
+            .setName("user")
+            .setDescription("The director to be voted.")
+            .setRequired(true)
         )
     ),
+  // .addStringOption((option) =>
+  //   option
+  //     .setName("type")
+  //     .setDescription("The voting type.")
+  //     .setRequired(true)
+  //     .addChoices(
+  //       { name: "👑 Voting Rights", value: "votingRights" },
+  //       { name: "💸 Performance-Based Rate", value: "pbr" }
+  //     )
+  // ),
 
   async execute(interaction, client) {
     const validRoles = ["1185935514042388520"];
@@ -44,12 +63,12 @@ module.exports = {
       return;
     }
 
-    const type = interaction.options.getString("type");
     const user = interaction.options.getUser("user");
+    const subcommand = interaction.options.getSubcommand();
     const member = interaction.guild.members.cache.get(user.id);
 
     let validRole, error;
-    if (type === "votingRights") {
+    if (subcommand === "votingRights") {
       validRole = "1196806310524629062";
       error = `🔴 ERROR: ${member.nickname} is not a <@&${validRole}>.`;
     } else {
@@ -69,7 +88,7 @@ module.exports = {
 
     const buttonRow = new ActionRowBuilder();
 
-    if (type === "votingRights") {
+    if (subcommand === "votingRights") {
       const upvote = new ButtonBuilder()
         .setCustomId("votingRightsUpvote")
         .setLabel("Upvote")
@@ -104,7 +123,7 @@ module.exports = {
 
     const votingRightsEmbed = new EmbedBuilder().setTimestamp(Date.now());
 
-    if (type === "votingRights") {
+    if (subcommand === "voting-rights") {
       votingRightsEmbed
         .setTitle(`🗳️ VOTING RIGHTS`)
         .addFields([
@@ -137,6 +156,9 @@ module.exports = {
 
       votingRightsEmbed
         .setTitle(`💸 PERFORMACE-BASED RATING`)
+        .setAuthor({
+          name: nanoid(),
+        })
         .addFields([
           {
             name: "Member",

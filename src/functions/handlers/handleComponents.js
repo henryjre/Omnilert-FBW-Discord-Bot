@@ -32,6 +32,13 @@ module.exports = (client) => {
           }
           break;
 
+        case "navigationButtons":
+          for (const file of componentFiles) {
+            const button = require(`../../components/${folder}/${file}`);
+            buttons.set(button.data.name, button);
+          }
+          break;
+
         case "selectMenus":
           for (const file of componentFiles) {
             const menu = require(`../../components/${folder}/${file}`);

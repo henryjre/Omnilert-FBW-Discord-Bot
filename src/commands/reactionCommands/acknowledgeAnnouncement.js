@@ -17,7 +17,7 @@ module.exports = {
         userField.value.includes(`<@${user.id}>`) &&
         !userField.value.includes(`✔ <@${user.id}>`)
       ) {
-        messageEmbed.data.fields[2].value = userField.value.replace(
+        messageEmbed.data.fields[1].value = userField.value.replace(
           `<@${user.id}>`,
           `✔ <@${user.id}>`
         );
@@ -28,12 +28,12 @@ module.exports = {
           userField.value.includes(`<@${user.id}>`) &&
           !userField.value.includes(`✔ <@${user.id}>`)
         ) {
-          messageEmbed.data.fields[2].value = userField.value.replace(
+          messageEmbed.data.fields[1].value = userField.value.replace(
             `<@${user.id}>`,
             `✔ <@${user.id}>`
           );
         } else if (!userField.value.includes(`<@${user.id}>`)) {
-          messageEmbed.data.fields[2].value += `\n✔ <@${user.id}>`;
+          messageEmbed.data.fields[1].value += `\n✔ <@${user.id}>`;
         }
       } else {
         messageEmbed.data.fields.push({

@@ -1,0 +1,104 @@
+const { EmbedBuilder } = require("discord.js");
+
+let pbrSubmissions = [];
+module.exports = {
+  data: {
+    name: `pbrSubmit`,
+  },
+  async execute(interaction, client) {
+    await interaction.deferUpdate();
+
+    const messageEmbed = interaction.message.embeds[0].data;
+
+    const embedId = messageEmbed.author.name;
+    const pbrField = messageEmbed.fields.find(
+      (f) => f.name === "Calculated PBR"
+    );
+    const pbrValue = pbrField.value;
+
+    const dmChannel = await client.channels.cache.get(interaction.channelId);
+
+    try {
+      const votingChannel = await client.channels.cache.get(
+        "1186662402247368704"
+      );
+      const votingMessage = await votingChannel.messages
+        .fetch()
+        .then((messages) => {
+          return messages
+            .filter(
+              (m) =>
+                m.author.bot &&
+                m.embeds.length > 0 &&
+                m.embeds[0].data.author &&
+                m.embeds[0].data.author.name === embedId
+            )
+            .first();
+        });
+
+      const votingEmbed = votingMessage.embeds[0].data;
+      votingEmbed.fields[2].value = String(
+        Number(votingEmbed.fields[2].value) + 1
+      );
+
+      await votingMessage.edit({
+        embeds: [votingEmbed],
+      });
+
+      const dmMessages = await dmChannel.messages.fetch({ limit: 2 });
+
+      const interactedMember = await client.guilds.cache
+        .get("1049165537193754664")
+        .members.cache.get(interaction.user.id);
+
+      const anonEmbed = new EmbedBuilder(messageEmbed).setFooter({
+        text: `ANONYMOUS SUBMISSION`,
+      });
+
+      const notAnonEmbed = new EmbedBuilder(messageEmbed).setFooter({
+        text: `SUBMITTED BY: ${interactedMember.nickname}`,
+        iconURL: interaction.user.displayAvatarURL(),
+      });
+
+      pbrSubmissions.push({
+        userId: interaction.user.id,
+        finalPbr: parseFloat(pbrValue),
+        anonRemarks: anonEmbed,
+        publicRemarks: notAnonEmbed,
+      });
+
+      await dmMessages.forEach((m) => {
+        setTimeout(() => {
+          m.delete();
+        }, 1000);
+      });
+
+      await dmChannel
+        .send({
+          content: `Your __**PBR RATING**__ was successfully submitted!`,
+        })
+        .then((m) => {
+          setTimeout(() => {
+            m.delete();
+          }, 10000);
+        });
+    } catch (error) {
+      console.log(error);
+      await dmChannel
+        .send({
+          content: `There was an error while submitting your __**PBR RATING**__. Please try again`,
+        })
+        .then((m) => {
+          setTimeout(() => {
+            m.delete();
+          }, 10000);
+        });
+    }
+  },
+  getPbr: function () {
+    return pbrSubmissions;
+  },
+  clearPbr: function () {
+    pbrSubmissions = [];
+  },
+};

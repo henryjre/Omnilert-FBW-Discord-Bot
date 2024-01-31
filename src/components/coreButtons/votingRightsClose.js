@@ -2,7 +2,7 @@ const upvotesFile = require("../coreModals/vrUpvoteModal");
 const downvotesFile = require("../coreModals/vrDownvoteModal");
 const abstainFile = require("../coreModals/vrAbstainModal");
 
-const pbrFile = require("../coreModals/votingPbrModal");
+const pbrFile = require("./pbrSubmit");
 
 const pool = require("../../sqlConnectionPool");
 const moment = require("moment");
@@ -19,7 +19,7 @@ module.exports = {
     name: `votingRightsClose`,
   },
   async execute(interaction, client) {
-    if (interaction.user.id !== "864920050691866654") {
+    if (!interaction.member.roles.cache.has("1177271188997804123")) {
       await interaction.reply({
         content: `🔴 ERROR: You cannot use this button.`,
         ephemeral: true,
@@ -78,8 +78,7 @@ module.exports = {
     } else {
       votes = pbrFile.getPbr();
 
-      let finalPbr;
-      let remarksEmbed;
+      let finalPbr, anonRemarks, publicRemarks;
       if (votes.length > 0) {
         const selectQuery = `SELECT * FROM Board_Of_Directors WHERE MEMBER_ID = ?`;
         for (const vote of votes) {
@@ -91,7 +90,7 @@ module.exports = {
         }
 
         const sumOfVrPbr = votes.reduce(
-          (acc, obj) => acc + obj.votingRights * obj.pbr,
+          (acc, obj) => acc + obj.votingRights * obj.finalPbr,
           0
         );
         const totalVotingRights = votes.reduce(
@@ -100,14 +99,16 @@ module.exports = {
         );
 
         finalPbr = parseFloat((sumOfVrPbr / totalVotingRights).toFixed(2));
-        remarksEmbed = votes.map((vote) => vote.remarkEmbed);
+        anonRemarks = votes.map((vote) => vote.anonRemarks);
+        publicRemarks = votes.map((vote) => vote.publicRemarks);
       } else if (votes.length <= 0) {
         finalPbr = 0;
-        remarksEmbed = [];
+        anonRemarks = [];
+        publicRemarks = [];
       }
 
-      const updateQuery = `UPDATE Executives SET PBR = ?, TIME_RENDERED = ? WHERE MEMBER_ID = ?`;
-      await connection.execute(updateQuery, [finalPbr, 0, userId]);
+      const updateQuery = `UPDATE Executives SET PBR = ?, TIME_RENDERED = ?, CUMULATIVE_PBR = (CUMULATIVE_PBR + ?) WHERE MEMBER_ID = ?`;
+      await connection.execute(updateQuery, [finalPbr, 0, finalPbr, userId]);
 
       await connection.release();
 
@@ -142,19 +143,26 @@ module.exports = {
       messageEmbed.data.color = 2392134; //5763720
       messageEmbed.data.fields.splice(2, 1);
 
-      await client.channels.cache
-        .get("1194283985870782565")
+      await client.channels.cache.get("1194283985870782565").send({
+        embeds: [messageEmbed],
+      });
+
+      await client.channels.cache.get("1196800785338613852").send({
+        embeds: anonRemarks,
+      });
+
+      const shenonUser = await interaction.guild.members.cache.get(
+        "864920050691866654"
+      );
+
+      await shenonUser
         .send({
-          embeds: [messageEmbed],
+          embeds: publicRemarks,
         })
         .then((msg) => {
           pbrFile.clearPbr();
           message.delete();
         });
-
-      await client.channels.cache.get("1196800785338613852").send({
-        embeds: remarksEmbed,
-      });
     }
 
     const membersWhoVoted = await interaction.guild.roles.cache
