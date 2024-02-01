@@ -287,7 +287,7 @@ module.exports = {
         });
 
       thread.send({
-        content: author.toString() + " " + randomTts,
+        content: author.toString() + " " + randomTts.reminder,
         embeds: [reminderEmbed],
       });
     }
