@@ -5,6 +5,8 @@ const { GoogleSpreadsheet } = require("google-spreadsheet");
 const creds = require("../../secret-key.json");
 const pool = require("../../sqlConnectionPool");
 
+const ttsReminders = require("./reminderTts.json");
+
 let reminder = {};
 let hourlyReminders = {};
 let penalty = {};
@@ -254,7 +256,7 @@ module.exports = {
       const reminderEmbed = new EmbedBuilder()
         .setTitle(`🔔 HALF HOUR REMINDER`)
         .setDescription(
-          `This is a reminder that you have 30 minutes to send an update to this channel before penalty.`
+          `This is a reminder that you have 15 minutes to send an update to this channel before penalty.`
         )
         .setColor("Yellow")
         .setTimestamp(Date.now())
@@ -270,6 +272,9 @@ module.exports = {
     }
 
     function remindUserHourly() {
+      const randomIndex = Math.floor(Math.random() * ttsReminders.length);
+      const randomTts = ttsReminders[randomIndex];
+
       const reminderEmbed = new EmbedBuilder()
         .setDescription(
           `##  🔔 15-MINUTE REMINDER\nThis is a reminder that you have 15 minutes to send an update to this channel before you get automatically outed.`
@@ -282,7 +287,7 @@ module.exports = {
         });
 
       thread.send({
-        content: author.toString(),
+        content: author.toString() + " " + randomTts,
         embeds: [reminderEmbed],
       });
     }

@@ -5,9 +5,13 @@ module.exports = {
     .setName("embed")
     .setDescription("Returns an embed."),
   async execute(interaction, client) {
-    const shenonUser = await interaction.guild.members.cache.get(
-      "748568303219245117"
-    );
+    interaction.reply({
+      content:
+        "Hello! Are you still alive? This is your 15-minute reminder to send an update on this thread. No update for another 15 minutes will get you kicked out.",
+      tts: true,
+    });
+
+    return;
 
     let embeds = [];
     for (let i = 0; i < 10; i++) {
