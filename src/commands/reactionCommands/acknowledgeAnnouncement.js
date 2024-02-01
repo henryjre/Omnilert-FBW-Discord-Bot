@@ -7,7 +7,7 @@ module.exports = {
       reaction.message.id
     );
     const messageEmbed = message.embeds[0];
-    const userField = messageEmbed.data.fields[2];
+    const userField = messageEmbed.data.fields[1];
 
     const mentionedUsers = message.mentions.users.map((u) => u.id);
     const mentionedRole = message.mentions.roles.map((r) => r.id);

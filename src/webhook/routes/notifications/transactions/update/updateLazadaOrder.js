@@ -5,35 +5,43 @@ const moment = require("moment");
 module.exports = async (req, res) => {
   const { data } = req.body;
 
-  const channelId = data.order.discordChannel;
-  const orderStatus = data.order.orderStatus.replace("_", " ");
-  const orderId = maskOrderId(data.order._id);
+  const channelId = data.discordChannel;
+  const orderStatus = data.status;
+  const orderId = maskOrderId(data.order_info.order_id);
   const updateTime = moment(Date.now()).format("MMMM DD, YYYY [at] h:mm A");
 
   let emoji;
   let status;
   switch (orderStatus) {
-    case "AWAITING_SHIPMENT":
+    case "pending":
       emoji = "⌛";
       status = "Pending";
       break;
-    case "AWAITING_COLLECTION":
+    case "packed":
       emoji = "📦";
-      status = "Packed and Waiting for Pickup";
+      status = "Packed";
       break;
-    case "IN_TRANSIT":
+    case "ready_to_ship_pending":
+      emoji = "⌛📦";
+      status = "Waiting For Pickup";
+      break;
+    case "ready_to_ship":
+      emoji = "⌛🚚";
+      status = "Waiting for Transit";
+      break;
+    case "shipped":
       emoji = "🚚";
       status = "In Transit";
       break;
-    case "CANCELLED":
+    case "canceled":
       emoji = "🚫";
       status = "Cancelled";
       break;
-    case "DELIVERED":
+    case "delivered":
       emoji = "✅";
       status = "Delivered";
       break;
-    case "COMPLETED":
+    case "confirmed":
       emoji = "⭐";
       status = "Completed";
       break;

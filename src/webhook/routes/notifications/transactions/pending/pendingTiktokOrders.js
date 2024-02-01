@@ -59,13 +59,47 @@ module.exports = async (req, res) => {
   const sfSellerDiscount = Number(order.payment.shipping_fee_seller_discount);
   const totalSubtotal = subtotal + platformDiscount - sfSellerDiscount;
   const paymentMethod = order.payment_method_name;
-  const orderStatus = order.status.replace("_", " ");
+  const orderStatus = order.status;
   const buyerMessage = order.buyer_message;
   const buyerId = order.user_id;
   const orderCreateTime = moment
     .unix(order.create_time)
     .format("MMMM DD, YYYY [at] h:mm A");
   const lineitemsImages = order.line_items.map((item) => item.sku_image);
+
+  let emoji;
+  let status;
+  switch (orderStatus) {
+    case "AWAITING_SHIPMENT":
+      emoji = "⌛";
+      status = "Pending";
+      break;
+    case "AWAITING_COLLECTION":
+      emoji = "📦";
+      status = "Packed and Waiting for Pickup";
+      break;
+    case "IN_TRANSIT":
+      emoji = "🚚";
+      status = "In Transit";
+      break;
+    case "CANCELLED":
+      emoji = "🚫";
+      status = "Cancelled";
+      break;
+    case "DELIVERED":
+      emoji = "✅";
+      status = "Delivered";
+      break;
+    case "COMPLETED":
+      emoji = "⭐";
+      status = "Completed";
+      break;
+
+    default:
+      emoji = "";
+      status = orderStatus;
+      break;
+  }
 
   let description = "";
   order.line_items.forEach((item) => {
@@ -137,7 +171,7 @@ module.exports = async (req, res) => {
     .addFields(buyerFields);
 
   const thread = await channel.threads.create({
-    name: `${orderId} | ${orderStatus}`,
+    name: `${emoji} ${orderId} | ${status}`,
     autoArchiveDuration: 1440,
   });
   await thread.join();

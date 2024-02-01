@@ -15,8 +15,8 @@ module.exports = {
     await interaction.deferUpdate();
 
     let mentions;
-    if (messageEmbed.data.fields[2]) {
-      mentions = messageEmbed.data.fields[2].value.replace("\n", " ");
+    if (messageEmbed.data.fields[1]) {
+      mentions = messageEmbed.data.fields[1].value.replace("\n", " ");
     } else {
       if (messageEmbed.data.color === 15277667) {
         mentions = `<@&1185935514042388520>`;
