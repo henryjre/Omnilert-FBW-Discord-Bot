@@ -98,6 +98,10 @@ module.exports = {
         field.name.includes("⌛")
       );
 
+      const authorIndex = messageEmbed.data.fields.findIndex(
+        (field) => field.name === "Prepared By"
+      );
+
       const match =
         messageEmbed.data.fields[noSignIndex].value.match(/<@(\d+)>/);
       const userId = match && match[1];
@@ -113,10 +117,11 @@ module.exports = {
       const linkButton = new ButtonBuilder(components[2].data);
       const buttonRow = new ActionRowBuilder().addComponents(linkButton);
 
-      const members = await interaction.guild.members.fetch();
-      const author = members.find((m) =>
-        messageEmbed.data.footer.text.includes(m.nickname)
-      );
+      const authorMatch =
+        messageEmbed.data.fields[authorIndex].value.match(/<@(\d+)>/);
+      const authorId = authorMatch && authorMatch[1];
+
+      const author = interaction.guild.members.cache.get(authorId);
 
       const modal = new ModalBuilder();
 
