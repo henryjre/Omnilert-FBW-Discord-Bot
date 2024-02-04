@@ -78,6 +78,11 @@ module.exports = {
     } else {
       votes = pbrFile.getPbr();
 
+      await interaction.followUp({
+        content: "Processing your request... Please wait.",
+        ephemeral: true,
+      });
+
       let finalPbr, anonRemarks, publicRemarks;
       if (votes.length > 0) {
         const selectQuery = `SELECT * FROM Board_Of_Directors WHERE MEMBER_ID = ?`;
@@ -106,6 +111,11 @@ module.exports = {
         anonRemarks = [];
         publicRemarks = [];
       }
+
+      await interaction.followUp({
+        content: "Updating the member's PBR, Time Rendered and Cumulative PBR.",
+        ephemeral: true,
+      });
 
       const updateQuery = `UPDATE Executives SET PBR = ?, TIME_RENDERED = ?, CUMULATIVE_PBR = (CUMULATIVE_PBR + ?) WHERE MEMBER_ID = ?`;
       await connection.execute(updateQuery, [finalPbr, 0, finalPbr, userId]);

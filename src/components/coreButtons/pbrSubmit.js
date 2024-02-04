@@ -6,6 +6,13 @@ module.exports = {
     name: `pbrSubmit`,
   },
   async execute(interaction, client) {
+    if (!interaction.member.roles.cache.has("1196806310524629062")) {
+      await interaction.reply({
+        content: `🔴 ERROR: You cannot vote.`,
+        ephemeral: true,
+      });
+      return;
+    }
     await interaction.deferUpdate();
 
     const messageEmbed = interaction.message.embeds[0].data;
@@ -14,7 +21,8 @@ module.exports = {
     const pbrField = messageEmbed.fields.find(
       (f) => f.name === "Calculated PBR"
     );
-    const pbrValue = pbrField.value;
+    const pbrString = pbrField.value;
+    const pbrValue = parseFloat(pbrString.match(/[\d.]+/));
 
     const dmChannel = await client.channels.cache.get(interaction.channelId);
 

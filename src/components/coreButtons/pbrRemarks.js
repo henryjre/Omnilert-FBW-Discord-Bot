@@ -29,14 +29,30 @@ module.exports = {
 
     await interaction.showModal(modal);
 
-    const modalResponse = await interaction.awaitModalSubmit({
-      filter: async (i) => {
-        const f =
-          i.customId === "addRemarksModal" && i.user.id === interaction.user.id;
-        return f;
-      },
-      time: 240000,
-    });
+    const modalResponse = await interaction
+      .awaitModalSubmit({
+        filter: async (i) => {
+          const f =
+            i.customId === "addRemarksModal" &&
+            i.user.id === interaction.user.id;
+          return f;
+        },
+        time: 180000,
+      })
+      .catch(async () => {
+        const dmChannel = client.channels.cache.get(interaction.channelId);
+        await dmChannel
+          .send({
+            content: `🔴 ERROR: Request timed out. Please re-submit your PBR Remarks.`,
+          })
+          .then((m) => {
+            setTimeout(() => {
+              m.delete();
+            }, 10000);
+          });
+
+        return;
+      });
 
     try {
       if (modalResponse.isModalSubmit()) {
@@ -81,10 +97,10 @@ module.exports = {
         });
       }
     } catch (error) {
-      console.log(error);
-      await modalResponse
-        .followUp({
-          content: `🔴 ERROR: An error occurred while adding your score. Please try selecting again.`,
+      const dmChannel = client.channels.cache.get(interaction.channelId);
+      await dmChannel
+        .send({
+          content: `🔴 ERROR: An error occurred while adding your PBR Remarks. Please try again.`,
         })
         .then((m) => {
           setTimeout(() => {

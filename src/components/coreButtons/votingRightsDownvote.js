@@ -10,14 +10,6 @@ module.exports = {
     name: `votingRightsDownvote`,
   },
   async execute(interaction, client) {
-    if (interaction.user.id === "864920050691866654") {
-      await interaction.reply({
-        content: `🔴 ERROR: You cannot use this button.`,
-        ephemeral: true,
-      });
-      return;
-    }
-
     const interactionMember = interaction.guild.members.cache.get(
       interaction.user.id
     );

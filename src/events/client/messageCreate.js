@@ -74,19 +74,19 @@ module.exports = {
       (channel) => channel.isThread() && channel.id === message.channel.id
     );
 
-    if (thread) {
-      const department = departments.find(
-        (d) => d.officeChannelId === thread.parentId
-      );
+    // if (thread) {
+    //   const department = departments.find(
+    //     (d) => d.officeChannelId === thread.parentId
+    //   );
 
-      if (department) {
-        if (department.userIds.includes(message.author.id)) {
-          return client.commands
-            .get("reportal")
-            .execute(message, thread.id, client, 0);
-        }
-      }
-    }
+    //   if (department) {
+    //     if (department.userIds.includes(message.author.id)) {
+    //       return client.commands
+    //         .get("reportal")
+    //         .execute(message, thread.id, client, 0);
+    //     }
+    //   }
+    // }
 
     // if (Object.keys(channelIds).includes(message.channelId)) {
     //   if (message.author.id === channelIds[message.channelId]) {
