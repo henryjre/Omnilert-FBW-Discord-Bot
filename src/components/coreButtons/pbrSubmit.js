@@ -67,6 +67,8 @@ module.exports = {
         publicRemarks: notAnonEmbed,
       });
 
+      await interactedMember.roles.add("1186987728336846958");
+
       await dmMessages.forEach((m) => {
         setTimeout(() => {
           m.delete();
