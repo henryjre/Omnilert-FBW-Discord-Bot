@@ -22,12 +22,12 @@ module.exports = {
         .execute(reaction, user, client);
     }
 
-    // if (
-    //   ["1197101506638381188", "1197101565421568082"].includes(message.channelId)
-    // ) {
-    //   return client.commands
-    //     .get("acknowledgeAnnouncement")
-    //     .execute(reaction, user, client);
-    // }
+    if (
+      ["1197101506638381188", "1197101565421568082"].includes(message.channelId)
+    ) {
+      return client.commands
+        .get("acknowledgeAnnouncement")
+        .execute(reaction, user, client);
+    }
   },
 };
