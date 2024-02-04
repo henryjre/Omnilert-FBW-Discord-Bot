@@ -68,6 +68,7 @@ module.exports = {
       });
 
       await interactedMember.roles.add("1186987728336846958");
+      console.log(pbrSubmissions);
 
       await dmMessages.forEach((m) => {
         setTimeout(() => {

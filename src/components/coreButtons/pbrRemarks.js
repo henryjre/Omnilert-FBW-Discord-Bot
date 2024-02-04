@@ -35,7 +35,7 @@ module.exports = {
           i.customId === "addRemarksModal" && i.user.id === interaction.user.id;
         return f;
       },
-      time: 60000,
+      time: 240000,
     });
 
     try {

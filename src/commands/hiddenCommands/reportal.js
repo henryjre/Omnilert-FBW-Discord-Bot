@@ -69,7 +69,7 @@ module.exports = {
       // );
 
       hourlyReminders[channelId] = schedule.scheduleJob(
-        `IN 1 HOUR: ${author.username}`,
+        `IN 15 MINUTES: ${author.username}`,
         calculate15MinuteReminder(),
         () => {
           remindUserHourly();
