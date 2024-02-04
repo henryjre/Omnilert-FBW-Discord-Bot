@@ -6,13 +6,6 @@ module.exports = {
     name: `pbrSubmit`,
   },
   async execute(interaction, client) {
-    if (!interaction.member.roles.cache.has("1196806310524629062")) {
-      await interaction.reply({
-        content: `🔴 ERROR: You cannot vote.`,
-        ephemeral: true,
-      });
-      return;
-    }
     await interaction.deferUpdate();
 
     const messageEmbed = interaction.message.embeds[0].data;

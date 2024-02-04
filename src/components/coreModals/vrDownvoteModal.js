@@ -47,7 +47,9 @@ module.exports = {
     const match = votedUser.match(/<@(\d+)>/);
     const userId = match && match[1];
 
-    await interactionMember.roles.add("1186987728336846958");
+    if (!interactionMember.roles.cache.has("1186987728336846958")) {
+      await interactionMember.roles.add("1186987728336846958");
+    }
     const member = interaction.guild.members.cache.get(userId);
     const shenonUser =
       interaction.guild.members.cache.get("864920050691866654");

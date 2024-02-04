@@ -14,7 +14,13 @@ module.exports = {
     name: `votingPbrButton`,
   },
   async execute(interaction, client) {
-
+    if (!interaction.member.roles.cache.has("1196806310524629062")) {
+      await interaction.reply({
+        content: `🔴 ERROR: You cannot vote.`,
+        ephemeral: true,
+      });
+      return;
+    }
     await interaction.deferReply({ ephemeral: true });
 
     const interactedUser = interaction.guild.members.cache.get(
