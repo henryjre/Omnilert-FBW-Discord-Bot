@@ -1,49 +1,27 @@
 const { EmbedBuilder } = require("discord.js");
-const pool = require("../../sqlConnectionPool");
+const pool = require("../../../sqlConnectionPool");
 
-let upvoteSubmissions = [];
+const fs = require("fs").promises;
+const path = require("path");
+
 module.exports = {
   data: {
     name: "vrUpvoteModal",
   },
   async execute(interaction, client) {
-    await interaction.deferUpdate();
     const interactionMember = interaction.guild.members.cache.get(
       interaction.user.id
     );
-
     if (interactionMember.roles.cache.has("1186987728336846958")) {
-      await interaction.followUp({
+      await interaction.reply({
         content: `You already voted, cannot vote again.`,
         ephemeral: true,
       });
       return;
     }
+    await interaction.deferUpdate();
 
-    // const pbrDetails = interaction.fields.getTextInputValue("pbrInput");
     const remarks = interaction.fields.getTextInputValue("remarksInput");
-
-    // const pbrCheck = Number(pbrDetails);
-
-    // if (isNaN(pbrCheck)) {
-    //   await interaction.reply({
-    //     content: `🔴 ERROR: Vote not submitted. Please enter a valid number PBR.`,
-    //     ephemeral: true,
-    //   });
-    //   return;
-    // } else if (pbrCheck < 1) {
-    //   await interaction.reply({
-    //     content: `🔴 ERROR: Vote not submitted. PBR must not be a negative value.`,
-    //     ephemeral: true,
-    //   });
-    //   return;
-    // } else if (pbrCheck > 50) {
-    //   await interaction.reply({
-    //     content: `🔴 ERROR: Vote not submitted. PBR must not exceed 50.`,
-    //     ephemeral: true,
-    //   });
-    //   return;
-    // }
 
     const messageEmbed = interaction.message.embeds[0];
     const votedUser = messageEmbed.data.fields[0].value;
@@ -62,20 +40,14 @@ module.exports = {
       await interactionMember.roles.add("1186987728336846958");
     }
     const member = interaction.guild.members.cache.get(userId);
-    const shenonUser =
-      interaction.guild.members.cache.get("864920050691866654");
 
-    const votingRightsEmbed = new EmbedBuilder()
+    const notAnonEmbed = new EmbedBuilder()
       .setDescription("## Upvote Remarks")
       .addFields([
         {
           name: "Voted Member",
           value: member.nickname,
         },
-        // {
-        //   name: "PBR Vote",
-        //   value: pbrDetails,
-        // },
         {
           name: "Remarks",
           value: `${remarks}`,
@@ -88,17 +60,13 @@ module.exports = {
         iconURL: interactionMember.displayAvatarURL(),
       });
 
-    const anonymousRemarksEmbed = new EmbedBuilder()
+    const anonEmbed = new EmbedBuilder()
       .setDescription("## Upvote Remarks")
       .addFields([
         {
           name: "Voted Member",
           value: member.nickname,
         },
-        // {
-        //   name: "PBR Vote",
-        //   value: pbrDetails,
-        // },
         {
           name: "Remarks",
           value: `${remarks}`,
@@ -109,14 +77,6 @@ module.exports = {
       .setAuthor({
         name: "Anonymous",
       });
-
-    await shenonUser.send({
-      embeds: [votingRightsEmbed],
-    });
-
-    await client.channels.cache.get("1189222831368716368").send({
-      embeds: [anonymousRemarksEmbed],
-    });
 
     await interaction.followUp({
       content: "Your __**Upvote**__ was successfully submitted.",
@@ -135,16 +95,34 @@ module.exports = {
 
     await connection.release();
 
-    upvoteSubmissions.push({
+    await storeVoteSubmission({
       vote: "upvote",
       userId: interaction.user.id,
-      // pbr: pbrCheck,
+      anonRemarks: anonEmbed,
+      publicRemarks: notAnonEmbed,
     });
   },
-  getUpvotes: function () {
-    return upvoteSubmissions;
-  },
-  clearUpvotes: function () {
-    upvoteSubmissions = [];
-  },
 };
+
+async function storeVoteSubmission(jsonObject) {
+  const filePath = path.join(
+    __dirname,
+    "../../../temp/votingRightsSubmissions.json"
+  );
+  try {
+    // Read existing data
+    const existingData = await fs.readFile(filePath, "utf-8");
+
+    // Parse existing data (or initialize as an empty array if the file is empty)
+    const existingArray = existingData ? JSON.parse(existingData) : [];
+
+    // Append the new JSON object
+    existingArray.push(jsonObject);
+
+    // Write back to the file
+    await fs.writeFile(filePath, JSON.stringify(existingArray));
+    console.log("Vote stored successfully.");
+  } catch (error) {
+    console.error("Error storing Vote:", error);
+  }
+}

@@ -5,7 +5,7 @@ const {
   EmbedBuilder,
 } = require("discord.js");
 
-const pool = require("../../sqlConnectionPool");
+const pool = require("../../../sqlConnectionPool");
 const moment = require("moment");
 
 const { customAlphabet } = require("nanoid");

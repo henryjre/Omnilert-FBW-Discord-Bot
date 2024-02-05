@@ -1,12 +1,14 @@
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
-const proposalVotesFile = require("../coreModals/proposalVoteConfirm");
+
+const fs = require("fs").promises;
+const path = require("path");
 
 module.exports = {
   data: {
     name: `proposalVotingEnd`,
   },
   async execute(interaction, client) {
-    if (interaction.user.id !== "864920050691866654") {
+    if (!interaction.member.roles.cache.has("1177271188997804123")) {
       await interaction.reply({
         content: `🔴 ERROR: You cannot use this button.`,
         ephemeral: true,
@@ -16,7 +18,7 @@ module.exports = {
 
     await interaction.deferUpdate();
 
-    const proposalVotes = proposalVotesFile.getProposalVotes();
+    const proposalVotes = await getProposalVotes();
 
     let messageEmbed = interaction.message.embeds[0];
     if (proposalVotes.length > 0) {
@@ -38,14 +40,16 @@ module.exports = {
             percentage: Number(percentage),
           });
         } else {
-          result[voteIndex].percentage += Number(percentage)
+          result[voteIndex].percentage += Number(percentage);
         }
       });
 
       messageEmbed.data.fields.push({
         name: "Votes Summary",
         value: `${result
-          .map((opt, i) => `- *${opt.option}*: **${opt.percentage.toFixed(2)}%**\n`)
+          .map(
+            (opt, i) => `- *${opt.option}*: **${opt.percentage.toFixed(2)}%**\n`
+          )
           .join("")}`,
       });
       messageEmbed.data.description = "";
@@ -59,7 +63,7 @@ module.exports = {
         await member.roles.remove("1186987728336846958");
       }
 
-      proposalVotesFile.clearProposalVotes();
+      await clearProposalVotes();
     }
 
     const addResolution = new ButtonBuilder()
@@ -75,3 +79,32 @@ module.exports = {
     });
   },
 };
+
+async function getProposalVotes() {
+  const filePath = path.join(
+    __dirname,
+    "../../../temp/proposalVotesSubmissions.json"
+  );
+  try {
+    const data = await fs.readFile(filePath, "utf-8");
+    const jsonObject = JSON.parse(data);
+    console.log("Proposal votes retrieved successfully");
+    return jsonObject;
+  } catch (error) {
+    console.error("Error retrieving proposal votes:", error);
+    return [];
+  }
+}
+
+async function clearProposalVotes() {
+  const filePath = path.join(
+    __dirname,
+    "../../../temp/proposalVotesSubmissions.json"
+  );
+  try {
+    await fs.truncate(filePath, 0); // Truncate the file to zero bytes
+    console.log("Proposal votes cleared successfully.");
+  } catch (error) {
+    console.error("Error clearing proposal votes:", error);
+  }
+}

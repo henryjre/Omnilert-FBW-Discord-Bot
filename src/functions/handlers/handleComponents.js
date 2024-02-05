@@ -2,79 +2,41 @@ const { readdirSync } = require("fs");
 
 module.exports = (client) => {
   client.handleComponents = async () => {
-    const componentFolder = readdirSync(`./src/components`);
-    for (const folder of componentFolder) {
-      const componentFiles = readdirSync(`./src/components/${folder}`).filter(
-        (file) => file.endsWith(".js")
-      );
+    const { buttons, selectMenus, modals } = client;
 
-      const { buttons, selectMenus, modals } = client;
+    const buttonComponentsFolder = readdirSync(`./src/components/button`);
+    for (const folder of buttonComponentsFolder) {
+      const componentFiles = readdirSync(
+        `./src/components/button/${folder}`
+      ).filter((file) => file.endsWith(".js"));
 
-      switch (folder) {
-        case "liveStatsButtons":
-          for (const file of componentFiles) {
-            const button = require(`../../components/${folder}/${file}`);
-            buttons.set(button.data.name, button);
-          }
-          break;
+      for (const file of componentFiles) {
+        const button = require(`../../components/button/${folder}/${file}`);
+        buttons.set(button.data.name, button);
+      }
+    }
 
-        case "coreButtons":
-          for (const file of componentFiles) {
-            const button = require(`../../components/${folder}/${file}`);
-            buttons.set(button.data.name, button);
-          }
-          break;
+    const menuComponentsFolder = readdirSync(`./src/components/menu`);
+    for (const folder of menuComponentsFolder) {
+      const componentFiles = readdirSync(
+        `./src/components/menu/${folder}`
+      ).filter((file) => file.endsWith(".js"));
 
-        case "documentButtons":
-          for (const file of componentFiles) {
-            const button = require(`../../components/${folder}/${file}`);
-            buttons.set(button.data.name, button);
-          }
-          break;
+      for (const file of componentFiles) {
+        const menu = require(`../../components/menu/${folder}/${file}`);
+        selectMenus.set(menu.data.name, menu);
+      }
+    }
 
-        case "navigationButtons":
-          for (const file of componentFiles) {
-            const button = require(`../../components/${folder}/${file}`);
-            buttons.set(button.data.name, button);
-          }
-          break;
+    const modalComponentsFolder = readdirSync(`./src/components/modal`);
+    for (const folder of modalComponentsFolder) {
+      const componentFiles = readdirSync(
+        `./src/components/modal/${folder}`
+      ).filter((file) => file.endsWith(".js"));
 
-        case "selectMenus":
-          for (const file of componentFiles) {
-            const menu = require(`../../components/${folder}/${file}`);
-            selectMenus.set(menu.data.name, menu);
-          }
-          break;
-
-        case "coreMenus":
-          for (const file of componentFiles) {
-            const menu = require(`../../components/${folder}/${file}`);
-            selectMenus.set(menu.data.name, menu);
-          }
-          break;
-
-        case "documentMenus":
-          for (const file of componentFiles) {
-            const menu = require(`../../components/${folder}/${file}`);
-            selectMenus.set(menu.data.name, menu);
-          }
-          break;
-
-        case "modals":
-          for (const file of componentFiles) {
-            const modal = require(`../../components/${folder}/${file}`);
-            modals.set(modal.data.name, modal);
-          }
-          break;
-
-        case "coreModals":
-          for (const file of componentFiles) {
-            const modal = require(`../../components/${folder}/${file}`);
-            modals.set(modal.data.name, modal);
-          }
-          break;
-        default:
-          break;
+      for (const file of componentFiles) {
+        const modal = require(`../../components/modal/${folder}/${file}`);
+        modals.set(modal.data.name, modal);
       }
     }
   };

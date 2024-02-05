@@ -1,4 +1,4 @@
-const pool = require("../../sqlConnectionPool");
+const pool = require("../../../sqlConnectionPool");
 
 module.exports = {
   data: {

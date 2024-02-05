@@ -42,7 +42,7 @@ module.exports = {
     FROM
       Executives e
     LEFT JOIN
-      Sub_Members s ON e.NAME = s.DEPARTMENT_EXECUTIVE
+      Sub_Members s ON e.OFFICE_ID = s.OFFICE_ID
     WHERE
       e.MEMBER_ID = ? OR s.MEMBER_ID = ?
     GROUP BY
@@ -106,16 +106,18 @@ module.exports = {
       if (formattedResult.department.subMembers.length > 0) {
         embedFields.push({
           name: "Associates",
-          value: formattedResult.department.subMembers.map((member) => {
-            const totalSubmemberHours = Math.floor(member.timeRendered / 60);
-            const totalSubmemberMinutes = member.timeRendered % 60;
+          value: formattedResult.department.subMembers
+            .map((member) => {
+              const totalSubmemberHours = Math.floor(member.timeRendered / 60);
+              const totalSubmemberMinutes = member.timeRendered % 60;
 
-            return `<@${member.memberId}>・**\`⏱️ ${totalSubmemberHours} ${
-              totalSubmemberHours === 1 ? "hour" : "hours"
-            } and ${totalSubmemberMinutes} ${
-              totalSubmemberMinutes === 1 ? "minute" : "minutes"
-            }\`**\n`;
-          }).join(""),
+              return `<@${member.memberId}>・**\`⏱️ ${totalSubmemberHours} ${
+                totalSubmemberHours === 1 ? "hour" : "hours"
+              } and ${totalSubmemberMinutes} ${
+                totalSubmemberMinutes === 1 ? "minute" : "minutes"
+              }\`**\n`;
+            })
+            .join(""),
         });
       }
 

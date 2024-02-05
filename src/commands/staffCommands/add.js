@@ -11,14 +11,50 @@ const pesoFormatter = new Intl.NumberFormat("en-PH", {
 
 const departments = [
   {
-    name: "Tiktok Account Management",
-    executive: "752713584148086795",
-    submember_role: "1187702183802720327",
+    department: "Operations",
+    officeChannelId: "1117386962580541473",
+    executive: "1201413097697591327",
+    department_role: "1203938264898211920",
   },
   {
-    name: "Web Development Department",
+    department: "Procurement",
+    officeChannelId: "1117386986374823977",
+  },
+  {
+    department: "Design",
+    officeChannelId: "1117387017089728512",
+  },
+  {
+    department: "Web Development",
+    officeChannelId: "1117387044696641607",
     executive: "748568303219245117",
-    submember_role: "1117440563361366147",
+    department_role: "1117440563361366147",
+  },
+  {
+    department: "Finance",
+    officeChannelId: "1118180874136059964",
+  },
+  {
+    department: "Livestream",
+    officeChannelId: "1185979300936155136",
+  },
+  {
+    department: "Tiktok Account",
+    officeChannelId: "1185979374198071436",
+    executive: "752713584148086795",
+    department_role: "1187702183802720327",
+  },
+  {
+    department: "Tiktok Seller Center",
+    officeChannelId: "1185979531216027730",
+  },
+  {
+    department: "Lazada Seller Center",
+    officeChannelId: "1197118556467376188",
+  },
+  {
+    department: "Shopee Seller Center",
+    officeChannelId: "1197118789855223888",
   },
 ];
 
@@ -29,11 +65,11 @@ module.exports = {
     .addSubcommand((subcommand) =>
       subcommand
         .setName("pbr")
-        .setDescription("Add PBR to a Sub-Member")
+        .setDescription("Add PBR to an Assosciate")
         .addUserOption((option) =>
           option
             .setName("user")
-            .setDescription("The target Sub-Member.")
+            .setDescription("The target Associate.")
             .setRequired(true)
         )
         .addNumberOption((option) =>
@@ -43,6 +79,23 @@ module.exports = {
             .setRequired(true)
             .setMaxValue(30)
             .setMinValue(0)
+        )
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName("associate")
+        .setDescription("Add an associate to your department")
+        .addUserOption((option) =>
+          option
+            .setName("user")
+            .setDescription("The target user to add.")
+            .setRequired(true)
+        )
+        .addRoleOption((option) =>
+          option
+            .setName("department")
+            .setDescription("The target role of the department.")
+            .setRequired(true)
         )
     ),
   async execute(interaction, client) {
@@ -61,118 +114,182 @@ module.exports = {
 
     switch (subcommand) {
       case "pbr":
-        addSubmemberPbr();
+        addSubmemberPbr(interaction, client);
+        break;
+
+      case "associate":
+        addAssociate(interaction, client);
         break;
 
       default:
         break;
     }
-
-    async function addSubmemberPbr() {
-      await interaction.deferReply({ ephemeral: true });
-      const user = interaction.options.getUser("user");
-      const pbr = interaction.options.getNumber("pbr-value");
-
-      const department = departments.find(
-        (u) => u.executive === interaction.user.id
-      );
-
-      if (!department) {
-        await interaction.editReply({
-          content:
-            "🔴 ERROR: Cannot add PBR to associates. You do not have an associate yet.",
-        });
-        return;
-      }
-
-      const userMember = await interaction.guild.members.cache.get(user.id);
-      const role = await interaction.guild.roles.cache.get(
-        department.submember_role
-      );
-
-      if (!userMember.roles.cache.has(department.submember_role)) {
-        await interaction.editReply({
-          content:
-            "🔴 ERROR: You cannot add PBR to associates from another department.",
-        });
-        return;
-      }
-
-      const connection = await pool
-        .getConnection()
-        .catch((err) => console.log(err));
-
-      try {
-        const selectQuery = "SELECT * FROM Sub_Members WHERE MEMBER_ID = ?";
-        const [submember] = await connection.query(selectQuery, [user.id]);
-        const timeRendered = parseInt(submember[0].TIME_RENDERED);
-        const totalHours = moment.duration(timeRendered, "minutes").asHours();
-
-        const hours = Math.floor(timeRendered / 60);
-        const minutes = timeRendered % 60;
-
-        const fixedPay = Number(totalHours) * 30;
-        const pbrPay = pbr * Number(totalHours);
-        const totalPay = fixedPay + pbrPay;
-
-        const updateQuery =
-          "UPDATE Sub_Members SET PBR = ?, TIME_RENDERED = ? WHERE MEMBER_ID = ?";
-        await connection.query(updateQuery, [pbr, 0, user.id]);
-
-        const embed = new EmbedBuilder()
-          .setTitle(`📝 ASSOCIATE EVALUATION`)
-          .setColor(role.color)
-          .addFields([
-            {
-              name: "Member",
-              value: userMember.toString(),
-            },
-            {
-              name: `Hours Rendered`,
-              value: `${hours} hours and ${minutes} minutes`,
-            },
-            {
-              name: "PBR",
-              value: pesoFormatter.format(pbr),
-            },
-            {
-              name: `Fixed Salary`,
-              value: pesoFormatter.format(fixedPay),
-            },
-            {
-              name: `Performance Based Salary`,
-              value: pesoFormatter.format(pbrPay),
-            },
-            {
-              name: `Total Salary`,
-              value: pesoFormatter.format(totalPay),
-            },
-          ]);
-
-        await client.channels.cache.get("1194283985870782565").send({
-          embeds: [embed],
-        });
-
-        const successEmbed = new EmbedBuilder()
-          .setDescription(
-            "## SUCCESS\nYou have sucessfully added PBR to your associate."
-          )
-          .setColor("Green");
-
-        await interaction.editReply({
-          embeds: [successEmbed],
-        });
-        return;
-      } catch (error) {
-        console.log(error);
-        await interaction.editReply({
-          content:
-            "🔴 ERROR: There was an error while adding PBR to the selected user.",
-        });
-        return;
-      } finally {
-        await connection.release();
-      }
-    }
   },
 };
+
+async function addSubmemberPbr(interaction, client) {
+  await interaction.deferReply({ ephemeral: true });
+  const user = interaction.options.getUser("user");
+  const pbr = interaction.options.getNumber("pbr-value");
+
+  const department = departments.find(
+    (u) => u.executive === interaction.user.id
+  );
+
+  if (!department) {
+    await interaction.editReply({
+      content:
+        "🔴 ERROR: Cannot add PBR to associates. You do not have an associate yet.",
+    });
+    return;
+  }
+
+  const userMember = await interaction.guild.members.cache.get(user.id);
+  const role = await interaction.guild.roles.cache.get(
+    department.department_role
+  );
+
+  if (!userMember.roles.cache.has(department.department_role)) {
+    await interaction.editReply({
+      content:
+        "🔴 ERROR: You cannot add PBR to associates from another department.",
+    });
+    return;
+  }
+
+  const connection = await pool
+    .getConnection()
+    .catch((err) => console.log(err));
+
+  try {
+    const selectQuery = "SELECT * FROM Sub_Members WHERE MEMBER_ID = ?";
+    const [submember] = await connection.query(selectQuery, [user.id]);
+    const timeRendered = parseInt(submember[0].TIME_RENDERED);
+    const totalHours = moment.duration(timeRendered, "minutes").asHours();
+
+    const hours = Math.floor(timeRendered / 60);
+    const minutes = timeRendered % 60;
+
+    const fixedPay = Number(totalHours) * 30;
+    const pbrPay = pbr * Number(totalHours);
+    const totalPay = fixedPay + pbrPay;
+
+    const updateQuery =
+      "UPDATE Sub_Members SET PBR = ?, TIME_RENDERED = ? WHERE MEMBER_ID = ?";
+    await connection.query(updateQuery, [pbr, 0, user.id]);
+
+    const embed = new EmbedBuilder()
+      .setTitle(`📝 ASSOCIATE EVALUATION`)
+      .setColor(role.color)
+      .addFields([
+        {
+          name: "Member",
+          value: userMember.toString(),
+        },
+        {
+          name: `Hours Rendered`,
+          value: `${hours} hours and ${minutes} minutes`,
+        },
+        {
+          name: "PBR",
+          value: pesoFormatter.format(pbr),
+        },
+        {
+          name: `Fixed Salary`,
+          value: pesoFormatter.format(fixedPay),
+        },
+        {
+          name: `Performance Based Salary`,
+          value: pesoFormatter.format(pbrPay),
+        },
+        {
+          name: `Total Salary`,
+          value: pesoFormatter.format(totalPay),
+        },
+      ]);
+
+    await client.channels.cache.get("1194283985870782565").send({
+      embeds: [embed],
+    });
+
+    const successEmbed = new EmbedBuilder()
+      .setDescription(
+        "## SUCCESS\nYou have sucessfully added PBR to your associate."
+      )
+      .setColor("Green");
+
+    await interaction.editReply({
+      embeds: [successEmbed],
+    });
+    return;
+  } catch (error) {
+    console.log(error);
+    await interaction.editReply({
+      content:
+        "🔴 ERROR: There was an error while adding PBR to the selected user.",
+    });
+    return;
+  } finally {
+    await connection.release();
+  }
+}
+
+async function addAssociate(interaction, client) {
+  await interaction.deferReply({ ephemeral: true });
+  const user = interaction.options.getUser("user");
+  const role = interaction.options.getRole("department");
+  const userMember = await interaction.guild.members.cache.get(user.id);
+
+  if (
+    userMember.roles.cache.some((r) =>
+      ["1196806310524629062", "1185935514042388520"].includes(r.id)
+    )
+  ) {
+    await interaction.editReply({
+      content:
+        "🔴 ERROR: You cannot add an executive/director as an associate.",
+    });
+    return;
+  }
+
+  const department = departments.find((d) => d.department_role === role.id);
+
+  if (!department) {
+    await interaction.editReply({
+      content: "🔴 ERROR: Invalid department selected.",
+    });
+    return;
+  }
+
+  const executive = await interaction.guild.members.cache.get(
+    department.executive
+  );
+
+  const connection = await pool
+    .getConnection()
+    .catch((err) => console.log(err));
+
+  try {
+    const insertQuery =
+      "INSERT INTO Sub_Members (MEMBER_ID, USERNAME, DEPARTMENT_EXECUTIVE, OFFICE_ID) VALUES (?, ?, ?)";
+    await connection.query(insertQuery, [
+      user.id,
+      user.username,
+      executive.nickname,
+      department.officeChannelId,
+    ]);
+
+    await interaction.editReply({
+      content: `✅ Successfully added ${userMember.toString()} as ${role.toString()} associate`,
+    });
+  } catch (error) {
+    console.log(error);
+    await interaction.editReply({
+      content:
+        "🔴 ERROR: There was an error while adding the associate. Please try again.",
+    });
+    return;
+  } finally {
+    await connection.release();
+  }
+}

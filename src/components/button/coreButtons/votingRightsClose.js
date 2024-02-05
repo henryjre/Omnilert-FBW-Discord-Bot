@@ -1,10 +1,7 @@
-const upvotesFile = require("../coreModals/vrUpvoteModal");
-const downvotesFile = require("../coreModals/vrDownvoteModal");
-const abstainFile = require("../coreModals/vrAbstainModal");
+const fs = require("fs").promises;
+const path = require("path");
 
-const pbrFile = require("./pbrSubmit");
-
-const pool = require("../../sqlConnectionPool");
+const pool = require("../../../sqlConnectionPool");
 const moment = require("moment");
 
 const pesoFormatter = new Intl.NumberFormat("en-PH", {
@@ -28,6 +25,10 @@ module.exports = {
     }
     await interaction.deferUpdate();
 
+    const shenonUser = await interaction.guild.members.cache.get(
+      "864920050691866654"
+    );
+
     let messageEmbed = interaction.message.embeds[0];
     const votedUser = messageEmbed.data.fields[0].value;
     const match = votedUser.match(/<@(\d+)>/);
@@ -41,15 +42,20 @@ module.exports = {
       .getConnection()
       .catch((err) => console.log(err));
 
-    let votes;
     if (messageEmbed.data.title.includes("VOTING RIGHTS")) {
-      const upvotes = upvotesFile.getUpvotes();
-      const downvotes = downvotesFile.getDownVotes();
-      const abstains = abstainFile.getAbstains();
-      votes = [...upvotes, ...downvotes, ...abstains];
+      const votes = await getVotingRightsSubmissions();
+
+      const upvotes = votes.filter((v) => v.vote === "upvote");
+      const downvotes = votes.filter((v) => v.vote === "downvote");
+      const abstains = votes.filter((v) => v.vote === "abstain");
+
+      const anonRemarks = votes.map((vote) => vote.anonRemarks);
+      const publicRemarks = votes.map((vote) => vote.publicRemarks);
 
       const updateQuery = `SELECT * FROM Board_Of_Directors WHERE MEMBER_ID = ?`;
       const [core] = await connection.execute(updateQuery, [userId]);
+
+      await connection.release();
 
       messageEmbed.data.fields.push(
         {
@@ -64,19 +70,22 @@ module.exports = {
       messageEmbed.data.color = 2392134; //5763720
       messageEmbed.data.fields.splice(1, 1);
 
-      await client.channels.cache
-        .get("1196811363658498088")
-        .send({
-          embeds: [messageEmbed],
-        })
-        .then((msg) => {
-          upvotesFile.clearUpvotes();
-          downvotesFile.clearDownvotes();
-          abstainFile.clearAbstains();
-          message.delete();
-        });
+      await client.channels.cache.get("1196811363658498088").send({
+        embeds: [messageEmbed],
+      });
+
+      await client.channels.cache.get("1189222831368716368").send({
+        embeds: anonRemarks,
+      });
+
+      await shenonUser.send({
+        embeds: publicRemarks,
+      });
+
+      await clearVotingRightsSubmissions();
+      await message.delete();
     } else {
-      votes = pbrFile.getPbr();
+      const votes = await getPbrSubmissions();
 
       await interaction.followUp({
         content: "Processing your request... Please wait.",
@@ -161,18 +170,12 @@ module.exports = {
         embeds: anonRemarks,
       });
 
-      const shenonUser = await interaction.guild.members.cache.get(
-        "864920050691866654"
-      );
+      await shenonUser.send({
+        embeds: publicRemarks,
+      });
 
-      await shenonUser
-        .send({
-          embeds: publicRemarks,
-        })
-        .then((msg) => {
-          pbrFile.clearPbr();
-          message.delete();
-        });
+      await clearPbrSubmissions();
+      await message.delete();
     }
 
     const membersWhoVoted = await interaction.guild.roles.cache
@@ -184,3 +187,55 @@ module.exports = {
     }
   },
 };
+
+async function getPbrSubmissions() {
+  const filePath = path.join(__dirname, "../../../temp/pbrSubmissions.json");
+  try {
+    const data = await fs.readFile(filePath, "utf-8");
+    const jsonObject = JSON.parse(data);
+    console.log("PBR votes retrieved successfully");
+    return jsonObject;
+  } catch (error) {
+    console.error("Error retrieving PBR votes:", error);
+    return [];
+  }
+}
+
+async function clearPbrSubmissions() {
+  const filePath = path.join(__dirname, "../../../temp/pbrSubmissions.json");
+  try {
+    await fs.truncate(filePath, 0); // Truncate the file to zero bytes
+    console.log("PBR votes cleared successfully.");
+  } catch (error) {
+    console.error("Error clearing PBR votes:", error);
+  }
+}
+
+async function getVotingRightsSubmissions() {
+  const filePath = path.join(
+    __dirname,
+    "../../../temp/votingRightsSubmissions.json"
+  );
+  try {
+    const data = await fs.readFile(filePath, "utf-8");
+    const jsonObject = JSON.parse(data);
+    console.log("VR votes retrieved successfully");
+    return jsonObject;
+  } catch (error) {
+    console.error("Error retrieving VR votes:", error);
+    return [];
+  }
+}
+
+async function clearVotingRightsSubmissions() {
+  const filePath = path.join(
+    __dirname,
+    "../../../temp/votingRightsSubmissions.json"
+  );
+  try {
+    await fs.truncate(filePath, 0); // Truncate the file to zero bytes
+    console.log("VR votes cleared successfully.");
+  } catch (error) {
+    console.error("Error clearing VR votes:", error);
+  }
+}

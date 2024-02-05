@@ -1,15 +1,12 @@
-const {
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  EmbedBuilder,
-  ModalBuilder,
-  TextInputBuilder,
-  TextInputStyle,
-} = require("discord.js");
+const { ActionRowBuilder, ButtonBuilder, EmbedBuilder } = require("discord.js");
 const moment = require("moment");
 
 const userChannels = [
+  {
+    //web dev
+    users: ["864920050691866654"],
+    channel: "1203998793473728572",
+  },
   {
     //web dev
     users: ["748568303219245117"],

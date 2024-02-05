@@ -5,7 +5,7 @@ const {
   ButtonStyle,
 } = require("discord.js");
 
-const pool = require("../../sqlConnectionPool");
+const pool = require("../../../sqlConnectionPool");
 const moment = require("moment");
 
 const pesoFormatter = new Intl.NumberFormat("en-PH", {
@@ -15,7 +15,7 @@ const pesoFormatter = new Intl.NumberFormat("en-PH", {
   minimumFractionDigits: 2,
 });
 
-const commissionRates = require("../../commands/tiktokCommands/commission.json");
+const commissionRates = require("../../../commands/tiktokCommands/commission.json");
 
 module.exports = {
   data: {

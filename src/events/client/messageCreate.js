@@ -19,6 +19,11 @@ module.exports = {
 
     const departments = [
       {
+        department: "Executive Head",
+        userIds: ["864920050691866654"],
+        officeChannelId: "1203998793473728572",
+      },
+      {
         department: "Operations",
         userIds: ["762612635605663767", "1201413097697591327"],
         officeChannelId: "1117386962580541473",

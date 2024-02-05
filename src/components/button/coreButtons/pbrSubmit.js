@@ -1,6 +1,9 @@
 const { EmbedBuilder } = require("discord.js");
+const fs = require("fs").promises;
+const path = require("path");
 
-let pbrSubmissions = [];
+const filePath = path.join(__dirname, "../../../temp/pbrSubmissions.json");
+
 module.exports = {
   data: {
     name: `pbrSubmit`,
@@ -61,7 +64,7 @@ module.exports = {
         iconURL: interaction.user.displayAvatarURL(),
       });
 
-      pbrSubmissions.push({
+      await storePbrSubmission({
         userId: interaction.user.id,
         finalPbr: parseFloat(pbrValue),
         anonRemarks: anonEmbed,
@@ -69,7 +72,6 @@ module.exports = {
       });
 
       await interactedMember.roles.add("1186987728336846958");
-      console.log(pbrSubmissions);
 
       await dmMessages.forEach((m) => {
         setTimeout(() => {
@@ -99,10 +101,23 @@ module.exports = {
         });
     }
   },
-  getPbr: function () {
-    return pbrSubmissions;
-  },
-  clearPbr: function () {
-    pbrSubmissions = [];
-  },
 };
+
+async function storePbrSubmission(jsonObject) {
+  try {
+    // Read existing data
+    const existingData = await fs.readFile(filePath, "utf-8");
+
+    // Parse existing data (or initialize as an empty array if the file is empty)
+    const existingArray = existingData ? JSON.parse(existingData) : [];
+
+    // Append the new JSON object
+    existingArray.push(jsonObject);
+
+    // Write back to the file
+    await fs.writeFile(filePath, JSON.stringify(existingArray));
+    console.log("Vote stored successfully.");
+  } catch (error) {
+    console.error("Error storing Vote:", error);
+  }
+}

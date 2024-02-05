@@ -1,16 +1,10 @@
-const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+const { SlashCommandBuilder } = require("discord.js");
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName("embed")
+    .setName("test")
     .setDescription("Returns an embed."),
   async execute(interaction, client) {
-    interaction.reply({
-      content:
-        "Hello! Are you still alive? This is your 15-minute reminder to send an update on this thread. No update for another 15 minutes will get you kicked out.",
-      tts: true,
-    });
-
     return;
 
     let embeds = [];

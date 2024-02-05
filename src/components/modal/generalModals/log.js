@@ -1,6 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
 const { customAlphabet } = require("nanoid");
-const pool = require("../../sqlConnectionPool");
+const pool = require("../../../sqlConnectionPool");
 
 const nanoid = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 13);
 

@@ -10,7 +10,7 @@ module.exports = {
     name: `proposalResolution`,
   },
   async execute(interaction, client) {
-    if (interaction.user.id !== "864920050691866654") {
+    if (!interaction.member.roles.cache.has("1177271188997804123")) {
       await interaction.reply({
         content: `🔴 ERROR: You cannot use this button.`,
         ephemeral: true,
