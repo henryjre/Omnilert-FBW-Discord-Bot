@@ -7,8 +7,7 @@ const pool = require("../../sqlConnectionPool");
 
 const ttsReminders = require("./reminderTts.json");
 
-let reminder = {};
-let hourlyReminders = {};
+let reminders = [];
 let penalty = {};
 module.exports = {
   name: "reportal",
@@ -30,55 +29,60 @@ module.exports = {
       if (workShift[0].length <= 0) return;
     }
 
-    let penaltyTimestampOnStart = Date.now();
+    const reminderStart = Date.now();
 
-    function calculate15MinuteReminder() {
-      // hourRemindetTimestampOnStart = Date.now();
-      const nextSchedule = new Date(penaltyTimestampOnStart + 15 * 60000);
+    function calculateReminder(minutes) {
+      const nextSchedule = new Date(reminderStart + minutes * 60000);
       // const nextSchedule = new Date(penaltyTimestampOnStart + 20 * 1000);
       return nextSchedule;
     }
 
-    // function calculateHourAndHalfReminder() {
-    //   // reminderTimestampOnStart = Date.now();
-    //   const nextSchedule = new Date(penaltyTimestampOnStart + 90 * 60000);
-    //   return nextSchedule;
-    // }
-
     function calculateNextPenalty() {
-      penaltyTimestampOnStart = Date.now();
-      const nextSchedule = new Date(penaltyTimestampOnStart + 30 * 60000);
+      const nextSchedule = new Date(reminderStart + 30 * 60000);
       return nextSchedule;
     }
 
-    // !reminder[channelId] ? {} : await reminder[channelId].cancel();
-    !hourlyReminders[channelId]
-      ? {}
-      : await hourlyReminders[channelId].cancel();
+    const reminderIndex = reminders.findIndex((r) => r.id === channelId);
+    if (reminderIndex !== -1) {
+      await reminders[reminderIndex].first.cancel();
+      await reminders[reminderIndex].second.cancel();
+    }
+
     !penalty[channelId] ? {} : await penalty[channelId].cancel();
 
     if (type === 0) {
-      // console.log(`Resetting reminders for ${member.nickname}`);
-      // reminder[channelId] = schedule.scheduleJob(
-      //   `IN 1 HOUR AND 30 MINS: ${author.username}`,
-      //   calculateHourAndHalfReminder(),
-      //   () => {
-      //     remindUserHourAndHalf();
-      //     checkSchedules();
-      //   }
-      // );
-
-      hourlyReminders[channelId] = schedule.scheduleJob(
-        `IN 15 MINUTES: ${author.username}`,
-        calculate15MinuteReminder(),
+      console.log(`Resetting reminders for ${member.nickname}`);
+      const first_reminder = schedule.scheduleJob(
+        `FIRST REMINDER: ${member.nickname}`,
+        calculateReminder(15),
         () => {
-          remindUserHourly();
+          firstReminder();
           checkSchedules();
         }
       );
 
+      const second_reminder = schedule.scheduleJob(
+        `SECOND REMINDER: ${member.nickname}`,
+        calculateReminder(29),
+        () => {
+          secondReminder();
+          checkSchedules();
+        }
+      );
+
+      if (reminderIndex !== -1) {
+        reminders[reminderIndex].first = first_reminder;
+        reminders[reminderIndex].second = second_reminder;
+      } else {
+        reminders.push({
+          id: channelId,
+          first: first_reminder,
+          second: second_reminder,
+        });
+      }
+
       penalty[channelId] = schedule.scheduleJob(
-        `PENALTY: ${author.username}`,
+        `PENALTY: ${member.nickname}`,
         calculateNextPenalty(),
         () => {
           penalizeUser();
@@ -98,8 +102,12 @@ module.exports = {
         console.log("No schedules found");
         return;
       }
+      let counter = 0;
       console.log("-----------------------------------------");
       for (const jobName in scheduledJobs) {
+        if (counter % 6 === 0 || counter % 6 === 3) {
+          console.log("-----------------------------------------");
+        }
         const job = scheduledJobs[jobName];
         const nextRuntime = new Date(job.nextInvocation()).toLocaleDateString(
           "en-PH",
@@ -113,8 +121,10 @@ module.exports = {
             hour12: true,
           }
         );
+
         console.log(`Schedule name: ${jobName}`);
         console.log(`Next run time: ${nextRuntime}`);
+        counter++;
       }
       console.log("-----------------------------------------");
     }
@@ -252,26 +262,7 @@ module.exports = {
       }
     }
 
-    function remindUserHourAndHalf() {
-      const reminderEmbed = new EmbedBuilder()
-        .setTitle(`🔔 HALF HOUR REMINDER`)
-        .setDescription(
-          `This is a reminder that you have 15 minutes to send an update to this channel before penalty.`
-        )
-        .setColor("Yellow")
-        .setTimestamp(Date.now())
-        .setFooter({
-          iconURL: client.user.displayAvatarURL(),
-          text: "Leviosa Philippines",
-        });
-
-      thread.send({
-        content: author.toString(),
-        embeds: [reminderEmbed],
-      });
-    }
-
-    function remindUserHourly() {
+    function firstReminder() {
       const randomIndex = Math.floor(Math.random() * ttsReminders.length);
       const randomTts = ttsReminders[randomIndex];
 
@@ -290,6 +281,24 @@ module.exports = {
         content: author.toString() + " " + randomTts.reminder,
         embeds: [reminderEmbed],
         tts: true,
+      });
+    }
+
+    function secondReminder() {
+      const reminderEmbed = new EmbedBuilder()
+        .setDescription(
+          `##  🔔 1-MINUTE REMINDER\nThis is a reminder that you only have 1 minute to send an update to this channel before you get automatically outed.`
+        )
+        .setColor("LuminousVividPink")
+        .setTimestamp(Date.now())
+        .setFooter({
+          iconURL: client.user.displayAvatarURL(),
+          text: "Leviosa Philippines",
+        });
+
+      thread.send({
+        content: author.toString(),
+        embeds: [reminderEmbed],
       });
     }
   },
