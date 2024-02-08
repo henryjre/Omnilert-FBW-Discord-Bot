@@ -6,7 +6,7 @@ const {
   EmbedBuilder,
 } = require("discord.js");
 
-const pool = require("../../sqlConnectionPool");
+const { managementPool } = require("../../sqlConnection");
 
 const { customAlphabet } = require("nanoid");
 const nanoid = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 10);
@@ -138,7 +138,7 @@ module.exports = {
         ])
         .setColor("Blurple");
     } else {
-      const connection = await pool
+      const connection = await managementPool
         .getConnection()
         .catch((err) => console.log(err));
 

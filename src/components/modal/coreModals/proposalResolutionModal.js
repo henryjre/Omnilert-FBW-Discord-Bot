@@ -1,4 +1,4 @@
-const pool = require("../../../sqlConnectionPool");
+const { managementPool } = require("../../../sqlConnection");
 
 module.exports = {
   data: {
@@ -9,7 +9,7 @@ module.exports = {
     const resolution = interaction.fields.getTextInputValue("resolutionInput");
     const member = interaction.guild.members.cache.get(interaction.user.id);
 
-    const connection = await pool
+    const connection = await managementPool
       .getConnection()
       .catch((err) => console.log(err));
 

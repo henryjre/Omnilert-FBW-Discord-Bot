@@ -7,7 +7,7 @@ const {
   ComponentType,
 } = require("discord.js");
 const moment = require("moment-timezone");
-const pool = require("../../sqlConnectionPool");
+const { managementPool } = require("../../sqlConnection");
 
 const commissionRates = require("./commission.json");
 
@@ -49,7 +49,7 @@ module.exports = {
 
     const streamId = interaction.options.getString("id");
 
-    const connection = await pool
+    const connection = await managementPool
       .getConnection()
       .catch((err) => console.log(err));
 

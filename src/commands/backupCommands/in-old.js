@@ -3,7 +3,7 @@ const { customAlphabet } = require("nanoid");
 
 const nanoid = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 13);
 
-const pool = require("../../sqlConnectionPool");
+const { managementPool } = require("../../sqlConnection");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -12,7 +12,7 @@ module.exports = {
   async execute(interaction, client) {
     await interaction.deferReply();
 
-    const connection = await pool
+    const connection = await managementPool
       .getConnection()
       .catch((err) => console.log(err));
 

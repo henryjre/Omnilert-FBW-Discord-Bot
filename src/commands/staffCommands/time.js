@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 const moment = require("moment");
-const pool = require("../../sqlConnectionPool");
+const { managementPool } = require("../../sqlConnection");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -49,7 +49,7 @@ module.exports = {
       e.MEMBER_ID, e.TIME_RENDERED, e.NAME, s.MEMBER_ID, s.TIME_RENDERED, s.DEPARTMENT_EXECUTIVE;
     `;
 
-    const connection = await pool
+    const connection = await managementPool
       .getConnection()
       .catch((err) => console.log(err));
 

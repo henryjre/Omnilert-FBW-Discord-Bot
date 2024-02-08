@@ -8,7 +8,7 @@ const {
 } = require("discord.js");
 const moment = require("moment-timezone");
 
-const pool = require("../../sqlConnectionPool");
+const { managementPool } = require("../../sqlConnection");
 const commissionRates = require("./commission.json");
 
 const pesoFormatter = new Intl.NumberFormat("en-PH", {
@@ -38,7 +38,7 @@ module.exports = {
 
     // const streamerName = interaction.user.globalName;
 
-    const connection = await pool
+    const connection = await managementPool
       .getConnection()
       .catch((err) => console.log(err));
 

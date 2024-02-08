@@ -3,7 +3,7 @@ const { EmbedBuilder } = require("discord.js");
 
 const { GoogleSpreadsheet } = require("google-spreadsheet");
 const creds = require("../../secret-key.json");
-const pool = require("../../sqlConnectionPool");
+const { managementPool } = require("../../sqlConnection");
 
 const ttsReminders = require("./reminderTts.json");
 
@@ -22,7 +22,7 @@ module.exports = {
     if (type === 0) {
       const queryWorkShiftString =
         "SELECT * FROM WORK_HOURS WHERE DISCORD_ID = ? AND TIME_OUT IS NULL";
-      const workShift = await pool
+      const workShift = await managementPool
         .query(queryWorkShiftString, [author.id])
         .catch((err) => console.log(err));
 
@@ -132,7 +132,7 @@ module.exports = {
     checkSchedules();
 
     async function penalizeUser() {
-      const connection = await pool
+      const connection = await managementPool
         .getConnection()
         .catch((err) => console.log(err));
 

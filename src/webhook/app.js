@@ -9,7 +9,7 @@ const authenticate = require("./auth");
 
 // app.use(helmet());
 app.use(express.json());
-app.use(authenticate);
+// app.use(authenticate);
 app.use("/api", routes);
 
 // Turn on that server!

@@ -7,7 +7,7 @@ const pesoFormatter = new Intl.NumberFormat("en-PH", {
   minimumFractionDigits: 2,
 });
 
-const pool = require("../../sqlConnectionPool");
+const { managementPool } = require("../../sqlConnection");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -30,7 +30,7 @@ module.exports = {
 
     const subcommand = interaction.options.getSubcommand();
 
-    const connection = await pool
+    const connection = await managementPool
       .getConnection()
       .catch((err) => console.log(err));
 

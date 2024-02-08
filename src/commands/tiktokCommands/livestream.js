@@ -6,7 +6,7 @@ const crypto = require("crypto");
 const { customAlphabet } = require("nanoid");
 const nanoid = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 13);
 
-const pool = require("../../sqlConnectionPool");
+const { managementPool } = require("../../sqlConnection");
 const commissionRates = require("./commission.json");
 const { time } = require("console");
 
@@ -123,7 +123,7 @@ module.exports = {
       .tz("Asia/Manila")
       .format("YYYY-MM-DD HH:mm:ss");
 
-    const connection = await pool
+    const connection = await managementPool
       .getConnection()
       .catch((err) => console.log(err));
 

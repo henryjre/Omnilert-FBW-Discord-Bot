@@ -8,7 +8,7 @@ const pesoFormatter = new Intl.NumberFormat("en-PH", {
   minimumFractionDigits: 2,
 });
 
-const pool = require("../../sqlConnectionPool");
+const { managementPool } = require("../../sqlConnection");
 
 const commissionRates = require("../tiktokCommands/commission.json");
 
@@ -17,7 +17,7 @@ module.exports = {
   async execute(interaction, client) {
     const streamerId = interaction.user.id;
 
-    const connection = await pool
+    const connection = await managementPool
       .getConnection()
       .catch((err) => console.log(err));
 

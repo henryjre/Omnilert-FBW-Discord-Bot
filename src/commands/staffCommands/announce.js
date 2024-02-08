@@ -10,15 +10,15 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("announce")
     .setDescription("Announce something to Executives or BODs.")
-    .addStringOption((option) =>
-      option
-        .setName("type")
-        .setDescription("The type of announcement to make.")
-        .setRequired(true)
-        .addChoices(
-          { name: "🔴 Executive Announcement", value: "executive" },
-          { name: "🟢 BOD Announcement", value: "bod" }
-        )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName("executives")
+        .setDescription("Announce something to the Executives.")
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName("directors")
+        .setDescription("Announce something to the Board of Directors.")
     ),
 
   async execute(interaction, client) {
@@ -34,7 +34,7 @@ module.exports = {
       return;
     }
 
-    const type = interaction.options.getString("type");
+    const type = interaction.options.getSubcommand();
 
     const modal = buildModal(type);
     await interaction.showModal(modal);
@@ -48,7 +48,7 @@ module.exports = {
         .setStyle(TextInputStyle.Short)
         .setRequired(true);
 
-      if (type === "executive") {
+      if (type === "executives") {
         channelInput.setValue("1197101506638381188");
         modal.setTitle(`Announce to the Executives`);
       } else {

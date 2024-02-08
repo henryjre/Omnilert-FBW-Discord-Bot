@@ -9,11 +9,11 @@ const {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("complain")
-    .setDescription("File an anonymous complaint/s to a specific core member.")
+    .setDescription("File an anonymous complaint/s to a specific executive.")
     .addUserOption((option) =>
       option
         .setName("user")
-        .setDescription("The target core member of your complaint/s.")
+        .setDescription("The target executive of your complaint/s.")
         .setRequired(true)
     ),
 

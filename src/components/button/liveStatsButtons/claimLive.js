@@ -1,6 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
 
-const pool = require("../../../sqlConnectionPool");
+const { managementPool } = require("../../../sqlConnection");
 const moment = require("moment");
 
 const { customAlphabet } = require("nanoid");
@@ -54,7 +54,7 @@ module.exports = {
 
     await timer(1300);
 
-    const connection = await pool
+    const connection = await managementPool
       .getConnection()
       .catch((err) => console.log(err));
 
@@ -140,6 +140,6 @@ module.exports = {
 
     return client.commands
       .get("livestreamDashboard")
-      .execute(interaction, client, pool);
+      .execute(interaction, client, managementPool);
   },
 };

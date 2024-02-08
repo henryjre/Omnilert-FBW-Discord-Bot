@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
-const pool = require("../../sqlConnectionPool");
+const { managementPool } = require("../../sqlConnection");
 
 const { GoogleSpreadsheet } = require("google-spreadsheet");
 const creds = require("../../secret-key.json");
@@ -23,7 +23,7 @@ module.exports = {
 
     await interaction.deferReply();
 
-    const connection = await pool
+    const connection = await managementPool
       .getConnection()
       .catch((err) => console.log(err));
 

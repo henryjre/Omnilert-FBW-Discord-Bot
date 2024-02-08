@@ -6,7 +6,7 @@ const {
   channelLink,
 } = require("discord.js");
 
-const pool = require("../../../sqlConnectionPool");
+const { managementPool } = require("../../../sqlConnection");
 
 module.exports = {
   data: {
@@ -43,7 +43,7 @@ module.exports = {
       embedTitleType = "DIRECTORS PROPOSAL";
     }
 
-    const connection = await pool
+    const connection = await managementPool
       .getConnection()
       .catch((err) => console.log(err));
 

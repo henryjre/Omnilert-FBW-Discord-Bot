@@ -1,5 +1,5 @@
 const { EmbedBuilder } = require("discord.js");
-const pool = require("../../../sqlConnectionPool");
+const { managementPool } = require("../../../sqlConnection");
 
 const fs = require("fs").promises;
 const path = require("path");
@@ -83,7 +83,7 @@ module.exports = {
       ephemeral: true,
     });
 
-    const connection = await pool
+    const connection = await managementPool
       .getConnection()
       .catch((err) => console.log(err));
 

@@ -1,4 +1,4 @@
-const pool = require("../../../sqlConnectionPool");
+const { managementPool } = require("../../../sqlConnection");
 const voteFile = require("../../menu/coreMenus/voteProposalOptions");
 
 const fs = require("fs").promises;
@@ -16,7 +16,7 @@ module.exports = {
     const vote = voteFile.getUserVote(interaction.user.id);
     const proposalVotes = await getProposalVotes();
 
-    const connection = await pool
+    const connection = await managementPool
       .getConnection()
       .catch((err) => console.log(err));
 

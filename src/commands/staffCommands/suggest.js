@@ -12,20 +12,26 @@ module.exports = {
     .setDescription(
       "Suggest improvements that can be made by a specific core member."
     )
-    .addUserOption((option) =>
-      option
-        .setName("user")
-        .setDescription("The target core member of your suggestion.")
-        .setRequired(true)
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName("publicly")
+        .setDescription("Suggest publicly to another executive.")
+        .addUserOption((option) =>
+          option
+            .setName("user")
+            .setDescription("The target executive.")
+            .setRequired(true)
+        )
     )
-    .addStringOption((option) =>
-      option
-        .setName("type")
-        .setDescription("Suggest privately or publicly.")
-        .setRequired(true)
-        .addChoices(
-          { name: "🔓 Suggest publicly", value: "public" },
-          { name: "🔒 Suggest privately", value: "private" }
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName("privately")
+        .setDescription("Suggest privately to another executive.")
+        .addUserOption((option) =>
+          option
+            .setName("user")
+            .setDescription("The target executive.")
+            .setRequired(true)
         )
     ),
 
@@ -43,13 +49,13 @@ module.exports = {
     }
 
     const user = interaction.options.getUser("user");
-    const type = interaction.options.getString("type");
+    const type = interaction.options.getSubcommand();
 
     const member = interaction.guild.members.cache.get(user.id);
 
     if (!member.roles.cache.has("1185935514042388520")) {
       await interaction.reply({
-        content: `🔴 ERROR: ${member.nickname} is not a <@&1185935514042388520> member.`,
+        content: `🔴 ERROR: ${member.nickname} is not an <@&1185935514042388520>.`,
         ephemeral: true,
       });
       return;
@@ -68,7 +74,7 @@ module.exports = {
     function buildModal(type) {
       const modal = new ModalBuilder();
 
-      if (type === "public") {
+      if (type === "publicly") {
         modal
           .setCustomId("coreSuggestionPublic")
           .setTitle(`Suggest to ${titleName} PUBLICLY`);

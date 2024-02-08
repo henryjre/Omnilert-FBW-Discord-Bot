@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
-const pool = require("../../sqlConnectionPool");
+const { managementPool } = require("../../sqlConnection");
 const moment = require("moment");
 
 const pesoFormatter = new Intl.NumberFormat("en-PH", {
@@ -157,7 +157,7 @@ async function addSubmemberPbr(interaction, client) {
     return;
   }
 
-  const connection = await pool
+  const connection = await managementPool
     .getConnection()
     .catch((err) => console.log(err));
 
@@ -265,7 +265,7 @@ async function addAssociate(interaction, client) {
     department.executive
   );
 
-  const connection = await pool
+  const connection = await managementPool
     .getConnection()
     .catch((err) => console.log(err));
 

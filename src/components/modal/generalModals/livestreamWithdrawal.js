@@ -5,7 +5,7 @@ const {
   EmbedBuilder,
 } = require("discord.js");
 
-const pool = require("../../../sqlConnectionPool");
+const { managementPool } = require("../../../sqlConnection");
 const moment = require("moment");
 
 const { customAlphabet } = require("nanoid");
@@ -56,7 +56,7 @@ module.exports = {
     const netWithdrawal = parseFloat(netAmount[0].replace(/,/g, ""));
     const claimDate = moment().format("YYYY-MM-DD HH:mm:ss");
 
-    const connection = await pool
+    const connection = await managementPool
       .getConnection()
       .catch((err) => console.log(err));
 

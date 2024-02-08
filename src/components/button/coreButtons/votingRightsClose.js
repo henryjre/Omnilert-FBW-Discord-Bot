@@ -1,7 +1,7 @@
 const fs = require("fs").promises;
 const path = require("path");
 
-const pool = require("../../../sqlConnectionPool");
+const { managementPool } = require("../../../sqlConnection");
 const moment = require("moment");
 
 const pesoFormatter = new Intl.NumberFormat("en-PH", {
@@ -38,7 +38,7 @@ module.exports = {
       interaction.message.id
     );
 
-    const connection = await pool
+    const connection = await managementPool
       .getConnection()
       .catch((err) => console.log(err));
 

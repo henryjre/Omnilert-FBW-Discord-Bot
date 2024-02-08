@@ -7,7 +7,7 @@ const {
   ComponentType,
 } = require("discord.js");
 
-const pool = require("../../sqlConnectionPool");
+const { managementPool } = require("../../sqlConnection");
 const pesoFormatter = new Intl.NumberFormat("en-PH", {
   style: "currency",
   currency: "PHP",
@@ -44,7 +44,7 @@ module.exports = {
     const withdrawalAmount = interaction.options.getNumber("amount");
     const streamerId = interaction.user.id;
 
-    const connection = await pool
+    const connection = await managementPool
       .getConnection()
       .catch((err) => console.log(err));
 
