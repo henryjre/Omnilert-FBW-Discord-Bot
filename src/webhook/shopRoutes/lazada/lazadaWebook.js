@@ -17,14 +17,38 @@ module.exports = async (req, res) => {
   const sign = signWebhookRequest(stringToSign, secretKey);
 
   if (sign !== auth) {
-    return res
-      .status(400)
-      .json({ error: "Bad request", message: "Invalid authorization" });
+    return;
   }
 
-  console.log(body);
+  switch (body.message_type) {
+    case 0:
+      return await orderStatusChange();
 
-  return;
+    default:
+      return;
+  }
+
+  async function orderStatusChange() {
+    const status = body.data.order_status;
+    const checkDupeId = body.data.trade_order_id + body.data.order_status;
+
+    if (status === "unpaid") {
+      return;
+    }
+
+    if (processedLazadaOrders.has(checkDupeId)) {
+      console.log(
+        `Duplicate order ID received: ${body.data.trade_order_id} with status ${status}. Ignoring...`
+      );
+      return;
+    }
+
+    processedLazadaOrders.add(checkDupeId);
+
+    const response = await processLazadaOrder(body);
+    console.log(response);
+    return;
+  }
 };
 
 function signWebhookRequest(input, secret) {
@@ -45,11 +69,30 @@ async function getLazSecrets() {
       },
     };
     const response = await fetch(url, options);
-    console.log(response);
     const responseData = await response.json();
-    console.log(responseData);
     return responseData.secrets;
   } catch (error) {
+    console.log("LAZADA SECRETS FETCH ERROR: ", error);
+    return null;
+  }
+}
+
+async function processLazadaOrder(body) {
+  try {
+    const url = `https://leviosa.ph/_functions/LazadaOrderStatusChange`;
+    const options = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": process.env.apiKey,
+      },
+      body: JSON.stringify(body),
+    };
+    const response = await fetch(url, options);
+    const responseData = await response.json();
+    return responseData;
+  } catch (error) {
+    console.error("LAZADA ORDER ERROR: ", error);
     return null;
   }
 }
