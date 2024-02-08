@@ -1,6 +1,6 @@
 const lazada = require("express").Router();
-const newOrder = require("./newLazadaOrder");
+const newOrder = require("./lazadaWebook");
 
-lazada.post("/newOrder", newOrder);
+lazada.post("/webhook", newOrder);
 
 module.exports = lazada;
