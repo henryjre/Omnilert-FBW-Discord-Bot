@@ -41,13 +41,12 @@ module.exports = async (req, res) => {
         `Duplicate order ID received: ${body.data.trade_order_id} with status ${status}. Ignoring...`
       );
       return;
+    } else {
+      processedLazadaOrders.add(checkDupeId);
+
+      await processLazadaOrder(body);
+      return;
     }
-
-    processedLazadaOrders.add(checkDupeId);
-
-    const response = await processLazadaOrder(body);
-    console.log(response);
-    return;
   }
 };
 
@@ -92,7 +91,7 @@ async function processLazadaOrder(body) {
     const responseData = await response.json();
     return responseData;
   } catch (error) {
-    console.error("LAZADA ORDER ERROR: ", error);
+    console.log("LAZADA ORDER ERROR: ", error);
     return null;
   }
 }
