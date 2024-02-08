@@ -45,7 +45,9 @@ async function getLazSecrets() {
       },
     };
     const response = await fetch(url, options);
+    console.log(response);
     const responseData = await response.json();
+    console.log(responseData);
     return responseData.secrets;
   } catch (error) {
     return null;
