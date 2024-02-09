@@ -315,6 +315,8 @@ async function addAssociate(interaction, client) {
       department.officeChannelId,
     ]);
 
+    await userMember.roles.add(["1197888181702496319", role.id]);
+
     await interaction.editReply({
       content: `✅ Successfully added ${userMember.toString()} as ${role.toString()} associate`,
     });
