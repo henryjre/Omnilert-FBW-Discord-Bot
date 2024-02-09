@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+const { EmbedBuilder } = require("discord.js");
 const { managementPool } = require("../../sqlConnection");
 
 const pesoFormatter = new Intl.NumberFormat("en-PH", {
@@ -9,22 +9,7 @@ const pesoFormatter = new Intl.NumberFormat("en-PH", {
 });
 
 module.exports = {
-  // cooldown: 90,
-  data: new SlashCommandBuilder()
-    .setName("add-liab")
-    .setDescription("Add liabilities to livestreamers.")
-    .addUserOption((option) =>
-      option
-        .setName("livestreamer")
-        .setDescription("The livestreamer to add liabilities.")
-        .setRequired(true)
-    )
-    .addNumberOption((option) =>
-      option
-        .setName("amount")
-        .setDescription("The amount liabilities to add in peso.")
-        .setRequired(true)
-    ),
+  name: "add-liab",
   async execute(interaction, client) {
     const validRoles = ["1176496361802301462"];
 

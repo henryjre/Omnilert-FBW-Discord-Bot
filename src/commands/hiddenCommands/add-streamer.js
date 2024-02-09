@@ -1,24 +1,8 @@
-const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+const { EmbedBuilder } = require("discord.js");
 const { managementPool } = require("../../sqlConnection");
 
-const pesoFormatter = new Intl.NumberFormat("en-PH", {
-  style: "currency",
-  currency: "PHP",
-  maximumFractionDigits: 2,
-  minimumFractionDigits: 2,
-});
-
 module.exports = {
-  // cooldown: 90,
-  data: new SlashCommandBuilder()
-    .setName("add-streamer")
-    .setDescription("Add a new Leviosa Tiktok livestreamer.")
-    .addUserOption((option) =>
-      option
-        .setName("user")
-        .setDescription("The user to add.")
-        .setRequired(true)
-    ),
+  name: "add-streamer",
   async execute(interaction, client) {
     const validRoles = ["1176496361802301462"];
 

@@ -65,7 +65,7 @@ module.exports = {
     .addSubcommand((subcommand) =>
       subcommand
         .setName("pbr")
-        .setDescription("Add PBR to an Assosciate")
+        .setDescription("Add PBR to an Associate")
         .addUserOption((option) =>
           option
             .setName("user")
@@ -97,6 +97,34 @@ module.exports = {
             .setDescription("The target role of the department.")
             .setRequired(true)
         )
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName("liabilities")
+        .setDescription("Add liabilities to a livestreamer")
+        .addUserOption((option) =>
+          option
+            .setName("livestreamer")
+            .setDescription("The livestreamer to add liabilities to.")
+            .setRequired(true)
+        )
+        .addNumberOption((option) =>
+          option
+            .setName("amount")
+            .setDescription("The amount liabilities to add in peso.")
+            .setRequired(true)
+        )
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName("streamer")
+        .setDescription("Add a new Leviosa Tiktok livestreamer.")
+        .addUserOption((option) =>
+          option
+            .setName("user")
+            .setDescription("The user to add.")
+            .setRequired(true)
+        )
     ),
   async execute(interaction, client) {
     const interactionMember = await interaction.guild.members.cache.get(
@@ -114,11 +142,19 @@ module.exports = {
 
     switch (subcommand) {
       case "pbr":
-        addSubmemberPbr(interaction, client);
+        await addSubmemberPbr(interaction, client);
         break;
 
       case "associate":
-        addAssociate(interaction, client);
+        await addAssociate(interaction, client);
+        break;
+
+      case "liabilities":
+        await client.commands.get("add-liab").execute(interaction, client);
+        break;
+
+      case "streamer":
+        await client.commands.get("add-streamer").execute(interaction, client);
         break;
 
       default:
@@ -271,7 +307,7 @@ async function addAssociate(interaction, client) {
 
   try {
     const insertQuery =
-      "INSERT INTO Sub_Members (MEMBER_ID, USERNAME, DEPARTMENT_EXECUTIVE, OFFICE_ID) VALUES (?, ?, ?)";
+      "INSERT INTO Sub_Members (MEMBER_ID, USERNAME, DEPARTMENT_EXECUTIVE, OFFICE_ID) VALUES (?, ?, ?, ?)";
     await connection.query(insertQuery, [
       user.id,
       user.username,

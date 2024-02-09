@@ -23,7 +23,7 @@ module.exports = {
     .setDescription("Save the tiktok livestream statistics.")
     .addUserOption((option) =>
       option
-        .setName("streamer")
+        .setName("livestreamer")
         .setDescription("The streamer of the livestream to end.")
         .setRequired(true)
     )
@@ -54,7 +54,7 @@ module.exports = {
       return;
     }
 
-    const streamer = interaction.options.getUser("streamer");
+    const streamer = interaction.options.getUser("livestreamer");
     const start = interaction.options.getString("start-time");
     const duration = interaction.options.getString("duration");
 
