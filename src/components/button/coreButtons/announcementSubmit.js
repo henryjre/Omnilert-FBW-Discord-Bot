@@ -29,8 +29,12 @@ module.exports = {
       interaction.message.id
     );
 
+    const executiveRole = await interaction.guild.roles.cache.get(
+      "1185935514042388520"
+    );
+
     let channel;
-    if (messageEmbed.data.color === 15277667) {
+    if (messageEmbed.data.color === executiveRole.color) {
       channel = "1197101506638381188";
     } else {
       channel = "1197101565421568082";
