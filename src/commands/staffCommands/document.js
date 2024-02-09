@@ -17,9 +17,7 @@ const nanoid = customAlphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 6);
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("doc")
-    .setDescription(
-      "Start a voting session for the voting rights of a core member."
-    )
+    .setDescription("Submit a document to be signed by your target users.")
     .addAttachmentOption((option) =>
       option
         .setName("document")
