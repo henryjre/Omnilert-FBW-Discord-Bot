@@ -14,11 +14,15 @@ module.exports = {
 
     await interaction.deferUpdate();
 
+    const executiveRole = await interaction.guild.roles.cache.get(
+      "1185935514042388520"
+    );
+
     let mentions;
     if (messageEmbed.data.fields[1]) {
       mentions = messageEmbed.data.fields[1].value.replace("\n", " ");
     } else {
-      if (messageEmbed.data.color === 15277667) {
+      if (messageEmbed.data.color === executiveRole.color) {
         mentions = `<@&1185935514042388520>`;
       } else {
         mentions = `<@&1196806310524629062>`;
@@ -27,10 +31,6 @@ module.exports = {
 
     const message = await interaction.message.channel.messages.fetch(
       interaction.message.id
-    );
-
-    const executiveRole = await interaction.guild.roles.cache.get(
-      "1185935514042388520"
     );
 
     let channel;
