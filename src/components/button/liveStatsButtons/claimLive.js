@@ -23,9 +23,9 @@ module.exports = {
 
     const streamId = interaction.message.embeds[0].data.fields[0].value;
     const commissionString =
-      interaction.message.embeds[0].data.fields[7].value.match(/[\d,.]+/);
+      interaction.message.embeds[0].data.fields[8].value.match(/[\d,.]+/);
     const subtotalString =
-      interaction.message.embeds[0].data.fields[6].value.match(/[\d,.]+/);
+      interaction.message.embeds[0].data.fields[7].value.match(/[\d,.]+/);
 
     const netCommission = parseFloat(commissionString[0].replace(/,/g, ""));
     const netSubtotal = parseFloat(subtotalString[0].replace(/,/g, ""));
