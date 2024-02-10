@@ -180,6 +180,8 @@ module.exports = {
               ).length
             }\n**Cancelled Orders:** ${
               str.ORDER_STATUSES.filter((obj) => obj === "CANCELLED").length
+            }\n**Delivered Orders:** ${
+              str.ORDER_STATUSES.filter((obj) => obj === "DELIVERED").length
             }\n**Completed Orders:** ${
               str.ORDER_STATUSES.filter((obj) => obj === "COMPLETED").length
             }\n\n📦 **Net Orders Subtotal:** ${pesoFormatter.format(

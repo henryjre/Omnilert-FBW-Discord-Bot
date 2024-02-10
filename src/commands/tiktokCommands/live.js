@@ -119,10 +119,13 @@ module.exports = {
     const liveStats = orders[0][0];
 
     const pending = liveStats.ORDER_STATUSES.filter(
-      (obj) => obj !== "CANCELLED" && obj !== "COMPLETED"
+      (obj) => !["CANCELLED", "COMPLETED", "DELIVERED"].includes(obj)
     ).length;
     const cancelled = liveStats.ORDER_STATUSES.filter(
       (obj) => obj === "CANCELLED"
+    ).length;
+    const delivered = liveStats.ORDER_STATUSES.filter(
+      (obj) => obj === "DELIVERED"
     ).length;
     const completed = liveStats.ORDER_STATUSES.filter(
       (obj) => obj === "COMPLETED"
@@ -161,6 +164,10 @@ module.exports = {
         {
           name: `CANCELLED ORDERS`,
           value: `🔴 | ${[cancelled]} ${cancelled === 1 ? "order" : "orders"}`,
+        },
+        {
+          name: `DELIVERED ORDERS`,
+          value: `🔵 | ${[delivered]} ${delivered === 1 ? "order" : "orders"}`,
         },
         {
           name: `COMPLETED ORDERS`,
