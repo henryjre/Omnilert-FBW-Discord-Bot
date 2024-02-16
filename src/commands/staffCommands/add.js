@@ -1,4 +1,11 @@
-const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+const {
+  SlashCommandBuilder,
+  EmbedBuilder,
+  ModalBuilder,
+  TextInputBuilder,
+  TextInputStyle,
+  ActionRowBuilder,
+} = require("discord.js");
 const { managementPool } = require("../../sqlConnection");
 const moment = require("moment");
 
@@ -125,6 +132,25 @@ module.exports = {
             .setDescription("The user to add.")
             .setRequired(true)
         )
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName("minutes-of-meeting")
+        .setDescription("Add minutes of meeting to a concluded meeting.")
+        .addStringOption((option) =>
+          option
+            .setName("meeting-id")
+            .setDescription("The meeting ID of a concluded meeting.")
+            .setRequired(true)
+        )
+        .addAttachmentOption((option) =>
+          option
+            .setName("minutes")
+            .setDescription(
+              "The document containing the minutes of the meeting."
+            )
+            .setRequired(true)
+        )
     ),
   async execute(interaction, client) {
     const interactionMember = await interaction.guild.members.cache.get(
@@ -155,6 +181,10 @@ module.exports = {
 
       case "streamer":
         await client.commands.get("add-streamer").execute(interaction, client);
+        break;
+
+      case "minutes-of-meeting":
+        createMinutesModal(interaction);
         break;
 
       default:
@@ -330,4 +360,51 @@ async function addAssociate(interaction, client) {
   } finally {
     await connection.release();
   }
+}
+
+function createMinutesModal(interaction) {
+  const meetingId = interaction.options.getString("meeting-id");
+  const minutesDoc = interaction.options.getAttachment("minutes");
+
+  if (minutesDoc.contentType !== "application/pdf") {
+    interaction.reply({
+      content: `🔴 ERROR: The minutes attachment should be a PDF file.`,
+      ephemeral: true,
+    });
+    return;
+  }
+
+  const modal = new ModalBuilder();
+  modal
+    .setCustomId("addMinutes")
+    .setTitle(`Add minutes to a concluded meeting.`);
+
+  const title = new TextInputBuilder()
+    .setCustomId(`title`)
+    .setLabel(`Meeting Summary`)
+    .setPlaceholder("What the concluded meeting is all about.")
+    .setMaxLength(100)
+    .setStyle(TextInputStyle.Short)
+    .setRequired(true);
+
+  const meetingIdInput = new TextInputBuilder()
+    .setCustomId(`meetingId`)
+    .setLabel(`Meeting ID (DO NOT CHANGE)`)
+    .setValue(meetingId)
+    .setStyle(TextInputStyle.Short)
+    .setRequired(true);
+
+  const docUrl = new TextInputBuilder()
+    .setCustomId(`document`)
+    .setLabel(`Document URL (DO NOT CHANGE)`)
+    .setValue(minutesDoc.url)
+    .setStyle(TextInputStyle.Paragraph)
+    .setRequired(true);
+
+  const firstRow = new ActionRowBuilder().addComponents(title);
+  const secondRow = new ActionRowBuilder().addComponents(meetingIdInput);
+  const thirdRow = new ActionRowBuilder().addComponents(docUrl);
+  modal.addComponents(firstRow, secondRow, thirdRow);
+
+  interaction.showModal(modal);
 }

@@ -122,7 +122,7 @@ module.exports = {
         name: "Livestreamer: " + interaction.user.globalName,
       })
       .setColor("#84bff3")
-      .setDescription("✅ Commission claimed! Retrieving your dashboard...")
+      .setDescription("✅ Commission claimed!")
       .addFields([
         {
           name: "LIVESTREAM ID",
@@ -138,8 +138,8 @@ module.exports = {
 
     await timer(2000);
 
-    return client.commands
-      .get("livestreamDashboard")
-      .execute(interaction, client, managementPool);
+    // return client.commands
+    //   .get("livestreamDashboard")
+    //   .execute(interaction, client, managementPool);
   },
 };

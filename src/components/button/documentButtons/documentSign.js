@@ -151,10 +151,16 @@ module.exports = {
         );
 
         if (nextSignIndex === -1) {
+          const documentButton = new ButtonBuilder(components[2].data);
+          const newButtonRow = new ActionRowBuilder().addComponents(
+            documentButton
+          );
+
           await client.channels.cache
             .get("1197134495917277204")
             .send({
               embeds: [updatedEmbed],
+              components: [newButtonRow],
             })
             .then((msg) => {
               message.delete();

@@ -96,11 +96,5 @@ module.exports = {
         }
       }
     }
-
-    // if (Object.keys(channelIds).includes(message.channelId)) {
-    //   if (message.author.id === channelIds[message.channelId]) {
-    //     return client.commands.get("reminder").execute(message, client, 0);
-    //   }
-    // }
   },
 };
