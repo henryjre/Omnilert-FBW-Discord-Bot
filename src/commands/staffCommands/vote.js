@@ -68,7 +68,7 @@ module.exports = {
     const member = interaction.guild.members.cache.get(user.id);
 
     let validRole, error;
-    if (subcommand === "votingRights") {
+    if (subcommand === "voting-rights") {
       validRole = "1196806310524629062";
       error = `🔴 ERROR: ${member.nickname} is not a <@&${validRole}>.`;
     } else {
