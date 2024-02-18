@@ -88,7 +88,7 @@ module.exports = {
 
     const buttonRow = new ActionRowBuilder();
 
-    if (subcommand === "votingRights") {
+    if (subcommand === "voting-rights") {
       const upvote = new ButtonBuilder()
         .setCustomId("votingRightsUpvote")
         .setLabel("Upvote")
