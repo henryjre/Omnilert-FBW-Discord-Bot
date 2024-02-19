@@ -77,6 +77,11 @@ module.exports = {
         userIds: ["1196432863751577690"],
         officeChannelId: "1197118789855223888",
       },
+      {
+        department: "Supply Chain Management",
+        userIds: ["1207935798301823001"],
+        officeChannelId: "1209039670927826975",
+      },
     ];
 
     const thread = message.guild.channels.cache.find(
