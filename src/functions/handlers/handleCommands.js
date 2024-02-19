@@ -34,16 +34,12 @@ module.exports = (client) => {
           for (const file of commandFiles) {
             const command = require(`../../commands/${folder}/${file}`);
             commands.set(command.name, command);
-            // commandArray.push(command.data.toJSON());
-            // console.log(`Command: ${command.data.name} has been passed throught the handler`);
           }
           break;
         case "reactionCommands":
           for (const file of commandFiles) {
             const command = require(`../../commands/${folder}/${file}`);
             commands.set(command.name, command);
-            // commandArray.push(command.data.toJSON());
-            // console.log(`Command: ${command.data.name} has been passed throught the handler`);
           }
           break;
 
