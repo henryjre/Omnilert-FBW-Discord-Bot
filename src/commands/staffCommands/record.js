@@ -4,11 +4,6 @@ const {
   ButtonBuilder,
   ButtonStyle,
   EmbedBuilder,
-  ModalBuilder,
-  TextInputBuilder,
-  TextInputStyle,
-  StringSelectMenuOptionBuilder,
-  StringSelectMenuBuilder,
 } = require("discord.js");
 
 const { leviosaPool } = require("../../sqlConnection");
@@ -82,11 +77,11 @@ module.exports = {
 
     switch (subcommand) {
       case "to-ship":
-        return await processToShipOrders(interaction);
+        return await processToShipOrders(interaction, client);
       case "cancelled":
-        return await processCancelledOrders(interaction);
+        return await processCancelledOrders(interaction, client);
       case "settlement":
-        return await processSettlement(interaction);
+        return await processSettlement(interaction, client);
 
       default:
         break;
@@ -94,7 +89,8 @@ module.exports = {
   },
 };
 
-async function processToShipOrders(interaction) {
+async function processToShipOrders(interaction, client) {
+  const connection = await leviosaPool.getConnection();
   try {
     const attachment = interaction.options.getAttachment("orders");
 
@@ -102,11 +98,7 @@ async function processToShipOrders(interaction) {
       attachment.contentType !==
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     ) {
-      await interaction.reply({
-        content: `🔴 ERROR: The attachment should be an Excel file.`,
-        ephemeral: true,
-      });
-      return;
+      throw new Error("The attachment should be an Excel file.");
     }
 
     await interaction.deferReply();
@@ -120,10 +112,9 @@ async function processToShipOrders(interaction) {
       });
 
     if (!fetchBuffer) {
-      await interaction.editReply({
-        content: `🔴 ERROR: There was an error while reading your Excel file. Please try again.`,
-      });
-      return;
+      throw new Error(
+        "There was an error while reading your Excel file. Please try again."
+      );
     }
 
     const link = new ButtonBuilder()
@@ -132,8 +123,6 @@ async function processToShipOrders(interaction) {
       .setStyle(ButtonStyle.Link);
 
     const buttonRow = new ActionRowBuilder().addComponents(link);
-
-    const successEmbed = new EmbedBuilder().setTitle("✅ SUCCESS");
 
     const workbook = XLSX.read(new Uint8Array(fetchBuffer), {
       type: "array",
@@ -149,25 +138,68 @@ async function processToShipOrders(interaction) {
     );
 
     if (cancelledOrders.length > 0 && toShipOrders.length > 0) {
-      return await interaction.editReply({
-        content:
-          "🔴 ERROR: Multiple order statuses found. Do not export in **`All`** tab of Shopee Orders. Please try again.",
-      });
-    } else if (toShipOrders.length < 0) {
-      return await interaction.editReply({
-        content:
-          "🔴 ERROR: No To Ship orders found. Only export in **`To Ship`** tab of Shopee Orders when using this command. Please try again.",
-      });
+      throw new Error(
+        "Multiple order statuses found. Do not export in **`All`** tab of Shopee Orders. Please try again."
+      );
+    } else if (toShipOrders.length <= 0) {
+      throw new Error(
+        "No To Ship orders found. Only export in **`To Ship`** tab of Shopee Orders when using this command. Please try again."
+      );
     }
 
-    const ordersToCalculateCogs = orderData.map((obj) => ({
-      orderId: obj["Order ID"],
-      sku: obj["SKU Reference No."],
-      quantity: parseInt(obj["Quantity"]),
-      status: obj["Order Status"],
-      settlementAmount: parseFloat(obj["Product Subtotal"]),
-    }));
+    console.log(toShipOrders);
 
+    const cutoffDate = new Date("2024-02-20");
+
+    const hasOrderBeforeCutoff = orderData.some((order) => {
+      const orderCreationDate = new Date(order["Order Creation Date"]);
+      return orderCreationDate < cutoffDate;
+    });
+
+    if (hasOrderBeforeCutoff) {
+      throw new Error("Orders before February 20, 2024 found.");
+    }
+
+    const toShipOrderIds = orderData.map((order) => order["Order ID"]);
+    const toShipPlaceholders = Array.from(
+      { length: toShipOrderIds.length },
+      (_, index) => "?"
+    ).join(", ");
+    const queryToShipOrders = `SELECT * FROM Shopee_Orders WHERE ID IN (${toShipPlaceholders})`;
+    const [dbOrders] = await connection.query(
+      queryToShipOrders,
+      toShipOrderIds
+    );
+
+    const ordersToCalculateCogs = orderData
+      .map((obj) => {
+        const dbOrderIndex = dbOrders.findIndex(
+          (order) => order.ID === obj["Order ID"]
+        );
+        if (dbOrderIndex === -1) {
+          return {
+            orderId: obj["Order ID"],
+            sku: obj["SKU Reference No."],
+            quantity: parseInt(obj["Quantity"]),
+            status: obj["Order Status"],
+            settlementAmount: parseFloat(obj["Product Subtotal"]),
+          };
+        } else {
+          return null;
+        }
+      })
+      .filter((order) => order !== null);
+
+    if (ordersToCalculateCogs.length <= 0) {
+      throw new Error(
+        "No orders to record. Duplicate orders are already recorded."
+      );
+    }
+
+    await interaction.followUp({
+      content: "Fetching order costs...",
+      ephemeral: true,
+    });
     const url = `https://www.leviosa.ph/_functions/CalculateItemCosts`;
     const options = {
       method: "POST",
@@ -182,24 +214,14 @@ async function processToShipOrders(interaction) {
 
     const response = await fetch(url, options).then((res) => res.json());
     if (response.code === 3) {
-      return await interaction.editReply({
-        content:
-          "🔴 FETCH ERROR: There was an error while fetching your request. Please try again.",
-      });
+      throw new Error(
+        "There was an error while fetching your request. Please try again."
+      );
     }
 
     const createdDate = moment()
       .tz("Asia/Manila")
       .format("YYYY-MM-DD HH:mm:ss");
-
-    const ordersToSave = response.orders.map((obj) => [
-      obj.orderId,
-      obj.status,
-      obj.settlementAmount,
-      JSON.stringify(obj.lineItems),
-      createdDate,
-      createdDate,
-    ]);
 
     const receivablesPlacement = response.orders
       .filter((order) => order.status !== "Cancelled")
@@ -221,19 +243,73 @@ async function processToShipOrders(interaction) {
 
     const journalEntries = [...receivablesPlacement, ...cogsPlacement];
 
-    const connection = await leviosaPool.getConnection();
+    const channel = client.channels.cache.get("1206946369387110400");
 
-    const insertOrdersQuery = `INSERT INTO Shopee_Orders (ID, ORDER_STATUS, SETTLEMENT_AMOUNT, LINEITEMS, CREATED_DATE, LAST_UPDATED) VALUES ?`;
+    await interaction.followUp({
+      content: "Creating threads...",
+      ephemeral: true,
+    });
+    const ordersToSave = [];
+    for (const order of response.orders) {
+      const thread = await channel.threads.create({
+        name: `🟡 ${order.orderId} | To Ship`,
+        autoArchiveDuration: 1440,
+      });
+      await thread.join();
+
+      let description = "";
+      order.lineItems.forEach((item) => {
+        description += `▪️ ${item.name}\n`;
+      });
+
+      const orderEmbed = new EmbedBuilder()
+        .setDescription("🛒 ORDER DETAILS")
+        .setColor("#2B2D31")
+        .addFields([
+          {
+            name: `ORDER ID`,
+            value: `\`${order.orderId}\``,
+          },
+          {
+            name: `ORDER CREATE TIME`,
+            value: `\`${moment()
+              .tz("Asia/Manila")
+              .format("MMMM DD, YYYY [at] h:mm A")}\``,
+          },
+          {
+            name: `ORDER SUBTOTAL`,
+            value: `\`${order.settlementAmount}\``,
+          },
+          {
+            name: `ORDER ITEMS`,
+            value: `\`\`\`${description}\`\`\``,
+          },
+        ]);
+
+      await thread.send({
+        embeds: [orderEmbed],
+      });
+
+      ordersToSave.push([
+        order.orderId,
+        order.status,
+        order.settlementAmount,
+        JSON.stringify(order.lineItems),
+        thread.id,
+        createdDate,
+        createdDate,
+      ]);
+    }
+
+    const insertOrdersQuery = `INSERT INTO Shopee_Orders (ID, ORDER_STATUS, SETTLEMENT_AMOUNT, LINEITEMS, DISCORD_CHANNEL, CREATED_DATE, LAST_UPDATED) VALUES ?`;
     await connection.query(insertOrdersQuery, [ordersToSave]);
 
     const journalQuery =
       "INSERT INTO Journalizing_Balances (_id, TIMESTAMP, AMOUNT, TYPE) VALUES ?";
     await connection.query(journalQuery, [journalEntries]);
 
-    connection.release();
-
-    const toUpdate = orders.flatMap((order) =>
-      order.LINEITEMS.map((item) => {
+    const toUpdate = response.orders.flatMap((order) =>
+      order.lineItems.map((item) => {
         return {
           id: item.id,
           quantity: item.quantity,
@@ -241,6 +317,10 @@ async function processToShipOrders(interaction) {
       })
     );
 
+    await interaction.followUp({
+      content: "Decrementing inventory...",
+      ephemeral: true,
+    });
     const decrementUrl = `https://www.leviosa.ph/_functions/updateInventory`;
     const decrementOptions = {
       method: "POST",
@@ -254,25 +334,35 @@ async function processToShipOrders(interaction) {
       }),
     };
 
-    await fetch(decrementUrl, decrementOptions).then((res) => res.json());
+    await fetch(decrementUrl, decrementOptions)
+      .then((res) => res.json())
+      .catch((err) => {
+        throw new Error("There was an error while decrementing the Inventory.");
+      });
 
-    successEmbed
-      .setDescription("To Ship orders were recorded.")
+    const success = new EmbedBuilder()
+      .setDescription("## ✅ SUCCESS\nTo Ship orders were recorded.")
       .setColor("Green");
     await interaction.editReply({
-      embeds: [successEmbed],
+      embeds: [success],
       components: [buttonRow],
     });
   } catch (error) {
     console.log(error);
+    const errorEmbed = new EmbedBuilder()
+      .setDescription(`## 🔴 ERROR\n${error.toString()}`)
+      .setColor("Red");
     return await interaction.editReply({
-      content:
-        "🔴 ERROR: There was an error while processing your request. Please try again.",
+      embeds: [errorEmbed],
     });
+  } finally {
+    connection.release();
   }
 }
 
-async function processCancelledOrders(interaction) {
+async function processCancelledOrders(interaction, client) {
+  const connection = await leviosaPool.getConnection();
+
   try {
     const attachment = interaction.options.getAttachment("orders");
 
@@ -280,11 +370,7 @@ async function processCancelledOrders(interaction) {
       attachment.contentType !==
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     ) {
-      await interaction.reply({
-        content: `🔴 ERROR: The attachment should be an Excel file.`,
-        ephemeral: true,
-      });
-      return;
+      throw new Error("The attachment should be an Excel file.");
     }
 
     await interaction.deferReply();
@@ -298,10 +384,9 @@ async function processCancelledOrders(interaction) {
       });
 
     if (!fetchBuffer) {
-      await interaction.editReply({
-        content: `🔴 ERROR: There was an error while reading your Excel file. Please try again.`,
-      });
-      return;
+      throw new Error(
+        "There was an error while reading your Excel file. Please try again"
+      );
     }
 
     const link = new ButtonBuilder()
@@ -310,8 +395,6 @@ async function processCancelledOrders(interaction) {
       .setStyle(ButtonStyle.Link);
 
     const buttonRow = new ActionRowBuilder().addComponents(link);
-
-    const successEmbed = new EmbedBuilder().setTitle("✅ SUCCESS");
 
     const workbook = XLSX.read(new Uint8Array(fetchBuffer), {
       type: "array",
@@ -327,22 +410,18 @@ async function processCancelledOrders(interaction) {
     );
 
     if (cancelledOrders.length > 0 && toShipOrders.length > 0) {
-      return await interaction.editReply({
-        content:
-          "🔴 ERROR: Multiple order statuses found. Do not export in **`All`** tab of Shopee Orders. Please try again.",
-      });
-    } else if (cancelledOrders.length < 0) {
-      return await interaction.editReply({
-        content:
-          "🔴 ERROR: No Cancelled orders found. Only export in **`Cancelled`** tab of Shopee Orders when using this command. Please try again.",
-      });
+      throw new Error(
+        "Multiple order statuses found. Do not export in **`All`** tab of Shopee Orders. Please try again."
+      );
+    } else if (cancelledOrders.length <= 0) {
+      throw new Error(
+        "No Cancelled orders found. Only export in **`Cancelled`** tab of Shopee Orders when using this command. Please try again."
+      );
     }
 
     const updatedDate = moment()
       .tz("Asia/Manila")
       .format("YYYY-MM-DD HH:mm:ss");
-
-    const connection = await leviosaPool.getConnection();
 
     const cancelleOrderIds = orderData.map((order) => order["Order ID"]);
     const cancelledPlaceholders = Array.from(
@@ -350,11 +429,31 @@ async function processCancelledOrders(interaction) {
       (_, index) => "?"
     ).join(", ");
     const queryCancelledOrders = `SELECT * FROM Shopee_Orders WHERE ID IN (${cancelledPlaceholders})`;
-    const [orders] = await connection.query(
+    const [sqlOrders] = await connection.query(
       queryCancelledOrders,
       cancelleOrderIds
     );
 
+    if (sqlOrders.length <= 0) {
+      throw new Error("No orders to cancel found in database.");
+    }
+
+    const orders = sqlOrders.filter(
+      (order) => order.ORDER_STATUS !== "Cancelled"
+    );
+
+    if (orders.length <= 0) {
+      throw new Error(
+        "No orders to cancel found in database. Duplicate orders were skipped."
+      );
+    }
+
+    const toCancelOrderIds = orders.map((order) => order.ID);
+
+    await interaction.followUp({
+      content: "Fetching products to increment...",
+      ephemeral: true,
+    });
     const lineItemsSkus = orders.flatMap((order) =>
       order.LINEITEMS.map((item) => item.sku)
     );
@@ -391,6 +490,10 @@ async function processCancelledOrders(interaction) {
       })
     );
 
+    await interaction.followUp({
+      content: "Incrementing inventory and updating cogs...",
+      ephemeral: true,
+    });
     const updateProductQuery = `
   UPDATE Leviosa_Inventory
   SET TOTAL_QUANTITY = TOTAL_QUANTITY + CASE SKU
@@ -413,7 +516,7 @@ async function processCancelledOrders(interaction) {
       LAST_UPDATED = ?
   WHERE ID IN (?);
 `;
-    await connection.query(updateOrderQuery, [updatedDate, cancelleOrderIds]);
+    await connection.query(updateOrderQuery, [updatedDate, toCancelOrderIds]);
 
     const receivablesReturn = orders.map((order) => [
       nanoid(),
@@ -437,8 +540,39 @@ async function processCancelledOrders(interaction) {
       "INSERT INTO Journalizing_Balances (_id, TIMESTAMP, AMOUNT, TYPE) VALUES ?";
     await connection.query(journalQuery, [journalEntries]);
 
-    connection.release();
+    await interaction.followUp({
+      content: "Updating threads...",
+      ephemeral: true,
+    });
+    for (const order of orders) {
+      const thread = client.channels.cache.get(order.DISCORD_CHANNEL);
+      await thread.setName(`🚫 ${order.ID} | Cancelled`);
 
+      const updateEmbed = new EmbedBuilder()
+        .setDescription(`## ORDER STATUS UPDATED`)
+        .setColor("#2B2D31")
+        .addFields([
+          {
+            name: `TIMESTAMP`,
+            value: `\`${moment(Date.now()).format(
+              "MMMM DD, YYYY [at] h:mm A"
+            )}\``,
+          },
+          {
+            name: `STATUS`,
+            value: `\`Cancelled\``,
+          },
+        ]);
+
+      await thread.send({
+        embeds: [updateEmbed],
+      });
+    }
+
+    await interaction.followUp({
+      content: "Incrementing Wix inventory...",
+      ephemeral: true,
+    });
     const url = `https://www.leviosa.ph/_functions/updateInventory`;
     const options = {
       method: "POST",
@@ -454,23 +588,29 @@ async function processCancelledOrders(interaction) {
 
     await fetch(url, options).then((res) => res.json());
 
-    successEmbed
-      .setDescription("Cancelled orders were recorded.")
-      .setColor("Red");
+    const success = new EmbedBuilder()
+      .setDescription("## ✅ SUCCESS\nCancelled orders were recorded.")
+      .setColor("Green");
     await interaction.editReply({
-      embeds: [successEmbed],
+      embeds: [success],
       components: [buttonRow],
     });
   } catch (error) {
     console.log(error);
+    const errorEmbed = new EmbedBuilder()
+      .setDescription(`## 🔴 ERROR\n${error.toString()}`)
+      .setColor("Red");
     return await interaction.editReply({
-      content:
-        "🔴 ERROR: There was an error while processing your request. Please try again.",
+      embeds: [errorEmbed],
     });
+  } finally {
+    connection.release();
   }
 }
 
-async function processSettlement(interaction) {
+async function processSettlement(interaction, client) {
+  const connection = await leviosaPool.getConnection();
+
   try {
     const attachment = interaction.options.getAttachment("file");
 
@@ -478,11 +618,7 @@ async function processSettlement(interaction) {
       attachment.contentType !==
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     ) {
-      await interaction.reply({
-        content: `🔴 ERROR: The attachment should be an Excel file.`,
-        ephemeral: true,
-      });
-      return;
+      throw new Error("The attachment should be an Excel file.");
     }
 
     await interaction.deferReply();
@@ -496,10 +632,9 @@ async function processSettlement(interaction) {
       });
 
     if (!fetchBuffer) {
-      await interaction.editReply({
-        content: `🔴 ERROR: There was an error while reading your Excel file. Please try again.`,
-      });
-      return;
+      throw new Error(
+        "There was an error while reading your Excel file. Please try again."
+      );
     }
 
     const link = new ButtonBuilder()
@@ -508,8 +643,6 @@ async function processSettlement(interaction) {
       .setStyle(ButtonStyle.Link);
 
     const buttonRow = new ActionRowBuilder().addComponents(link);
-
-    const successEmbed = new EmbedBuilder().setTitle("✅ SUCCESS");
 
     const workbook = XLSX.read(new Uint8Array(fetchBuffer), {
       type: "array",
@@ -521,49 +654,63 @@ async function processSettlement(interaction) {
 
     const settlementOrderIds = settlementData.map((order) => order["Order ID"]);
 
-    const connection = await leviosaPool.getConnection();
-
     const orderQueryPlaceholders = Array.from(
       { length: settlementOrderIds.length },
       (_, index) => "?"
     ).join(", ");
     const queryOrders = `SELECT * FROM Shopee_Orders WHERE ID IN (${orderQueryPlaceholders})`;
-    const [settledOrders] = await connection.query(
-      queryOrders,
-      settlementOrderIds
+    const [sqlOrders] = await connection.query(queryOrders, settlementOrderIds);
+
+    if (sqlOrders.length <= 0) {
+      throw new Error("There are no orders to settle in the provided file.");
+    }
+
+    const settledOrders = sqlOrders.filter(
+      (order) => order.ORDER_STATUS !== "Completed"
     );
 
     if (settledOrders.length <= 0) {
-      connection.release();
-      return await interaction.editReply({
-        content:
-          "🟡 WARNING: There are no orders to settle in the provided file.",
-      });
+      throw new Error(
+        "No orders to settle found in database. Duplicate orders were skipped."
+      );
     }
 
-    const settlementAmountJournals = settlementData.map((order) => {
-      const dbOrder = settledOrders.find((o) => o.ID === order["Order ID"]);
+    const settlementAmountJournals = settlementData
+      .map((order) => {
+        const dbOrder = settledOrders.find((o) => o.ID === order["Order ID"]);
 
-      if (dbOrder) {
-        return [
-          nanoid(),
-          Date.now(),
-          Number(order["Total Released Amount (₱)"]),
-          "Shopee Settlement Amount",
-        ];
-      }
-    });
+        if (dbOrder) {
+          return [
+            nanoid(),
+            Date.now(),
+            Number(order["Total Released Amount (₱)"]),
+            "Shopee Settlement Amount",
+          ];
+        } else {
+          return null;
+        }
+      })
+      .filter((order) => order !== null);
 
-    const settlementFeesJournal = settlementData.map((order) => {
-      const dbOrder = settledOrders.find((o) => o.ID === order["Order ID"]);
+    const settlementFeesJournal = settlementData
+      .map((order) => {
+        const dbOrder = settledOrders.find((o) => o.ID === order["Order ID"]);
 
-      if (dbOrder) {
-        const fee =
-          Number(dbOrder.SETTLEMENT_AMOUNT) -
-          Number(order["Total Released Amount (₱)"]);
-        return [nanoid(), Date.now(), Math.abs(fee), "Shopee Settlement Fees"];
-      }
-    });
+        if (dbOrder) {
+          const fee =
+            Number(dbOrder.SETTLEMENT_AMOUNT) -
+            Number(order["Total Released Amount (₱)"]);
+          return [
+            nanoid(),
+            Date.now(),
+            Math.abs(fee),
+            "Shopee Settlement Fees",
+          ];
+        } else {
+          return null;
+        }
+      })
+      .filter((order) => order !== null);
 
     const journalEntries = [
       ...settlementAmountJournals,
@@ -579,23 +726,50 @@ async function processSettlement(interaction) {
       { length: toUpdateOrdersIds.length },
       (_, index) => "?"
     ).join(", ");
-    const updateOrders = `UPDATE Shopee_Orders SET SETTLED = 1 WHERE ID IN (${orderUpdatePlaceholders})`;
+    const updateOrders = `UPDATE Shopee_Orders SET SETTLED = 1, ORDER_STATUS = 'Completed' WHERE ID IN (${orderUpdatePlaceholders})`;
     await connection.query(updateOrders, toUpdateOrdersIds);
 
-    connection.release();
+    for (const order of settledOrders) {
+      const thread = client.channels.cache.get(order.DISCORD_CHANNEL);
+      await thread.setName(`⭐ ${order.ID} | Completed`);
 
-    successEmbed
-      .setDescription("Order settlements were recorded.")
-      .setColor("Blue");
+      const updateEmbed = new EmbedBuilder()
+        .setDescription(`## ORDER STATUS UPDATED`)
+        .setColor("#2B2D31")
+        .addFields([
+          {
+            name: `TIMESTAMP`,
+            value: `\`${moment(Date.now()).format(
+              "MMMM DD, YYYY [at] h:mm A"
+            )}\``,
+          },
+          {
+            name: `STATUS`,
+            value: `\`Completed\``,
+          },
+        ]);
+
+      await thread.send({
+        embeds: [updateEmbed],
+      });
+    }
+
+    const success = new EmbedBuilder()
+      .setDescription("## ✅ SUCCESS\nOrder settlements were recorded.")
+      .setColor("Green");
     await interaction.editReply({
-      embeds: [successEmbed],
+      embeds: [success],
       components: [buttonRow],
     });
   } catch (error) {
     console.log(error);
+    const errorEmbed = new EmbedBuilder()
+      .setDescription(`## 🔴 ERROR\n${error.toString()}`)
+      .setColor("Red");
     return await interaction.editReply({
-      content:
-        "🔴 ERROR: There was an error while processing your request. Please try again.",
+      embeds: [errorEmbed],
     });
+  } finally {
+    connection.release();
   }
 }
