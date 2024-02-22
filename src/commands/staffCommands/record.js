@@ -692,29 +692,37 @@ async function processSettlement(interaction, client) {
       })
       .filter((order) => order !== null);
 
-    const settlementFeesJournal = settlementData
-      .map((order) => {
-        const dbOrder = settledOrders.find((o) => o.ID === order["Order ID"]);
-
-        if (dbOrder) {
-          const fee =
-            Number(dbOrder.SETTLEMENT_AMOUNT) -
-            Number(order["Total Released Amount (₱)"]);
-          return [
-            nanoid(),
-            Date.now(),
-            Math.abs(fee),
-            "Shopee Settlement Fees",
-          ];
-        } else {
-          return null;
-        }
-      })
-      .filter((order) => order !== null);
+    const amsFees = generateSettlementFees(
+      settlementData,
+      settledOrders,
+      "AMS Commission Fee",
+      "AMS"
+    );
+    const commissionFees = generateSettlementFees(
+      settlementData,
+      settledOrders,
+      "Commission fee",
+      "Commission"
+    );
+    const transactionFees = generateSettlementFees(
+      settlementData,
+      settledOrders,
+      "Transaction Fee",
+      "Transaction"
+    );
+    const voucherFees = generateSettlementFees(
+      settlementData,
+      settledOrders,
+      "Seller Voucher Discount",
+      "Voucher Discount"
+    );
 
     const journalEntries = [
       ...settlementAmountJournals,
-      ...settlementFeesJournal,
+      ...amsFees,
+      ...commissionFees,
+      ...transactionFees,
+      ...voucherFees,
     ];
 
     const journalQuery =
@@ -771,5 +779,30 @@ async function processSettlement(interaction, client) {
     });
   } finally {
     connection.release();
+  }
+
+  function generateSettlementFees(
+    settlementData,
+    settledOrders,
+    feeKey,
+    description
+  ) {
+    return settlementData
+      .map((order) => {
+        const dbOrder = settledOrders.find((o) => o.ID === order["Order ID"]);
+
+        if (dbOrder) {
+          const fee = Number(order[feeKey]);
+          return [
+            nanoid(),
+            Date.now(),
+            Math.abs(fee),
+            `Shopee Settlement Fees - ${description}`,
+          ];
+        } else {
+          return null;
+        }
+      })
+      .filter((order) => order !== null);
   }
 }
