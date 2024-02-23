@@ -131,10 +131,10 @@ async function processToShipOrders(interaction, client) {
     const orderData = XLSX.utils.sheet_to_json(orderSheets);
 
     const cancelledOrders = orderData.filter(
-      (order) => order["Order Status"] === "Cancelled"
+      (order) => order["Order Status"].toLowerCase() === "cancelled"
     );
     const toShipOrders = orderData.filter(
-      (order) => order["Order Status"] === "To Ship"
+      (order) => order["Order Status"].toLowerCase() === "to ship"
     );
 
     if (cancelledOrders.length > 0 && toShipOrders.length > 0) {
@@ -403,10 +403,10 @@ async function processCancelledOrders(interaction, client) {
     const orderData = XLSX.utils.sheet_to_json(orderSheets);
 
     const cancelledOrders = orderData.filter(
-      (order) => order["Order Status"] === "Cancelled"
+      (order) => order["Order Status"].toLowerCase() === "cancelled"
     );
     const toShipOrders = orderData.filter(
-      (order) => order["Order Status"] === "To Ship"
+      (order) => order["Order Status"].toLowerCase() === "to ship"
     );
 
     if (cancelledOrders.length > 0 && toShipOrders.length > 0) {
