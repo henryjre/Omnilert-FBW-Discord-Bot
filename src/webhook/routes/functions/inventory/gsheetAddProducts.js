@@ -14,7 +14,8 @@ module.exports = async (req, res) => {
   const connection = await leviosaPool.getConnection();
 
   try {
-    const insertQuery = `INSERT IGNORE INTO Leviosa_Inventory (SKU, BRAND, PRODUCT_NAME, WEIGHT, L(cm), W(cm), H(cm), SRP, REGULAR_DISCOUNTED_PRICE, RESELLER_PRICE, CAMPAIGN_PRICE, PRODUCT_DESCRIPTION, HOW_TO_USE, INGREDIENTS, BENEFITS, DISCLAIMER) VALUES ?`;
+    const insertQuery =
+      "INSERT IGNORE INTO Leviosa_Inventory (SKU, BRAND, PRODUCT_NAME, WEIGHT, `L(cm)`, `W(cm)`, `H(cm)`, SRP, REGULAR_DISCOUNTED_PRICE, RESELLER_PRICE, CAMPAIGN_PRICE, PRODUCT_DESCRIPTION, HOW_TO_USE, INGREDIENTS, BENEFITS, DISCLAIMER) VALUES ?";
     await connection.query(insertQuery, [products]);
 
     const embedsToSend = [];
