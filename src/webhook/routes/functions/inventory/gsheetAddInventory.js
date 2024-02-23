@@ -10,8 +10,8 @@ const nanoid = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 13);
 const pesoFormatter = new Intl.NumberFormat("en-PH", {
   style: "currency",
   currency: "PHP",
-  maximumFractionDigits: 0,
-  minimumFractionDigits: 0,
+  maximumFractionDigits: 2,
+  minimumFractionDigits: 2,
 });
 
 module.exports = async (req, res) => {
