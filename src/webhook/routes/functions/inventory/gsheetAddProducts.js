@@ -51,12 +51,13 @@ module.exports = async (req, res) => {
     const attachmentId = nanoid();
     const attachment = new AttachmentBuilder()
       .setFile(buffer)
-      .setName(`Add_Products_Log-${attachmentId}`);
+      .setName(`Add_Products_Log-${attachmentId}.xlsx`);
 
     const embed = new EmbedBuilder()
       .setDescription(
         "## 🏷️ New Products Added!\nCheck the attachment file for the logs."
       )
+      .setColor("Green")
       .setAuthor({ name: `Log ID: ${attachmentId}` });
 
     client.channels.cache.get("1210581512689426522").send({

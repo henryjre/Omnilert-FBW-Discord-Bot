@@ -85,6 +85,7 @@ module.exports = async (req, res) => {
       return [
         pr_number,
         product.SKU,
+        product.PRODUCT_NAME,
         oldQuantity,
         totalProductQuantity,
         oldCost,
@@ -112,13 +113,14 @@ module.exports = async (req, res) => {
     const attachmentId = nanoid();
     const attachment = new AttachmentBuilder()
       .setFile(buffer)
-      .setName(`Add_Inventory_Log-${attachmentId}-${pr_number}`);
+      .setName(`Add_Inventory_Log-${attachmentId}-${pr_number}.xlsx`);
 
     const embed = new EmbedBuilder()
       .setDescription(
         "## 🧾 Add Inventory Log\nCheck the attachment file for the logs."
       )
       .setAuthor({ name: `Log ID: ${attachmentId}` })
+      .setColor("Blue")
       .addFields([
         {
           name: "PR Number",
