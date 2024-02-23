@@ -1,7 +1,9 @@
 const inventory = require("express").Router();
 
-const addProdcutFile = require("./gsheetAddProducts");
+const addProductFile = require("./gsheetAddProducts");
+const addInventoryFile = require("./gsheetAddInventory");
 
-inventory.post("/addProducts", addProdcutFile);
+inventory.post("/addProducts", addProductFile);
+inventory.post("/addInventory", addInventoryFile);
 
 module.exports = inventory;
