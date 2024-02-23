@@ -34,7 +34,7 @@ module.exports = async (req, res) => {
     const [products] = await connection.query(queryProductsArray, productSkus);
 
     const toUpdate = data.map((item) => {
-      const product = products.find((p) => p.SKU === item["SKU"]);
+      const product = products.find((p) => p.SKU == item["SKU"]);
       const totalProductCost =
         Number(product.TOTAL_QUANTITY) * Number(product.COST_OF_GOODS) +
         Number(item["COST OF GOODS"]);
@@ -69,7 +69,7 @@ module.exports = async (req, res) => {
     await connection.query(updateProductQuery);
 
     const excelFileData = data.map((item) => {
-      const product = products.find((p) => p.SKU === item["SKU"]);
+      const product = products.find((p) => p.SKU == item["SKU"]);
       const totalProductCost =
         Number(product.TOTAL_QUANTITY) * Number(product.COST_OF_GOODS) +
         Number(item["COST OF GOODS"]);
