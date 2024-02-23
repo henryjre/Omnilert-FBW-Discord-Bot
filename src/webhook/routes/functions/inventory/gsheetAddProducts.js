@@ -41,7 +41,7 @@ module.exports = async (req, res) => {
     }
 
     client.channels.cache.get("1210581285194571806").send({
-      embeds: [embedsToSend],
+      embeds: embedsToSend,
     });
 
     res.status(200).json({ ok: true, message: "success" });
