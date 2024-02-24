@@ -45,7 +45,10 @@ module.exports = {
         const timeStartValue = logEmbed.fields.find(
           (f) => f.name === "Start Time"
         ).value;
-        const timeStart = moment(timeStartValue, "MMMM DD, YYYY [at] h:mm A");
+        const timeStart = moment(
+          timeStartValue,
+          "MMMM DD, YYYY [at] h:mm A"
+        ).tz("Asia/Manila");
         const timeEnd = moment().tz("Asia/Manila");
 
         const hoursDifference = timeEnd.diff(timeStart, "hours");
