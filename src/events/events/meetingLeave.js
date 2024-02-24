@@ -46,16 +46,22 @@ module.exports = {
           (f) => f.name === "Start Time"
         ).value;
 
-        const timeStart = moment(timeStartValue, "MMMM DD, YYYY h:mm A").tz("Asia/Manila");
+        const timeStart = moment(timeStartValue, "MMMM DD, YYYY h:mm A");
         const timeEnd = moment().tz("Asia/Manila");
 
-        const hoursDifference = timeEnd.diff(timeStart, "hours");
-        const minutesDifference = timeEnd.diff(timeStart, "minutes") % 60;
         console.log(
           timeStart.format("MMM DD, YYYY h:mm A"),
           timeEnd.format("MMM DD, YYYY h:mm A")
         );
+
+        const hoursDifference = timeEnd.diff(timeStart, "hours");
+        const minutesDifference = timeEnd.diff(timeStart, "minutes") % 60;
+
+        const hoursDifference1 = timeStart.diff(timeEnd, "hours");
+        const minutesDifference1 = timeStart.diff(timeEnd, "minutes") % 60;
+
         console.log(hoursDifference, minutesDifference);
+        console.log(hoursDifference1, minutesDifference1);
 
         let duration;
         if (hoursDifference === 0) {
