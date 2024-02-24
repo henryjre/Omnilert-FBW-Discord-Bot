@@ -50,7 +50,7 @@ module.exports = {
           "Asia/Manila",
           true
         );
-        const timeEnd = moment().tz("Asia/Manila", true);
+        const timeEnd = moment().tz("Asia/Manila");
 
         console.log(
           timeStart.format("MMM DD, YYYY h:mm A"),
