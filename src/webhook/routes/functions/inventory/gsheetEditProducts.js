@@ -33,25 +33,25 @@ module.exports = async (req, res) => {
     const queryProductsArray = `SELECT * FROM Leviosa_Inventory WHERE SKU IN (${queryPlaceholders})`;
     const [products] = await connection.query(queryProductsArray, productSkus);
 
-    // await connection.beginTransaction();
-    // const updatePromises = data.map(async (item) => {
-    //   const sku = item.SKU;
+    await connection.beginTransaction();
+    const updatePromises = data.map(async (item) => {
+      const sku = item.SKU;
 
-    //   const keys = Object.keys(item).filter((key) => key !== "SKU");
-    //   const values = keys.map((key) => item[key]);
+      const keys = Object.keys(item).filter((key) => key !== "SKU");
+      const values = keys.map((key) => item[key]);
 
-    //   const updateQuery = `
-    //       UPDATE Leviosa_Inventory
-    //       SET ${keys.map((key) => `\`${key}\` = ?`).join(", ")}
-    //       WHERE SKU = ?;
-    //     `;
+      const updateQuery = `
+          UPDATE Leviosa_Inventory
+          SET ${keys.map((key) => `\`${key}\` = ?`).join(", ")}
+          WHERE SKU = ?;
+        `;
 
-    //   await connection.query(updateQuery, [...values, sku]);
-    // });
+      await connection.query(updateQuery, [...values, sku]);
+    });
 
-    // await Promise.all(updatePromises);
+    await Promise.all(updatePromises);
 
-    // await connection.commit();
+    await connection.commit();
 
     const excelData = [];
     for (const obj of data) {
@@ -72,7 +72,7 @@ module.exports = async (req, res) => {
       const newData = [
         "NEW:",
         product.SKU,
-        ...Object.values(obj)
+        ...Object.keys(obj)
           .filter((key) => key !== "SKU")
           .map((key) => obj[key]),
       ];
