@@ -9,11 +9,20 @@ module.exports = {
     const resolution = interaction.fields.getTextInputValue("resolutionInput");
     const member = interaction.guild.members.cache.get(interaction.user.id);
 
+    let messageEmbed = interaction.message.embeds[0];
+
+    let databaseTable;
+    if (messageEmbed.data.title.includes("EXECUTIVE")) {
+      databaseTable = "Executive_Proposals";
+    } else {
+      databaseTable = "Directors_Proposals";
+    }
+
     const connection = await managementPool
       .getConnection()
       .catch((err) => console.log(err));
 
-    const updateQuery = `UPDATE Leviosa_Proposals SET RESOLUTION = ? WHERE MESSAGE_ID = ?`;
+    const updateQuery = `UPDATE ${databaseTable} SET RESOLUTION = ? WHERE MESSAGE_ID = ?`;
     await connection.execute(updateQuery, [resolution, interaction.message.id]);
 
     await connection.release();
@@ -22,7 +31,6 @@ module.exports = {
       interaction.message.id
     );
 
-    let messageEmbed = interaction.message.embeds[0];
     messageEmbed.data.fields.push({
       name: "Resolution",
       value: resolution,
