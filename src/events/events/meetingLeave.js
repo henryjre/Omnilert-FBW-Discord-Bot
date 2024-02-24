@@ -53,6 +53,8 @@ module.exports = {
 
         const hoursDifference = timeEnd.diff(timeStart, "hours");
         const minutesDifference = timeEnd.diff(timeStart, "minutes") % 60;
+        console.log(timeStart.format("MMM DD, YYYY h:mm A"), timeEnd.format("MMM DD, YYYY h:mm A"))
+        console.log(hoursDifference, minutesDifference)
 
         let duration;
         if (hoursDifference === 0) {
