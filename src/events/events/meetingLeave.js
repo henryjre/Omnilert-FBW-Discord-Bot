@@ -46,15 +46,7 @@ module.exports = {
           (f) => f.name === "Start Time"
         ).value;
 
-        const originalTimeStart = moment(
-          timeStartValue,
-          "MMMM DD, YYYY h:mm A"
-        );
-        const adjustedTimeStart = originalTimeStart.subtract(
-          originalTime.utcOffset(),
-          "minutes"
-        );
-        const timeStart = adjustedTimeStart.tz("Asia/Manila");
+        const timeStart = moment(timeStartValue, "MMMM DD, YYYY h:mm A");
         const timeEnd = moment().tz("Asia/Manila");
 
         const hoursDifference = timeEnd.diff(timeStart, "hours");
