@@ -5,13 +5,13 @@ module.exports = {
     name: "addMinutes",
   },
   async execute(interaction, client) {
-    const validRoles = ["1176496361802301462"];
+    const validRoles = ["1185935514042388520", "1196806310524629062"];
 
     if (
       !interaction.member.roles.cache.some((r) => validRoles.includes(r.id))
     ) {
       await interaction.reply({
-        content: `🔴 ERROR: This command can only be used by <@&1176496361802301462>.`,
+        content: `🔴 ERROR: This command can only be used by <@&1185935514042388520> or <@&1196806310524629062>.`,
         ephemeral: true,
       });
       return;
