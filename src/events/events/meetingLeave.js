@@ -45,16 +45,25 @@ module.exports = {
         const timeStartValue = logEmbed.fields.find(
           (f) => f.name === "Start Time"
         ).value;
-        const timeStart = moment(
+
+        const originalTimeStart = moment(
           timeStartValue,
-          "MMMM DD, YYYY [at] h:mm A"
-        ).tz("Asia/Manila");
+          "MMMM DD, YYYY h:mm A"
+        );
+        const adjustedTimeStart = originalTimeStart.subtract(
+          originalTime.utcOffset(),
+          "minutes"
+        );
+        const timeStart = adjustedTimeStart.tz("Asia/Manila");
         const timeEnd = moment().tz("Asia/Manila");
 
         const hoursDifference = timeEnd.diff(timeStart, "hours");
         const minutesDifference = timeEnd.diff(timeStart, "minutes") % 60;
-        console.log(timeStart.format("MMM DD, YYYY h:mm A"), timeEnd.format("MMM DD, YYYY h:mm A"))
-        console.log(hoursDifference, minutesDifference)
+        console.log(
+          timeStart.format("MMM DD, YYYY h:mm A"),
+          timeEnd.format("MMM DD, YYYY h:mm A")
+        );
+        console.log(hoursDifference, minutesDifference);
 
         let duration;
         if (hoursDifference === 0) {

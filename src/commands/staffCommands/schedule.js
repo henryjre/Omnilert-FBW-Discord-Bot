@@ -44,9 +44,12 @@ module.exports = {
 
     const startTimeOption = interaction.options.getString("start-time");
 
-    const startTime = moment(startTimeOption, "MMMM DD, YYYY h:mm A").tz(
-      "Asia/Manila"
+    const originalTime = moment(startTimeOption, "MMMM DD, YYYY h:mm A");
+    const adjustedTime = originalTime.subtract(
+      originalTime.utcOffset(),
+      "minutes"
     );
+    const startTime = adjustedTime.tz("Asia/Manila");
 
     if (!startTime.isValid()) {
       await interaction.reply({
