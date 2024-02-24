@@ -16,55 +16,6 @@ const pesoFormatter = new Intl.NumberFormat("en-PH", {
   minimumFractionDigits: 2,
 });
 
-const departments = [
-  {
-    department: "Operations",
-    officeChannelId: "1117386962580541473",
-    executive: "1201413097697591327",
-    department_role: "1203938264898211920",
-  },
-  {
-    department: "Procurement",
-    officeChannelId: "1117386986374823977",
-  },
-  {
-    department: "Design",
-    officeChannelId: "1117387017089728512",
-  },
-  {
-    department: "Web Development",
-    officeChannelId: "1117387044696641607",
-    executive: "748568303219245117",
-    department_role: "1117440563361366147",
-  },
-  {
-    department: "Finance",
-    officeChannelId: "1118180874136059964",
-  },
-  {
-    department: "Livestream",
-    officeChannelId: "1185979300936155136",
-  },
-  {
-    department: "Tiktok Account",
-    officeChannelId: "1185979374198071436",
-    executive: "752713584148086795",
-    department_role: "1187702183802720327",
-  },
-  {
-    department: "Tiktok Seller Center",
-    officeChannelId: "1185979531216027730",
-  },
-  {
-    department: "Lazada Seller Center",
-    officeChannelId: "1197118556467376188",
-  },
-  {
-    department: "Shopee Seller Center",
-    officeChannelId: "1197118789855223888",
-  },
-];
-
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("add")
@@ -198,36 +149,33 @@ async function addSubmemberPbr(interaction, client) {
   const user = interaction.options.getUser("user");
   const pbr = interaction.options.getNumber("pbr-value");
 
-  const department = departments.find(
-    (u) => u.executive === interaction.user.id
-  );
-
-  if (!department) {
-    await interaction.editReply({
-      content:
-        "🔴 ERROR: Cannot add PBR to associates. You do not have an associate yet.",
-    });
-    return;
-  }
-
-  const userMember = await interaction.guild.members.cache.get(user.id);
-  const role = await interaction.guild.roles.cache.get(
-    department.department_role
-  );
-
-  if (!userMember.roles.cache.has(department.department_role)) {
-    await interaction.editReply({
-      content:
-        "🔴 ERROR: You cannot add PBR to associates from another department.",
-    });
-    return;
-  }
-
-  const connection = await managementPool
-    .getConnection()
-    .catch((err) => console.log(err));
+  const connection = await managementPool.getConnection();
 
   try {
+    const selectDepartmentQuery = `SELECT * FROM Executives WHERE MEMBER_ID = ?`;
+    const [department] = await connection.query(selectDepartmentQuery, [
+      interaction.user.id,
+    ]);
+
+    if (department.length <= 0) {
+      await interaction.editReply({
+        content:
+          "🔴 ERROR: Cannot add PBR to associates. You are not an executive.",
+      });
+      return;
+    }
+
+    const userMember = await interaction.guild.members.cache.get(user.id);
+    if (!userMember.roles.cache.has(department[0].ROLE_ID)) {
+      await interaction.editReply({
+        content:
+          "🔴 ERROR: You cannot add PBR to associates from another department.",
+      });
+      return;
+    }
+
+    const role = await interaction.guild.roles.cache.get(department[0].ROLE_ID);
+
     const selectQuery = "SELECT * FROM Sub_Members WHERE MEMBER_ID = ?";
     const [submember] = await connection.query(selectQuery, [user.id]);
     const timeRendered = parseInt(submember[0].TIME_RENDERED);
@@ -296,7 +244,7 @@ async function addSubmemberPbr(interaction, client) {
     });
     return;
   } finally {
-    await connection.release();
+    connection.release();
   }
 }
 
@@ -318,24 +266,23 @@ async function addAssociate(interaction, client) {
     return;
   }
 
-  const department = departments.find((d) => d.department_role === role.id);
-
-  if (!department) {
-    await interaction.editReply({
-      content: "🔴 ERROR: Invalid department selected.",
-    });
-    return;
-  }
-
-  const executive = await interaction.guild.members.cache.get(
-    department.executive
-  );
-
-  const connection = await managementPool
-    .getConnection()
-    .catch((err) => console.log(err));
+  const connection = await managementPool.getConnection();
 
   try {
+    const selectQuery = `SELECT * FROM Executives WHERE ROLE_ID = ?`;
+    const [department] = await connection.query(selectQuery, [role.id]);
+
+    if (department.length <= 0) {
+      await interaction.editReply({
+        content: "🔴 ERROR: Invalid department selected.",
+      });
+      return;
+    }
+
+    const executive = await interaction.guild.members.cache.get(
+      department[0].MEMBER_ID
+    );
+
     const insertQuery =
       "INSERT INTO Sub_Members (MEMBER_ID, USERNAME, DEPARTMENT_EXECUTIVE, OFFICE_ID) VALUES (?, ?, ?, ?)";
     await connection.query(insertQuery, [
@@ -353,12 +300,10 @@ async function addAssociate(interaction, client) {
   } catch (error) {
     console.log(error);
     await interaction.editReply({
-      content:
-        "🔴 ERROR: There was an error while adding the associate. Please try again.",
+      content: error.toString(),
     });
-    return;
   } finally {
-    await connection.release();
+    connection.release();
   }
 }
 
