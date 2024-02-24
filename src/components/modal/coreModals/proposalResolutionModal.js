@@ -1,3 +1,4 @@
+const channel = require("sharp/lib/channel");
 const { managementPool } = require("../../../sqlConnection");
 
 module.exports = {
@@ -11,11 +12,13 @@ module.exports = {
 
     let messageEmbed = interaction.message.embeds[0];
 
-    let databaseTable;
+    let databaseTable, channelId;
     if (messageEmbed.data.title.includes("EXECUTIVE")) {
       databaseTable = "Executive_Proposals";
+      channelId = "1204006923427516499";
     } else {
       databaseTable = "Directors_Proposals";
+      channelId = "1186661471451627661";
     }
 
     const connection = await managementPool
@@ -46,7 +49,7 @@ module.exports = {
     };
 
     await client.channels.cache
-      .get("1186661471451627661")
+      .get(channelId)
       .send({
         embeds: [messageEmbed],
         components: [],
