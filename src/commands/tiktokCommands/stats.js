@@ -277,47 +277,55 @@ module.exports = {
     collector.on("collect", async (i) => {
       if (i.user.id !== interaction.user.id) return;
 
-      await i.deferUpdate();
+      try {
+        await i.deferUpdate();
 
-      if (i.customId === "prev") {
-        if (index > 0) index--;
-      } else if (i.customId === "next") {
-        if (index < embedPages.length - 1) index++;
-      } else if (i.customId === "first") {
-        index = 0;
-      } else if (i.customId === "last") {
-        index = embedPages.length - 1;
+        if (i.customId === "prev") {
+          if (index > 0) index--;
+        } else if (i.customId === "next") {
+          if (index < embedPages.length - 1) index++;
+        } else if (i.customId === "first") {
+          index = 0;
+        } else if (i.customId === "last") {
+          index = embedPages.length - 1;
+        }
+
+        if (index === 0) {
+          first.setDisabled(true).setStyle(ButtonStyle.Secondary);
+          prev.setDisabled(true).setStyle(ButtonStyle.Secondary);
+        } else {
+          first.setDisabled(false).setStyle(ButtonStyle.Primary);
+          prev.setDisabled(false).setStyle(ButtonStyle.Primary);
+        }
+
+        if (index === embedPages.length - 1) {
+          next.setDisabled(true).setStyle(ButtonStyle.Secondary);
+          last.setDisabled(true).setStyle(ButtonStyle.Secondary);
+        } else {
+          next.setDisabled(false).setStyle(ButtonStyle.Primary);
+          last.setDisabled(false).setStyle(ButtonStyle.Primary);
+        }
+
+        await currentPage.edit({
+          embeds: [embedPages[index]],
+          components: [buttonRow],
+        });
+
+        collector.resetTimer();
+      } catch (error) {
+        console.log("stats.js ERROR:", error);
       }
-
-      if (index === 0) {
-        first.setDisabled(true).setStyle(ButtonStyle.Secondary);
-        prev.setDisabled(true).setStyle(ButtonStyle.Secondary);
-      } else {
-        first.setDisabled(false).setStyle(ButtonStyle.Primary);
-        prev.setDisabled(false).setStyle(ButtonStyle.Primary);
-      }
-
-      if (index === embedPages.length - 1) {
-        next.setDisabled(true).setStyle(ButtonStyle.Secondary);
-        last.setDisabled(true).setStyle(ButtonStyle.Secondary);
-      } else {
-        next.setDisabled(false).setStyle(ButtonStyle.Primary);
-        last.setDisabled(false).setStyle(ButtonStyle.Primary);
-      }
-
-      await currentPage.edit({
-        embeds: [embedPages[index]],
-        components: [buttonRow],
-      });
-
-      collector.resetTimer();
     });
 
     collector.on("end", async (i) => {
-      await currentPage.edit({
-        embeds: [embedPages[index]],
-        components: [],
-      });
+      try {
+        await currentPage.edit({
+          embeds: [embedPages[index]],
+          components: [],
+        });
+      } catch (error) {
+        console.log("stats.js ERROR:", error);
+      }
     });
 
     function calculateCommission(netSales) {

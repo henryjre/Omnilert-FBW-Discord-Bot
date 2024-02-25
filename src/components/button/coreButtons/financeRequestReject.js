@@ -24,7 +24,9 @@ module.exports = {
 
     const modal = new ModalBuilder();
 
-    modal.setCustomId("rejectReason").setTitle(`Reject Request`);
+    modal
+      .setCustomId(`rejectReason_${interaction.id}`)
+      .setTitle(`Reject Request`);
 
     const reason = new TextInputBuilder()
       .setCustomId(`reasonInput`)
@@ -41,7 +43,8 @@ module.exports = {
     const modalResponse = await interaction.awaitModalSubmit({
       filter: async (i) => {
         const f =
-          i.customId === "rejectReason" && i.user.id === interaction.user.id;
+          i.customId === `rejectReason_${interaction.id}` &&
+          i.user.id === interaction.user.id;
 
         if (f) {
           await i.deferReply({ ephemeral: true });
@@ -96,10 +99,10 @@ module.exports = {
       }
     } catch (error) {
       console.log(error);
-      await modalResponse.editReply({
-        content: `🔴 ERROR: An error occurred while rejecting this request. Please try again.`,
-        ephemeral: true,
-      });
+      // await modalResponse.editReply({
+      //   content: `🔴 ERROR: An error occurred while rejecting this request. Please try again.`,
+      //   ephemeral: true,
+      // });
     }
   },
 };

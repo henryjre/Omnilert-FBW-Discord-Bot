@@ -21,7 +21,7 @@ module.exports = {
     const title = formatTitle(selected);
 
     const modal = new ModalBuilder();
-    modal.setCustomId("criteriaRating").setTitle(title);
+    modal.setCustomId(`criteriaRating_${interaction.id}`).setTitle(title);
 
     const score = new TextInputBuilder()
       .setCustomId(`score`)
@@ -39,7 +39,7 @@ module.exports = {
       .awaitModalSubmit({
         filter: async (i) => {
           const f =
-            i.customId === "criteriaRating" &&
+            i.customId === `criteriaRating_${interaction.id}` &&
             i.user.id === interaction.user.id;
           return f;
         },
@@ -129,16 +129,17 @@ module.exports = {
         });
       }
     } catch (error) {
-      const dmChannel = client.channels.cache.get(interaction.channelId);
-      await dmChannel
-        .send({
-          content: `🔴 ERROR: An error occurred while adding your score. Please try selecting again.`,
-        })
-        .then((m) => {
-          setTimeout(() => {
-            m.delete();
-          }, 5000);
-        });
+      console.log(error)
+      // const dmChannel = client.channels.cache.get(interaction.channelId);
+      // await dmChannel
+      //   .send({
+      //     content: `🔴 ERROR: An error occurred while adding your score. Please try selecting again.`,
+      //   })
+      //   .then((m) => {
+      //     setTimeout(() => {
+      //       m.delete();
+      //     }, 5000);
+      //   });
     }
   },
 };

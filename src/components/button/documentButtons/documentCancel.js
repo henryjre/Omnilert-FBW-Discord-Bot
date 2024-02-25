@@ -125,7 +125,9 @@ module.exports = {
 
       const modal = new ModalBuilder();
 
-      modal.setCustomId("returnRequest").setTitle(`Return the document`);
+      modal
+        .setCustomId(`returnRequest_${interaction.id}`)
+        .setTitle(`Return the document`);
       const details = new TextInputBuilder()
         .setCustomId(`details`)
         .setLabel(`Return Reason`)
@@ -142,7 +144,8 @@ module.exports = {
       const modalResponse = await interaction.awaitModalSubmit({
         filter: async (i) => {
           const f =
-            i.customId === "returnRequest" && i.user.id === interaction.user.id;
+            i.customId === `returnRequest_${interaction.id}` &&
+            i.user.id === interaction.user.id;
 
           if (f) {
             await i.deferUpdate();
@@ -185,10 +188,10 @@ module.exports = {
         }
       } catch (error) {
         console.log(error);
-        await modalResponse.followUp({
-          content: `🔴 ERROR: An error occurred while creating your signature request. Please try again.`,
-          ephemeral: true,
-        });
+        // await modalResponse.followUp({
+        //   content: `🔴 ERROR: An error occurred while creating your signature request. Please try again.`,
+        //   ephemeral: true,
+        // });
       }
     }
   },

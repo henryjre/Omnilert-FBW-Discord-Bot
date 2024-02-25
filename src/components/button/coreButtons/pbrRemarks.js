@@ -14,7 +14,9 @@ module.exports = {
   },
   async execute(interaction, client) {
     const modal = new ModalBuilder();
-    modal.setCustomId("addRemarksModal").setTitle("Add Remarks");
+    modal
+      .setCustomId(`addRemarksModal_${interaction.id}`)
+      .setTitle("Add Remarks");
 
     const remark = new TextInputBuilder()
       .setCustomId(`remarks`)
@@ -33,7 +35,7 @@ module.exports = {
       .awaitModalSubmit({
         filter: async (i) => {
           const f =
-            i.customId === "addRemarksModal" &&
+            i.customId === `addRemarksModal_${interaction.id}` &&
             i.user.id === interaction.user.id;
           return f;
         },
@@ -97,16 +99,17 @@ module.exports = {
         });
       }
     } catch (error) {
-      const dmChannel = client.channels.cache.get(interaction.channelId);
-      await dmChannel
-        .send({
-          content: `🔴 ERROR: An error occurred while adding your PBR Remarks. Please try again.`,
-        })
-        .then((m) => {
-          setTimeout(() => {
-            m.delete();
-          }, 5000);
-        });
+      console.log(error);
+      // const dmChannel = client.channels.cache.get(interaction.channelId);
+      // await dmChannel
+      //   .send({
+      //     content: `🔴 ERROR: An error occurred while adding your PBR Remarks. Please try again.`,
+      //   })
+      //   .then((m) => {
+      //     setTimeout(() => {
+      //       m.delete();
+      //     }, 5000);
+      //   });
     }
   },
 };

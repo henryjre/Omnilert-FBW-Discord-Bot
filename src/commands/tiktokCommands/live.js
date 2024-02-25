@@ -226,14 +226,20 @@ module.exports = {
     });
 
     collector.on("end", async (i) => {
-      const message = await currentPage.channel.messages.fetch(currentPage.id);
+      try {
+        const message = await currentPage.channel.messages.fetch(
+          currentPage.id
+        );
 
-      const currentEmbed = message.embeds[0].data;
-      if (currentEmbed.title === "LIVESTREAM DETAILS") {
-        await currentPage.edit({
-          embeds: [embed],
-          components: [],
-        });
+        const currentEmbed = message.embeds[0].data;
+        if (currentEmbed.title === "LIVESTREAM DETAILS") {
+          await currentPage.edit({
+            embeds: [embed],
+            components: [],
+          });
+        }
+      } catch (error) {
+        console.log("live.js ERROR:", error);
       }
     });
 

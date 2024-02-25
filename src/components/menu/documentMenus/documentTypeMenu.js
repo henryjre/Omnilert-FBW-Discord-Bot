@@ -71,27 +71,35 @@ module.exports = {
     collector.on("collect", async (i) => {
       if (i.user.id !== interaction.user.id) return;
 
-      await i.deferUpdate();
+      try {
+        await i.deferUpdate();
 
-      const newEmbed = new EmbedBuilder(messageEmbed.data).addFields([
-        {
-          name: `⌛ ${selectedValue}`,
-          value: `<@${i.values[0]}>`,
-        },
-      ]);
+        const newEmbed = new EmbedBuilder(messageEmbed.data).addFields([
+          {
+            name: `⌛ ${selectedValue}`,
+            value: `<@${i.values[0]}>`,
+          },
+        ]);
 
-      await msg.edit({
-        embeds: [newEmbed],
-      });
+        await msg.edit({
+          embeds: [newEmbed],
+        });
 
-      collector.stop();
+        collector.stop();
+      } catch (error) {
+        console.log("documentTypeMenu ERROR:", error);
+      }
     });
 
     collector.on("end", async (i) => {
-      buttonActionRow.components[submitIndex].data.disabled = false;
-      await msg.edit({
-        components: [buttonActionRow, typeRow],
-      });
+      try {
+        buttonActionRow.components[submitIndex].data.disabled = false;
+        await msg.edit({
+          components: [buttonActionRow, typeRow],
+        });
+      } catch (error) {
+        console.log("documentTypeMenu ERROR:", error);
+      }
     });
   },
 };

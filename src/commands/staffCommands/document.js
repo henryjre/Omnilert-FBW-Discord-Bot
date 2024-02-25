@@ -52,7 +52,9 @@ module.exports = {
 
     const modal = new ModalBuilder();
 
-    modal.setCustomId("signRequest").setTitle(`Request a document signature`);
+    modal
+      .setCustomId(`signRequest_${interaction.id}`)
+      .setTitle(`Request a document signature`);
 
     const title = new TextInputBuilder()
       .setCustomId(`title`)
@@ -79,7 +81,8 @@ module.exports = {
     const modalResponse = await interaction.awaitModalSubmit({
       filter: async (i) => {
         const f =
-          i.customId === "signRequest" && i.user.id === interaction.user.id;
+          i.customId === `signRequest_${interaction.id}` &&
+          i.user.id === interaction.user.id;
 
         if (f) {
           await i.deferReply();
@@ -173,9 +176,9 @@ module.exports = {
       }
     } catch (error) {
       console.log(error);
-      await modalResponse.editReply({
-        content: `🔴 ERROR: An error occurred while creating your signature request. Please try again.`,
-      });
+      // await modalResponse.editReply({
+      //   content: `🔴 ERROR: An error occurred while creating your signature request. Please try again.`,
+      // });
     }
   },
 };

@@ -183,16 +183,20 @@ module.exports = {
     });
 
     collector.on("end", async (i) => {
-      const message = await replyMessage.channel.messages.fetch(
-        replyMessage.id
-      );
+      try {
+        const message = await replyMessage.channel.messages.fetch(
+          replyMessage.id
+        );
 
-      const currentEmbed = message.embeds[0].data;
-      if (currentEmbed.title === "WITHDRAWAL REQUEST") {
-        await replyMessage.edit({
-          embeds: [withdrawalEmbed],
-          components: [],
-        });
+        const currentEmbed = message.embeds[0].data;
+        if (currentEmbed.title === "WITHDRAWAL REQUEST") {
+          await replyMessage.edit({
+            embeds: [withdrawalEmbed],
+            components: [],
+          });
+        }
+      } catch (error) {
+        console.log("withdraw.js ERROR:", error);
       }
     });
 
