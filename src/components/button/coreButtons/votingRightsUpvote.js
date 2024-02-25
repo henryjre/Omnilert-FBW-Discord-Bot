@@ -40,7 +40,7 @@ module.exports = {
         .setCustomId(`remarksInput`)
         .setLabel(`Remarks`)
         .setStyle(TextInputStyle.Paragraph)
-        .setPlaceholder("Add remarks to justify your Upvote and PBR choice.")
+        .setPlaceholder("Add remarks to justify your Upvote.")
         .setRequired(true);
 
       // const firstActionRow = new ActionRowBuilder().addComponents(firstInput);
