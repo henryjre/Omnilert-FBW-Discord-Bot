@@ -126,16 +126,18 @@ module.exports = {
         ephemeral: true,
       });
 
+      const selectQuery = `SELECT TIME_RENDERED FROM Executives WHERE MEMBER_ID = ?`;
+      const [exec] = await connection.execute(selectQuery, [userId]);
+
       const updateQuery = `UPDATE Executives SET PBR = ?, TIME_RENDERED = ?, CUMULATIVE_PBR = (CUMULATIVE_PBR + ?) WHERE MEMBER_ID = ?`;
       await connection.execute(updateQuery, [finalPbr, 0, finalPbr, userId]);
 
       await connection.release();
 
-      const workDuration = messageEmbed.data.fields[1].value;
-      const [hours, minutes] = workDuration.match(/\d+/g).map(Number);
-      const totalSum = moment.duration({ hours, minutes }).asHours();
+      const minutes = Number(exec[0].TIME_RENDERED);
+      const totalSum = moment.duration(minutes, "minutes").asHours();
 
-      const totalHours = Number(totalSum);
+      const totalHours = Number(totalSum.toFixed(2));
 
       const fixedPay = Number((totalHours * 30).toFixed(2));
       const pbrPay = Number((totalHours * finalPbr).toFixed(2));
