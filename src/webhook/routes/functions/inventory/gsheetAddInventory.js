@@ -37,7 +37,7 @@ module.exports = async (req, res) => {
       const product = products.find((p) => p.SKU == item["SKU"]);
       const totalProductCost =
         Number(product.TOTAL_QUANTITY) * Number(product.COST_OF_GOODS) +
-        Number(item["COST OF GOODS"]);
+        Number(item["QUANTITY"]) * Number(item["COST OF GOODS"]);
       const totalProductQuantity =
         Number(product.TOTAL_QUANTITY) + Number(item["QUANTITY"]);
 
