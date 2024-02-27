@@ -47,8 +47,18 @@ module.exports = {
 
     const voiceChannel = interactedMember.voice.channel;
     const channelMembers = voiceChannel.members.map((m) => m.id);
+
+    const meetingHostField = messageEmbed.fields[hostIndex].value;
+    const match = meetingHostField.match(/<@(\d+)>/);
+    const meetingHostId = match && match[1];
+    const membersToWriteMinutes = channelMembers.filter(
+      (m) => !m.includes(meetingHostId)
+    );
+
     const minutesWriter =
-      channelMembers[Math.floor(Math.random() * channelMembers.length)];
+      membersToWriteMinutes[
+        Math.floor(Math.random() * membersToWriteMinutes.length)
+      ];
 
     messageEmbed.fields.splice(hostIndex + 1, 0, {
       name: "Minutes Writer",
