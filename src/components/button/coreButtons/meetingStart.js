@@ -47,8 +47,19 @@ module.exports = {
 
     const voiceChannel = interactedMember.voice.channel;
     const channelMembers = voiceChannel.members.map((m) => m.id);
+    const minutesWriter =
+      channelMembers[Math.floor(Math.random() * channelMembers.length)];
 
     messageEmbed.fields.splice(hostIndex + 1, 0, {
+      name: "Minutes Writer",
+      value: `<@${minutesWriter}>`,
+    });
+
+    const minutesIndex = messageEmbed.fields.findIndex(
+      (field) => field.name === "Minutes Writer"
+    );
+
+    messageEmbed.fields.splice(minutesIndex + 1, 0, {
       name: "Participants",
       value: channelMembers
         .map((m) => `<@${m}>\n`)

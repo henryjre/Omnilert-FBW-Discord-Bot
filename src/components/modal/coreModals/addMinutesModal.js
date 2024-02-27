@@ -54,6 +54,7 @@ module.exports = {
     }
 
     logEmbed.description += `\n### *${summary}*`;
+    logEmbed.color = 65359;
 
     const link = new ButtonBuilder()
       .setLabel("View Minutes")
