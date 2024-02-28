@@ -35,4 +35,19 @@ const leviosaPool = mysql.createPool({
   },
 });
 
-module.exports = { managementPool, leviosaPool };
+const testPool = mysql.createPool({
+  host: process.env.logSqlHost,
+  port: process.env.logSqlPort,
+  user: process.env.logSqlUsername,
+  password: process.env.logSqlPassword,
+  database: "development",
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+  ssl: {
+    ca: caCertificate,
+    rejectUnauthorized: true,
+  },
+});
+
+module.exports = { managementPool, leviosaPool, testPool };

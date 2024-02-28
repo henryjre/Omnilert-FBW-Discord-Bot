@@ -46,9 +46,10 @@ module.exports = async (req, res) => {
       );
 
       return {
-        sku: item["SKU"],
+        sku: product.SKU,
         quantity: Number(item["QUANTITY"]),
         newCogs: newCost,
+        newExpDate: item["NEW EXPIRATION DATE"],
       };
     });
 
@@ -62,6 +63,16 @@ module.exports = async (req, res) => {
       COST_OF_GOODS = CASE SKU
     ${toUpdate
       .map((product) => `WHEN '${product.sku}' THEN ${product.newCogs}`)
+      .join(" ")}
+  END,
+      NEW_QUANTITY = CASE SKU
+    ${toUpdate
+      .map((product) => `WHEN '${product.sku}' THEN ${product.quantity}`)
+      .join(" ")}
+  END,
+      NEW_EXPIRATION_DATE = CASE SKU
+    ${toUpdate
+      .map((product) => `WHEN '${product.sku}' THEN ${product.newExpDate}`)
       .join(" ")}
   END
   WHERE SKU IN (${toUpdate.map((product) => `'${product.sku}'`).join(", ")});
@@ -90,6 +101,7 @@ module.exports = async (req, res) => {
         totalProductQuantity,
         oldCost,
         newCost,
+        item["NEW EXPIRATION DATE"],
       ];
     });
 
@@ -103,6 +115,7 @@ module.exports = async (req, res) => {
         "NEW QUANTITY",
         "OLD COST",
         "NEW COST",
+        "NEW EXPIRATION DATE",
       ],
       ...excelFileData,
     ];
