@@ -19,6 +19,7 @@ module.exports = async (req, res) => {
     res.status(401).json({ ok: false, message: "unauthorized" });
     return;
   }
+  console.log("signature match for shopee webhook!");
 
   res.status(200).json({ ok: true, message: "success" });
 
