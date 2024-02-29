@@ -38,7 +38,7 @@ module.exports = async (req, res) => {
 
     if (processedLazadaOrders.has(checkDupeId)) {
       console.log(
-        `Duplicate order ID received: ${body.data.trade_order_id} with status ${status}. Ignoring...`
+        `Duplicate lazada order ID received: ${body.data.trade_order_id} with status ${status}. Ignoring...`
       );
       return;
     } else {
