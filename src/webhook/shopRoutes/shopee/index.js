@@ -1,7 +1,6 @@
 const shopee = require("express").Router();
+const webhook = require("./shopeeWebhook");
 
-const order = require("./order");
-
-shopee.use("/order", order);
+shopee.post("/webhook", webhook);
 
 module.exports = shopee;

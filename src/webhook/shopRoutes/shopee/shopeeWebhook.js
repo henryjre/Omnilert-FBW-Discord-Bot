@@ -6,6 +6,8 @@ const processedLazadaOrders = new Set();
 module.exports = async (req, res) => {
   res.status(200).json({ ok: true, message: "success" });
 
+  return
+
   const body = req.body;
   const auth = req.headers.authorization;
 
