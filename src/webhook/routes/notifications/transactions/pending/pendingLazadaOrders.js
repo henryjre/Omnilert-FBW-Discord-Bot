@@ -154,6 +154,7 @@ module.exports = async (req, res) => {
   } catch (error) {
     console.log(error);
     console.log(orderEmbed, buyerEmbed);
+    return res.status(200).json({ ok: true, message: "success" });
   }
 
   function maskOrderId(number) {
