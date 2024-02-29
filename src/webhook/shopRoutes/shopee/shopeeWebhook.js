@@ -5,8 +5,7 @@ const crypto = require("crypto");
 const processedShopeeOrders = new Set();
 module.exports = async (req, res) => {
   console.log(req.body);
-  res.status(200).json({ ok: true, message: "success" });
-  return;
+
   const secrets = await getShopeeSecrets();
   const receivedSignature = req.get("Authorization");
   const url = req.originalUrl;
@@ -16,6 +15,7 @@ module.exports = async (req, res) => {
   const sign = signWebhookRequest(url, responseContent, partnerKey);
 
   if (sign !== receivedSignature) {
+    console.log("signature mismatch for shopee webhook")
     res.status(401).json({ ok: false, message: "unauthorized" });
     return;
   }
@@ -49,7 +49,8 @@ module.exports = async (req, res) => {
     processedShopeeOrders.add(checkDupeId);
 
     const orderFetch = await getOrderDetail(secrets, body.data.ordersn);
-    console.log(orderFetch.data.response);
+    console.log(orderFetch);
+    return
   }
 };
 
