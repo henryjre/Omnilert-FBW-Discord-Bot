@@ -4,7 +4,8 @@ const crypto = require("crypto");
 
 const processedLazadaOrders = new Set();
 module.exports = async (req, res) => {
-  console.log(req);
+  const url = req.get("host") + req.originalUrl;
+  console.log(url);
   res.status(200).json({ ok: true, message: "success" });
 
   return;
