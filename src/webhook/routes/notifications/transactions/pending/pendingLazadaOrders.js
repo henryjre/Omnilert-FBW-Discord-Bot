@@ -1,9 +1,9 @@
 const { EmbedBuilder } = require("discord.js");
 const client = require("../../../../../index");
 
-const fetch = (...args) =>
-  import("node-fetch").then(({ default: fetch }) => fetch(...args));
-const crypto = require("crypto");
+// const fetch = (...args) =>
+//   import("node-fetch").then(({ default: fetch }) => fetch(...args));
+// const crypto = require("crypto");
 const moment = require("moment");
 
 const pesoFormatter = new Intl.NumberFormat("en-PH", {
@@ -133,20 +133,28 @@ module.exports = async (req, res) => {
     .setColor("#2B2D31")
     .addFields(buyerFields);
 
-  const thread = await channel.threads.create({
-    name: `${emoji} ${orderId} | ${status}`,
-    autoArchiveDuration: 1440,
-  });
-  await thread.join();
+  try {
+    const thread = await channel.threads.create({
+      name: `${emoji} ${orderId} | ${status}`,
+      autoArchiveDuration: 1440,
+    });
 
-  await thread.send({
-    embeds: [orderEmbed, buyerEmbed],
-    files: lineitemsImages,
-  });
+    res
+      .status(200)
+      .json({ ok: true, message: "success", channelId: thread.id });
 
-  return res
-    .status(200)
-    .json({ ok: true, message: "success", channelId: thread.id });
+    await thread.join();
+
+    await thread.send({
+      embeds: [orderEmbed, buyerEmbed],
+      files: lineitemsImages,
+    });
+
+    return;
+  } catch (error) {
+    console.log(error);
+    console.log(orderEmbed, buyerEmbed);
+  }
 
   function maskOrderId(number) {
     let numberStr = number.toString();

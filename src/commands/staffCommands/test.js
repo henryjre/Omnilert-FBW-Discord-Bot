@@ -38,7 +38,7 @@ module.exports = {
     const body = {
       partner_id: partnerId,
       shop_id: parseInt(process.env.shopeeShopId),
-      code: "4b44616e4b7a79655074415679574b52",
+      code: "4f46796c5450515162514f7344655166",
     };
 
     const url = `${host}${path}?${Object.entries(params)
