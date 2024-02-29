@@ -4,9 +4,10 @@ const crypto = require("crypto");
 
 const processedLazadaOrders = new Set();
 module.exports = async (req, res) => {
+  console.log(req);
   res.status(200).json({ ok: true, message: "success" });
 
-  return
+  return;
 
   const body = req.body;
   const auth = req.headers.authorization;
