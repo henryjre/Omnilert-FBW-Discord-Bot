@@ -4,6 +4,8 @@ const crypto = require("crypto");
 
 const processedShopeeOrders = new Set();
 module.exports = async (req, res) => {
+  res.status(200).json({ ok: true, message: "success" });
+  return
   const secrets = await getShopeeSecrets();
   const receivedSignature = req.get("Authorization");
   const url = req.originalUrl;
