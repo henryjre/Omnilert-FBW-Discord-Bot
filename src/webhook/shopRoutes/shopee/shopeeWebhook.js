@@ -8,14 +8,14 @@ module.exports = async (req, res) => {
 
   const secrets = await getShopeeSecrets();
   const receivedSignature = req.get("Authorization");
-  const url = req.originalUrl;
+  const url = "https://leviosa.mysrv.us/shops/shopee/webhook";
   const responseContent = JSON.stringify(req.body);
   const partnerKey = secrets.appKey;
 
   const sign = signWebhookRequest(url, responseContent, partnerKey);
 
   if (sign !== receivedSignature) {
-    console.log("signature mismatch for shopee webhook")
+    console.log("signature mismatch for shopee webhook");
     res.status(401).json({ ok: false, message: "unauthorized" });
     return;
   }
@@ -50,7 +50,7 @@ module.exports = async (req, res) => {
 
     const orderFetch = await getOrderDetail(secrets, body.data.ordersn);
     console.log(orderFetch);
-    return
+    return;
   }
 };
 
