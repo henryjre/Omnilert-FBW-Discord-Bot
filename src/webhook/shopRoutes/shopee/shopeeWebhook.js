@@ -83,7 +83,7 @@ async function getShopeeSecrets() {
 }
 
 async function getOrderDetail(secrets, orderId) {
-  const host = "https://partner.test-stable.shopeemobile.com";
+  const host = "https://partner.shopeemobile.com";
   const path = "/api/v2/order/get_order_detail";
   const timest = Math.floor(Date.now() / 1000);
 
