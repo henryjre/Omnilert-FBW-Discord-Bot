@@ -57,17 +57,17 @@ module.exports = async (req, res) => {
   UPDATE Leviosa_Inventory
   SET TOTAL_QUANTITY = TOTAL_QUANTITY + CASE SKU
     ${toUpdate
-      .map((product) => `WHEN '${product.sku}' THEN '${product.quantity}'`)
+      .map((product) => `WHEN '${product.sku}' THEN ${product.quantity}`)
       .join(" ")}
   END,
       COST_OF_GOODS = CASE SKU
     ${toUpdate
-      .map((product) => `WHEN '${product.sku}' THEN '${product.newCogs}'`)
+      .map((product) => `WHEN '${product.sku}' THEN ${product.newCogs}`)
       .join(" ")}
   END,
       NEW_QUANTITY = CASE SKU
     ${toUpdate
-      .map((product) => `WHEN '${product.sku}' THEN '${product.quantity}'`)
+      .map((product) => `WHEN '${product.sku}' THEN ${product.quantity}`)
       .join(" ")}
   END,
       NEW_EXPIRATION_DATE = CASE SKU
