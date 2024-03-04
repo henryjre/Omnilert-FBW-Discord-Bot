@@ -89,7 +89,7 @@ module.exports = {
         }
         return f;
       },
-      time: 60000,
+      time: 180000,
     });
 
     try {

@@ -65,7 +65,7 @@ module.exports = {
 
     const collector = await msg.createMessageComponentCollector({
       componentType: ComponentType.StringSelect,
-      time: 60000,
+      time: 180000,
     });
 
     collector.on("collect", async (i) => {
