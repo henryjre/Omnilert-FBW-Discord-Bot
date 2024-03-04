@@ -146,9 +146,6 @@ async function processToShipOrders(interaction, client) {
         "No To Ship orders found. Only export in **`To Ship`** tab of Shopee Orders when using this command. Please try again."
       );
     }
-
-    console.log(toShipOrders);
-
     const cutoffDate = new Date("2024-02-20");
 
     const hasOrderBeforeCutoff = orderData.some((order) => {
