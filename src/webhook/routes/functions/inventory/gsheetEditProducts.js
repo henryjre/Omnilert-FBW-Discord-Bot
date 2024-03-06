@@ -55,8 +55,9 @@ module.exports = async (req, res) => {
 
     const excelData = [];
     for (const obj of data) {
-      const product = products.find((p) => p.SKU == obj["SKU"]);
+      const product = await products.find((p) => p.SKU == obj["SKU"]);
       if (!product) {
+        console.log(obj);
         console.log("no edits made for sku: ", obj["SKU"]);
         continue;
       }
