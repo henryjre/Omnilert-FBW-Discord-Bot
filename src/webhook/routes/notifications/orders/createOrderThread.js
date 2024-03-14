@@ -52,9 +52,10 @@ async function processShopeeNotifications(order) {
       .unix(order.create_time)
       .tz("Asia/Manila")
       .format("MMMM DD, YYYY [at] h:mm A");
-    const lineitemsImages = order.item_list.map(
-      (item) => item.image_info.image_url
-    );
+    const lineitemsImages = order.item_list.map((item, index) => ({
+      attachment: item.image_info.image_url,
+      name: `line-item-${index}.png`,
+    }));
 
     let emoji;
     let status;
