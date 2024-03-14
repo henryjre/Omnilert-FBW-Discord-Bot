@@ -92,7 +92,7 @@ async function processShopeeNotifications(order) {
 
     let description = "";
     order.item_list.forEach((item) => {
-      description += `▪️ ${item.product_name}\n`;
+      description += `▪️ ${item.item_name}\n`;
     });
 
     const title = `### 🛒 NEW SHOPEE ORDER`;
