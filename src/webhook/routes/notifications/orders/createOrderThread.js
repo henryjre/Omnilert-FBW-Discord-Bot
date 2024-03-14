@@ -26,7 +26,7 @@ module.exports = async (req, res) => {
     }
 
     if (process.ok) {
-      updated.push(process.updateData);
+      updatedIds.push(process.updateData);
     }
   }
 
