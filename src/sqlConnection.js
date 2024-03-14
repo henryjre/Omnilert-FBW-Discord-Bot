@@ -35,12 +35,12 @@ const leviosaPool = mysql.createPool({
   },
 });
 
-const testPool = mysql.createPool({
+const inventoryPool = mysql.createPool({
   host: process.env.logSqlHost,
   port: process.env.logSqlPort,
   user: process.env.logSqlUsername,
   password: process.env.logSqlPassword,
-  database: "development",
+  database: "inventory",
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
@@ -50,4 +50,4 @@ const testPool = mysql.createPool({
   },
 });
 
-module.exports = { managementPool, leviosaPool, testPool };
+module.exports = { managementPool, leviosaPool, inventoryPool };

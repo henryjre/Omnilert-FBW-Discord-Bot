@@ -3,11 +3,12 @@ const notifications = require("express").Router();
 const inventory = require("./inventory");
 const accounts = require("./accounts");
 const transactions = require("./transactions");
-const lazadaTransactions = require("../../shopRoutes/lazada");
+const orders = require("./orders");
 
 notifications.use("/accounts", accounts);
 notifications.use("/inventory", inventory);
 notifications.use("/transactions", transactions);
+notifications.use("/orders", orders);
 
 notifications.get("/", (req, res) => {
   res.status(200).json({ message: "The notifications are sent here" });

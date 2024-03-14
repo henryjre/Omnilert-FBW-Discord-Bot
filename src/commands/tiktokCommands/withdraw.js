@@ -79,7 +79,7 @@ module.exports = {
     const balance = streamerData[0].BALANCE;
     const liab = streamerData[0].LIABILITIES;
 
-    let withdrawalFees = withdrawalAmount * 0.1;
+    let withdrawalFees = withdrawalAmount * 0.15;
     if (liab === 0) {
       withdrawalFees = 0;
     } else if (liab < withdrawalFees) {

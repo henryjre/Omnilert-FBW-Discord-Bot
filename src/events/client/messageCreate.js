@@ -89,6 +89,14 @@ module.exports = {
     );
 
     if (thread) {
+      if (thread.id === "1215488215105011784") {
+        await client.events.get("inventoryIn").execute(message, thread, client);
+      } else if (thread.id === "1215487701126742056") {
+        await client.events
+          .get("inventoryOut")
+          .execute(message, thread, client);
+      }
+
       const department = departments.find(
         (d) => d.officeChannelId === thread.parentId
       );
