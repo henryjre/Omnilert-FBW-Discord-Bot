@@ -4,16 +4,17 @@ const { inventoryPool } = require("../../sqlConnection.js");
 
 module.exports = {
   name: "inventoryIn",
-  async execute(message, thread, client) {
+  async execute(message, thread, client, platform) {
     const scannedSku = message.content;
 
     try {
       const inv_connection = await inventoryPool.getConnection();
 
       try {
-        const selectQuery = `SELECT * FROM Pending_Inventory_In WHERE PRODUCT_SKU = ? ORDER BY ORDER_CREATED ASC LIMIT 1;`;
+        const selectQuery = `SELECT * FROM Pending_Inventory_In WHERE PRODUCT_SKU = ? AND PLATFORM = ? ORDER BY ORDER_CREATED ASC LIMIT 1;`;
         const [selectResult] = await inv_connection.query(selectQuery, [
           scannedSku,
+          platform,
         ]);
 
         if (!selectResult.length) {

@@ -89,14 +89,39 @@ module.exports = {
     );
 
     if (thread) {
-      if (thread.id === "1215488215105011784") {
-        await client.events.get("inventoryIn").execute(message, thread, client);
-      } else if (thread.id === "1215487701126742056") {
-        await client.events
-          .get("inventoryOut")
-          .execute(message, thread, client);
-      }
+      switch (thread.id) {
+        // shopee
+        case "1218216761325781143":
+          return await client.events
+            .get("inventoryIn")
+            .execute(message, thread, client, "SHOPEE");
+        case "1218216406034939916":
+          return await client.events
+            .get("inventoryOut")
+            .execute(message, thread, client, "SHOPEE");
+        // lazada
+        case "1218216584510836797":
+          return await client.events
+            .get("inventoryIn")
+            .execute(message, thread, client, "LAZADA");
+        case "1218216524532289627":
+          return await client.events
+            .get("inventoryOut")
+            .execute(message, thread, client, "LAZADA");
+        // tiktok
+        case "1218216960618139739":
+          return await client.events
+            .get("inventoryIn")
+            .execute(message, thread, client, "TIKTOK");
+        case "1218216899318648952":
+          return await client.events
+            .get("inventoryOut")
+            .execute(message, thread, client, "TIKTOK");
 
+        default:
+          break;
+      }
+      
       const department = departments.find(
         (d) => d.officeChannelId === thread.parentId
       );
