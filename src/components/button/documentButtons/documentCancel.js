@@ -59,6 +59,11 @@ const userChannels = [
     users: ["1196432863751577690"],
     channel: "1197118789855223888",
   },
+  {
+    // supply chain manager
+    users: ["1207935798301823001"],
+    channel: "1209039670927826975",
+  },
 ];
 
 module.exports = {
