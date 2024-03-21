@@ -3,7 +3,6 @@ const {
   ButtonBuilder,
   ButtonStyle,
   EmbedBuilder,
-  channelLink,
 } = require("discord.js");
 
 const { managementPool } = require("../../../sqlConnection");

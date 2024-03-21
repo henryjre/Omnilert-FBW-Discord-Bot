@@ -121,7 +121,7 @@ module.exports = {
         default:
           break;
       }
-      
+
       const department = departments.find(
         (d) => d.officeChannelId === thread.parentId
       );
