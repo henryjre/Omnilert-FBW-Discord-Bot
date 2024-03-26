@@ -12,26 +12,36 @@ const pesoFormatter = new Intl.NumberFormat("en-PH", {
 module.exports = async (req, res) => {
   const { data, platform } = req.body;
 
-  let updatedIds = [];
-  for (const order of data) {
-    let process;
-    if (platform === "SHOPEE") {
-      process = await processShopeeNotifications(order);
-    } else if (platform === "LAZADA") {
-      process = await processLazadaNotifications(order);
-    } else if (platform === "TIKTOK") {
-      process = await processTiktokNotifications(order);
-    } else {
-      continue;
+  try {
+    let updatedIds = [];
+    for (const order of data) {
+      let process;
+      if (platform === "SHOPEE") {
+        process = await processShopeeNotifications(order);
+      } else if (platform === "LAZADA") {
+        process = await processLazadaNotifications(order);
+      } else if (platform === "TIKTOK") {
+        process = await processTiktokNotifications(order);
+      } else {
+        continue;
+      }
+
+      if (process.ok) {
+        updatedIds.push(process.updateData);
+      }
     }
 
-    if (process.ok) {
-      updatedIds.push(process.updateData);
-    }
+    return res
+      .status(200)
+      .json({ ok: true, message: "success", updated: updatedIds });
+  } catch (error) {
+    console.log(
+      `Error in processing ${platform} notifications: ${error.message}`
+    );
+    return res
+      .status(400)
+      .json({ ok: false, message: error.message, updated: null });
   }
-
-  res.status(200).json({ ok: true, message: "success", updated: updatedIds });
-  return;
 };
 
 async function processShopeeNotifications(order) {
@@ -71,6 +81,10 @@ async function processShopeeNotifications(order) {
       case "PROCESSED":
         emoji = "⚙️";
         status = "Processed";
+        break;
+      case "SHIPPED":
+        emoji = "🚚";
+        status = "Shipped";
         break;
       case "CANCELLED":
         emoji = "🚫";
