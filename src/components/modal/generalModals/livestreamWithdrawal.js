@@ -34,6 +34,8 @@ module.exports = {
     const netAmount =
       interaction.message.embeds[0].data.fields[4].value.match(/[\d,.]+/);
 
+    const member = interaction.guild.members.cache.get(interaction.user.id);
+
     const pendingSubmitEmbed = new EmbedBuilder()
       .setTitle(`SUBMITTING REQUEST`)
       .setColor("#e8fbd4")
@@ -70,13 +72,22 @@ module.exports = {
       ])
       .catch((err) => console.log(err));
 
-    const insertQuery1 = `INSERT INTO Withdraw_History (TRANSACTION_ID, STREAMER_ID, AMOUNT, FEES, CREATED_DATE) VALUES (?, ?, ?, ?, ?)`;
+    const selectQuery =
+      "SELECT * FROM Tiktok_Livestreamers WHERE STREAMER_ID = ?";
+    const [streamerData] = await connection
+      .execute(selectQuery, [interaction.user.id])
+      .catch((err) => console.log(err));
+
+    const insertQuery1 = `INSERT INTO Withdraw_History (TRANSACTION_ID, STREAMER_ID, STREAMER_NAME, AMOUNT, FEES, CURRENT_BALANCE, CURRENT_LIABILITIES, CREATED_DATE) VALUES (?, ?, ?, ?, ?, ?, ?)`;
     await connection
       .query(insertQuery1, [
         nanoid(),
         interaction.user.id,
+        member.nickname,
         netWithdrawal,
         withdrawalFees,
+        streamerData[0].BALANCE,
+        streamerData[0].LIABILITIES,
         claimDate,
       ])
       .catch((err) => console.log(err));
@@ -114,7 +125,7 @@ module.exports = {
       ])
       .setTimestamp(Date.now())
       .setFooter({
-        text: `REQUESTED BY: ${interaction.user.globalName}`,
+        text: `REQUESTED BY: ${member.nickname}`,
       });
 
     await client.channels.cache.get("1176497779040858173").send({
