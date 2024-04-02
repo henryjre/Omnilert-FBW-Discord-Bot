@@ -1,4 +1,7 @@
-const caCertificate = process.env.db_cert;
+const fs = require("fs");
+const path = require("path");
+const caCertificatePath = path.join(__dirname, "./DO_Certificate.crt");
+const caCertificate = fs.readFileSync(caCertificatePath);
 
 const mysql = require("mysql2/promise");
 
