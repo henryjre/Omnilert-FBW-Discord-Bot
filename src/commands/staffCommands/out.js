@@ -1,9 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 const { managementPool } = require("../../sqlConnection");
 
-const { GoogleSpreadsheet } = require("google-spreadsheet");
-const creds = require("../../secret-key.json");
-
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("out")
@@ -75,30 +72,15 @@ module.exports = {
       const duration = timeOut - timeIn;
       const { hours, minutes } = convertMilliseconds(duration);
       const minutesOnly = Math.floor(duration / 60000);
-
-      const doc = new GoogleSpreadsheet(process.env.sheetId);
-      await doc.useServiceAccountAuth(creds);
-      await doc.loadInfo();
       ///
-      let logSheet;
       let updateQuery;
       if (interaction.member.roles.cache.has("1185935514042388520")) {
         updateQuery =
           "UPDATE Executives SET TIME_RENDERED = (TIME_RENDERED + ?) WHERE MEMBER_ID = ?";
-        logSheet = doc.sheetsByTitle["LOGS"];
       } else {
         updateQuery =
           "UPDATE Sub_Members SET TIME_RENDERED = (TIME_RENDERED + ?) WHERE MEMBER_ID = ?";
-        logSheet = doc.sheetsByTitle["SUB_MEMBER_LOGS"];
       }
-
-      await logSheet.addRow([
-        workId,
-        interaction.user.username,
-        timeInStamp,
-        timeStamp,
-        `${minutesOnly}`,
-      ]);
 
       const updateWorkShiftString =
         "UPDATE WORK_HOURS SET TIME_OUT = ? WHERE ID = ?";

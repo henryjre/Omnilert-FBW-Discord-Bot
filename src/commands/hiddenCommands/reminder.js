@@ -1,8 +1,6 @@
 const schedule = require("node-schedule");
 const { EmbedBuilder } = require("discord.js");
 
-const { GoogleSpreadsheet } = require("google-spreadsheet");
-const creds = require("../../secret-key.json");
 const { managementPool } = require("../../sqlConnection");
 
 let reminder = {};
@@ -122,10 +120,6 @@ module.exports = {
     checkSchedules();
 
     async function penalizeUser(author) {
-      const doc = new GoogleSpreadsheet(process.env.sheetId);
-      await doc.useServiceAccountAuth(creds);
-      await doc.loadInfo();
-
       const penaltyTimeStamp = Date.now();
       const duration = Math.ceil(
         (penaltyTimeStamp - penaltyTimestampOnStart) / 60000
@@ -152,15 +146,6 @@ module.exports = {
         minute: "numeric",
         hour12: true,
       });
-
-      const logSheet = doc.sheetsByTitle["PENALTY"];
-
-      await logSheet.addRow([
-        author.username,
-        timeOnStart,
-        penaltyDate,
-        `${duration} minutes`,
-      ]);
 
       const penaltyEmbed = new EmbedBuilder()
         .setTitle(`⛔ PENALTY`)
