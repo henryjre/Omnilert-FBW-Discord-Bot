@@ -13,5 +13,8 @@
   },
   {
     "reminder": "I know you're busy, but don't forget to send an update here to prevent yourself from getting kicked out and losing that salary bonus."
+  },
+  {
+    "reminder": "This is a reminder that you have 15 minutes to send an update to this channel before you get automatically outed."
   }
 ]

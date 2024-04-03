@@ -61,7 +61,7 @@ module.exports = {
 
       const second_reminder = schedule.scheduleJob(
         `SECOND REMINDER: ${member.nickname}`,
-        calculateReminder(29),
+        calculateReminder(27),
         () => {
           secondReminder();
           checkSchedules();
@@ -270,7 +270,7 @@ module.exports = {
     function secondReminder() {
       const reminderEmbed = new EmbedBuilder()
         .setDescription(
-          `##  🔔 1-MINUTE REMINDER\nThis is a reminder that you only have 1 minute to send an update to this channel before you get automatically outed.`
+          `##  🔔 LAST 3 MINUTES\nThis is a reminder that you only have 3 minutes to send an update to this channel before you get automatically outed.`
         )
         .setColor("LuminousVividPink")
         .setTimestamp(Date.now())
@@ -280,8 +280,11 @@ module.exports = {
         });
 
       thread.send({
-        content: author.toString(),
+        content:
+          author.toString() +
+          ", You only have 3 minutes left to update on this channel before you get kicked out of the thread.",
         embeds: [reminderEmbed],
+        tts: true,
       });
     }
   },
