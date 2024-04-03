@@ -34,6 +34,7 @@ module.exports = async (req, res) => {
     const [products] = await connection.query(queryProductsArray, productSkus);
 
     const toUpdate = data.map((item) => {
+      console.log(item["SKU"]);
       const product = products.find((p) => p.SKU == item["SKU"]);
       const totalProductCost =
         Number(product.TOTAL_QUANTITY) * Number(product.COST_OF_GOODS) +
