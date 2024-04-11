@@ -1,7 +1,7 @@
 const fs = require("fs").promises;
 const path = require("path");
 
-const { managementPool } = require("../../../sqlConnection");
+const conn = require("../../../sqlConnection");
 const moment = require("moment");
 
 const pesoFormatter = new Intl.NumberFormat("en-PH", {
@@ -38,9 +38,7 @@ module.exports = {
       interaction.message.id
     );
 
-    const connection = await managementPool
-      .getConnection()
-      .catch((err) => console.log(err));
+    const connection = await conn.managementConnection()
 
     if (messageEmbed.data.title.includes("VOTING RIGHTS")) {
       const votes = await getVotingRightsSubmissions();
@@ -55,7 +53,7 @@ module.exports = {
       const updateQuery = `SELECT * FROM Board_Of_Directors WHERE MEMBER_ID = ?`;
       const [core] = await connection.execute(updateQuery, [userId]);
 
-      await connection.release();
+      await connection.end();
 
       messageEmbed.data.fields.push(
         {
@@ -132,7 +130,7 @@ module.exports = {
       const updateQuery = `UPDATE Executives SET PBR = ?, TIME_RENDERED = ?, CUMULATIVE_PBR = (CUMULATIVE_PBR + ?) WHERE MEMBER_ID = ?`;
       await connection.execute(updateQuery, [finalPbr, 0, finalPbr, userId]);
 
-      await connection.release();
+      await connection.end();
 
       const minutes = Number(exec[0].TIME_RENDERED);
       const totalSum = moment.duration(minutes, "minutes").asHours();

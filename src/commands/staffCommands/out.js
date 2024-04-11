@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
-const { managementPool } = require("../../sqlConnection");
+const conn = require("../../sqlConnection");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -20,9 +20,7 @@ module.exports = {
 
     await interaction.deferReply();
 
-    const connection = await managementPool
-      .getConnection()
-      .catch((err) => console.log(err));
+    const connection = await conn.managementConnection()
 
     const userId = interaction.user.id;
     const timeOut = Date.now();
@@ -51,7 +49,7 @@ module.exports = {
       await interaction.editReply({
         content: `🔴 ERROR: No work log in found.`,
       });
-      await connection.release();
+      await connection.end();
       return;
     }
 
@@ -137,7 +135,7 @@ module.exports = {
         ephemeral: true,
       });
     } finally {
-      await connection.release();
+      await connection.end();
     }
 
     function convertMilliseconds(milliseconds) {

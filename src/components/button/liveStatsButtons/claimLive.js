@@ -1,6 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
 
-const { managementPool } = require("../../../sqlConnection");
+const conn = require("../../../sqlConnection");
 const moment = require("moment");
 
 const { customAlphabet } = require("nanoid");
@@ -54,9 +54,7 @@ module.exports = {
 
     await timer(1300);
 
-    const connection = await managementPool
-      .getConnection()
-      .catch((err) => console.log(err));
+    const connection = await conn.managementConnection()
 
     const findLiveQuery =
       "SELECT CLAIMED FROM Tiktok_Livestream_Schedules WHERE STREAM_ID = ?";
@@ -85,7 +83,7 @@ module.exports = {
         embeds: [errorEmbed],
         components: [],
       });
-      await connection.release();
+      await connection.end();
       return;
     }
 
@@ -113,7 +111,7 @@ module.exports = {
       ])
       .catch((err) => console.log(err));
 
-    connection.release();
+    await connection.end();
 
     const claimedEmbed = new EmbedBuilder()
       .setTitle(`LIVESTREAM CLAIMED`)

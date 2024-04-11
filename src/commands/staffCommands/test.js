@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, Embed, EmbedBuilder } = require("discord.js");
-const { leviosaPool } = require("../../sqlConnection");
+const conn = require("../../sqlConnection");
 const XLSX = require("xlsx");
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));

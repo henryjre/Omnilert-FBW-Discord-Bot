@@ -6,7 +6,7 @@ const crypto = require("crypto");
 const { customAlphabet } = require("nanoid");
 const nanoid = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 13);
 
-const { managementPool } = require("../../sqlConnection");
+const conn = require("../../sqlConnection");
 const commissionRates = require("./commission.json");
 const { time } = require("console");
 
@@ -123,9 +123,7 @@ module.exports = {
       .tz("Asia/Manila")
       .format("YYYY-MM-DD HH:mm:ss");
 
-    const connection = await managementPool
-      .getConnection()
-      .catch((err) => console.log(err));
+    const connection = await conn.managementConnection()
 
     const findDupeQuery =
       "SELECT * FROM Tiktok_Livestream_Schedules WHERE LIVE_ID = ?";
@@ -285,7 +283,7 @@ module.exports = {
       ])
       .catch((err) => console.log(err));
 
-    connection.release();
+    await connection.end();
 
     const embedToSend = new EmbedBuilder()
       .setTitle(`${embed.emoji} TIKTOK LIVESTREAM SAVED`)

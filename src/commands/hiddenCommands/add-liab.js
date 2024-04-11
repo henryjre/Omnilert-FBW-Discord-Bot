@@ -1,5 +1,5 @@
 const { EmbedBuilder } = require("discord.js");
-const { managementPool } = require("../../sqlConnection");
+const conn = require("../../sqlConnection");
 
 const pesoFormatter = new Intl.NumberFormat("en-PH", {
   style: "currency",
@@ -39,9 +39,7 @@ module.exports = {
 
     await interaction.deferReply();
 
-    const connection = await managementPool
-      .getConnection()
-      .catch((err) => console.log(err));
+    const connection = await conn.managementConnection();
 
     try {
       const updateLiabQuery =
@@ -122,7 +120,7 @@ module.exports = {
         components: [],
       });
     } finally {
-      await connection.release();
+      await connection.end();
     }
   },
 };

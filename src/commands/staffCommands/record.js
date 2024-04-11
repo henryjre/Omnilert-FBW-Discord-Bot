@@ -6,7 +6,7 @@ const {
   EmbedBuilder,
 } = require("discord.js");
 
-const { leviosaPool } = require("../../sqlConnection");
+const conn = require("../../sqlConnection");
 
 const XLSX = require("xlsx");
 const fetch = (...args) =>
@@ -90,7 +90,7 @@ module.exports = {
 };
 
 async function processToShipOrders(interaction, client) {
-  const connection = await leviosaPool.getConnection();
+  const connection = await conn.leviosaConnection();
   try {
     const attachment = interaction.options.getAttachment("orders");
 
@@ -353,12 +353,12 @@ async function processToShipOrders(interaction, client) {
       embeds: [errorEmbed],
     });
   } finally {
-    connection.release();
+    await connection.end();
   }
 }
 
 async function processCancelledOrders(interaction, client) {
-  const connection = await leviosaPool.getConnection();
+  const connection = await conn.leviosaConnection();
 
   try {
     const attachment = interaction.options.getAttachment("orders");
@@ -601,12 +601,12 @@ async function processCancelledOrders(interaction, client) {
       embeds: [errorEmbed],
     });
   } finally {
-    connection.release();
+    await connection.end();
   }
 }
 
 async function processSettlement(interaction, client) {
-  const connection = await leviosaPool.getConnection();
+  const connection = await conn.leviosaConnection();
 
   try {
     const attachment = interaction.options.getAttachment("file");
@@ -775,7 +775,7 @@ async function processSettlement(interaction, client) {
       embeds: [errorEmbed],
     });
   } finally {
-    connection.release();
+    await connection.end();
   }
 
   function generateSettlementFees(

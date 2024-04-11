@@ -7,7 +7,7 @@ const {
   ComponentType,
 } = require("discord.js");
 
-const { managementPool } = require("../../sqlConnection");
+const conn = require("../../sqlConnection");
 const pesoFormatter = new Intl.NumberFormat("en-PH", {
   style: "currency",
   currency: "PHP",
@@ -44,9 +44,7 @@ module.exports = {
     const withdrawalAmount = interaction.options.getNumber("amount");
     const streamerId = interaction.user.id;
 
-    const connection = await managementPool
-      .getConnection()
-      .catch((err) => console.log(err));
+    const connection = await conn.managementConnection()
 
     const findStreamerQuery =
       "SELECT * FROM Tiktok_Livestreamers WHERE STREAMER_ID = ?";
@@ -54,7 +52,7 @@ module.exports = {
       .query(findStreamerQuery, [streamerId])
       .catch((err) => console.log(err));
 
-    await connection.release();
+    await connection.end();
 
     const withdrawals = streamerData[0].WITHDRAWALS;
 

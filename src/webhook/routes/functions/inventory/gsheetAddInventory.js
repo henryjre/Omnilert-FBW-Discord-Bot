@@ -1,7 +1,7 @@
 const { EmbedBuilder, AttachmentBuilder } = require("discord.js");
 const client = require("../../../../index");
 
-const { leviosaPool } = require("../../../../sqlConnection");
+const conn = require("../../../../sqlConnection");
 const XLSX = require("xlsx");
 
 const { customAlphabet } = require("nanoid");
@@ -22,7 +22,7 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const connection = await leviosaPool.getConnection();
+  const connection = await conn.leviosaConnection();
 
   try {
     const productSkus = data.map((product) => product["SKU"]);
@@ -157,6 +157,6 @@ module.exports = async (req, res) => {
     console.log(error);
     res.status(400).json({ ok: true, message: "an error has occured" });
   } finally {
-    connection.release();
+    await connection.end();
   }
 };

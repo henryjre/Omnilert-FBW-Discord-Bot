@@ -1,7 +1,7 @@
 const schedule = require("node-schedule");
 const { EmbedBuilder } = require("discord.js");
 
-const { managementPool } = require("../../sqlConnection");
+const conn = require("../../sqlConnection");
 
 const ttsReminders = require("./reminderTts.json");
 
@@ -17,12 +17,16 @@ module.exports = {
     const channelId = thread.id;
     const member = message.guild.members.cache.get(author.id);
 
+    const connection = await conn.managementConnection();
+
     if (type === 0) {
       const queryWorkShiftString =
         "SELECT * FROM WORK_HOURS WHERE DISCORD_ID = ? AND TIME_OUT IS NULL";
-      const workShift = await managementPool
+      const workShift = await connection
         .query(queryWorkShiftString, [author.id])
         .catch((err) => console.log(err));
+
+      await connection.end();
 
       if (workShift[0].length <= 0) return;
     }
@@ -130,9 +134,7 @@ module.exports = {
     checkSchedules();
 
     async function penalizeUser() {
-      const connection = await managementPool
-        .getConnection()
-        .catch((err) => console.log(err));
+      const connection = await conn.managementConnection();
 
       const parentChannel = await client.channels.cache.get(thread.parentId);
 
@@ -233,7 +235,7 @@ module.exports = {
           content: `<@748568303219245117>, there was an error while recording the penalty for ${member.nickname}.`,
         });
       } finally {
-        await connection.release();
+        await connection.end();
       }
 
       function convertMilliseconds(milliseconds) {

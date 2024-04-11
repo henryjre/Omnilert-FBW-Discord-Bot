@@ -6,7 +6,7 @@ const {
   TextInputStyle,
   ActionRowBuilder,
 } = require("discord.js");
-const { managementPool } = require("../../sqlConnection");
+const conn = require("../../sqlConnection");
 const moment = require("moment");
 
 const pesoFormatter = new Intl.NumberFormat("en-PH", {

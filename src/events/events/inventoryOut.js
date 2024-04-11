@@ -1,6 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
 const moment = require("moment-timezone");
-const { inventoryPool } = require("../../sqlConnection.js");
+const conn = require("../../sqlConnection.js");
 
 module.exports = {
   name: "inventoryOut",
@@ -8,7 +8,7 @@ module.exports = {
     const scannedSku = message.content;
 
     try {
-      const inv_connection = await inventoryPool.getConnection();
+      const inv_connection = await conn.inventoryConnection();
 
       try {
         const selectQuery = `SELECT * FROM Pending_Inventory_Out WHERE PRODUCT_SKU = ? AND PLATFORM = ? ORDER BY ORDER_CREATED ASC LIMIT 1;`;
@@ -49,7 +49,7 @@ module.exports = {
         await message.delete();
         await thread.send({ embeds: [embed] });
       } finally {
-        inv_connection.release();
+        await inv_connection.end();
       }
     } catch (error) {
       console.log(error.toString());

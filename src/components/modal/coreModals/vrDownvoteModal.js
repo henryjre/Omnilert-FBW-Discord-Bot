@@ -1,5 +1,5 @@
 const { EmbedBuilder } = require("discord.js");
-const { managementPool } = require("../../../sqlConnection");
+const conn = require("../../../sqlConnection");
 
 const fs = require("fs").promises;
 const path = require("path");
@@ -83,9 +83,7 @@ module.exports = {
       ephemeral: true,
     });
 
-    const connection = await managementPool
-      .getConnection()
-      .catch((err) => console.log(err));
+    const connection = await conn.managementConnection()
 
     const updateQuery = `UPDATE Board_Of_Directors SET VOTING_RIGHTS = (VOTING_RIGHTS - 1) WHERE MEMBER_ID = ?`;
     await connection.execute(updateQuery, [userId]);
@@ -93,7 +91,7 @@ module.exports = {
     const updateQuery2 = `UPDATE Board_Of_Directors SET VOTING_RIGHTS = (VOTING_RIGHTS - 1) WHERE MEMBER_ID = ?`;
     await connection.execute(updateQuery2, ["864920050691866654"]);
 
-    await connection.release();
+    await connection.end();
 
     await storeVoteSubmission({
       vote: "downvote",

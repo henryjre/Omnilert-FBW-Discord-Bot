@@ -7,7 +7,7 @@ const pesoFormatter = new Intl.NumberFormat("en-PH", {
   minimumFractionDigits: 2,
 });
 
-const { managementPool } = require("../../sqlConnection");
+const conn = require("../../sqlConnection");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -30,9 +30,7 @@ module.exports = {
 
     const subcommand = interaction.options.getSubcommand();
 
-    const connection = await managementPool
-      .getConnection()
-      .catch((err) => console.log(err));
+    const connection = await conn.managementConnection()
 
     const role = await interaction.guild.roles.cache.get(
       subcommand === "executives"
@@ -109,7 +107,7 @@ module.exports = {
         content: "🔴 ERROR: There was an error while getting the leaderboards.",
       });
     } finally {
-      await connection.release();
+      await connection.end();
     }
   },
 };

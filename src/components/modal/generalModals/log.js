@@ -1,6 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
 const { customAlphabet } = require("nanoid");
-const { managementPool } = require("../../../sqlConnection");
+const conn = require("../../../sqlConnection");
 
 const nanoid = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 13);
 
@@ -9,9 +9,7 @@ module.exports = {
     name: "log",
   },
   async execute(interaction, client) {
-    const connection = await managementPool
-      .getConnection()
-      .catch((err) => console.log(err));
+    const connection = await conn.managementConnection()
 
     const queryWorkShiftString =
       "SELECT * FROM WORK_HOURS WHERE DISCORD_ID = ? AND TIME_OUT IS NULL";
@@ -23,7 +21,7 @@ module.exports = {
       await interaction.reply({
         content: `🔴 ERROR: No work log in found.`,
       });
-      connection.release();
+      await connection.end();
       return;
     }
 
@@ -53,7 +51,7 @@ module.exports = {
         .catch((err) => console.log(err));
     }
 
-    connection.release();
+    await connection.end();
 
     // const convertedImage1 =
     //   firstImageLog.length > 0 ? `[See Attachment](${firstImageLog})` : "";

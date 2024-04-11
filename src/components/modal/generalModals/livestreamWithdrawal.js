@@ -5,7 +5,7 @@ const {
   EmbedBuilder,
 } = require("discord.js");
 
-const { managementPool } = require("../../../sqlConnection");
+const conn = require("../../../sqlConnection");
 const moment = require("moment");
 
 const { customAlphabet } = require("nanoid");
@@ -58,9 +58,7 @@ module.exports = {
     const netWithdrawal = parseFloat(netAmount[0].replace(/,/g, ""));
     const claimDate = moment().format("YYYY-MM-DD HH:mm:ss");
 
-    const connection = await managementPool
-      .getConnection()
-      .catch((err) => console.log(err));
+    const connection = await conn.managementConnection()
 
     const updateBalanceQuery =
       "UPDATE Tiktok_Livestreamers SET BALANCE = (BALANCE - ?), LIABILITIES = (LIABILITIES - ?), WITHDRAWALS = (WITHDRAWALS - 1) WHERE STREAMER_ID = ?";
@@ -92,7 +90,7 @@ module.exports = {
       ])
       .catch((err) => console.log(err));
 
-    await connection.release();
+    await connection.end();
 
     const newEmbed = new EmbedBuilder()
       .setTitle("⌛ NEW COMMISSION WITHDRAWAL")

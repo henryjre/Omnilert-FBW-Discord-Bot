@@ -5,7 +5,7 @@ const {
   ButtonStyle,
 } = require("discord.js");
 
-const { managementPool } = require("../../../sqlConnection");
+const conn = require("../../../sqlConnection");
 const moment = require("moment");
 
 const pesoFormatter = new Intl.NumberFormat("en-PH", {
@@ -51,9 +51,7 @@ module.exports = {
       components: [],
     });
 
-    const connection = await managementPool
-      .getConnection()
-      .catch((err) => console.log(err));
+    const connection = await conn.managementConnection()
 
     const backButton = new ButtonBuilder()
       .setCustomId("allDashboardBackButton")
@@ -212,7 +210,7 @@ module.exports = {
       console.log(error);
     } finally {
       // Close the connection after executing queries
-      await connection.release();
+      await connection.end();
     }
 
     function calculateCommission(netSales) {

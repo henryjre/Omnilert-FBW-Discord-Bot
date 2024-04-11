@@ -1,5 +1,5 @@
 const { EmbedBuilder } = require("discord.js");
-const { managementPool } = require("../../sqlConnection");
+const conn = require("../../sqlConnection");
 
 module.exports = {
   name: "add-streamer",
@@ -31,9 +31,7 @@ module.exports = {
 
     await interaction.deferReply();
 
-    const connection = await managementPool
-      .getConnection()
-      .catch((err) => console.log(err));
+    const connection = await conn.managementConnection()
 
     try {
       const insertQuery1 = `INSERT INTO Tiktok_Livestreamers (STREAMER_ID, BALANCE, LIABILITIES, WITHDRAWALS) VALUES (?, ?, ?)`;
@@ -82,7 +80,7 @@ module.exports = {
         components: [],
       });
     } finally {
-      await connection.release();
+      await connection.end();
     }
   },
 };

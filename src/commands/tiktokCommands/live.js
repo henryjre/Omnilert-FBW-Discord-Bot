@@ -7,7 +7,7 @@ const {
   ComponentType,
 } = require("discord.js");
 const moment = require("moment-timezone");
-const { managementPool } = require("../../sqlConnection");
+const conn = require("../../sqlConnection");
 
 const commissionRates = require("./commission.json");
 
@@ -49,9 +49,7 @@ module.exports = {
 
     const streamId = interaction.options.getString("id");
 
-    const connection = await managementPool
-      .getConnection()
-      .catch((err) => console.log(err));
+    const connection = await conn.managementConnection()
 
     const findLiveQuery =
       "SELECT * FROM Tiktok_Livestream_Schedules WHERE STREAM_ID = ?";
@@ -68,7 +66,7 @@ module.exports = {
       await interaction.editReply({
         embeds: [noOrdersEmbed],
       });
-      connection.release();
+      await connection.end();
       return;
     }
 
@@ -76,7 +74,7 @@ module.exports = {
       await interaction.editReply({
         content: "🔴 ERROR: You cannot retrieve that livestream.",
       });
-      connection.release();
+      await connection.end();
       return;
     }
 
@@ -102,7 +100,7 @@ module.exports = {
       .query(findLiveOrdersQuery, [streamId])
       .catch((err) => console.log(err));
 
-    connection.release();
+    await connection.end();
 
     orders[0].forEach((order) => {
       order.ORDER_STATUSES = order.ORDER_STATUSES

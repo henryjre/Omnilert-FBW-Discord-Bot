@@ -8,7 +8,7 @@ const pesoFormatter = new Intl.NumberFormat("en-PH", {
   minimumFractionDigits: 2,
 });
 
-const { managementPool } = require("../../sqlConnection");
+const conn = require("../../sqlConnection");
 
 const commissionRates = require("../tiktokCommands/commission.json");
 
@@ -17,9 +17,7 @@ module.exports = {
   async execute(interaction, client) {
     const streamerId = interaction.user.id;
 
-    const connection = await managementPool
-      .getConnection()
-      .catch((err) => console.log(err));
+    const connection = await conn.managementConnection()
 
     try {
       // Query to get BALANCE from Tiktok_Livestreamers
@@ -161,7 +159,7 @@ module.exports = {
       console.log(error);
     } finally {
       // Close the connection after executing queries
-      await connection.release();
+      await connection.end();
     }
 
     function calculateCommission(netSales) {

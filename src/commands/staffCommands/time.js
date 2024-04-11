@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 const moment = require("moment");
-const { managementPool } = require("../../sqlConnection");
+const conn = require("../../sqlConnection");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -49,9 +49,7 @@ module.exports = {
       e.MEMBER_ID, e.TIME_RENDERED, e.NAME, s.MEMBER_ID, s.TIME_RENDERED, s.DEPARTMENT_EXECUTIVE;
     `;
 
-    const connection = await managementPool
-      .getConnection()
-      .catch((err) => console.log(err));
+    const connection = await conn.managementConnection()
 
     try {
       const [queryResult] = await connection.query(queryString, [
@@ -153,7 +151,7 @@ module.exports = {
       });
       return;
     } finally {
-      await connection.release();
+      await connection.end();
     }
   },
 };

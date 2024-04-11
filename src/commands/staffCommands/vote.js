@@ -6,7 +6,7 @@ const {
   EmbedBuilder,
 } = require("discord.js");
 
-const { managementPool } = require("../../sqlConnection");
+const conn = require("../../sqlConnection");
 
 const { customAlphabet } = require("nanoid");
 const nanoid = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 10);
@@ -138,16 +138,14 @@ module.exports = {
         ])
         .setColor("Blurple");
     } else {
-      const connection = await managementPool
-        .getConnection()
-        .catch((err) => console.log(err));
+      const connection = await conn.managementConnection();
 
       const selectQuery = "SELECT * FROM Executives WHERE MEMBER_ID = ?";
       const [executive] = await connection
         .query(selectQuery, [user.id])
         .catch((err) => console.log(err));
 
-      await connection.release();
+      await connection.end();
 
       const totalTime = parseInt(executive[0].TIME_RENDERED);
 

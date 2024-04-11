@@ -8,7 +8,7 @@ const {
 } = require("discord.js");
 const moment = require("moment-timezone");
 
-const { managementPool } = require("../../sqlConnection");
+const conn = require("../../sqlConnection");
 const commissionRates = require("./commission.json");
 
 const pesoFormatter = new Intl.NumberFormat("en-PH", {
@@ -38,9 +38,7 @@ module.exports = {
 
     // const streamerName = interaction.user.globalName;
 
-    const connection = await managementPool
-      .getConnection()
-      .catch((err) => console.log(err));
+    const connection = await conn.managementConnection()
 
     // const findLiveOrdersQuery =
     //   "SELECT " +
@@ -72,7 +70,7 @@ module.exports = {
       .query(findOrdersForScheduleQuery, [interaction.user.id])
       .catch((err) => console.error(err));
 
-    connection.release();
+    await connection.end();
 
     if (findLiveOrders[0].length <= 0) {
       const noOrdersEmbed = new EmbedBuilder()
