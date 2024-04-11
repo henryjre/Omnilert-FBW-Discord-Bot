@@ -20,7 +20,7 @@ module.exports = {
 
     await interaction.deferReply();
 
-    const connection = await conn.managementConnection()
+    const connection = await conn.managementConnection();
 
     const userId = interaction.user.id;
     const timeOut = Date.now();
@@ -37,7 +37,9 @@ module.exports = {
       hour12: true,
     });
 
-    client.commands.get("reportal").execute(interaction, thread.id, client, 1);
+    await client.commands
+      .get("reportal")
+      .execute(interaction, thread.id, client, 1);
 
     const queryWorkShiftString =
       "SELECT * FROM WORK_HOURS WHERE DISCORD_ID = ? AND TIME_OUT IS NULL";
