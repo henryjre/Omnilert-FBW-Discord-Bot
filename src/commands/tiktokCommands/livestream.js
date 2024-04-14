@@ -47,19 +47,22 @@ module.exports = {
     ),
   async execute(interaction, client) {
     const validRoles = ["1176496361802301462"];
+    const interactionMember = interaction.guild.members.cache.get(
+      interaction.user.id
+    );
 
-    const streamer = interaction.options.getUser("livestreamer");
-    const start = interaction.options.getString("start-time");
-    const duration = interaction.options.getString("duration");
-    const member = interaction.guild.members.cache.get(streamer.id);
-
-    if (!member.roles.cache.some((r) => validRoles.includes(r.id))) {
+    if (!interactionMember.roles.cache.some((r) => validRoles.includes(r.id))) {
       await interaction.reply({
         content: `🔴 ERROR: This command can only be used by <@&1176496361802301462>.`,
         ephemeral: true,
       });
       return;
     }
+
+    const streamer = interaction.options.getUser("livestreamer");
+    const start = interaction.options.getString("start-time");
+    const duration = interaction.options.getString("duration");
+    const member = interaction.guild.members.cache.get(streamer.id);
 
     await interaction.deferReply();
     if (!member.roles.cache.has("1117440696891220050")) {
