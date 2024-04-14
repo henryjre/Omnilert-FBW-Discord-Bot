@@ -1,4 +1,8 @@
-const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+const {
+  SlashCommandBuilder,
+  EmbedBuilder,
+  AttachmentBuilder,
+} = require("discord.js");
 const moment = require("moment-timezone");
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
@@ -8,7 +12,7 @@ const nanoid = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 13);
 
 const conn = require("../../sqlConnection");
 const commissionRates = require("./commission.json");
-const { time } = require("console");
+const ExcelJS = require("exceljs");
 
 const pesoFormatter = new Intl.NumberFormat("en-PH", {
   style: "currency",
@@ -44,9 +48,12 @@ module.exports = {
   async execute(interaction, client) {
     const validRoles = ["1176496361802301462"];
 
-    if (
-      !interaction.member.roles.cache.some((r) => validRoles.includes(r.id))
-    ) {
+    const streamer = interaction.options.getUser("livestreamer");
+    const start = interaction.options.getString("start-time");
+    const duration = interaction.options.getString("duration");
+    const member = interaction.guild.members.cache.get(streamer.id);
+
+    if (!member.roles.cache.some((r) => validRoles.includes(r.id))) {
       await interaction.reply({
         content: `🔴 ERROR: This command can only be used by <@&1176496361802301462>.`,
         ephemeral: true,
@@ -54,16 +61,8 @@ module.exports = {
       return;
     }
 
-    const streamer = interaction.options.getUser("livestreamer");
-    const start = interaction.options.getString("start-time");
-    const duration = interaction.options.getString("duration");
-
     await interaction.deferReply();
-    if (
-      !interaction.guild.members.cache
-        .get(streamer.id)
-        .roles.cache.has("1117440696891220050")
-    ) {
+    if (!member.roles.cache.has("1117440696891220050")) {
       const errorEmbed = new EmbedBuilder()
         .setTitle(`INVALID LIVESTREAMER`)
         .setColor("Red")
@@ -118,12 +117,13 @@ module.exports = {
       streamer.id +
       "_" +
       moment.unix(apiStartTime).tz("Asia/Manila").format("MMDDYY");
-    const streamerName = streamer.globalName;
+    const streamerName = member.nickname;
     const createdDate = moment()
       .tz("Asia/Manila")
       .format("YYYY-MM-DD HH:mm:ss");
 
-    const connection = await conn.managementConnection()
+    const connection = await conn.managementConnection();
+    const def_connection = await conn.leviosaConnection();
 
     const findDupeQuery =
       "SELECT * FROM Tiktok_Livestream_Schedules WHERE LIVE_ID = ?";
@@ -131,44 +131,28 @@ module.exports = {
       .query(findDupeQuery, [liveId])
       .catch((err) => console.log(err));
 
-    const url = `https://leviosa.ph/_functions/getTiktokSecrets`;
-    const options = {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": process.env.apiKey,
-      },
-    };
+    const querySecrets = "SELECT * FROM Shop_Tokens WHERE ID = ?";
+    const [secretsResult] = await def_connection.query(querySecrets, [
+      process.env.tiktok_secrets_id,
+    ]);
 
-    const response = await fetch(url, options).catch((err) => {
-      interaction.editReply({
-        content:
-          "🔴 FETCH ERROR: An error has occured while fetching secret tokens.",
-      });
-      return;
-    });
-    const responseData = await response.json();
+    await def_connection.end();
 
-    if (!response.ok) {
-      return await interaction.editReply({
-        content: "🔴 FETCH ERROR: " + responseData.error,
-      });
-    }
+    const secrets = secretsResult[0];
+
     const ordersResponse = await getOrdersLists(
       apiStartTime,
       apiEndTime,
       "",
-      responseData.secrets
+      secrets
     );
-
-    console.log(apiStartTime, apiEndTime, ordersResponse);
 
     const embedStartDate = timeDates.start.format("MMM D, YYYY, h:mm A");
     const embedEndDate = timeDates.end.format("MMM D, YYYY, h:mm A");
     const livestreamId = nanoid();
 
     let embed = { color: "#78B159", emoji: "🟢", description: "" };
-    let ordersToSave;
+    let ordersToSave, ordersToExcel;
     if (!ordersResponse || ordersResponse.code !== 0) {
       return await interaction.editReply({
         content:
@@ -179,6 +163,7 @@ module.exports = {
       ordersResponse.data.orders.length <= 0
     ) {
       ordersToSave = [];
+      ordersToExcel = [];
     } else {
       let orders = [];
 
@@ -192,7 +177,7 @@ module.exports = {
           apiStartTime,
           apiEndTime,
           nextPageToken,
-          responseData.secrets
+          secrets
         );
         if (!newResponse || newResponse.code !== 0) {
           break;
@@ -224,7 +209,30 @@ module.exports = {
           totalSubtotal,
           liveId,
           streamerName,
-          createdDate,
+          moment
+            .unix(obj.create_time)
+            .tz("Asia/Manila")
+            .format("YYYY-MM-DD HH:mm:ss"),
+        ];
+      });
+
+      ordersToExcel = orders.map((obj) => {
+        const subtotal = Number(obj.payment.sub_total);
+        const platformDiscount = Number(obj.payment.platform_discount);
+        const sfSellerDiscount = Number(
+          obj.payment.shipping_fee_seller_discount
+        );
+        const totalSubtotal = subtotal + platformDiscount - sfSellerDiscount;
+
+        return [
+          maskOrderId(obj.id),
+          obj.status,
+          pesoFormatter.format(totalSubtotal),
+          moment
+            .unix(obj.create_time)
+            .tz("Asia/Manila")
+            .format("MMMM DD, YYYY [at] h:mm A"),
+          streamerName,
         ];
       });
     }
@@ -237,6 +245,8 @@ module.exports = {
       netSubtotal: 0,
       netCommission: 0,
     };
+
+    let excelFile;
 
     if (ordersToSave.length > 0) {
       const insertQueryOrders =
@@ -261,10 +271,14 @@ module.exports = {
 
         livestreamStats.totalOrders += 1;
       });
+
+      excelFile = await createExcelFile(ordersToExcel, livestreamId);
     } else {
       embed.color = "Orange";
       embed.description = "No orders found within that livestream period.";
       embed.emoji = "🟠";
+
+      excelFile = undefined;
     }
 
     const commission = calculateCommission(livestreamStats.netSubtotal);
@@ -294,7 +308,7 @@ module.exports = {
         },
         {
           name: `LIVE STREAMER`,
-          value: streamer.globalName,
+          value: streamerName,
         },
         {
           name: `ORDER DETAILS`,
@@ -369,11 +383,15 @@ module.exports = {
       };
     }
 
+    if (excelFile !== undefined) {
+      messagePayload.files = [excelFile];
+    }
+
     await interaction.editReply(messagePayload);
 
     async function getOrdersLists(start, end, nextPage, options) {
       const currentTimestamp = Math.floor(new Date().getTime() / 1000);
-      const urlPath = `/order/202309/orders/search?app_key=${options.tiktokAppKey}&shop_cipher=${options.tiktokShopCipher}&timestamp=${currentTimestamp}&page_token=${nextPage}&page_size=100`;
+      const urlPath = `/order/202309/orders/search?app_key=${options.APP_KEY}&shop_cipher=${options.SHOP_CIPHER}&timestamp=${currentTimestamp}&page_token=${nextPage}&page_size=100`;
       const apiUrl = "https://open-api.tiktokglobalshop.com";
 
       const signReqOptions = {
@@ -392,7 +410,7 @@ module.exports = {
           method: "POST",
           headers: {
             "content-type": "application/json",
-            "x-tts-access-token": options.tiktokAccessToken,
+            "x-tts-access-token": options.ACCESS_TOKEN,
           },
           body: JSON.stringify(signReqOptions.body),
         });
@@ -406,7 +424,7 @@ module.exports = {
     }
 
     async function signRequest(request) {
-      const secretKey = responseData.secrets.tiktokAppSecret;
+      const secretKey = secrets.APP_SECRET;
       const signature = CalSign(request, secretKey);
       return signature;
 
@@ -503,6 +521,67 @@ module.exports = {
       }
 
       return "No commission applicable for the given netSales";
+    }
+
+    function maskOrderId(number) {
+      let numberStr = number.toString();
+      let length = numberStr.length;
+      if (length < 8) {
+        return numberStr;
+      } else {
+        let maskedStr =
+          numberStr.substring(0, 4) +
+          "▪️".repeat(length - 8) +
+          numberStr.substring(length - 4);
+        return maskedStr;
+      }
+    }
+
+    async function createExcelFile(data, streamId) {
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("Sheet 1");
+
+      const streamIdRow = worksheet.addRow([
+        "LIVESTREAM ID",
+        streamId,
+        "",
+        "",
+        "",
+        "",
+      ]);
+      streamIdRow.getCell(1).font = { bold: true };
+
+      worksheet.addRow(["", "", "", "", "", ""]);
+
+      const headerRow = worksheet.addRow([
+        "ORDER ID",
+        "ORDER STATUS",
+        "ORDER SUBTOTAL",
+        "ORDER CREATED DATE",
+        "LIVESTREAM HOST",
+      ]);
+      headerRow.eachCell((cell) => {
+        cell.font = { bold: true };
+      });
+
+      // Adding data
+      data.forEach((row) => worksheet.addRow(row));
+
+      for (let i = 1; i <= 5; i++) {
+        worksheet.getColumn(i).width = 30;
+        worksheet.getColumn(i).eachCell({ includeEmpty: false }, (cell) => {
+          cell.alignment = { vertical: "middle", horizontal: "center" };
+        });
+      }
+
+      // Writing to buffer
+      const buffer = await workbook.xlsx.writeBuffer();
+
+      const attachment = new AttachmentBuilder()
+        .setFile(buffer)
+        .setName(`LIVESTREAM-${streamId}-ORDERS.xlsx`);
+
+      return attachment;
     }
   },
 };

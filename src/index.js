@@ -42,7 +42,11 @@ client.handleEvents();
 client.handleCommands();
 client.handleComponents();
 
-client.login(process.env.token);
+if (process.env.node_env === "prod") {
+  client.login(process.env.token);
+} else if (process.env.node_env === "dev") {
+  client.login(process.env.test);
+}
 
 module.exports = client;
 require("./webhook/app.js");

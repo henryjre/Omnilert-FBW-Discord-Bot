@@ -198,6 +198,7 @@ async function processTiktokNotifications(order) {
     const buyerId = order.user_id;
     const orderCreateTime = moment
       .unix(order.create_time)
+      .tz("Asia/Manila")
       .format("MMMM DD, YYYY [at] h:mm A");
     const lineitemsImages = order.line_items.map((item) => item.sku_image);
 
@@ -361,7 +362,9 @@ async function processLazadaNotifications(order) {
     const orderCreateTime = moment(
       order.order_items[0].created_at,
       "YYYY-MM-DD HH:mm:ss Z"
-    ).format("MMMM DD, YYYY [at] h:mm A");
+    )
+      .tz("Asia/Manila")
+      .format("MMMM DD, YYYY [at] h:mm A");
 
     const lineitemsImages = order.order_items.map(
       (item) => item.product_main_image

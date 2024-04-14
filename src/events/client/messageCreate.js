@@ -7,15 +7,8 @@ module.exports = {
     if (message.member.roles.cache.has("1117791688832860182")) {
       return;
     }
-    if (message.channelId === "1049166465049309224") {
-      return client.commands.get("inventory-out").execute(message, client);
-    }
-    if (message.channelId === "1049167086481580032") {
-      return client.commands.get("audit").execute(message, client);
-    }
-    if (message.channelId === "1049166582829559918") {
-      return client.commands.get("rts").execute(message, client);
-    }
+
+    if (process.env.node_env === "dev") return;
 
     const departments = [
       {

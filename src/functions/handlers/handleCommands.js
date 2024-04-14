@@ -48,10 +48,18 @@ module.exports = (client) => {
       }
     }
 
-    const clientId = "1048079490493993000";
-    const testClientId = "1166638042698747924";
     const guildId = "1049165537193754664";
-    const rest = new REST({ version: "10" }).setToken(process.env.token);
+    let clientId, token;
+
+    if (process.env.node_env === "prod") {
+      clientId = "1048079490493993000";
+      token = process.env.token;
+    } else if (process.env.node_env === "dev") {
+      clientId = "1166638042698747924";
+      token = process.env.test;
+    }
+
+    const rest = new REST({ version: "10" }).setToken(token);
     try {
       console.log(chalk.blue("Started refreshing application (/) commands."));
 

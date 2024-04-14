@@ -10,6 +10,8 @@ module.exports = {
     //     .execute(reaction, user, client);
     // }
 
+    if (process.env.node_env === "dev") return;
+
     if (message.channelId === "1171798094900379740") {
       return client.commands
         .get("approveGiveaway")

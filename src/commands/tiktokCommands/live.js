@@ -5,9 +5,11 @@ const {
   ButtonStyle,
   EmbedBuilder,
   ComponentType,
+  AttachmentBuilder,
 } = require("discord.js");
 const moment = require("moment-timezone");
 const conn = require("../../sqlConnection");
+const ExcelJS = require("exceljs");
 
 const commissionRates = require("./commission.json");
 
@@ -49,7 +51,7 @@ module.exports = {
 
     const streamId = interaction.options.getString("id");
 
-    const connection = await conn.managementConnection()
+    const connection = await conn.managementConnection();
 
     const findLiveQuery =
       "SELECT * FROM Tiktok_Livestream_Schedules WHERE STREAM_ID = ?";
@@ -96,8 +98,15 @@ module.exports = {
       "LEFT JOIN Tiktok_Livestream_Orders o ON s.STREAM_ID = o.STREAM_ID " +
       "WHERE s.STREAM_ID = ? ";
 
+    const findLivestreamOrdersQuery =
+      "SELECT * FROM Tiktok_Livestream_Orders WHERE STREAM_ID = ?";
+
     const orders = await connection
       .query(findLiveOrdersQuery, [streamId])
+      .catch((err) => console.log(err));
+
+    const [live_orders] = await connection
+      .query(findLivestreamOrdersQuery, [streamId])
       .catch((err) => console.log(err));
 
     await connection.end();
@@ -115,6 +124,23 @@ module.exports = {
     });
 
     const liveStats = orders[0][0];
+
+    let excelFile;
+    if (live_orders.length > 0) {
+      const excelData = live_orders.map((obj) => {
+        const orderId = maskOrderId(obj.ORDER_ID);
+        const createdDate = moment
+          .unix(obj.CREATED_DATE)
+          .tz("Asia/Manila")
+          .format("MMMM DD, YYYY [at] h:mm A");
+        const subtotal = pesoFormatter.format(Number(obj.ORDER_SUBTOTAL));
+
+        return [orderId, obj.ORDER_STATUS, subtotal, createdDate];
+      });
+      excelFile = await createExcelFile(excelData, streamId);
+    } else {
+      excelFile = undefined;
+    }
 
     const pending = liveStats.ORDER_STATUSES.filter(
       (obj) => !["CANCELLED", "COMPLETED", "DELIVERED"].includes(obj)
@@ -208,7 +234,7 @@ module.exports = {
 
     const button = new ActionRowBuilder().addComponents(claimButton);
 
-    const currentPage = await interaction.editReply({
+    const messagePayload = {
       content:
         pending > 0
           ? "You cannot yet claim the commission for this livestream because it currently has pending orders."
@@ -216,7 +242,13 @@ module.exports = {
       embeds: [embed],
       components: [button],
       fetchReply: true,
-    });
+    };
+
+    if (excelFile !== undefined) {
+      messagePayload.files = [excelFile];
+    }
+
+    const currentPage = await interaction.editReply(messagePayload);
 
     const collector = await currentPage.createMessageComponentCollector({
       componentType: ComponentType.Button,
@@ -262,6 +294,67 @@ module.exports = {
       }
 
       return "No commission applicable for the given netSales";
+    }
+
+    async function createExcelFile(data, streamId) {
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("Sheet 1");
+
+      const streamIdRow = worksheet.addRow([
+        "LIVESTREAM ID",
+        streamId,
+        "",
+        "",
+        "",
+        "",
+      ]);
+      streamIdRow.getCell(1).font = { bold: true };
+
+      worksheet.addRow(["", "", "", "", "", ""]);
+
+      const headerRow = worksheet.addRow([
+        "ORDER ID",
+        "ORDER STATUS",
+        "ORDER SUBTOTAL",
+        "ORDER CREATED DATE",
+        "LIVESTREAM HOST",
+      ]);
+      headerRow.eachCell((cell) => {
+        cell.font = { bold: true };
+      });
+
+      // Adding data
+      data.forEach((row) => worksheet.addRow(row));
+
+      for (let i = 1; i <= 5; i++) {
+        worksheet.getColumn(i).width = 30;
+        worksheet.getColumn(i).eachCell({ includeEmpty: false }, (cell) => {
+          cell.alignment = { vertical: "middle", horizontal: "center" };
+        });
+      }
+
+      // Writing to buffer
+      const buffer = await workbook.xlsx.writeBuffer();
+
+      const attachment = new AttachmentBuilder()
+        .setFile(buffer)
+        .setName(`LIVESTREAM-${streamId}-ORDERS.xlsx`);
+
+      return attachment;
+    }
+
+    function maskOrderId(number) {
+      let numberStr = number.toString();
+      let length = numberStr.length;
+      if (length < 8) {
+        return numberStr;
+      } else {
+        let maskedStr =
+          numberStr.substring(0, 4) +
+          "▪️".repeat(length - 8) +
+          numberStr.substring(length - 4);
+        return maskedStr;
+      }
     }
   },
 };

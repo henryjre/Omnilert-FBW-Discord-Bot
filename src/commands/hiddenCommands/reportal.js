@@ -96,6 +96,7 @@ module.exports = {
         content: `Cancelled reminders for ${member.nickname}`,
       });
       checkSchedules();
+      return;
     }
 
     function checkSchedules() {

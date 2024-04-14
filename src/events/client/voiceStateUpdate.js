@@ -7,6 +7,8 @@ module.exports = {
       "1207251622124720168",
     ];
 
+    if (process.env.node_env === "dev") return;
+
     if (newState.channel) {
       if (meetingChannels.includes(newState.channelId)) {
         client.events.get("meetingEnter").execute(newState, client);
