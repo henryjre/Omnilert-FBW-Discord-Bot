@@ -49,7 +49,7 @@ module.exports = {
       e.MEMBER_ID, e.TIME_RENDERED, e.NAME, s.MEMBER_ID, s.TIME_RENDERED, s.DEPARTMENT_EXECUTIVE;
     `;
 
-    const connection = await conn.managementConnection()
+    const connection = await conn.managementConnection();
 
     try {
       const [queryResult] = await connection.query(queryString, [
@@ -151,7 +151,7 @@ module.exports = {
       });
       return;
     } finally {
-      await connection.end();
+      await connection.destroy();
     }
   },
 };

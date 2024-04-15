@@ -38,7 +38,7 @@ module.exports = {
       interaction.message.id
     );
 
-    const connection = await conn.managementConnection()
+    const connection = await conn.managementConnection();
 
     if (messageEmbed.data.title.includes("VOTING RIGHTS")) {
       const votes = await getVotingRightsSubmissions();
@@ -53,7 +53,7 @@ module.exports = {
       const updateQuery = `SELECT * FROM Board_Of_Directors WHERE MEMBER_ID = ?`;
       const [core] = await connection.execute(updateQuery, [userId]);
 
-      await connection.end();
+      await connection.destroy();
 
       messageEmbed.data.fields.push(
         {
@@ -130,7 +130,7 @@ module.exports = {
       const updateQuery = `UPDATE Executives SET PBR = ?, TIME_RENDERED = ?, CUMULATIVE_PBR = (CUMULATIVE_PBR + ?) WHERE MEMBER_ID = ?`;
       await connection.execute(updateQuery, [finalPbr, 0, finalPbr, userId]);
 
-      await connection.end();
+      await connection.destroy();
 
       const minutes = Number(exec[0].TIME_RENDERED);
       const totalSum = moment.duration(minutes, "minutes").asHours();

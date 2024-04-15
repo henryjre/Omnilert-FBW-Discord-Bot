@@ -54,7 +54,7 @@ module.exports = {
 
     await timer(1300);
 
-    const connection = await conn.managementConnection()
+    const connection = await conn.managementConnection();
 
     const findLiveQuery =
       "SELECT CLAIMED FROM Tiktok_Livestream_Schedules WHERE STREAM_ID = ?";
@@ -83,7 +83,7 @@ module.exports = {
         embeds: [errorEmbed],
         components: [],
       });
-      await connection.end();
+      await connection.destroy();
       return;
     }
 
@@ -111,7 +111,7 @@ module.exports = {
       ])
       .catch((err) => console.log(err));
 
-    await connection.end();
+    await connection.destroy();
 
     const claimedEmbed = new EmbedBuilder()
       .setTitle(`LIVESTREAM CLAIMED`)

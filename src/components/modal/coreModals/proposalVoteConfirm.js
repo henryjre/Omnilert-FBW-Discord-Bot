@@ -16,14 +16,14 @@ module.exports = {
     const vote = voteFile.getUserVote(interaction.user.id);
     const proposalVotes = await getProposalVotes();
 
-    const connection = await conn.managementConnection()
+    const connection = await conn.managementConnection();
 
     const selectMemberQuery =
       "SELECT * FROM Board_Of_Directors WHERE MEMBER_ID = ?";
     const [selectMemberResult] = await connection.execute(selectMemberQuery, [
       String(interaction.user.id),
     ]);
-    await connection.end();
+    await connection.destroy();
 
     const votingRights = selectMemberResult[0].VOTING_RIGHTS;
     const selectedValueIndex = proposalVotes.findIndex(

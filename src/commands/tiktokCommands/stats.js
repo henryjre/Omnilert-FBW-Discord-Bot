@@ -38,7 +38,7 @@ module.exports = {
 
     // const streamerName = interaction.user.globalName;
 
-    const connection = await conn.managementConnection()
+    const connection = await conn.managementConnection();
 
     // const findLiveOrdersQuery =
     //   "SELECT " +
@@ -70,7 +70,7 @@ module.exports = {
       .query(findOrdersForScheduleQuery, [interaction.user.id])
       .catch((err) => console.error(err));
 
-    await connection.end();
+    await connection.destroy();
 
     if (findLiveOrders[0].length <= 0) {
       const noOrdersEmbed = new EmbedBuilder()

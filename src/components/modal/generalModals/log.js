@@ -9,7 +9,7 @@ module.exports = {
     name: "log",
   },
   async execute(interaction, client) {
-    const connection = await conn.managementConnection()
+    const connection = await conn.managementConnection();
 
     const queryWorkShiftString =
       "SELECT * FROM WORK_HOURS WHERE DISCORD_ID = ? AND TIME_OUT IS NULL";
@@ -21,7 +21,7 @@ module.exports = {
       await interaction.reply({
         content: `🔴 ERROR: No work log in found.`,
       });
-      await connection.end();
+      await connection.destroy();
       return;
     }
 
@@ -51,7 +51,7 @@ module.exports = {
         .catch((err) => console.log(err));
     }
 
-    await connection.end();
+    await connection.destroy();
 
     // const convertedImage1 =
     //   firstImageLog.length > 0 ? `[See Attachment](${firstImageLog})` : "";

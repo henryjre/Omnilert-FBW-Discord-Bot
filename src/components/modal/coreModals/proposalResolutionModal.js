@@ -21,12 +21,12 @@ module.exports = {
       channelId = "1186661471451627661";
     }
 
-    const connection = await conn.managementConnection()
+    const connection = await conn.managementConnection();
 
     const updateQuery = `UPDATE ${databaseTable} SET RESOLUTION = ? WHERE MESSAGE_ID = ?`;
     await connection.execute(updateQuery, [resolution, interaction.message.id]);
 
-    await connection.end();
+    await connection.destroy();
 
     const message = await interaction.message.channel.messages.fetch(
       interaction.message.id

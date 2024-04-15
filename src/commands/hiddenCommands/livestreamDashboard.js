@@ -17,7 +17,7 @@ module.exports = {
   async execute(interaction, client) {
     const streamerId = interaction.user.id;
 
-    const connection = await conn.managementConnection()
+    const connection = await conn.managementConnection();
 
     try {
       // Query to get BALANCE from Tiktok_Livestreamers
@@ -159,7 +159,7 @@ module.exports = {
       console.log(error);
     } finally {
       // Close the connection after executing queries
-      await connection.end();
+      await connection.destroy();
     }
 
     function calculateCommission(netSales) {

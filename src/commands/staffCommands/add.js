@@ -244,7 +244,7 @@ async function addSubmemberPbr(interaction, client) {
     });
     return;
   } finally {
-    await connection.end();
+    await connection.destroy();
   }
 }
 
@@ -303,7 +303,7 @@ async function addAssociate(interaction, client) {
       content: error.toString(),
     });
   } finally {
-    await connection.end();
+    await connection.destroy();
   }
 }
 

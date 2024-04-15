@@ -51,7 +51,7 @@ module.exports = {
       components: [],
     });
 
-    const connection = await conn.managementConnection()
+    const connection = await conn.managementConnection();
 
     const backButton = new ButtonBuilder()
       .setCustomId("allDashboardBackButton")
@@ -210,7 +210,7 @@ module.exports = {
       console.log(error);
     } finally {
       // Close the connection after executing queries
-      await connection.end();
+      await connection.destroy();
     }
 
     function calculateCommission(netSales) {

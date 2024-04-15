@@ -85,7 +85,7 @@ module.exports = {
           selectMemberQuery,
           [String(interaction.user.id)]
         );
-        await connection.end();
+        await connection.destroy();
 
         const votingRights = selectMemberResult[0].VOTING_RIGHTS;
         const selectedValueIndex = proposalVotes.findIndex(

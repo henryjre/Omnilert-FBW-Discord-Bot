@@ -51,7 +51,7 @@ module.exports = {
       await interaction.editReply({
         content: `🔴 ERROR: No work log in found.`,
       });
-      await connection.end();
+      await connection.destroy();
       return;
     }
 
@@ -137,7 +137,7 @@ module.exports = {
         ephemeral: true,
       });
     } finally {
-      await connection.end();
+      await connection.destroy();
     }
 
     function convertMilliseconds(milliseconds) {

@@ -40,7 +40,7 @@ module.exports = {
       embedTitleType = "DIRECTORS PROPOSAL";
     }
 
-    const connection = await conn.managementConnection()
+    const connection = await conn.managementConnection();
 
     const insertQuery = `INSERT INTO ${sqlTableName} (TITLE, ISSUE, ABSTRACT) VALUES (?, ?, ?)`;
     await connection
@@ -104,6 +104,6 @@ module.exports = {
       idResult[0][0].ID,
     ]);
 
-    await connection.end();
+    await connection.destroy();
   },
 };

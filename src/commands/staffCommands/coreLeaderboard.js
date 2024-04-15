@@ -30,7 +30,7 @@ module.exports = {
 
     const subcommand = interaction.options.getSubcommand();
 
-    const connection = await conn.managementConnection()
+    const connection = await conn.managementConnection();
 
     const role = await interaction.guild.roles.cache.get(
       subcommand === "executives"
@@ -107,7 +107,7 @@ module.exports = {
         content: "🔴 ERROR: There was an error while getting the leaderboards.",
       });
     } finally {
-      await connection.end();
+      await connection.destroy();
     }
   },
 };

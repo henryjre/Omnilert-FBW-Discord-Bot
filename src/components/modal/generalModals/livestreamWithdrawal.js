@@ -58,7 +58,7 @@ module.exports = {
     const netWithdrawal = parseFloat(netAmount[0].replace(/,/g, ""));
     const claimDate = moment().format("YYYY-MM-DD HH:mm:ss");
 
-    const connection = await conn.managementConnection()
+    const connection = await conn.managementConnection();
 
     const updateBalanceQuery =
       "UPDATE Tiktok_Livestreamers SET BALANCE = (BALANCE - ?), LIABILITIES = (LIABILITIES - ?), WITHDRAWALS = (WITHDRAWALS - 1) WHERE STREAMER_ID = ?";
@@ -90,7 +90,7 @@ module.exports = {
       ])
       .catch((err) => console.log(err));
 
-    await connection.end();
+    await connection.destroy();
 
     const newEmbed = new EmbedBuilder()
       .setTitle("⌛ NEW COMMISSION WITHDRAWAL")

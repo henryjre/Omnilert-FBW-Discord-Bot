@@ -71,6 +71,6 @@ module.exports = async (req, res) => {
     console.log(error);
     res.status(400).json({ ok: true, message: "an error has occured" });
   } finally {
-    await connection.end();
+    await connection.destroy();
   }
 };

@@ -31,7 +31,7 @@ module.exports = {
 
     await interaction.deferReply();
 
-    const connection = await conn.managementConnection()
+    const connection = await conn.managementConnection();
 
     try {
       const insertQuery1 = `INSERT INTO Tiktok_Livestreamers (STREAMER_ID, BALANCE, LIABILITIES, WITHDRAWALS) VALUES (?, ?, ?)`;
@@ -80,7 +80,7 @@ module.exports = {
         components: [],
       });
     } finally {
-      await connection.end();
+      await connection.destroy();
     }
   },
 };

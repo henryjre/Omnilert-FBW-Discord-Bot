@@ -121,9 +121,6 @@ module.exports = {
       "_" +
       moment.unix(apiStartTime).tz("Asia/Manila").format("MMDDYY");
     const streamerName = member.nickname;
-    const createdDate = moment()
-      .tz("Asia/Manila")
-      .format("YYYY-MM-DD HH:mm:ss");
 
     const connection = await conn.managementConnection();
     const def_connection = await conn.leviosaConnection();
@@ -139,7 +136,7 @@ module.exports = {
       process.env.tiktok_secrets_id,
     ]);
 
-    await def_connection.end();
+    await def_connection.destroy();
 
     const secrets = secretsResult[0];
 
@@ -293,14 +290,14 @@ module.exports = {
       .query(insertQueryLive, [
         livestreamId,
         streamer.id,
-        streamer.globalName,
+        streamerName,
         apiStartTime,
         apiEndTime,
         liveId,
       ])
       .catch((err) => console.log(err));
 
-    await connection.end();
+    await connection.destroy();
 
     const embedToSend = new EmbedBuilder()
       .setTitle(`${embed.emoji} TIKTOK LIVESTREAM SAVED`)
@@ -336,7 +333,7 @@ module.exports = {
       ])
       .setColor(embed.color)
       .setFooter({
-        text: `Command by: ${interaction.user.globalName}`,
+        text: `Command by: ${interactionMember.nickname}`,
       });
 
     if (embed.description.length > 0) {
