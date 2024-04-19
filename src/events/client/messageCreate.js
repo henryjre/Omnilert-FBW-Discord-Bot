@@ -121,6 +121,9 @@ module.exports = {
 
       if (department) {
         if (department.userIds.includes(message.author.id)) {
+          // return client.events
+          //   .get("reportal")
+          //   .execute(message, thread.id, client, 0);
           return client.commands
             .get("reportal")
             .execute(message, thread.id, client, 0);
