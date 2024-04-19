@@ -1,16 +1,19 @@
 const schedule = require("node-schedule");
 const { EmbedBuilder } = require("discord.js");
+const moment = require("moment-timezone");
 
 const conn = require("../../sqlConnection");
 
-const ttsReminders = require("./reminderTts.json");
+const ttsReminders = require("../../commands/hiddenCommands/reminderTts.json");
 
 let reminders = [];
 let penalty = {};
 module.exports = {
   name: "reportal",
   async execute(message, threadId, client, type) {
-    const author = message.type === 2 ? message.user : message.author;
+    const author = [3, 2].includes(message.type)
+      ? message.user
+      : message.author;
     const thread = message.guild.channels.cache.get(threadId);
 
     try {
@@ -21,15 +24,13 @@ module.exports = {
 
       try {
         if (type === 0) {
-          const queryWorkShiftString =
-            "SELECT * FROM WORK_HOURS WHERE DISCORD_ID = ? AND TIME_OUT IS NULL";
-          const workShift = await connection
-            .query(queryWorkShiftString, [author.id])
-            .catch((err) => console.log(err));
+          const queryReportal =
+            "SELECT * FROM Executive_Reportals WHERE EXECUTIVE_ID = ? AND TIME_OUT_UNIX IS NULL";
+          const [reportal] = await mgmt_connection.query(queryReportal, [
+            author.id,
+          ]);
 
-          await connection.destroy();
-
-          if (workShift[0].length <= 0) return;
+          if (reportal.length <= 0) return;
         }
 
         const reminderIndex = reminders.findIndex((r) => r.id === channelId);
@@ -44,7 +45,7 @@ module.exports = {
           console.log(`Resetting reminders for ${member.nickname}`);
           const first_reminder = schedule.scheduleJob(
             `FIRST REMINDER: ${member.nickname}`,
-            calculateReminder(15),
+            calculateReminder(Date.now(), 15),
             () => {
               firstReminder();
               checkSchedules();
@@ -53,7 +54,7 @@ module.exports = {
 
           const second_reminder = schedule.scheduleJob(
             `SECOND REMINDER: ${member.nickname}`,
-            calculateReminder(27),
+            calculateReminder(Date.now(), 27),
             () => {
               secondReminder();
               checkSchedules();
@@ -75,7 +76,7 @@ module.exports = {
             `PENALTY: ${member.nickname}`,
             calculateNextPenalty(Date.now()),
             () => {
-              penalizeUser();
+              penalizeUser(member);
               checkSchedules();
             }
           );
@@ -98,8 +99,8 @@ module.exports = {
       });
     }
 
-    function calculateReminder(minutes) {
-      const nextSchedule = new Date(reminderStart + minutes * 60000);
+    function calculateReminder(time, minutes) {
+      const nextSchedule = new Date(time + minutes * 60000);
       // const nextSchedule = new Date(penaltyTimestampOnStart + 20 * 1000);
       return nextSchedule;
     }
@@ -142,7 +143,7 @@ module.exports = {
       console.log("-----------------------------------------");
     }
 
-    async function penalizeUser() {
+    async function penalizeUser(member) {
       try {
         const mgmt_connection = await conn.managementConnection();
         try {
@@ -151,14 +152,90 @@ module.exports = {
           );
 
           const queryShift =
-            "SELECT * FROM WORK_HOURS WHERE DISCORD_ID = ? AND TIME_OUT IS NULL";
-          const [workShift] = await mgmt_connection.query(queryShift, [
+            "SELECT * FROM Executive_Reportals WHERE EXECUTIVE_ID = ? AND TIME_OUT_UNIX IS NULL";
+          const [reportal] = await mgmt_connection.query(queryShift, [
             member.user.id,
           ]);
 
-          const workId = workShift[0].ID;
-          const timeIn = workShift[0].TIME_IN;
+          const workId = reportal[0].ID;
+          const taskId = reportal[0].TASK_ID;
+          const timeIn = reportal[0].TIME_IN_UNIX;
           const timeOut = Date.now();
+
+          const timeInStamp = moment
+            .unix(timeIn / 1000)
+            .tz("Asia/Manila")
+            .format("MMM DD, YYYY hh:mm A");
+          const timeOutStamp = moment
+            .unix(timeOut / 1000)
+            .tz("Asia/Manila")
+            .format("MMM DD, YYYY hh:mm A");
+
+          const duration = timeOut - timeIn;
+
+          const { hours, minutes } = convertMilliseconds(duration);
+          const minutesOnly = Math.floor(duration / 60000);
+
+          try {
+            await mgmt_connection.beginTransaction();
+
+            const updateQuery =
+              "UPDATE Executives SET TIME_RENDERED = (TIME_RENDERED + ?) WHERE MEMBER_ID = ?";
+            await mgmt_connection.query(updateQuery, [
+              minutesOnly,
+              member.user.id,
+            ]);
+
+            const updateWorkShiftString =
+              "UPDATE Executive_Reportals SET TIME_OUT_UNIX = ? WHERE ID = ?";
+            await mgmt_connection.query(updateWorkShiftString, [
+              timeOut,
+              workId,
+            ]);
+
+            const updateTasks =
+              "UPDATE Executive_Tasks SET TIME_RENDERED = (TIME_RENDERED + ?) WHERE TASK_ID = ?";
+            await mgmt_connection.query(updateTasks, [minutesOnly, taskId]);
+
+            await mgmt_connection.commit();
+            console.log("Transaction committed successfully.");
+          } catch (error) {
+            await mgmt_connection.rollback();
+            console.error("Transaction rolled back due to error:", error);
+          }
+
+          const embed = new EmbedBuilder()
+            .setTitle(`🔴 LOG OUT`)
+            .setDescription(
+              `👤 **User:** ${member.nickname}\n⏱️ **Time In:** ${timeInStamp}\n⏱️ **Time Out:** ${timeOutStamp}\n⏳ **Duration:** ${hours} hours and ${minutes} minutes`
+            )
+            .setColor("Red");
+
+          await thread.send({
+            embeds: [embed],
+          });
+
+          await thread.members.remove(member.user.id);
+          await thread.setLocked(true);
+          await thread.setArchived(true);
+
+          const threadCreatedMessages = await parentChannel.messages
+            .fetch()
+            .then((messages) => {
+              return messages.filter((m) => m.author.bot && m.type === 18);
+            });
+
+          const lastThreadCreated = await threadCreatedMessages.find(
+            (t) => t.reference.channelId === thread.id
+          );
+
+          await lastThreadCreated.delete();
+
+          const channelThreads = parentChannel.threads;
+          const activeThreads = await channelThreads.fetchActive();
+          if (activeThreads.threads.size <= 0) {
+            await parentChannel.setName(parentChannel.name.replace("🟢", "🔴"));
+          }
         } finally {
           mgmt_connection.destroy();
         }
@@ -167,96 +244,6 @@ module.exports = {
         await thread.send({
           content: `🔴 PENALTY ERROR: ${error.message}.`,
         });
-      }
-
-      try {
-        const timeInStamp = new Date(timeIn).toLocaleDateString("en-PH", {
-          timeZone: "Asia/Manila",
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-          hour: "numeric",
-          minute: "numeric",
-          hour12: true,
-        });
-
-        const timeOutStamp = new Date(timeOut).toLocaleDateString("en-PH", {
-          timeZone: "Asia/Manila",
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-          hour: "numeric",
-          minute: "numeric",
-          hour12: true,
-        });
-
-        const duration = timeOut - timeIn;
-        const { hours, minutes } = convertMilliseconds(duration);
-        const minutesOnly = Math.floor(duration / 60000);
-
-        let updateQuery;
-        if (member.roles.cache.has("1185935514042388520")) {
-          updateQuery =
-            "UPDATE Executives SET TIME_RENDERED = (TIME_RENDERED + ?) WHERE MEMBER_ID = ?";
-        } else {
-          updateQuery =
-            "UPDATE Sub_Members SET TIME_RENDERED = (TIME_RENDERED + ?) WHERE MEMBER_ID = ?";
-        }
-
-        const updateWorkShiftString =
-          "UPDATE WORK_HOURS SET TIME_OUT = ? WHERE ID = ?";
-        await connection
-          .query(updateWorkShiftString, [timeOut, workId])
-          .catch((err) => console.log(err));
-
-        await connection
-          .query(updateQuery, [minutesOnly, member.user.id])
-          .catch((err) => console.log(err));
-
-        const embed = new EmbedBuilder()
-          .setTitle(`🔴 LOG OUT`)
-          .setDescription(
-            `👤 **User:** ${member.nickname}\n⏱️ **Time In:** ${timeInStamp}\n⏱️ **Time Out:** ${timeOutStamp}\n⏳ **Duration:** ${hours} hours and ${minutes} minutes`
-          )
-          .setColor("Red")
-          // .setTimestamp(timeStamp)
-          .setFooter({
-            iconURL: member.user.displayAvatarURL(),
-            text: "Leviosa Philippines",
-          });
-
-        await thread.send({
-          embeds: [embed],
-        });
-
-        await thread.members.remove(member.user.id);
-        await thread.setLocked(true);
-        await thread.setArchived(true);
-
-        const threadCreatedMessages = await parentChannel.messages
-          .fetch()
-          .then((messages) => {
-            return messages.filter((m) => m.author.bot && m.type === 18);
-          });
-
-        const lastThreadCreated = await threadCreatedMessages.find(
-          (t) => t.reference.channelId === thread.id
-        );
-
-        await lastThreadCreated.delete();
-
-        const channelThreads = parentChannel.threads;
-        const activeThreads = await channelThreads.fetchActive();
-        if (activeThreads.threads.size <= 0) {
-          await parentChannel.setName(parentChannel.name.replace("🟢", "🔴"));
-        }
-      } catch (error) {
-        console.log(error);
-        await thread.send({
-          content: `<@748568303219245117>, there was an error while recording the penalty for ${member.nickname}.`,
-        });
-      } finally {
-        await connection.destroy();
       }
 
       function convertMilliseconds(milliseconds) {
@@ -305,7 +292,7 @@ module.exports = {
       thread.send({
         content:
           author.toString() +
-          ", You only have 3 minutes left to update on this channel before you get kicked out of the thread.",
+          ", This is your last warning. You only have 3 minutes left to update on this channel before you get kicked out of the thread.",
         embeds: [reminderEmbed],
         tts: true,
       });
