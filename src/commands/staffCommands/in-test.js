@@ -21,7 +21,7 @@ module.exports = {
       const member = interaction.guild.members.cache.get(interaction.user.id);
       const messagePayload = {};
       try {
-        const queryTasks = `SELECT * FROM Executive_Tasks WHERE EXECUTIVE_ID = ? ORDER BY TIME_RENDERED ASC`;
+        const queryTasks = `SELECT * FROM Executive_Tasks WHERE EXECUTIVE_ID = ?`;
         // const queryExecutive = `SELECT * FROM Executives WHERE MEMBER_ID = ?`;
 
         // const [executive] = await mgmt_connection.query(queryExecutive, [
