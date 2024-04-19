@@ -49,7 +49,7 @@ module.exports = {
           return;
         }
 
-        const timeInMoment = moment.unix(timeIn).tz("Asia/Manila");
+        const timeInMoment = moment.unix(timeIn / 1000).tz("Asia/Manila");
 
         const formattedTimestamp = timeInMoment.format("MMM D, YYYY h:mm A");
         const nextPenaltyTimestamp = timeInMoment
@@ -77,8 +77,6 @@ module.exports = {
           ])
           .setColor("Green");
 
-        await message.delete();
-
         const thread = await interaction.channel.threads.create({
           name: `${nanoid()} | ${member.nickname} - ${taskName}`,
           autoArchiveDuration: 1440,
@@ -86,9 +84,11 @@ module.exports = {
         await thread.join();
         await thread.members.add(interaction.user.id);
 
-        await interaction.channel.setName(
-          interaction.channel.name.replace("🔴", "🟢")
-        );
+        const newChannelName = interaction.channel.name.replace("🔴", "🟢");
+
+        await interaction.channel.setName(newChannelName);
+
+        await message.delete();
 
         const embed = new EmbedBuilder()
           .setDescription(
@@ -116,6 +116,10 @@ module.exports = {
           taskName,
           thread.id,
         ]);
+
+        await client.events
+          .get("reportal")
+          .execute(interaction, thread.id, client, 0);
       } finally {
         mgmt_connection.destroy();
       }
