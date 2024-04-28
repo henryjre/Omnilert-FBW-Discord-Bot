@@ -32,7 +32,7 @@ module.exports = {
       },
       {
         department: "Design",
-        userIds: ["719135399859060796"],
+        userIds: ["719135399859060796", "754997638415253575"],
         officeChannelId: "1117387017089728512",
       },
       {
