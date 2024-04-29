@@ -15,9 +15,8 @@ module.exports = async (req, res) => {
     }
 
     const embed = new EmbedBuilder()
-      .setDescription(
-        `## ${executive_name}\nPBR Voting is now open for this executive.`
-      )
+      .setTitle(executive_name)
+      .setDescription(`PBR Voting is now open for this executive.`)
       .setColor("Blurple");
 
     const link = new ButtonBuilder()
