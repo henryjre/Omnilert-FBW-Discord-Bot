@@ -93,7 +93,7 @@ module.exports = {
         await channel.send(messagePayload);
         await interaction.editReply({ content: "NCR reported successfully!" });
       } finally {
-        mgmt_connection.destroy();
+        await mgmt_connection.end();
       }
     } catch (error) {
       console.log(error.stack);

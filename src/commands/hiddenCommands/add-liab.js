@@ -120,7 +120,7 @@ module.exports = {
         components: [],
       });
     } finally {
-      await connection.destroy();
+      await connection.end();
     }
   },
 };

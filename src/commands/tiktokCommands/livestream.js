@@ -136,7 +136,7 @@ module.exports = {
       process.env.tiktok_secrets_id,
     ]);
 
-    await def_connection.destroy();
+    await def_connection.end();
 
     const secrets = secretsResult[0];
 
@@ -297,7 +297,7 @@ module.exports = {
       ])
       .catch((err) => console.log(err));
 
-    await connection.destroy();
+    await connection.end();
 
     const embedToSend = new EmbedBuilder()
       .setTitle(`${embed.emoji} TIKTOK LIVESTREAM SAVED`)

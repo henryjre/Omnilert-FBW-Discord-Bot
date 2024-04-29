@@ -176,7 +176,7 @@ module.exports = async (req, res) => {
 
       return res.status(200).json({ ok: true, message: "success" });
     } finally {
-      mgmt_connection.destroy();
+      await mgmt_connection.end();
     }
   } catch (error) {
     console.log(error.stack);

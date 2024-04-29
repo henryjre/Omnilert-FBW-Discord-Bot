@@ -145,7 +145,7 @@ module.exports = {
         .query(selectQuery, [user.id])
         .catch((err) => console.log(err));
 
-      await connection.destroy();
+      await connection.end();
 
       const totalTime = parseInt(executive[0].TIME_RENDERED);
 

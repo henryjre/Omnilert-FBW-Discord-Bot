@@ -26,7 +26,7 @@ module.exports = {
     const updateQuery = `UPDATE ${databaseTable} SET RESOLUTION = ? WHERE MESSAGE_ID = ?`;
     await connection.execute(updateQuery, [resolution, interaction.message.id]);
 
-    await connection.destroy();
+    await connection.end();
 
     const message = await interaction.message.channel.messages.fetch(
       interaction.message.id

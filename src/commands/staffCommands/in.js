@@ -33,7 +33,7 @@ module.exports = {
         content: `🔴 ERROR: You currently have a running shift. Please use /out to log out before logging in.`,
         ephemeral: true,
       });
-      await connection.destroy();
+      await connection.end();
       return;
     }
 
@@ -94,7 +94,7 @@ module.exports = {
       .query(queryWorkShiftString, [id, userId, timeIn])
       .catch((err) => console.log(err));
 
-    await connection.destroy();
+    await connection.end();
 
     await client.commands
       .get("reportal")

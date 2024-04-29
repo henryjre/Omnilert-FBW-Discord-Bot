@@ -26,7 +26,7 @@ module.exports = {
         .query(queryWorkShiftString, [author.id])
         .catch((err) => console.log(err));
 
-      await connection.destroy();
+      await connection.end();
 
       if (workShift[0].length <= 0) return;
     }
@@ -236,7 +236,7 @@ module.exports = {
           content: `<@748568303219245117>, there was an error while recording the penalty for ${member.nickname}.`,
         });
       } finally {
-        await connection.destroy();
+        await connection.end();
       }
 
       function convertMilliseconds(milliseconds) {

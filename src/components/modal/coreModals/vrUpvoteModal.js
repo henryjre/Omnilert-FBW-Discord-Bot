@@ -91,7 +91,7 @@ module.exports = {
     const updateQuery2 = `UPDATE Board_Of_Directors SET VOTING_RIGHTS = (VOTING_RIGHTS + 1) WHERE MEMBER_ID = ?`;
     await connection.execute(updateQuery2, ["864920050691866654"]);
 
-    await connection.destroy();
+    await connection.end();
 
     await storeVoteSubmission({
       vote: "upvote",

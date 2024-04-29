@@ -83,7 +83,7 @@ module.exports = {
         embeds: [errorEmbed],
         components: [],
       });
-      await connection.destroy();
+      await connection.end();
       return;
     }
 
@@ -111,7 +111,7 @@ module.exports = {
       ])
       .catch((err) => console.log(err));
 
-    await connection.destroy();
+    await connection.end();
 
     const claimedEmbed = new EmbedBuilder()
       .setTitle(`LIVESTREAM CLAIMED`)

@@ -70,7 +70,7 @@ module.exports = {
       .query(findOrdersForScheduleQuery, [interaction.user.id])
       .catch((err) => console.error(err));
 
-    await connection.destroy();
+    await connection.end();
 
     if (findLiveOrders[0].length <= 0) {
       const noOrdersEmbed = new EmbedBuilder()

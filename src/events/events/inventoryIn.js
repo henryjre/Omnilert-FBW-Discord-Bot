@@ -49,7 +49,7 @@ module.exports = {
         await message.delete();
         await thread.send({ embeds: [embed] });
       } finally {
-        await inv_connection.destroy();
+        await inv_connection.end();
       }
     } catch (error) {
       console.log(error.toString());

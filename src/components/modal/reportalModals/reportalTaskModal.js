@@ -128,7 +128,7 @@ module.exports = {
           );
         }
       } finally {
-        mgmt_connection.destroy();
+        await mgmt_connection.end();
       }
     } catch (error) {
       console.log(error.stack);

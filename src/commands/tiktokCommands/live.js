@@ -68,7 +68,7 @@ module.exports = {
       await interaction.editReply({
         embeds: [noOrdersEmbed],
       });
-      await connection.destroy();
+      await connection.end();
       return;
     }
 
@@ -76,7 +76,7 @@ module.exports = {
       await interaction.editReply({
         content: "🔴 ERROR: You cannot retrieve that livestream.",
       });
-      await connection.destroy();
+      await connection.end();
       return;
     }
 
@@ -109,7 +109,7 @@ module.exports = {
       .query(findLivestreamOrdersQuery, [streamId])
       .catch((err) => console.log(err));
 
-    await connection.destroy();
+    await connection.end();
 
     orders[0].forEach((order) => {
       order.ORDER_STATUSES = order.ORDER_STATUSES

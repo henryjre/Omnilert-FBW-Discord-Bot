@@ -151,7 +151,7 @@ module.exports = {
       });
       return;
     } finally {
-      await connection.destroy();
+      await connection.end();
     }
   },
 };

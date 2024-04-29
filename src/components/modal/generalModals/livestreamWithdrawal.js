@@ -90,7 +90,7 @@ module.exports = {
       ])
       .catch((err) => console.log(err));
 
-    await connection.destroy();
+    await connection.end();
 
     const newEmbed = new EmbedBuilder()
       .setTitle("⌛ NEW COMMISSION WITHDRAWAL")

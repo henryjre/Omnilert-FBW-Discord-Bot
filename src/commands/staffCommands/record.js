@@ -353,7 +353,7 @@ async function processToShipOrders(interaction, client) {
       embeds: [errorEmbed],
     });
   } finally {
-    await connection.destroy();
+    await connection.end();
   }
 }
 
@@ -601,7 +601,7 @@ async function processCancelledOrders(interaction, client) {
       embeds: [errorEmbed],
     });
   } finally {
-    await connection.destroy();
+    await connection.end();
   }
 }
 
@@ -775,7 +775,7 @@ async function processSettlement(interaction, client) {
       embeds: [errorEmbed],
     });
   } finally {
-    await connection.destroy();
+    await connection.end();
   }
 
   function generateSettlementFees(

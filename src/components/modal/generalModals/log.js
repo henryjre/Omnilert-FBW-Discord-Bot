@@ -21,7 +21,7 @@ module.exports = {
       await interaction.reply({
         content: `🔴 ERROR: No work log in found.`,
       });
-      await connection.destroy();
+      await connection.end();
       return;
     }
 
@@ -51,7 +51,7 @@ module.exports = {
         .catch((err) => console.log(err));
     }
 
-    await connection.destroy();
+    await connection.end();
 
     // const convertedImage1 =
     //   firstImageLog.length > 0 ? `[See Attachment](${firstImageLog})` : "";

@@ -52,7 +52,7 @@ module.exports = {
       .query(findStreamerQuery, [streamerId])
       .catch((err) => console.log(err));
 
-    await connection.destroy();
+    await connection.end();
 
     const withdrawals = streamerData[0].WITHDRAWALS;
 

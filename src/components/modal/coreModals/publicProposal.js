@@ -106,6 +106,6 @@ module.exports = {
       idResult[0][0].ID,
     ]);
 
-    await connection.destroy();
+    await connection.end();
   },
 };

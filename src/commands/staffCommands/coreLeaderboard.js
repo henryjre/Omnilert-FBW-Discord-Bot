@@ -107,7 +107,7 @@ module.exports = {
         content: "🔴 ERROR: There was an error while getting the leaderboards.",
       });
     } finally {
-      await connection.destroy();
+      await connection.end();
     }
   },
 };

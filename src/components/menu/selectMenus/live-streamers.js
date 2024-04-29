@@ -210,7 +210,7 @@ module.exports = {
       console.log(error);
     } finally {
       // Close the connection after executing queries
-      await connection.destroy();
+      await connection.end();
     }
 
     function calculateCommission(netSales) {

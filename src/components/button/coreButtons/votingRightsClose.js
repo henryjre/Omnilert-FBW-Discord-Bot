@@ -53,7 +53,7 @@ module.exports = {
       const updateQuery = `SELECT * FROM Board_Of_Directors WHERE MEMBER_ID = ?`;
       const [core] = await connection.execute(updateQuery, [userId]);
 
-      await connection.destroy();
+      await connection.end();
 
       messageEmbed.data.fields.push(
         {
@@ -130,7 +130,7 @@ module.exports = {
       const updateQuery = `UPDATE Executives SET PBR = ?, TIME_RENDERED = ?, CUMULATIVE_PBR = (CUMULATIVE_PBR + ?) WHERE MEMBER_ID = ?`;
       await connection.execute(updateQuery, [finalPbr, 0, finalPbr, userId]);
 
-      await connection.destroy();
+      await connection.end();
 
       const minutes = Number(exec[0].TIME_RENDERED);
       const totalSum = moment.duration(minutes, "minutes").asHours();

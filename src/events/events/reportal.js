@@ -90,7 +90,7 @@ module.exports = {
 
         checkSchedules();
       } finally {
-        mgmt_connection.destroy();
+        await mgmt_connection.end();
       }
     } catch (error) {
       console.log(error.stack);
@@ -237,7 +237,7 @@ module.exports = {
             await parentChannel.setName(parentChannel.name.replace("🟢", "🔴"));
           }
         } finally {
-          mgmt_connection.destroy();
+          await mgmt_connection.end();
         }
       } catch (error) {
         console.log(error.stack);

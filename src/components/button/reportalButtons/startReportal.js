@@ -121,7 +121,7 @@ module.exports = {
           .get("reportal")
           .execute(interaction, thread.id, client, 0);
       } finally {
-        mgmt_connection.destroy();
+        await mgmt_connection.end();
       }
     } catch (error) {
       console.log(error.stack);
