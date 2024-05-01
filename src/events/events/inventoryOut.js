@@ -23,6 +23,42 @@ module.exports = {
           );
         }
 
+        const selectPendingQuery = `SELECT * FROM Pending_Inventory_Out WHERE PLATFORM = ? ORDER BY ORDER_CREATED ASC LIMIT 3;`;
+        const [pendingResults] = await inv_connection.query(
+          selectPendingQuery,
+          [platform]
+        );
+
+        const keysToExtract = [
+          "ORDER_ID",
+          "PRODUCT_SKU",
+          "PRODUCT_NAME",
+          // "ORDER_CREATED",
+        ];
+
+        const pendingData = pendingResults.map((obj) =>
+          keysToExtract.map((key) => obj[key])
+        );
+
+        const tableData = [
+          ["Order ID", "Product SKU", "Product Name"],
+          ...pendingData,
+        ];
+
+        const config = {
+          columns: [
+            { alignment: "center" },
+            { alignment: "center" },
+            { alignment: "center" },
+          ],
+          header: {
+            alignment: "center",
+            content: "Next 3 pending products for SHOPEE", // platform
+          },
+        };
+
+        const t = table(tableData, config);
+
         const scannedProduct = selectResult[0];
         const sqlScanDate = moment()
           .tz("Asia/Manila")
@@ -47,7 +83,9 @@ module.exports = {
 
         const embed = buildSuccessEmbed(message, scannedProduct);
         await message.delete();
-        await thread.send({ embeds: [embed] });
+
+        const threadMessage = await thread.send({ embeds: [embed] });
+        await threadMessage.reply({ content: `\`\`\`\n${t}\`\`\`` });
       } finally {
         await inv_connection.end();
       }

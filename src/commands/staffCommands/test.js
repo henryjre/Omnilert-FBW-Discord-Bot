@@ -1,9 +1,13 @@
-const { SlashCommandBuilder, Embed, EmbedBuilder } = require("discord.js");
+const {
+  SlashCommandBuilder,
+  Embed,
+  EmbedBuilder,
+  AttachmentBuilder,
+} = require("discord.js");
 const conn = require("../../sqlConnection");
-const XLSX = require("xlsx");
-const fetch = (...args) =>
-  import("node-fetch").then(({ default: fetch }) => fetch(...args));
-const crypto = require("crypto");
+const { table } = require("table");
+const moment = require("moment-timezone");
+const { createCanvas, loadImage, registerFont } = require("canvas");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -17,58 +21,69 @@ module.exports = {
   // )
   async execute(interaction, client) {
     await interaction.deferReply();
-    const timest = Math.floor(Date.now() / 1000);
-    const path = "/api/v2/auth/token/get";
-    const partnerKey =
-      "424b4941644c776870534b4d474e45566e6d516e74717241717966637371634c";
-
-    const partnerId = 1122945;
-    const host = "https://partner.test-stable.shopeemobile.com";
-
-    const baseString = `${partnerId}${path}${timest}`;
-
-    const sign = signRequest(baseString, partnerKey);
-
-    const params = {
-      partner_id: partnerId,
-      timestamp: timest,
-      sign: sign,
-    };
-
-    const body = {
-      partner_id: partnerId,
-      shop_id: parseInt(process.env.shopeeShopId),
-      code: "4f46796c5450515162514f7344655166",
-    };
-
-    const url = `${host}${path}?${Object.entries(params)
-      .map(([key, value]) => `${key}=${value}`)
-      .join("&")}`;
 
     try {
-      const options = {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
-      };
-      const response = await fetch(url, options);
-      const responseData = await response.json();
+      const inv_connection = await conn.inventoryConnection();
+      try {
+        const selectPendingQuery = `SELECT * FROM Pending_Inventory_Out WHERE PLATFORM = ? ORDER BY ORDER_CREATED ASC LIMIT 3;`;
+        const [pendingResults] = await inv_connection.query(
+          selectPendingQuery,
+          ["SHOPEE"]
+        );
 
-      console.log(responseData);
+        const keysToExtract = [
+          "ORDER_ID",
+          "PRODUCT_SKU",
+          "PRODUCT_NAME",
+          // "ORDER_CREATED",
+        ];
+
+        const pendingData = pendingResults.map((obj) =>
+          keysToExtract.map((key) => {
+            if (key === "ORDER_CREATED") {
+              const createdDate = moment(obj[key])
+                .tz("Asia/Manila")
+                .format("MMM DD, YYYY h:mm A");
+
+              return createdDate;
+            } else {
+              return obj[key];
+            }
+          })
+        );
+
+        const tableData = [
+          ["Order ID", "Product SKU", "Product Name"],
+          ...pendingData,
+        ];
+
+        const config = {
+          columns: [
+            { alignment: "center" },
+            { alignment: "center" },
+            { alignment: "center" },
+          ],
+          header: {
+            alignment: "center",
+            content: "Next 3 pending products for SHOPEE", // platform
+          },
+        };
+
+        const t = table(tableData, config);
+
+        const message = await interaction.editReply({
+          content: `\`\`\`\n${t}\`\`\``,
+        });
+
+        await message.reply({ content: `\`\`\`\n${t}\`\`\`` });
+      } finally {
+        await inv_connection.end();
+      }
     } catch (error) {
-      console.log("LAZADA SECRETS FETCH ERROR: ", error);
-      return null;
+      console.log(error);
+      await interaction.editReply({
+        content: error.message,
+      });
     }
   },
 };
-
-function signRequest(input, partnerKey) {
-  const inputBuffer = Buffer.from(input, "utf-8");
-  const keyBuffer = Buffer.from(partnerKey, "utf-8");
-  const hmac = crypto.createHmac("sha256", keyBuffer);
-  hmac.update(inputBuffer);
-
-  return hmac.digest("hex");
-}
