@@ -53,7 +53,7 @@ module.exports = {
           ],
           header: {
             alignment: "center",
-            content: "Next 3 pending products for SHOPEE", // platform
+            content: `Next 3 pending products for ${platform}`, // platform
           },
         };
 
