@@ -1,6 +1,7 @@
 const { EmbedBuilder } = require("discord.js");
 const moment = require("moment-timezone");
 const conn = require("../../sqlConnection.js");
+const { table } = require("table");
 
 module.exports = {
   name: "inventoryOut",
