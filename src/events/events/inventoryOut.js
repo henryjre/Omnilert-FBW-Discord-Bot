@@ -24,6 +24,28 @@ module.exports = {
           );
         }
 
+        const scannedProduct = selectResult[0];
+        const sqlScanDate = moment()
+          .tz("Asia/Manila")
+          .format("YYYY-MM-DD HH:mm:ss");
+
+        const valuesToInsert = [
+          scannedProduct.ID,
+          scannedProduct.ORDER_ID,
+          scannedProduct.PRODUCT_SKU,
+          scannedProduct.PRODUCT_NAME,
+          scannedProduct.ORDER_CREATED,
+          scannedProduct.PLATFORM,
+          scannedProduct.PRODUCT_COGS,
+          sqlScanDate,
+        ];
+
+        const insertQuery = `INSERT IGNORE INTO Completed_Inventory_Out (ID, ORDER_ID, PRODUCT_SKU, PRODUCT_NAME, ORDER_CREATED, PLATFORM, PRODUCT_COGS, SCAN_DATE) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+        await inv_connection.query(insertQuery, valuesToInsert);
+
+        const deleteQuery = `DELETE FROM Pending_Inventory_Out WHERE ID = ?`;
+        await inv_connection.query(deleteQuery, [scannedProduct.ID]);
+
         const selectPendingQuery = `SELECT * FROM Pending_Inventory_Out WHERE PLATFORM = ? ORDER BY ORDER_CREATED ASC LIMIT 3;`;
         const [pendingResults] = await inv_connection.query(
           selectPendingQuery,
@@ -59,28 +81,6 @@ module.exports = {
         };
 
         const t = table(tableData, config);
-
-        const scannedProduct = selectResult[0];
-        const sqlScanDate = moment()
-          .tz("Asia/Manila")
-          .format("YYYY-MM-DD HH:mm:ss");
-
-        const valuesToInsert = [
-          scannedProduct.ID,
-          scannedProduct.ORDER_ID,
-          scannedProduct.PRODUCT_SKU,
-          scannedProduct.PRODUCT_NAME,
-          scannedProduct.ORDER_CREATED,
-          scannedProduct.PLATFORM,
-          scannedProduct.PRODUCT_COGS,
-          sqlScanDate,
-        ];
-
-        const insertQuery = `INSERT IGNORE INTO Completed_Inventory_Out (ID, ORDER_ID, PRODUCT_SKU, PRODUCT_NAME, ORDER_CREATED, PLATFORM, PRODUCT_COGS, SCAN_DATE) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
-        await inv_connection.query(insertQuery, valuesToInsert);
-
-        const deleteQuery = `DELETE FROM Pending_Inventory_Out WHERE ID = ?`;
-        await inv_connection.query(deleteQuery, [scannedProduct.ID]);
 
         const embed = buildSuccessEmbed(message, scannedProduct);
         await message.delete();
