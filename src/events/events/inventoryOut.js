@@ -1,7 +1,7 @@
 const { EmbedBuilder } = require("discord.js");
 const moment = require("moment-timezone");
 const conn = require("../../sqlConnection.js");
-const { table } = require("table");
+// const { table } = require("table");
 
 module.exports = {
   name: "inventoryOut",
@@ -46,47 +46,47 @@ module.exports = {
         const deleteQuery = `DELETE FROM Pending_Inventory_Out WHERE ID = ?`;
         await inv_connection.query(deleteQuery, [scannedProduct.ID]);
 
-        const selectPendingQuery = `SELECT * FROM Pending_Inventory_Out WHERE PLATFORM = ? ORDER BY ORDER_CREATED ASC LIMIT 3;`;
-        const [pendingResults] = await inv_connection.query(
-          selectPendingQuery,
-          [platform]
-        );
+        // const selectPendingQuery = `SELECT * FROM Pending_Inventory_Out WHERE PLATFORM = ? ORDER BY ORDER_CREATED ASC LIMIT 3;`;
+        // const [pendingResults] = await inv_connection.query(
+        //   selectPendingQuery,
+        //   [platform]
+        // );
 
-        const keysToExtract = [
-          "ORDER_ID",
-          "PRODUCT_SKU",
-          "PRODUCT_NAME",
-          // "ORDER_CREATED",
-        ];
+        // const keysToExtract = [
+        //   "ORDER_ID",
+        //   "PRODUCT_SKU",
+        //   "PRODUCT_NAME",
+        //   // "ORDER_CREATED",
+        // ];
 
-        const pendingData = pendingResults.map((obj) =>
-          keysToExtract.map((key) => obj[key])
-        );
+        // const pendingData = pendingResults.map((obj) =>
+        //   keysToExtract.map((key) => obj[key])
+        // );
 
-        const tableData = [
-          ["Order ID", "Product SKU", "Product Name"],
-          ...pendingData,
-        ];
+        // const tableData = [
+        //   ["Order ID", "Product SKU", "Product Name"],
+        //   ...pendingData,
+        // ];
 
-        const config = {
-          columns: [
-            { alignment: "center" },
-            { alignment: "center" },
-            { alignment: "center" },
-          ],
-          header: {
-            alignment: "center",
-            content: `Next 3 pending products for ${platform}`, // platform
-          },
-        };
+        // const config = {
+        //   columns: [
+        //     { alignment: "center" },
+        //     { alignment: "center" },
+        //     { alignment: "center" },
+        //   ],
+        //   header: {
+        //     alignment: "center",
+        //     content: `Next 3 pending products for ${platform}`, // platform
+        //   },
+        // };
 
-        const t = table(tableData, config);
+        // const t = table(tableData, config);
 
         const embed = buildSuccessEmbed(message, scannedProduct);
         await message.delete();
 
         const threadMessage = await thread.send({ embeds: [embed] });
-        await threadMessage.reply({ content: `\`\`\`\n${t}\`\`\`` });
+        // await threadMessage.reply({ content: `\`\`\`\n${t}\`\`\`` });
       } finally {
         await inv_connection.end();
       }
