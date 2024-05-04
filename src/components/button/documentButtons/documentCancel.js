@@ -180,12 +180,16 @@ module.exports = {
             channel = "1053860453853433860";
           }
 
+          const fileUrl = interaction.message.embeds[0].data.url;
+
+          interaction.message.embeds[0].data.url = "";
+
           await client.channels.cache
             .get(channel)
             .send({
               content: `<@${author.user.id}>`,
               embeds: [interaction.message.embeds[0].data],
-              components: [buttonRow],
+              files: [fileUrl],
             })
             .then((msg) => {
               message.delete();

@@ -156,16 +156,16 @@ module.exports = {
         );
 
         if (nextSignIndex === -1) {
-          const documentButton = new ButtonBuilder(components[2].data);
-          const newButtonRow = new ActionRowBuilder().addComponents(
-            documentButton
-          );
+          const fileUrl = updatedEmbed.data.url;
+          // const documentButton = new ButtonBuilder(components[2].data);
+
+          updatedEmbed.setURL("");
 
           await client.channels.cache
             .get("1197134495917277204")
             .send({
               embeds: [updatedEmbed],
-              components: [newButtonRow],
+              files: [fileUrl],
             })
             .then((msg) => {
               message.delete();

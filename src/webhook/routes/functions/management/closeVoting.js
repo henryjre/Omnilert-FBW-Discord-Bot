@@ -144,6 +144,14 @@ module.exports = async (req, res) => {
         }
       );
 
+      const updateQuery = `UPDATE Executives SET PBR = ?, TIME_RENDERED = ?, CUMULATIVE_PBR = (CUMULATIVE_PBR + ?) WHERE MEMBER_ID = ?`;
+      await connection.execute(updateQuery, [
+        pbrPerHour,
+        0,
+        pbrPerHour,
+        member.user.id,
+      ]);
+
       // send pbr results
       await client.channels.cache
         .get("1194283985870782565")

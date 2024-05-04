@@ -35,7 +35,7 @@ module.exports = {
           "ORDER_ID",
           "PRODUCT_SKU",
           "PRODUCT_NAME",
-          // "ORDER_CREATED",
+          "ORDER_CREATED",
         ];
 
         const pendingData = pendingResults.map((obj) =>
@@ -53,7 +53,7 @@ module.exports = {
         );
 
         const tableData = [
-          ["Order ID", "Product SKU", "Product Name"],
+          ["Order ID", "Product SKU", "Product Name", "Order Date"],
           ...pendingData,
         ];
 
@@ -61,6 +61,7 @@ module.exports = {
           columns: [
             { alignment: "center" },
             { alignment: "center" },
+            { alignment: "center", width: 28 },
             { alignment: "center" },
           ],
           header: {
@@ -75,7 +76,7 @@ module.exports = {
           content: `\`\`\`\n${t}\`\`\``,
         });
 
-        await message.reply({ content: `\`\`\`\n${t}\`\`\`` });
+        // await message.reply({ content: `\`\`\`\n${t}\`\`\`` });
       } finally {
         await inv_connection.end();
       }
