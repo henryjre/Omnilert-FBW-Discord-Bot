@@ -159,7 +159,7 @@ module.exports = {
           const fileUrl = updatedEmbed.data.url;
           // const documentButton = new ButtonBuilder(components[2].data);
 
-          updatedEmbed.setURL("");
+          updatedEmbed.data.url = "";
 
           await client.channels.cache
             .get("1197134495917277204")
