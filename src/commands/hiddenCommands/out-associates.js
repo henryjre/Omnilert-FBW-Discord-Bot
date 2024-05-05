@@ -18,7 +18,7 @@ module.exports = {
 
     await interaction.deferReply();
 
-    const member = interaction.guild.members.cache.get(userId);
+    const member = interaction.guild.members.cache.get(interaction.user.id);
 
     if (!member.roles.cache.has("1197888181702496319")) {
       await interaction.editReply({
