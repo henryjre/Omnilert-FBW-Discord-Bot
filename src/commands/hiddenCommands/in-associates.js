@@ -10,10 +10,9 @@ module.exports = {
   name: "in-associates",
   async execute(interaction, client) {
     await interaction.deferReply({ ephemeral: true });
-
     const member = interaction.guild.members.cache.get(interaction.user.id);
 
-    if (!member.rolse.cache.has("1197888181702496319")) {
+    if (!member.roles.cache.has("1197888181702496319")) {
       await interaction.editReply({
         content: `🔴 ERROR: Only <@&1197888181702496319> can use this command.`,
         ephemeral: true,

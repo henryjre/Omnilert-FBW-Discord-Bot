@@ -20,7 +20,7 @@ module.exports = {
 
     const member = interaction.guild.members.cache.get(userId);
 
-    if (!member.rolse.cache.has("1197888181702496319")) {
+    if (!member.roles.cache.has("1197888181702496319")) {
       await interaction.editReply({
         content: `🔴 ERROR: Only <@&1197888181702496319> can use this command.`,
         ephemeral: true,
