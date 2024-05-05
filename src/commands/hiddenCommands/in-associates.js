@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+const { EmbedBuilder } = require("discord.js");
 const { customAlphabet } = require("nanoid");
 
 const nanoid = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 13);
@@ -7,13 +7,19 @@ const threadId = customAlphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 5);
 const conn = require("../../sqlConnection");
 
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName("in")
-    .setDescription("Log in to start work shift."),
+  name: "in-associates",
   async execute(interaction, client) {
     await interaction.deferReply({ ephemeral: true });
 
     const member = interaction.guild.members.cache.get(interaction.user.id);
+
+    if (!member.rolse.cache.has("1197888181702496319")) {
+      await interaction.editReply({
+        content: `🔴 ERROR: Only <@&1197888181702496319> can use this command.`,
+        ephemeral: true,
+      });
+      return;
+    }
 
     const id = nanoid();
 

@@ -145,12 +145,25 @@ module.exports = async (req, res) => {
       );
 
       const updateQuery = `UPDATE Executives SET PBR = ?, TIME_RENDERED = ?, CUMULATIVE_PBR = (CUMULATIVE_PBR + ?) WHERE MEMBER_ID = ?`;
-      await connection.execute(updateQuery, [
+      await mgmt_connection.query(updateQuery, [
         pbrPerHour,
         0,
         pbrPerHour,
         member.user.id,
       ]);
+
+      const insertQuery = `INSERT IGNORE INTO Executive_Tasks_History (TASK_ID, EXECUTIVE_ID, EXECUTIVE_NAME, TASK_NAME, TASK_DESCRIPTION, TIME_RENDERED, DATE_CREATED)
+      SELECT TASK_ID, EXECUTIVE_ID, EXECUTIVE_NAME, TASK_NAME, TASK_DESCRIPTION, TIME_RENDERED, DATE_CREATED
+      FROM Executive_Tasks
+      WHERE EXECUTIVE_ID = ?`;
+      const [insertedTasks] = await mgmt_connection.query(insertQuery, [
+        member.user.id,
+      ]);
+
+      if (insertedTasks.changedRows > 0) {
+        const deleteQuery = `DELETE FROM Executive_Tasks WHERE EXECUTIVE_ID = ?`;
+        await mgmt_connection.query(deleteQuery, [member.user.id]);
+      }
 
       // send pbr results
       await client.channels.cache

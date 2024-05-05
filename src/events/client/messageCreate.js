@@ -10,70 +10,79 @@ module.exports = {
 
     if (process.env.node_env === "dev") return;
 
-    const departments = [
+    const departments_executives = [
       {
         department: "Executive Head",
-        userIds: ["864920050691866654"],
+        userId: "864920050691866654",
         officeChannelId: "1203998793473728572",
       },
       {
         department: "Operations",
-        userIds: [
-          "762612635605663767",
-          "1201413097697591327",
-          "1203686117778657340",
-        ],
+        userId: "1201413097697591327",
         officeChannelId: "1117386962580541473",
       },
       {
-        department: "Procurement",
-        userIds: ["851719358430576641"],
-        officeChannelId: "1117386986374823977",
-      },
-      {
         department: "Design",
-        userIds: ["719135399859060796", "754997638415253575"],
+        userId: "719135399859060796",
         officeChannelId: "1117387017089728512",
       },
       {
         department: "Web Development",
-        userIds: ["748568303219245117"],
+        userId: "748568303219245117",
         officeChannelId: "1117387044696641607",
       },
       {
         department: "Finance",
-        userIds: ["1120869673974649035"],
+        userId: "1120869673974649035",
         officeChannelId: "1118180874136059964",
       },
       {
         department: "Livestream",
-        userIds: ["938140159541665842"],
+        userId: "938140159541665842",
         officeChannelId: "1185979300936155136",
       },
       {
         department: "Tiktok Account",
-        userIds: ["752713584148086795", "1187593501609832508"],
+        userId: "752713584148086795",
         officeChannelId: "1185979374198071436",
       },
       {
         department: "Tiktok Seller Center",
-        userIds: ["756483149411909693"],
+        userId: "756483149411909693",
         officeChannelId: "1185979531216027730",
       },
       {
         department: "Lazada Seller Center",
-        userIds: ["841943205624283136"],
+        userId: "841943205624283136",
         officeChannelId: "1197118556467376188",
       },
       {
         department: "Shopee Seller Center",
-        userIds: ["1196432863751577690"],
+        userId: "1196432863751577690",
         officeChannelId: "1197118789855223888",
       },
       {
         department: "Supply Chain Management",
-        userIds: ["1207935798301823001"],
+        userId: "1207935798301823001",
         officeChannelId: "1209039670927826975",
+      },
+    ];
+
+    const departments_associates = [
+      {
+        department: "Operations",
+        userIds: ["1203686117778657340"],
+        officeChannelId: "1117386962580541473",
+      },
+      {
+        department: "Design",
+        userIds: ["754997638415253575"],
+        officeChannelId: "1117387017089728512",
+      },
+      {
+        department: "Tiktok Account",
+        userIds: ["1187593501609832508"],
+        officeChannelId: "1185979374198071436",
       },
     ];
 
@@ -115,15 +124,24 @@ module.exports = {
           break;
       }
 
-      const department = departments.find(
+      const executive_department = departments_executives.find(
         (d) => d.officeChannelId === thread.parentId
       );
 
-      if (department) {
-        if (department.userIds.includes(message.author.id)) {
-          // return client.events
-          //   .get("reportal")
-          //   .execute(message, thread.id, client, 0);
+      const associate_department = departments_associates.find(
+        (d) => d.officeChannelId === thread.parentId
+      );
+
+      if (executive_department) {
+        if (executive_department.userId === message.author.id) {
+          return client.events
+            .get("reportal")
+            .execute(message, thread.id, client, 0);
+        }
+      }
+
+      if (associate_department) {
+        if (associate_department.userIds.includes(message.author.id)) {
           return client.commands
             .get("reportal")
             .execute(message, thread.id, client, 0);

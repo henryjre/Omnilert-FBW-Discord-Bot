@@ -5,14 +5,32 @@ const conn = require("../../sqlConnection");
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName("test-out")
-    .setDescription("Log out of your current reportal."),
+    .setName("out")
+    .setDescription("Log out of your current reportal.")
+    .addSubcommand((subcommand) =>
+      subcommand.setName("executives").setDescription("Log out for Executives.")
+    )
+    .addSubcommand((subcommand) =>
+      subcommand.setName("associates").setDescription("Log out for Associates.")
+    ),
   async execute(interaction, client) {
     try {
-      await interaction.deferReply();
+      const subcommand = interaction.options.getSubcommand();
 
-      const mgmt_connection = await conn.managementConnection();
+      if (subcommand === "associates") {
+        await client.commands
+          .get("out-associates")
+          .execute(interaction, client);
+        return;
+      }
+
+      await interaction.deferReply();
       const member = interaction.guild.members.cache.get(interaction.user.id);
+
+      if (!member.roles.cache.has("1185935514042388520")) {
+        throw new Error("Only <@&1185935514042388520> can use this command.");
+      }
+
       const thread = await interaction.channel;
       const parentChannel = await client.channels.cache.get(thread.parentId);
       if (!thread.isThread()) {
@@ -26,6 +44,8 @@ module.exports = {
 
       const userId = member.user.id;
       const timeOut = Date.now();
+
+      const mgmt_connection = await conn.managementConnection();
 
       try {
         const timeOutStamp = moment

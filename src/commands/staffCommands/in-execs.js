@@ -12,27 +12,46 @@ const conn = require("../../sqlConnection.js");
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName("test-in")
-    .setDescription("Log in to start a task."),
+    .setName("in")
+    .setDescription("Log in to start a task.")
+    .addSubcommand((subcommand) =>
+      subcommand.setName("executives").setDescription("Log in for Executives.")
+    )
+    .addSubcommand((subcommand) =>
+      subcommand.setName("associates").setDescription("Log in for Associates.")
+    ),
   async execute(interaction, client) {
-    await interaction.deferReply();
     try {
-      const mgmt_connection = await conn.managementConnection();
+      const subcommand = interaction.options.getSubcommand();
+
+      if (subcommand === "associates") {
+        await client.commands.get("in-associates").execute(interaction, client);
+        return;
+      }
+
+      await interaction.deferReply();
       const member = interaction.guild.members.cache.get(interaction.user.id);
+
+      if (!member.roles.cache.has("1185935514042388520")) {
+        throw new Error("Only <@&1185935514042388520> can use this command.");
+      }
+
       const messagePayload = {};
+
+      const mgmt_connection = await conn.managementConnection();
       try {
         const queryTasks = `SELECT * FROM Executive_Tasks WHERE EXECUTIVE_ID = ?`;
-        // const queryExecutive = `SELECT * FROM Executives WHERE MEMBER_ID = ?`;
+        const queryExecutive = `SELECT * FROM Executives WHERE MEMBER_ID = ?`;
 
-        // const [executive] = await mgmt_connection.query(queryExecutive, [
-        //   member.user.id,
-        // ]);
+        const [executive] = await mgmt_connection.query(queryExecutive, [
+          member.user.id,
+        ]);
 
-        // if (executive[0].OFFICE_ID !== interaction.channelId) {
-        //   throw new Error(
-        //     `Use this command on your office channel: <#${executive[0].OFFICE_ID}>`
-        //   );
-        // }
+        if (executive[0].OFFICE_ID !== interaction.channelId) {
+          throw new Error(
+            `Use this command on your office channel: <#${executive[0].OFFICE_ID}>`
+          );
+        }
 
         const [tasks] = await mgmt_connection.query(queryTasks, [
           member.user.id,

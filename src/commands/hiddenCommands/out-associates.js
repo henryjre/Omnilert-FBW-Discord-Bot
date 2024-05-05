@@ -1,10 +1,8 @@
-const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+const { EmbedBuilder } = require("discord.js");
 const conn = require("../../sqlConnection");
 
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName("out")
-    .setDescription("Log out of your current shift."),
+  name: "out-associates",
   async execute(interaction, client) {
     const thread = await interaction.channel;
     const parentChannel = await client.channels.cache.get(thread.parentId);
@@ -20,12 +18,20 @@ module.exports = {
 
     await interaction.deferReply();
 
+    const member = interaction.guild.members.cache.get(userId);
+
+    if (!member.rolse.cache.has("1197888181702496319")) {
+      await interaction.editReply({
+        content: `🔴 ERROR: Only <@&1197888181702496319> can use this command.`,
+        ephemeral: true,
+      });
+      return;
+    }
+
     const connection = await conn.managementConnection();
 
     const userId = interaction.user.id;
     const timeOut = Date.now();
-
-    const member = interaction.guild.members.cache.get(userId);
 
     const timeStamp = new Date(timeOut).toLocaleDateString("en-PH", {
       timeZone: "Asia/Manila",
