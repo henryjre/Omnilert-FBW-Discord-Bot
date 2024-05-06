@@ -144,11 +144,13 @@ module.exports = async (req, res) => {
         }
       );
 
-      const updateQuery = `UPDATE Executives SET PBR = ?, TIME_RENDERED = ?, CUMULATIVE_PBR = (CUMULATIVE_PBR + ?) WHERE MEMBER_ID = ?`;
+      const updateQuery = `UPDATE Executives SET PBR = ?, TIME_RENDERED = ?, TIME_DEDUCTION = ?, CUMULATIVE_PBR = (CUMULATIVE_PBR + ?), NAME = ? WHERE MEMBER_ID = ?`;
       await mgmt_connection.query(updateQuery, [
-        pbrPerHour,
+        parseFloat(pbrPerHour.toFixed(2)),
         0,
-        pbrPerHour,
+        0,
+        parseFloat(pbrPerHour.toFixed(2)),
+        member.nickname,
         member.user.id,
       ]);
 
@@ -160,7 +162,7 @@ module.exports = async (req, res) => {
         member.user.id,
       ]);
 
-      if (insertedTasks.changedRows > 0) {
+      if (insertedTasks.affectedRows > 0) {
         const deleteQuery = `DELETE FROM Executive_Tasks WHERE EXECUTIVE_ID = ?`;
         await mgmt_connection.query(deleteQuery, [member.user.id]);
       }
