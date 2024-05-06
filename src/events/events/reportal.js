@@ -216,7 +216,6 @@ module.exports = {
           });
 
           await thread.members.remove(member.user.id);
-          await thread.setArchived(true);
 
           const threadCreatedMessages = await parentChannel.messages
             .fetch()
@@ -230,13 +229,15 @@ module.exports = {
 
           await lastThreadCreated.delete();
 
+          await thread.setLocked(true);
+          await thread.setArchived(true);
+
           const channelThreads = parentChannel.threads;
           const activeThreads = await channelThreads.fetchActive();
+
           if (activeThreads.threads.size <= 0) {
             await parentChannel.setName(parentChannel.name.replace("🟢", "🔴"));
           }
-
-          await thread.setLocked(true);
         } finally {
           await mgmt_connection.end();
         }
