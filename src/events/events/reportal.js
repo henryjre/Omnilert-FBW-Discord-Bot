@@ -81,7 +81,7 @@ module.exports = {
             }
           );
         } else {
-          thread.send({
+          await thread.send({
             content: `Cancelled reminders for ${member.nickname}`,
           });
           checkSchedules();
@@ -216,7 +216,6 @@ module.exports = {
           });
 
           await thread.members.remove(member.user.id);
-          await thread.setLocked(true);
           await thread.setArchived(true);
 
           const threadCreatedMessages = await parentChannel.messages
@@ -236,6 +235,8 @@ module.exports = {
           if (activeThreads.threads.size <= 0) {
             await parentChannel.setName(parentChannel.name.replace("🟢", "🔴"));
           }
+
+          await thread.setLocked(true);
         } finally {
           await mgmt_connection.end();
         }
