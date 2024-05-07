@@ -47,7 +47,10 @@ module.exports = {
           member.user.id,
         ]);
 
-        if (executive[0].OFFICE_ID !== interaction.channelId) {
+        if (
+          process.env.node_env !== "dev" &&
+          executive[0].OFFICE_ID !== interaction.channelId
+        ) {
           throw new Error(
             `Use this command on your office channel: <#${executive[0].OFFICE_ID}>`
           );
@@ -66,6 +69,12 @@ module.exports = {
           .setCustomId("reportalAddTask")
           .setLabel("Add Task")
           .setStyle(ButtonStyle.Primary);
+
+        const changeTaskButton = new ButtonBuilder()
+          .setCustomId("reportalChangeTask")
+          .setLabel("Switch Task")
+          .setStyle(ButtonStyle.Danger)
+          .setDisabled(true);
 
         // const editTaskButton = new ButtonBuilder()
         //   .setCustomId("reportalTaskEdit")
@@ -134,9 +143,10 @@ module.exports = {
         }
 
         const buttonRow = new ActionRowBuilder().addComponents(
+          startButton,
           addTaskButton,
+          changeTaskButton
           //   editTaskButton,
-          startButton
         );
 
         if (messagePayload.components) {

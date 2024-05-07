@@ -45,7 +45,8 @@ module.exports = {
       }
 
       const messageComponents = interaction.message.components;
-      messageComponents[1].components[1].data.disabled = false;
+      messageComponents[1].components[0].data.disabled = false;
+      // messageComponents[1].components[2].data.disabled = false;
       //   messageComponents[1].components[2].data.disabled = false;
 
       messagePayload.embeds = [messageEmbed];

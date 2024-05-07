@@ -36,6 +36,11 @@ module.exports = {
           .setLabel("Add Task")
           .setStyle(ButtonStyle.Primary);
 
+        const changeTaskButton = new ButtonBuilder()
+          .setCustomId("reportalChangeTask")
+          .setLabel("Switch Task")
+          .setStyle(ButtonStyle.Danger);
+
         // const editTaskButton = new ButtonBuilder()
         //   .setCustomId("reportalTaskEdit")
         //   .setLabel("Edit Task")
@@ -60,9 +65,10 @@ module.exports = {
         }
 
         const buttonRow = new ActionRowBuilder().addComponents(
+          startButton,
           addTaskButton,
+          changeTaskButton
           // editTaskButton,
-          startButton
         );
 
         //end of buttons, start of select menu
