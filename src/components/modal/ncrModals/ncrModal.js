@@ -31,8 +31,8 @@ module.exports = {
         const queryDepartments = "SELECT * FROM Executives;";
         const [departments] = await mgmt_connection.query(queryDepartments);
 
-        const department = departments.find((d) =>
-          d.NCR_OFFICE_ID.includes(channel.id)
+        const department = departments.find(
+          (d) => d.NCR_OFFICE_ID === channel.id
         );
 
         if (!department) {
