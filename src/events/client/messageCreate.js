@@ -71,7 +71,7 @@ module.exports = {
     const departments_associates = [
       {
         department: "Operations",
-        userIds: ["1203686117778657340"],
+        userIds: ["1203686117778657340", "762612635605663767"],
         officeChannelId: "1117386962580541473",
       },
       {
