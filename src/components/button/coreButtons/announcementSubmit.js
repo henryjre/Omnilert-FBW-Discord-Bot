@@ -40,7 +40,7 @@ module.exports = {
       channel = "1197101565421568082";
     }
 
-    await client.channels.cache
+    const announcementMessage = await client.channels.cache
       .get(channel)
       .send({
         content: mentions,
@@ -49,5 +49,48 @@ module.exports = {
       .then((msg) => {
         message.delete();
       });
+
+    let announcementMentions = [];
+    if (announcementMessage.mentions.roles.size) {
+      const firstRole = announcementMessage.mentions.roles.first();
+      firstRole.members.forEach((user) => {
+        announcementMentions.push(user.id);
+      });
+    } else {
+      announcementMessage.mentions.users.forEach((user) => {
+        announcementMentions.push(user.id);
+      });
+    }
+
+    const announcementToStore = {
+      id: announcementMessage.id,
+      mentions: announcementMentions,
+      createdAt: announcementMessage.createdAt,
+    };
+
+    await storeAnnouncement(announcementToStore);
   },
 };
+
+async function storeAnnouncement(jsonObject) {
+  const filePath = path.join(
+    __dirname,
+    "../../../temp/announcementReactions.json"
+  );
+  try {
+    // Read existing data
+    const existingData = await fs.readFile(filePath, "utf-8");
+
+    // Parse existing data (or initialize as an empty array if the file is empty)
+    const existingArray = existingData ? JSON.parse(existingData) : [];
+
+    // Append the new JSON object
+    existingArray.push(jsonObject);
+
+    // Write back to the file
+    await fs.writeFile(filePath, JSON.stringify(existingArray));
+    console.log("Vote stored successfully.");
+  } catch (error) {
+    console.error("Error storing Vote:", error);
+  }
+}

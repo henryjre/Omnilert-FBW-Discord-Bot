@@ -1,4 +1,7 @@
-const { EmbedBuilder } = require("discord.js");
+const fs = require("fs").promises;
+const path = require("path");
+
+const filePath = path.join(__dirname, "../../temp/announcementReactions.json");
 
 module.exports = {
   name: "acknowledgeAnnouncement",
@@ -48,5 +51,38 @@ module.exports = {
     await message.edit({
       embeds: [messageEmbed],
     });
+
+    const announcements = await getStoredAnnouncements();
+    if (announcements.length !== 0) {
+      const announcement = announcements.find((a) => a.id === message.id);
+      if (announcement) {
+        announcement.mentions = announcement.mentions.filter(
+          (mention) => mention !== user.id
+        );
+
+        await updateStoredAnnouncements(announcements);
+      }
+    }
   },
 };
+
+async function getStoredAnnouncements() {
+  try {
+    const data = await fs.readFile(filePath, "utf-8");
+    const jsonObject = JSON.parse(data);
+    console.log("Announcements retrieved successfully");
+    return jsonObject;
+  } catch (error) {
+    console.log("Error retrieving announcement:", error);
+    return [];
+  }
+}
+
+async function updateStoredAnnouncements(updatedData) {
+  try {
+    await fs.writeFile(filePath, JSON.stringify(updatedData));
+    console.log("Announcements updated successfully.");
+  } catch (error) {
+    console.error("Error updating announcements:", error);
+  }
+}

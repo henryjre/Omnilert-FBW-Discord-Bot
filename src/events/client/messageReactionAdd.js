@@ -10,26 +10,34 @@ module.exports = {
     //     .execute(reaction, user, client);
     // }
 
-    if (process.env.node_env === "dev") return;
+    if (process.env.node_env === "dev") {
+      if (message.channelId === "1197101506638381188") {
+        return client.events
+          .get("announcementReact")
+          .execute(reaction, user, client);
+      }
+    } else {
+      if (message.channelId === "1171798094900379740") {
+        return client.commands
+          .get("approveGiveaway")
+          .execute(reaction, user, client);
+      }
 
-    if (message.channelId === "1171798094900379740") {
-      return client.commands
-        .get("approveGiveaway")
-        .execute(reaction, user, client);
-    }
+      if (message.channelId === "1176497779040858173") {
+        return client.commands
+          .get("approveCommission")
+          .execute(reaction, user, client);
+      }
 
-    if (message.channelId === "1176497779040858173") {
-      return client.commands
-        .get("approveCommission")
-        .execute(reaction, user, client);
-    }
-
-    if (
-      ["1197101506638381188", "1197101565421568082"].includes(message.channelId)
-    ) {
-      return client.commands
-        .get("acknowledgeAnnouncement")
-        .execute(reaction, user, client);
+      if (
+        ["1197101506638381188", "1197101565421568082"].includes(
+          message.channelId
+        )
+      ) {
+        return client.commands
+          .get("acknowledgeAnnouncement")
+          .execute(reaction, user, client);
+      }
     }
   },
 };
