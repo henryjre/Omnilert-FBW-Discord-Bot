@@ -111,12 +111,12 @@ module.exports = {
           .setLabel("Cancel")
           .setStyle(ButtonStyle.Danger);
 
-        const link = new ButtonBuilder()
-          .setLabel("View Document")
-          .setURL(attachment.url)
-          .setStyle(ButtonStyle.Link);
+        // const link = new ButtonBuilder()
+        //   .setLabel("View Document")
+        //   .setURL(attachment.url)
+        //   .setStyle(ButtonStyle.Link);
 
-        buttonRow.addComponents(submit, cancel, link);
+        buttonRow.addComponents(submit, cancel);
 
         // const userFields = interaction.options._hoistedOptions
         //   .filter((i) => i.type === 6)
@@ -155,7 +155,7 @@ module.exports = {
           .setAuthor({
             name: nanoid(),
           })
-          .setURL(attachment.url)
+          // .setURL(attachment.url)
           .addFields([
             {
               name: "Prepared By",
@@ -171,6 +171,7 @@ module.exports = {
 
         await modalResponse.editReply({
           embeds: [embed],
+          files: [attachment.url],
           components: [buttonRow, typeRow],
         });
       }

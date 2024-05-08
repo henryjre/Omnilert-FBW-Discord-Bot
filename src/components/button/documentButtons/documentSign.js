@@ -78,7 +78,7 @@ module.exports = {
     const messageEmbed = interaction.message.embeds[0];
     const embedFields = messageEmbed.data.fields;
 
-    const documentUrl = messageEmbed.data.url;
+    const attachment = interaction.message.attachments.first();
 
     const noSignIndex = embedFields.findIndex((field) =>
       field.name.includes("⌛")
@@ -96,12 +96,12 @@ module.exports = {
       const cancelButton = new ButtonBuilder(components[1].data).setLabel(
         "Return"
       );
-      const documentButton = new ButtonBuilder(components[2].data);
+      // const documentButton = new ButtonBuilder(components[2].data);
 
       const newButtonRow = new ActionRowBuilder().addComponents(
         signButton,
-        cancelButton,
-        documentButton
+        cancelButton
+        // documentButton
       );
 
       const match = embedFields[noSignIndex].value.match(/<@(\d+)>/);
@@ -120,7 +120,7 @@ module.exports = {
         .send({
           content: `<@${userId}>`,
           embeds: [messageEmbed.data],
-          files: [documentUrl],
+          files: [attachment],
           components: [newButtonRow],
         })
         .then((msg) => {
@@ -159,7 +159,6 @@ module.exports = {
         );
 
         if (nextSignIndex === -1) {
-          const fileUrl = updatedEmbed.data.url;
           // const documentButton = new ButtonBuilder(components[2].data);
 
           updatedEmbed.data.url = "";
@@ -168,7 +167,7 @@ module.exports = {
             .get("1197134495917277204")
             .send({
               embeds: [updatedEmbed],
-              files: [fileUrl],
+              files: [attachment],
             })
             .then((msg) => {
               message.delete();
@@ -197,7 +196,7 @@ module.exports = {
           .send({
             content: `<@${nextUserId}>`,
             embeds: [updatedEmbed],
-            files: [documentUrl],
+            files: [attachment],
             components: [buttonRow],
           })
           .then((msg) => {

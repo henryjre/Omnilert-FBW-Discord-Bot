@@ -119,8 +119,8 @@ module.exports = {
         return;
       }
 
-      const linkButton = new ButtonBuilder(components[2].data);
-      const buttonRow = new ActionRowBuilder().addComponents(linkButton);
+      // const linkButton = new ButtonBuilder(components[2].data);
+      // const buttonRow = new ActionRowBuilder().addComponents(linkButton);
 
       const authorMatch =
         messageEmbed.data.fields[authorIndex].value.match(/<@(\d+)>/);
@@ -180,16 +180,14 @@ module.exports = {
             channel = "1053860453853433860";
           }
 
-          const fileUrl = interaction.message.embeds[0].data.url;
-
-          interaction.message.embeds[0].data.url = "";
+          const attachment = interaction.message.attachments.first();
 
           await client.channels.cache
             .get(channel)
             .send({
               content: `<@${author.user.id}>`,
               embeds: [interaction.message.embeds[0].data],
-              files: [fileUrl],
+              files: [attachment],
             })
             .then((msg) => {
               message.delete();
