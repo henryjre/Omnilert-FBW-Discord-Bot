@@ -180,15 +180,21 @@ module.exports = {
             channel = "1053860453853433860";
           }
 
-          const attachment = interaction.message.attachments.first();
+          const attachments = interaction.message.attachments;
+
+          let messagePayload = {
+            content: `<@${author.user.id}>`,
+            embeds: [interaction.message.embeds[0].data],
+          };
+
+          if (attachments.size > 0) {
+            const attachment = attachments.first();
+            messagePayload.files = [attachment];
+          }
 
           await client.channels.cache
             .get(channel)
-            .send({
-              content: `<@${author.user.id}>`,
-              embeds: [interaction.message.embeds[0].data],
-              files: [attachment],
-            })
+            .send(messagePayload)
             .then((msg) => {
               message.delete();
             });
