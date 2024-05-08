@@ -78,6 +78,8 @@ module.exports = {
     const messageEmbed = interaction.message.embeds[0];
     const embedFields = messageEmbed.data.fields;
 
+    const documentUrl = messageEmbed.data.url;
+
     const noSignIndex = embedFields.findIndex((field) =>
       field.name.includes("⌛")
     );
@@ -118,6 +120,7 @@ module.exports = {
         .send({
           content: `<@${userId}>`,
           embeds: [messageEmbed.data],
+          files: [documentUrl],
           components: [newButtonRow],
         })
         .then((msg) => {
@@ -194,6 +197,7 @@ module.exports = {
           .send({
             content: `<@${nextUserId}>`,
             embeds: [updatedEmbed],
+            files: [documentUrl],
             components: [buttonRow],
           })
           .then((msg) => {
