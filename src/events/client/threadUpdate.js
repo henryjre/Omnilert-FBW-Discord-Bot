@@ -22,9 +22,7 @@ module.exports = {
       const parentChannel = await client.channels.cache.get(newThread.parentId);
 
       const channelThreads = parentChannel.threads;
-      console.log(channelThreads);
       const activeThreads = await channelThreads.fetchActive();
-      console.log(activeThreads.threads.size);
       if (activeThreads.threads.size <= 0) {
         const newChannelName = parentChannel.name.replace("🟢", "🔴");
         await parentChannel.setName(newChannelName);
