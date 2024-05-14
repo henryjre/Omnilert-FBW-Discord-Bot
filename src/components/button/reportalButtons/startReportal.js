@@ -84,9 +84,9 @@ module.exports = {
         await thread.join();
         await thread.members.add(interaction.user.id);
 
-        const newChannelName = interaction.channel.name.replace("🔴", "🟢");
+        // const newChannelName = interaction.channel.name.replace("🔴", "🟢");
 
-        await interaction.channel.setName(newChannelName);
+        // await interaction.channel.setName(newChannelName);
 
         await message.delete();
 

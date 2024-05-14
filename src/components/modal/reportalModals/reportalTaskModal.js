@@ -39,7 +39,8 @@ module.exports = {
         const changeTaskButton = new ButtonBuilder()
           .setCustomId("reportalChangeTask")
           .setLabel("Switch Task")
-          .setStyle(ButtonStyle.Danger);
+          .setStyle(ButtonStyle.Danger)
+          .setDisabled(true);
 
         // const editTaskButton = new ButtonBuilder()
         //   .setCustomId("reportalTaskEdit")

@@ -149,12 +149,12 @@ module.exports = {
         await thread.setLocked(true);
         await thread.setArchived(true);
 
-        const channelThreads = parentChannel.threads;
-        const activeThreads = await channelThreads.fetchActive();
+        // const channelThreads = parentChannel.threads;
+        // const activeThreads = await channelThreads.fetchActive();
 
-        if (activeThreads.threads.size <= 0) {
-          await parentChannel.setName(parentChannel.name.replace("🟢", "🔴"));
-        }
+        // if (activeThreads.threads.size <= 0) {
+        //   await parentChannel.setName(parentChannel.name.replace("🟢", "🔴"));
+        // }
       } finally {
         await mgmt_connection.end();
       }

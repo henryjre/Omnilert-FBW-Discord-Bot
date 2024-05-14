@@ -105,8 +105,8 @@ module.exports = {
       .get("reportal")
       .execute(interaction, thread.id, client, 0);
 
-    await interaction.channel.setName(
-      interaction.channel.name.replace("🔴", "🟢")
-    );
+    // await interaction.channel.setName(
+    //   interaction.channel.name.replace("🔴", "🟢")
+    // );
   },
 };
