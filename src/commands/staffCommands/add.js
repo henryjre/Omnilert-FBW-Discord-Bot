@@ -6,7 +6,8 @@ const {
   TextInputStyle,
   ActionRowBuilder,
 } = require("discord.js");
-const conn = require("../../sqlConnection");
+// const conn = require("../../sqlConnection");
+const pools = require("../../sqlPools.js");
 const moment = require("moment");
 
 const pesoFormatter = new Intl.NumberFormat("en-PH", {
@@ -149,7 +150,8 @@ async function addSubmemberPbr(interaction, client) {
   const user = interaction.options.getUser("user");
   const pbr = interaction.options.getNumber("pbr-value");
 
-  const connection = await conn.managementConnection();
+  // const connection = await conn.managementConnection();
+  const connection = await pools.managementPool.getConnection();
 
   try {
     const selectDepartmentQuery = `SELECT * FROM Executives WHERE MEMBER_ID = ?`;
@@ -244,7 +246,8 @@ async function addSubmemberPbr(interaction, client) {
     });
     return;
   } finally {
-    await connection.end();
+    // await connection.end();
+    connection.release();
   }
 }
 
@@ -266,7 +269,8 @@ async function addAssociate(interaction, client) {
     return;
   }
 
-  const connection = await conn.managementConnection();
+  // const connection = await conn.managementConnection();
+  const connection = await pools.managementPool.getConnection();
 
   try {
     const selectQuery = `SELECT * FROM Executives WHERE ROLE_ID = ?`;
@@ -303,7 +307,8 @@ async function addAssociate(interaction, client) {
       content: error.toString(),
     });
   } finally {
-    await connection.end();
+    // await connection.end();
+    connection.release();
   }
 }
 

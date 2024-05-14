@@ -1,5 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
-const conn = require("../../sqlConnection");
+// const conn = require("../../sqlConnection");
+const pools = require("../../sqlPools.js");
 
 module.exports = {
   name: "out-associates",
@@ -28,7 +29,8 @@ module.exports = {
       return;
     }
 
-    const connection = await conn.managementConnection();
+    // const connection = await conn.managementConnection();
+    const connection = await pools.managementPool.getConnection();
 
     const userId = interaction.user.id;
     const timeOut = Date.now();
@@ -57,7 +59,8 @@ module.exports = {
       await interaction.editReply({
         content: `🔴 ERROR: No work log in found.`,
       });
-      await connection.end();
+      // await connection.end();
+      connection.release();
       return;
     }
 
@@ -145,7 +148,8 @@ module.exports = {
         ephemeral: true,
       });
     } finally {
-      await connection.end();
+      // await connection.end();
+      connection.release();
     }
 
     function convertMilliseconds(milliseconds) {

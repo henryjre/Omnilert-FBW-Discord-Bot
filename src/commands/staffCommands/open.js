@@ -1,13 +1,10 @@
 const {
   SlashCommandBuilder,
-  EmbedBuilder,
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
   ActionRowBuilder,
 } = require("discord.js");
-const conn = require("../../sqlConnection");
-const moment = require("moment");
 
 const pesoFormatter = new Intl.NumberFormat("en-PH", {
   style: "currency",

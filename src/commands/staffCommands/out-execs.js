@@ -1,7 +1,8 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 const moment = require("moment-timezone");
 
-const conn = require("../../sqlConnection");
+// const conn = require("../../sqlConnection");
+const pools = require("../../sqlPools.js");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -45,7 +46,8 @@ module.exports = {
       const userId = member.user.id;
       const timeOut = Date.now();
 
-      const mgmt_connection = await conn.managementConnection();
+      // const mgmt_connection = await conn.managementConnection();
+      const mgmt_connection = await pools.managementPool.getConnection();
 
       try {
         const timeOutStamp = moment
@@ -156,7 +158,8 @@ module.exports = {
         //   await parentChannel.setName(parentChannel.name.replace("🟢", "🔴"));
         // }
       } finally {
-        await mgmt_connection.end();
+        // await mgmt_connection.end();
+        mgmt_connection.release();
       }
     } catch (error) {
       console.log(error.stack);

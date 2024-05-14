@@ -1,6 +1,7 @@
 const { ButtonBuilder, ButtonStyle, ActionRowBuilder } = require("discord.js");
 const client = require("../../../../index");
-const conn = require("../../../../sqlConnection.js");
+// const conn = require("../../../../sqlConnection.js");
+const pools = require("../../../../sqlPools.js");
 
 const pesoFormatter = new Intl.NumberFormat("en-PH", {
   style: "currency",
@@ -19,7 +20,8 @@ module.exports = async (req, res) => {
       throw new Error("No data received.");
     }
 
-    const mgmt_connection = await conn.managementConnection();
+    // const mgmt_connection = await conn.managementConnection();
+    const mgmt_connection = await pools.managementPool.getConnection();
 
     try {
       const selectQuery = `SELECT * FROM Executives WHERE MEMBER_ID = ?;`;
@@ -199,7 +201,8 @@ module.exports = async (req, res) => {
 
       return res.status(200).json({ ok: true, message: "success" });
     } finally {
-      await mgmt_connection.end();
+      // await mgmt_connection.end();
+      mgmt_connection.release();
     }
   } catch (error) {
     console.log(error.stack);

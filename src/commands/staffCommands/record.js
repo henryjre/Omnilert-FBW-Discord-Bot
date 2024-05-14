@@ -6,7 +6,8 @@ const {
   EmbedBuilder,
 } = require("discord.js");
 
-const conn = require("../../sqlConnection");
+// const conn = require("../../sqlConnection");
+const pools = require("../../sqlPools.js");
 
 const XLSX = require("xlsx");
 const fetch = (...args) =>
@@ -90,7 +91,8 @@ module.exports = {
 };
 
 async function processToShipOrders(interaction, client) {
-  const connection = await conn.leviosaConnection();
+  // const connection = await conn.leviosaConnection();
+  const connection = await pools.leviosaPool.getConnection();
   try {
     const attachment = interaction.options.getAttachment("orders");
 
@@ -353,12 +355,14 @@ async function processToShipOrders(interaction, client) {
       embeds: [errorEmbed],
     });
   } finally {
-    await connection.end();
+    // await connection.end();
+    connection.release();
   }
 }
 
 async function processCancelledOrders(interaction, client) {
-  const connection = await conn.leviosaConnection();
+  // const connection = await conn.leviosaConnection();
+  const connection = await pools.leviosaPool.getConnection();
 
   try {
     const attachment = interaction.options.getAttachment("orders");
@@ -601,12 +605,14 @@ async function processCancelledOrders(interaction, client) {
       embeds: [errorEmbed],
     });
   } finally {
-    await connection.end();
+    // await connection.end();
+    connection.release();
   }
 }
 
 async function processSettlement(interaction, client) {
-  const connection = await conn.leviosaConnection();
+  // const connection = await conn.leviosaConnection();
+  const connection = await pools.leviosaPool.getConnection();
 
   try {
     const attachment = interaction.options.getAttachment("file");
@@ -775,7 +781,8 @@ async function processSettlement(interaction, client) {
       embeds: [errorEmbed],
     });
   } finally {
-    await connection.end();
+    // await connection.end();
+    connection.release();
   }
 
   function generateSettlementFees(

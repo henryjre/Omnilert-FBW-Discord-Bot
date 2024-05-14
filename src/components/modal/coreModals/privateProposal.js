@@ -5,7 +5,8 @@ const {
   EmbedBuilder,
 } = require("discord.js");
 
-const conn = require("../../../sqlConnection");
+// const conn = require("../../../sqlConnection");
+const pools = require("../../../sqlPools.js");
 
 module.exports = {
   data: {
@@ -40,7 +41,8 @@ module.exports = {
       embedTitleType = "DIRECTORS PROPOSAL";
     }
 
-    const connection = await conn.managementConnection();
+    // const connection = await conn.managementConnection();
+    const connection = await pools.managementPool.getConnection();
 
     const insertQuery = `INSERT INTO ${sqlTableName} (TITLE, ISSUE, ABSTRACT) VALUES (?, ?, ?)`;
     await connection
@@ -48,7 +50,7 @@ module.exports = {
       .catch((err) => console.log(err));
 
     const selectQuery = `SELECT ID FROM ${sqlTableName} WHERE ID = LAST_INSERT_ID()`;
-    const idResult = await connection.execute(selectQuery);
+    const idResult = await connection.query(selectQuery);
 
     const proposalNumber = String(idResult[0][0].ID).padStart(4, "0");
 
@@ -98,12 +100,13 @@ module.exports = {
     });
 
     const updateQuery = `UPDATE Leviosa_Proposals SET PROPOSAL_NUMBER = ?, MESSAGE_ID = ? WHERE ID = ?`;
-    await connection.execute(updateQuery, [
+    await connection.query(updateQuery, [
       proposalNumber,
       proposalMessage.id,
       idResult[0][0].ID,
     ]);
 
-    await connection.end();
+    // await connection.end();
+    connection.release();
   },
 };

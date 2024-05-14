@@ -6,7 +6,8 @@ const {
   StringSelectMenuOptionBuilder,
   StringSelectMenuBuilder,
 } = require("discord.js");
-const conn = require("../../../sqlConnection.js");
+// const conn = require("../../../sqlConnection.js");
+const pools = require("../../../sqlPools.js");
 
 module.exports = {
   data: {
@@ -26,7 +27,8 @@ module.exports = {
 
       const channel = interaction.channel;
 
-      const mgmt_connection = await conn.managementConnection();
+      // const mgmt_connection = await conn.managementConnection();
+      const mgmt_connection = await pools.managementPool.getConnection();
       try {
         const queryDepartments = "SELECT * FROM Executives;";
         const [departments] = await mgmt_connection.query(queryDepartments);
@@ -93,7 +95,8 @@ module.exports = {
         await channel.send(messagePayload);
         await interaction.editReply({ content: "NCR reported successfully!" });
       } finally {
-        await mgmt_connection.end();
+        // await mgmt_connection.end();
+        mgmt_connection.release();
       }
     } catch (error) {
       console.log(error.stack);

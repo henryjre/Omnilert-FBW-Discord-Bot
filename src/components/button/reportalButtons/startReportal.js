@@ -5,7 +5,8 @@ const { customAlphabet } = require("nanoid");
 const nanoid = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 6);
 const dbId = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 13);
 
-const conn = require("../../../sqlConnection.js");
+// const conn = require("../../../sqlConnection.js");
+const pools = require("../../../sqlPools.js");
 
 module.exports = {
   data: {
@@ -23,7 +24,8 @@ module.exports = {
         return;
       }
 
-      const mgmt_connection = await conn.managementConnection();
+      // const mgmt_connection = await conn.managementConnection();
+      const mgmt_connection = await pools.managementPool.getConnection();
       const member = interaction.guild.members.cache.get(interaction.user.id);
       const message = await interaction.message.channel.messages.fetch(
         interaction.message.id
@@ -121,7 +123,8 @@ module.exports = {
           .get("reportal")
           .execute(interaction, thread.id, client, 0);
       } finally {
-        await mgmt_connection.end();
+        // await mgmt_connection.end();
+        mgmt_connection.release();
       }
     } catch (error) {
       console.log(error.stack);

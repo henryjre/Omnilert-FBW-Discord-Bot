@@ -4,7 +4,8 @@ const {
   EmbedBuilder,
   AttachmentBuilder,
 } = require("discord.js");
-const conn = require("../../sqlConnection");
+// const conn = require("../../sqlConnection");
+const pools = require("../../sqlPools.js");
 const { table } = require("table");
 const moment = require("moment-timezone");
 const { createCanvas, loadImage, registerFont } = require("canvas");
@@ -23,7 +24,8 @@ module.exports = {
     await interaction.deferReply();
 
     try {
-      const inv_connection = await conn.inventoryConnection();
+      // const inv_connection = await conn.inventoryConnection();
+      const inv_connection = await pools.inventoryPool.getConnection();
       try {
         const selectPendingQuery = `SELECT * FROM Pending_Inventory_Out WHERE PLATFORM = ? ORDER BY ORDER_CREATED ASC LIMIT 3;`;
         const [pendingResults] = await inv_connection.query(
@@ -78,7 +80,8 @@ module.exports = {
 
         // await message.reply({ content: `\`\`\`\n${t}\`\`\`` });
       } finally {
-        await inv_connection.end();
+        // await inv_connection.end();
+        inv_connection.release();
       }
     } catch (error) {
       console.log(error);

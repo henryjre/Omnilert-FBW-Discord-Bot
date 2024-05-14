@@ -1,7 +1,8 @@
 const schedule = require("node-schedule");
 const { EmbedBuilder } = require("discord.js");
 
-const conn = require("../../sqlConnection");
+// const conn = require("../../sqlConnection");
+const pools = require("../../sqlPools.js");
 
 const ttsReminders = require("./reminderTts.json");
 
@@ -17,7 +18,8 @@ module.exports = {
     const channelId = thread.id;
     const member = message.guild.members.cache.get(author.id);
 
-    const connection = await conn.managementConnection();
+    // const connection = await conn.managementConnection();
+    const connection = await pools.managementPool.getConnection();
 
     if (type === 0) {
       const queryWorkShiftString =
@@ -26,7 +28,8 @@ module.exports = {
         .query(queryWorkShiftString, [author.id])
         .catch((err) => console.log(err));
 
-      await connection.end();
+      // await connection.end();
+      connection.release();
 
       if (workShift[0].length <= 0) return;
     }
@@ -135,16 +138,17 @@ module.exports = {
     checkSchedules();
 
     async function penalizeUser() {
-      const connection = await conn.managementConnection();
+      // const connection = await conn.managementConnection();
+      const connection = await pools.managementPool.getConnection();
 
       const parentChannel = await client.channels.cache.get(thread.parentId);
 
       try {
         const queryWorkShiftString =
           "SELECT * FROM WORK_HOURS WHERE DISCORD_ID = ? AND TIME_OUT IS NULL";
-        const workShift = await connection
-          .query(queryWorkShiftString, [member.user.id])
-          .catch((err) => console.log(err));
+        const workShift = await connection.query(queryWorkShiftString, [
+          member.user.id,
+        ]);
 
         const workId = workShift[0][0].ID;
         const timeIn = workShift[0][0].TIME_IN;
@@ -185,13 +189,9 @@ module.exports = {
 
         const updateWorkShiftString =
           "UPDATE WORK_HOURS SET TIME_OUT = ? WHERE ID = ?";
-        await connection
-          .query(updateWorkShiftString, [timeOut, workId])
-          .catch((err) => console.log(err));
+        await connection.query(updateWorkShiftString, [timeOut, workId]);
 
-        await connection
-          .query(updateQuery, [minutesOnly, member.user.id])
-          .catch((err) => console.log(err));
+        await connection.query(updateQuery, [minutesOnly, member.user.id]);
 
         const embed = new EmbedBuilder()
           .setTitle(`🔴 LOG OUT`)
@@ -237,7 +237,8 @@ module.exports = {
           content: `<@748568303219245117>, there was an error while recording the penalty for ${member.nickname}.`,
         });
       } finally {
-        await connection.end();
+        // await connection.end();
+        connection.release();
       }
 
       function convertMilliseconds(milliseconds) {

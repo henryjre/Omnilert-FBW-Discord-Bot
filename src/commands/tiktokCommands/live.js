@@ -8,7 +8,8 @@ const {
   AttachmentBuilder,
 } = require("discord.js");
 const moment = require("moment-timezone");
-const conn = require("../../sqlConnection");
+// const conn = require("../../sqlConnection");
+const pools = require("../../sqlPools.js");
 const ExcelJS = require("exceljs");
 
 const commissionRates = require("./commission.json");
@@ -51,7 +52,8 @@ module.exports = {
 
     const streamId = interaction.options.getString("id");
 
-    const connection = await conn.managementConnection();
+    // const connection = await conn.managementConnection();
+    const connection = await pools.managementPool.getConnection();
 
     const findLiveQuery =
       "SELECT * FROM Tiktok_Livestream_Schedules WHERE STREAM_ID = ?";
@@ -68,7 +70,8 @@ module.exports = {
       await interaction.editReply({
         embeds: [noOrdersEmbed],
       });
-      await connection.end();
+      // await connection.end();
+      connection.release();
       return;
     }
 
@@ -76,7 +79,8 @@ module.exports = {
       await interaction.editReply({
         content: "🔴 ERROR: You cannot retrieve that livestream.",
       });
-      await connection.end();
+      // await connection.end();
+      connection.release();
       return;
     }
 
@@ -109,7 +113,8 @@ module.exports = {
       .query(findLivestreamOrdersQuery, [streamId])
       .catch((err) => console.log(err));
 
-    await connection.end();
+    // await connection.end();
+    connection.release();
 
     orders[0].forEach((order) => {
       order.ORDER_STATUSES = order.ORDER_STATUSES

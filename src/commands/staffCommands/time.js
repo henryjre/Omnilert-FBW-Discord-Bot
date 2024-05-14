@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 const moment = require("moment");
-const conn = require("../../sqlConnection");
+// const conn = require("../../sqlConnection");
+const pools = require("../../sqlPools.js");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -49,7 +50,8 @@ module.exports = {
       e.MEMBER_ID, e.TIME_RENDERED, e.NAME, s.MEMBER_ID, s.TIME_RENDERED, s.DEPARTMENT_EXECUTIVE;
     `;
 
-    const connection = await conn.managementConnection();
+    // const connection = await conn.managementConnection();
+    const connection = await pools.managementPool.getConnection();
 
     try {
       const [queryResult] = await connection.query(queryString, [
@@ -151,7 +153,8 @@ module.exports = {
       });
       return;
     } finally {
-      await connection.end();
+      // await connection.end();
+      connection.release();
     }
   },
 };

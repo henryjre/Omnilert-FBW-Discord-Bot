@@ -5,7 +5,8 @@ const {
   TextInputStyle,
 } = require("discord.js");
 
-const conn = require("../../../sqlConnection.js");
+// const conn = require("../../../sqlConnection.js");
+const pools = require("../../../sqlPools.js");
 
 const fs = require("fs").promises;
 const path = require("path");
@@ -77,15 +78,16 @@ module.exports = {
 
         const proposalVotes = await getAmendmentVotes();
 
-        const connection = await conn.managementConnection();
+        // const connection = await conn.managementConnection();
+        const connection = await pools.managementPool.getConnection();
 
         const selectMemberQuery =
           "SELECT * FROM Board_Of_Directors WHERE MEMBER_ID = ?";
-        const [selectMemberResult] = await connection.execute(
-          selectMemberQuery,
-          [String(interaction.user.id)]
-        );
-        await connection.end();
+        const [selectMemberResult] = await connection.query(selectMemberQuery, [
+          String(interaction.user.id),
+        ]);
+        // await connection.end();
+        connection.release();
 
         const votingRights = selectMemberResult[0].VOTING_RIGHTS;
         const selectedValueIndex = proposalVotes.findIndex(

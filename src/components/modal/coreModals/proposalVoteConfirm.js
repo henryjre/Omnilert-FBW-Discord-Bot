@@ -1,4 +1,5 @@
-const conn = require("../../../sqlConnection");
+// const conn = require("../../../sqlConnection");
+const pools = require("../../../sqlPools.js");
 const voteFile = require("../../menu/coreMenus/voteProposalOptions");
 
 const fs = require("fs").promises;
@@ -16,14 +17,16 @@ module.exports = {
     const vote = voteFile.getUserVote(interaction.user.id);
     const proposalVotes = await getProposalVotes();
 
-    const connection = await conn.managementConnection();
+    // const connection = await conn.managementConnection();
+    const connection = await pools.managementPool.getConnection();
 
     const selectMemberQuery =
       "SELECT * FROM Board_Of_Directors WHERE MEMBER_ID = ?";
-    const [selectMemberResult] = await connection.execute(selectMemberQuery, [
+    const [selectMemberResult] = await connection.query(selectMemberQuery, [
       String(interaction.user.id),
     ]);
-    await connection.end();
+    // await connection.end();
+    connection.release();
 
     const votingRights = selectMemberResult[0].VOTING_RIGHTS;
     const selectedValueIndex = proposalVotes.findIndex(

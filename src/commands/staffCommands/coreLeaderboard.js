@@ -7,7 +7,8 @@ const pesoFormatter = new Intl.NumberFormat("en-PH", {
   minimumFractionDigits: 2,
 });
 
-const conn = require("../../sqlConnection");
+// const conn = require("../../sqlConnection");
+const pools = require("../../sqlPools.js");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -30,7 +31,8 @@ module.exports = {
 
     const subcommand = interaction.options.getSubcommand();
 
-    const connection = await conn.managementConnection();
+    // const connection = await conn.managementConnection();
+    const connection = await pools.managementPool.getConnection();
 
     const role = await interaction.guild.roles.cache.get(
       subcommand === "executives"
@@ -46,9 +48,7 @@ module.exports = {
         queryString =
           "SELECT * FROM Board_Of_Directors ORDER BY VOTING_RIGHTS DESC";
       }
-      const [lb] = await connection
-        .query(queryString)
-        .catch((err) => console.log(err));
+      const [lb] = await connection.query(queryString);
 
       let embedDescription = [];
       for (member of lb) {
@@ -107,7 +107,8 @@ module.exports = {
         content: "🔴 ERROR: There was an error while getting the leaderboards.",
       });
     } finally {
-      await connection.end();
+      // await connection.end();
+      connection.release();
     }
   },
 };

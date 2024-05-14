@@ -1,7 +1,8 @@
 const { EmbedBuilder, AttachmentBuilder } = require("discord.js");
 const client = require("../../../../index");
 
-const conn = require("../../../../sqlConnection");
+// const conn = require("../../../../sqlConnection");
+const pools = require("../../../../sqlPools.js");
 const XLSX = require("xlsx");
 
 const { customAlphabet } = require("nanoid");
@@ -15,7 +16,8 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const connection = await conn.leviosaConnection();
+  // const connection = await conn.leviosaConnection();
+  const connection = await pools.leviosaPool.getConnection();
 
   try {
     const insertQuery =
@@ -71,6 +73,7 @@ module.exports = async (req, res) => {
     console.log(error);
     res.status(400).json({ ok: true, message: "an error has occured" });
   } finally {
-    await connection.end();
+    // await connection.end();
+    connection.release();
   }
 };

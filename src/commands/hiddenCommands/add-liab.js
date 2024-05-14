@@ -1,5 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
-const conn = require("../../sqlConnection");
+// const conn = require("../../sqlConnection");
+const pools = require("../../sqlPools.js");
 
 const pesoFormatter = new Intl.NumberFormat("en-PH", {
   style: "currency",
@@ -39,14 +40,16 @@ module.exports = {
 
     await interaction.deferReply();
 
-    const connection = await conn.managementConnection();
+    // const connection = await conn.managementConnection();
+    const connection = await pools.managementPool.getConnection();
 
     try {
       const updateLiabQuery =
         "UPDATE Tiktok_Livestreamers SET LIABILITIES = (LIABILITIES + ?) WHERE STREAMER_ID = ?";
-      const update = await connection
-        .execute(updateLiabQuery, [liabAmount, streamerId])
-        .catch((err) => console.log(err));
+      const update = await connection.query(updateLiabQuery, [
+        liabAmount,
+        streamerId,
+      ]);
 
       let embed;
       if (update[0].affectedRows) {
@@ -120,7 +123,8 @@ module.exports = {
         components: [],
       });
     } finally {
-      await connection.end();
+      // await connection.end();
+      connection.release();
     }
   },
 };

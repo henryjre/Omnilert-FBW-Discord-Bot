@@ -1,7 +1,8 @@
 const schedule = require("node-schedule");
 const { EmbedBuilder } = require("discord.js");
 
-const conn = require("../../sqlConnection");
+// const conn = require("../../sqlConnection");
+const pools = require("../../sqlPools.js");
 
 let reminder = {};
 let hourlyReminders = {};
@@ -13,7 +14,8 @@ module.exports = {
     const channelId = message.channelId;
     const member = message.guild.members.cache.get(author.id);
 
-    const connection = await conn.managementConnection();
+    // const connection = await conn.managementConnection();
+    const connection = await pools.managementPool.getConnection();
 
     if (type === 0) {
       const queryWorkShiftString =
@@ -22,7 +24,8 @@ module.exports = {
         .query(queryWorkShiftString, [author.id])
         .catch((err) => console.log(err));
 
-      await connection.end();
+      // await connection.end();
+      connection.release();
 
       if (workShift[0].length <= 0) return;
     }

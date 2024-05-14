@@ -1,5 +1,6 @@
 const channel = require("sharp/lib/channel");
-const conn = require("../../../sqlConnection");
+// const conn = require("../../../sqlConnection");
+const pools = require("../../../sqlPools.js");
 
 module.exports = {
   data: {
@@ -21,12 +22,14 @@ module.exports = {
       channelId = "1186661471451627661";
     }
 
-    const connection = await conn.managementConnection();
+    // const connection = await conn.managementConnection();
+    const connection = await pools.managementPool.getConnection();
 
     const updateQuery = `UPDATE ${databaseTable} SET RESOLUTION = ? WHERE MESSAGE_ID = ?`;
-    await connection.execute(updateQuery, [resolution, interaction.message.id]);
+    await connection.query(updateQuery, [resolution, interaction.message.id]);
 
-    await connection.end();
+    // await connection.end();
+    connection.release();
 
     const message = await interaction.message.channel.messages.fetch(
       interaction.message.id

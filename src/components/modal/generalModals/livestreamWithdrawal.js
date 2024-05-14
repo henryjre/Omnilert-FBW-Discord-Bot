@@ -5,7 +5,8 @@ const {
   EmbedBuilder,
 } = require("discord.js");
 
-const conn = require("../../../sqlConnection");
+// const conn = require("../../../sqlConnection");
+const pools = require("../../../sqlPools.js");
 const moment = require("moment");
 
 const { customAlphabet } = require("nanoid");
@@ -58,12 +59,13 @@ module.exports = {
     const netWithdrawal = parseFloat(netAmount[0].replace(/,/g, ""));
     const claimDate = moment().format("YYYY-MM-DD HH:mm:ss");
 
-    const connection = await conn.managementConnection();
+    // const connection = await conn.managementConnection();
+    const connection = await pools.managementPool.getConnection();
 
     const updateBalanceQuery =
       "UPDATE Tiktok_Livestreamers SET BALANCE = (BALANCE - ?), LIABILITIES = (LIABILITIES - ?), WITHDRAWALS = (WITHDRAWALS - 1) WHERE STREAMER_ID = ?";
     await connection
-      .execute(updateBalanceQuery, [
+      .query(updateBalanceQuery, [
         netWithdrawal,
         withdrawalFees,
         interaction.user.id,
@@ -73,7 +75,7 @@ module.exports = {
     const selectQuery =
       "SELECT * FROM Tiktok_Livestreamers WHERE STREAMER_ID = ?";
     const [streamerData] = await connection
-      .execute(selectQuery, [interaction.user.id])
+      .query(selectQuery, [interaction.user.id])
       .catch((err) => console.log(err));
 
     const insertQuery1 = `INSERT INTO Withdraw_History (TRANSACTION_ID, STREAMER_ID, STREAMER_NAME, AMOUNT, FEES, CURRENT_BALANCE, CURRENT_LIABILITIES, CREATED_DATE) VALUES (?, ?, ?, ?, ?, ?, ?)`;
@@ -90,7 +92,8 @@ module.exports = {
       ])
       .catch((err) => console.log(err));
 
-    await connection.end();
+    // await connection.end();
+    connection.release();
 
     const newEmbed = new EmbedBuilder()
       .setTitle("⌛ NEW COMMISSION WITHDRAWAL")

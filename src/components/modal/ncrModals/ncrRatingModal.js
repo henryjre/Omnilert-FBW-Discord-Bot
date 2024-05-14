@@ -6,7 +6,8 @@ const {
   StringSelectMenuOptionBuilder,
   StringSelectMenuBuilder,
 } = require("discord.js");
-const conn = require("../../../sqlConnection.js");
+// const conn = require("../../../sqlConnection.js");
+const pools = require("../../../sqlPools.js");
 
 module.exports = {
   data: {
@@ -34,7 +35,8 @@ module.exports = {
       );
       const executive = message.mentions.users.first();
 
-      const mgmt_connection = await conn.managementConnection();
+      // const mgmt_connection = await conn.managementConnection();
+      const mgmt_connection = await pools.managementPool.getConnection();
       try {
         const messageEmbed = interaction.message.embeds[0].data;
 
@@ -62,7 +64,8 @@ module.exports = {
 
         await interaction.editReply(messagePayload);
       } finally {
-        await mgmt_connection.end();
+        // await mgmt_connection.end();
+        mgmt_connection.release();
       }
     } catch (error) {
       console.log(error.stack);

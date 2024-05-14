@@ -1,6 +1,7 @@
 const { EmbedBuilder } = require("discord.js");
 
-const conn = require("../../../sqlConnection");
+// const conn = require("../../../sqlConnection");
+const pools = require("../../../sqlPools.js");
 const moment = require("moment");
 
 const { customAlphabet } = require("nanoid");
@@ -54,7 +55,8 @@ module.exports = {
 
     await timer(1300);
 
-    const connection = await conn.managementConnection();
+    // const connection = await conn.managementConnection();
+    const connection = await pools.managementPool.getConnection();
 
     const findLiveQuery =
       "SELECT CLAIMED FROM Tiktok_Livestream_Schedules WHERE STREAM_ID = ?";
@@ -83,20 +85,21 @@ module.exports = {
         embeds: [errorEmbed],
         components: [],
       });
-      await connection.end();
+      // await connection.end();
+      connection.release();
       return;
     }
 
     const updateBalanceQuery =
       "UPDATE Tiktok_Livestreamers SET BALANCE = (BALANCE + ?) WHERE STREAMER_ID = ?";
     await connection
-      .execute(updateBalanceQuery, [netCommission, interaction.user.id])
+      .query(updateBalanceQuery, [netCommission, interaction.user.id])
       .catch((err) => console.log(err));
 
     const updateQuery =
       "UPDATE Tiktok_Livestream_Schedules SET CLAIMED = ? WHERE STREAM_ID = ?";
     await connection
-      .execute(updateQuery, [1, streamId])
+      .query(updateQuery, [1, streamId])
       .catch((err) => console.log(err));
 
     const insertQuery1 = `INSERT INTO Claim_History (TRANSACTION_ID, STREAM_ID, STREAMER_ID, NET_ORDER_SUBTOTAL, NET_COMMISSION_CLAIMED, CLAIM_DATE) VALUES (?, ?, ?, ?, ?, ?)`;
@@ -111,7 +114,8 @@ module.exports = {
       ])
       .catch((err) => console.log(err));
 
-    await connection.end();
+    // await connection.end();
+    connection.release();
 
     const claimedEmbed = new EmbedBuilder()
       .setTitle(`LIVESTREAM CLAIMED`)

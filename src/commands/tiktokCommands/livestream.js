@@ -10,7 +10,8 @@ const crypto = require("crypto");
 const { customAlphabet } = require("nanoid");
 const nanoid = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 13);
 
-const conn = require("../../sqlConnection");
+// const conn = require("../../sqlConnection");
+const pools = require("../../sqlPools.js");
 const commissionRates = require("./commission.json");
 const ExcelJS = require("exceljs");
 
@@ -122,8 +123,10 @@ module.exports = {
       moment.unix(apiStartTime).tz("Asia/Manila").format("MMDDYY");
     const streamerName = member.nickname;
 
-    const connection = await conn.managementConnection();
-    const def_connection = await conn.leviosaConnection();
+    // const connection = await conn.managementConnection();
+    const connection = await pools.managementPool.getConnection();
+    // const def_connection = await conn.leviosaConnection();
+    const def_connection = await pools.leviosaPool.getConnection();
 
     const findDupeQuery =
       "SELECT * FROM Tiktok_Livestream_Schedules WHERE LIVE_ID = ?";
@@ -136,7 +139,8 @@ module.exports = {
       process.env.tiktok_secrets_id,
     ]);
 
-    await def_connection.end();
+    // await def_connection.end();
+    def_connection.release();
 
     const secrets = secretsResult[0];
 
@@ -297,7 +301,8 @@ module.exports = {
       ])
       .catch((err) => console.log(err));
 
-    await connection.end();
+    // await connection.end();
+    connection.release();
 
     const embedToSend = new EmbedBuilder()
       .setTitle(`${embed.emoji} TIKTOK LIVESTREAM SAVED`)

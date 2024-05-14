@@ -1,7 +1,8 @@
 const fs = require("fs").promises;
 const path = require("path");
 
-const conn = require("../../../sqlConnection");
+// const conn = require("../../../sqlConnection");
+const pools = require("../../../sqlPools.js");
 const moment = require("moment");
 
 const pesoFormatter = new Intl.NumberFormat("en-PH", {
@@ -38,7 +39,8 @@ module.exports = {
       interaction.message.id
     );
 
-    const connection = await conn.managementConnection();
+    // const connection = await conn.managementConnection();
+    const connection = await pools.managementPool.getConnection();
 
     if (messageEmbed.data.title.includes("VOTING RIGHTS")) {
       const votes = await getVotingRightsSubmissions();
@@ -51,9 +53,10 @@ module.exports = {
       const publicRemarks = votes.map((vote) => vote.publicRemarks);
 
       const updateQuery = `SELECT * FROM Board_Of_Directors WHERE MEMBER_ID = ?`;
-      const [core] = await connection.execute(updateQuery, [userId]);
+      const [core] = await connection.query(updateQuery, [userId]);
 
-      await connection.end();
+      // await connection.end();
+      connection.release();
 
       messageEmbed.data.fields.push(
         {
@@ -94,7 +97,7 @@ module.exports = {
       if (votes.length > 0) {
         const selectQuery = `SELECT * FROM Board_Of_Directors WHERE MEMBER_ID = ?`;
         for (const vote of votes) {
-          const [selectResult] = await connection.execute(selectQuery, [
+          const [selectResult] = await connection.query(selectQuery, [
             vote.userId,
           ]);
 
@@ -125,12 +128,13 @@ module.exports = {
       });
 
       const selectQuery = `SELECT TIME_RENDERED FROM Executives WHERE MEMBER_ID = ?`;
-      const [exec] = await connection.execute(selectQuery, [userId]);
+      const [exec] = await connection.query(selectQuery, [userId]);
 
       const updateQuery = `UPDATE Executives SET PBR = ?, TIME_RENDERED = ?, CUMULATIVE_PBR = (CUMULATIVE_PBR + ?) WHERE MEMBER_ID = ?`;
-      await connection.execute(updateQuery, [finalPbr, 0, finalPbr, userId]);
+      await connection.query(updateQuery, [finalPbr, 0, finalPbr, userId]);
 
-      await connection.end();
+      // await connection.end();
+      connection.release();
 
       const minutes = Number(exec[0].TIME_RENDERED);
       const totalSum = moment.duration(minutes, "minutes").asHours();

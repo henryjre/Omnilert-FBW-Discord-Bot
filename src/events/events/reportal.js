@@ -2,7 +2,8 @@ const schedule = require("node-schedule");
 const { EmbedBuilder } = require("discord.js");
 const moment = require("moment-timezone");
 
-const conn = require("../../sqlConnection");
+// const conn = require("../../sqlConnection");
+const pools = require("../../sqlPools.js");
 
 const ttsReminders = require("../../commands/hiddenCommands/reminderTts.json");
 
@@ -17,7 +18,8 @@ module.exports = {
     const thread = message.guild.channels.cache.get(threadId);
 
     try {
-      const mgmt_connection = await conn.managementConnection();
+      // const mgmt_connection = await conn.managementConnection();
+      const mgmt_connection = await pools.managementPool.getConnection();
 
       const channelId = thread.id;
       const member = message.guild.members.cache.get(author.id);
@@ -90,7 +92,8 @@ module.exports = {
 
         checkSchedules();
       } finally {
-        await mgmt_connection.end();
+        // await mgmt_connection.end();
+        mgmt_connection.release();
       }
     } catch (error) {
       console.log(error.stack);
@@ -145,7 +148,8 @@ module.exports = {
 
     async function penalizeUser(member) {
       try {
-        const mgmt_connection = await conn.managementConnection();
+        // const mgmt_connection = await conn.managementConnection();
+        const mgmt_connection = await pools.managementPool.getConnection();
         try {
           const parentChannel = await client.channels.cache.get(
             thread.parentId
@@ -239,7 +243,8 @@ module.exports = {
             await parentChannel.setName(parentChannel.name.replace("🟢", "🔴"));
           }
         } finally {
-          await mgmt_connection.end();
+          // await mgmt_connection.end();
+          mgmt_connection.release();
         }
       } catch (error) {
         console.log(error.stack);

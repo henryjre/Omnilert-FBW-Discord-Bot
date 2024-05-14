@@ -1,6 +1,7 @@
 const { EmbedBuilder } = require("discord.js");
 const moment = require("moment-timezone");
-const conn = require("../../sqlConnection.js");
+// const conn = require("../../sqlConnection.js");
+const pools = require("../../sqlPools.js");
 // const { table } = require("table");
 
 module.exports = {
@@ -9,7 +10,8 @@ module.exports = {
     const scannedSku = message.content;
 
     try {
-      const inv_connection = await conn.inventoryConnection();
+      // const inv_connection = await conn.inventoryConnection();
+      const inv_connection = await pools.inventoryPool.getConnection();
 
       try {
         const selectQuery = `SELECT * FROM Pending_Inventory_Out WHERE PRODUCT_SKU = ? AND PLATFORM = ? ORDER BY ORDER_CREATED ASC LIMIT 1;`;
@@ -88,7 +90,8 @@ module.exports = {
         const threadMessage = await thread.send({ embeds: [embed] });
         // await threadMessage.reply({ content: `\`\`\`\n${t}\`\`\`` });
       } finally {
-        await inv_connection.end();
+        // await inv_connection.end();
+        inv_connection.release();
       }
     } catch (error) {
       console.log(error.toString());

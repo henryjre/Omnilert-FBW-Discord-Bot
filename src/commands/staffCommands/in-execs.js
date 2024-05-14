@@ -8,7 +8,8 @@ const {
   ButtonStyle,
 } = require("discord.js");
 
-const conn = require("../../sqlConnection.js");
+// const conn = require("../../sqlConnection.js");
+const pools = require("../../sqlPools.js");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -38,7 +39,8 @@ module.exports = {
 
       const messagePayload = {};
 
-      const mgmt_connection = await conn.managementConnection();
+      // const mgmt_connection = await conn.managementConnection();
+      const mgmt_connection = await pools.managementPool.getConnection();
       try {
         const queryTasks = `SELECT * FROM Executive_Tasks WHERE EXECUTIVE_ID = ?`;
         const queryExecutive = `SELECT * FROM Executives WHERE MEMBER_ID = ?`;
@@ -159,7 +161,8 @@ module.exports = {
 
         await interaction.editReply(messagePayload);
       } finally {
-        await mgmt_connection.end();
+        // await mgmt_connection.end();
+        mgmt_connection.release();
       }
     } catch (error) {
       console.log(error.stack);

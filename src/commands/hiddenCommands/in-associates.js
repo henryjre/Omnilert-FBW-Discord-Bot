@@ -4,7 +4,8 @@ const { customAlphabet } = require("nanoid");
 const nanoid = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 13);
 const threadId = customAlphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 5);
 
-const conn = require("../../sqlConnection");
+// const conn = require("../../sqlConnection");
+const pools = require("../../sqlPools.js");
 
 module.exports = {
   name: "in-associates",
@@ -22,7 +23,8 @@ module.exports = {
 
     const id = nanoid();
 
-    const connection = await conn.managementConnection();
+    // const connection = await conn.managementConnection();
+    const connection = await pools.managementPool.getConnection();
 
     const userId = interaction.user.id;
     const timeIn = Date.now();
@@ -38,7 +40,8 @@ module.exports = {
         content: `🔴 ERROR: You currently have a running shift. Please use /out to log out before logging in.`,
         ephemeral: true,
       });
-      await connection.end();
+      // await connection.end();
+      connection.release();
       return;
     }
 
@@ -99,7 +102,8 @@ module.exports = {
       .query(queryWorkShiftString, [id, userId, timeIn])
       .catch((err) => console.log(err));
 
-    await connection.end();
+    // await connection.end();
+    connection.release();
 
     await client.commands
       .get("reportal")

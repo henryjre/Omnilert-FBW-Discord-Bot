@@ -8,7 +8,8 @@ const pesoFormatter = new Intl.NumberFormat("en-PH", {
   minimumFractionDigits: 2,
 });
 
-const conn = require("../../sqlConnection");
+// const conn = require("../../sqlConnection");
+const pools = require("../../sqlPools.js");
 
 const commissionRates = require("../tiktokCommands/commission.json");
 
@@ -17,11 +18,12 @@ module.exports = {
   async execute(interaction, client) {
     const streamerId = interaction.user.id;
 
-    const connection = await conn.managementConnection();
+    // const connection = await conn.managementConnection();
+    const connection = await pools.managementPool.getConnection();
 
     try {
       // Query to get BALANCE from Tiktok_Livestreamers
-      const [balanceRows] = await connection.execute(
+      const [balanceRows] = await connection.query(
         "SELECT * FROM Tiktok_Livestreamers WHERE STREAMER_ID = ?",
         [streamerId]
       );
@@ -42,7 +44,7 @@ module.exports = {
       const liab = balanceRows[0].LIABILITIES;
 
       // Query to get total number of rows and average duration between START_TIME and END_TIME from Tiktok_Livestream_Schedules
-      const [scheduleStats] = await connection.execute(
+      const [scheduleStats] = await connection.query(
         "SELECT COUNT(*) AS totalRows, AVG(END_TIME - START_TIME) AS avgDuration FROM Tiktok_Livestream_Schedules WHERE STREAMER_ID = ?",
         [streamerId]
       );
@@ -76,7 +78,7 @@ module.exports = {
         "WHERE s.LIVE_ID LIKE ? " +
         "GROUP BY s.STREAM_ID";
 
-      const orderStats = await connection.execute(findLiveOrdersQuery, [
+      const orderStats = await connection.query(findLiveOrdersQuery, [
         `%${streamerId}%`,
       ]);
 
@@ -159,7 +161,8 @@ module.exports = {
       console.log(error);
     } finally {
       // Close the connection after executing queries
-      await connection.end();
+      // await connection.end();
+      connection.release();
     }
 
     function calculateCommission(netSales) {

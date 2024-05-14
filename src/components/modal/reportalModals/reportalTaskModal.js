@@ -10,7 +10,8 @@ const {
 const { customAlphabet } = require("nanoid");
 const nanoid = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 13);
 
-const conn = require("../../../sqlConnection.js");
+// const conn = require("../../../sqlConnection.js");
+const pools = require("../../../sqlPools.js");
 
 module.exports = {
   data: {
@@ -20,7 +21,8 @@ module.exports = {
     await interaction.deferUpdate();
 
     try {
-      const mgmt_connection = await conn.managementConnection();
+      // const mgmt_connection = await conn.managementConnection();
+      const mgmt_connection = await pools.managementPool.getConnection();
       const member = interaction.guild.members.cache.get(interaction.user.id);
       const messagePayload = {};
       try {
@@ -135,7 +137,8 @@ module.exports = {
           );
         }
       } finally {
-        await mgmt_connection.end();
+        // await mgmt_connection.end();
+        mgmt_connection.release();
       }
     } catch (error) {
       console.log(error.stack);
