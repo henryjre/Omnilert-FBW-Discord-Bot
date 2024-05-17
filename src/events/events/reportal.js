@@ -161,6 +161,39 @@ module.exports = {
             member.user.id,
           ]);
 
+          if (reportal[0].length === 0) {
+            const embed = new EmbedBuilder()
+              .setTitle(`🔴 LOG OUT`)
+              .setDescription(
+                `👤 **User:** ${member.nickname}\n⏱️ **Time In:** ${timeInStamp}\n⏱️ **Time Out:** ${timeOutStamp}\n⏳ **Duration:** ${hours} hours and ${minutes} minutes`
+              )
+              .setColor("Red");
+
+            await thread.send({
+              embeds: [embed],
+            });
+
+            await thread.members.remove(member.user.id);
+
+            const threadCreatedMessages = await parentChannel.messages
+              .fetch()
+              .then((messages) => {
+                return messages.filter((m) => m.author.bot && m.type === 18);
+              });
+
+            const lastThreadCreated = await threadCreatedMessages.find(
+              (t) => t.reference.channelId === thread.id
+            );
+
+            if (lastThreadCreated) {
+              await lastThreadCreated.delete();
+            }
+
+            await thread.setLocked(true);
+            await thread.setArchived(true);
+            return;
+          }
+
           const workId = reportal[0].ID;
           const taskId = reportal[0].TASK_ID;
           const timeIn = reportal[0].TIME_IN_UNIX;
@@ -231,17 +264,19 @@ module.exports = {
             (t) => t.reference.channelId === thread.id
           );
 
-          await lastThreadCreated.delete();
+          if (lastThreadCreated) {
+            await lastThreadCreated.delete();
+          }
 
           await thread.setLocked(true);
           await thread.setArchived(true);
 
-          const channelThreads = parentChannel.threads;
-          const activeThreads = await channelThreads.fetchActive();
+          // const channelThreads = parentChannel.threads;
+          // const activeThreads = await channelThreads.fetchActive();
 
-          if (activeThreads.threads.size <= 0) {
-            await parentChannel.setName(parentChannel.name.replace("🟢", "🔴"));
-          }
+          // if (activeThreads.threads.size <= 0) {
+          //   await parentChannel.setName(parentChannel.name.replace("🟢", "🔴"));
+          // }
         } finally {
           // await mgmt_connection.end();
           mgmt_connection.release();

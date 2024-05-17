@@ -10,7 +10,6 @@ const commonPoolConfig = {
   port: process.env.logSqlPort,
   user: process.env.logSqlUsername,
   password: process.env.logSqlPassword,
-  connectionLimit: 5,
   ssl: {
     ca: caCertificate,
     rejectUnauthorized: true,
@@ -19,16 +18,19 @@ const commonPoolConfig = {
 
 const managementPool = mysql.createPool({
   ...commonPoolConfig,
+  connectionLimit: 10,
   database: "management",
 });
 
 const leviosaPool = mysql.createPool({
   ...commonPoolConfig,
+  connectionLimit: 3,
   database: "defaultdb",
 });
 
 const inventoryPool = mysql.createPool({
   ...commonPoolConfig,
+  connectionLimit: 2,
   database: "inventory",
 });
 
