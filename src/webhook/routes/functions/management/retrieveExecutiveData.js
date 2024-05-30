@@ -9,12 +9,15 @@ module.exports = async (req, res) => {
       const selectQuery = `SELECT * FROM Executives;`;
       const [executive] = await mgmt_connection.query(selectQuery);
 
-      await storeData(executive);
+      const storeResult = await storeData(executive);
+      if (storeResult.ok) {
+        return res.status(200).json({ ok: true, message: "success" });
+      } else {
+        throw new Error(storeResult.message);
+      }
     } finally {
       mgmt_connection.release();
     }
-
-    return res.status(200).json({ ok: true, message: "success" });
   } catch (error) {
     console.log(error.stack);
     return res.status(404).json({ ok: false, message: error.message });
@@ -35,12 +38,24 @@ async function storeData(jsonArray) {
 
     if (existingArray.length > 0) {
       console.log("Executive data is already stored");
-      return;
+      return {
+        ok: false,
+        message: "There is an existing data currently stored.",
+      };
     }
 
     await fs.writeFile(filePath, JSON.stringify(jsonArray));
     console.log("Data stored successfully.");
+
+    return {
+      ok: true,
+      message: "Data stored successfully.",
+    };
   } catch (error) {
     console.error("Error storing data:", error);
+    return {
+      ok: false,
+      message: `Error storing data: ${error.message}`,
+    };
   }
 }
