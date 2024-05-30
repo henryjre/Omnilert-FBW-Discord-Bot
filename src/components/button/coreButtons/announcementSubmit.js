@@ -1,3 +1,6 @@
+const fs = require("fs").promises;
+const path = require("path");
+
 module.exports = {
   data: {
     name: `announcementSubmit`,
@@ -40,35 +43,34 @@ module.exports = {
       channel = "1197101565421568082";
     }
 
-    const announcementMessage = await client.channels.cache
-      .get(channel)
-      .send({
-        content: mentions,
-        embeds: [messageEmbed.data],
-      })
-      .then((msg) => {
-        message.delete();
-      });
+    const announcementMessage = await client.channels.cache.get(channel).send({
+      content: mentions,
+      embeds: [messageEmbed.data],
+    });
 
-    let announcementMentions = [];
-    if (announcementMessage.mentions.roles.size) {
-      const firstRole = announcementMessage.mentions.roles.first();
-      firstRole.members.forEach((user) => {
-        announcementMentions.push(user.id);
-      });
-    } else {
-      announcementMessage.mentions.users.forEach((user) => {
-        announcementMentions.push(user.id);
-      });
+    await message.delete();
+
+    if (channel === "1197101506638381188") {
+      let announcementMentions = [];
+      if (announcementMessage.mentions.roles.size) {
+        const firstRole = announcementMessage.mentions.roles.first();
+        firstRole.members.forEach((user) => {
+          announcementMentions.push(user.id);
+        });
+      } else {
+        announcementMessage.mentions.users.forEach((user) => {
+          announcementMentions.push(user.id);
+        });
+      }
+
+      const announcementToStore = {
+        id: announcementMessage.id,
+        mentions: announcementMentions,
+        createdAt: announcementMessage.createdAt,
+      };
+
+      await storeAnnouncement(announcementToStore);
     }
-
-    const announcementToStore = {
-      id: announcementMessage.id,
-      mentions: announcementMentions,
-      createdAt: announcementMessage.createdAt,
-    };
-
-    await storeAnnouncement(announcementToStore);
   },
 };
 
@@ -89,7 +91,7 @@ async function storeAnnouncement(jsonObject) {
 
     // Write back to the file
     await fs.writeFile(filePath, JSON.stringify(existingArray));
-    console.log("Vote stored successfully.");
+    console.log("Announcement stored successfully.");
   } catch (error) {
     console.error("Error storing Vote:", error);
   }

@@ -25,6 +25,8 @@ module.exports = {
         throw new Error("Rating must be a number.");
       }
 
+      const ratingEquivalent = parsedRating * 60;
+
       const channel = interaction.channel;
       const message = await interaction.message.channel.messages.fetch(
         interaction.message.id
@@ -52,7 +54,7 @@ module.exports = {
 
         const updateQuery = `UPDATE Executives SET TIME_DEDUCTION = (TIME_DEDUCTION + ?) WHERE MEMBER_ID = ?`;
         const [update] = await mgmt_connection.query(updateQuery, [
-          parsedRating,
+          ratingEquivalent,
           executive.id,
         ]);
 
