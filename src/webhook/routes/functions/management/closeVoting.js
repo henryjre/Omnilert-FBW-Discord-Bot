@@ -2,6 +2,8 @@ const { ButtonBuilder, ButtonStyle, ActionRowBuilder } = require("discord.js");
 const client = require("../../../../index");
 // const conn = require("../../../../sqlConnection.js");
 const pools = require("../../../../sqlPools.js");
+const fs = require("fs").promises;
+const path = require("path");
 
 const pesoFormatter = new Intl.NumberFormat("en-PH", {
   style: "currency",
@@ -20,14 +22,21 @@ module.exports = async (req, res) => {
       throw new Error("No data received.");
     }
 
+    const executivesData = await getStoredData();
+
+    if (executivesData.length === 0) {
+      throw new Error(
+        "No executives data found. Please retrieve the data first."
+      );
+    }
+
     // const mgmt_connection = await conn.managementConnection();
     const mgmt_connection = await pools.managementPool.getConnection();
 
     try {
-      const selectQuery = `SELECT * FROM Executives WHERE MEMBER_ID = ?;`;
-      const [executive] = await mgmt_connection.query(selectQuery, [
-        executive_id,
-      ]);
+      const executive = executivesData.find(
+        (d) => d.MEMBER_ID === executive_id
+      );
 
       const member = client.guilds.cache
         .get("1049165537193754664")
@@ -51,12 +60,10 @@ module.exports = async (req, res) => {
       const anonRemarks = [];
       const publicRemarks = [];
 
-      const totalHourRendered = executive[0].TIME_RENDERED / 60;
-      const totalHourDeductions = executive[0].TIME_DEDUCTION / 60;
-      const totalTimeRendered = formatRenderedTime(executive[0].TIME_RENDERED);
-      const totalTimeDeductions = formatRenderedTime(
-        executive[0].TIME_DEDUCTION
-      );
+      const totalHourRendered = executive.TIME_RENDERED / 60;
+      const totalHourDeductions = executive.TIME_DEDUCTION / 60;
+      const totalTimeRendered = formatRenderedTime(executive.TIME_RENDERED);
+      const totalTimeDeductions = formatRenderedTime(executive.TIME_DEDUCTION);
 
       pbrEmbed.fields.push(
         {
@@ -146,28 +153,32 @@ module.exports = async (req, res) => {
         }
       );
 
-      const updateQuery = `UPDATE Executives SET PBR = ?, TIME_RENDERED = ?, TIME_DEDUCTION = ?, CUMULATIVE_PBR = (CUMULATIVE_PBR + ?), NAME = ? WHERE MEMBER_ID = ?`;
+      const updateQuery = `UPDATE Executives SET PBR = ?, CUMULATIVE_PBR = (CUMULATIVE_PBR + ?), NAME = ? WHERE MEMBER_ID = ?`;
       await mgmt_connection.query(updateQuery, [
         parseFloat(pbrPerHour.toFixed(2)),
-        0,
-        0,
         parseFloat(pbrPerHour.toFixed(2)),
         member.nickname,
         member.user.id,
       ]);
 
-      const insertQuery = `INSERT IGNORE INTO Executive_Tasks_History (TASK_ID, EXECUTIVE_ID, EXECUTIVE_NAME, TASK_NAME, TASK_DESCRIPTION, TIME_RENDERED, DATE_CREATED)
-      SELECT TASK_ID, EXECUTIVE_ID, EXECUTIVE_NAME, TASK_NAME, TASK_DESCRIPTION, TIME_RENDERED, DATE_CREATED
-      FROM Executive_Tasks
-      WHERE EXECUTIVE_ID = ?`;
-      const [insertedTasks] = await mgmt_connection.query(insertQuery, [
-        member.user.id,
-      ]);
+      const updatedExecutivesData = executivesData.filter(
+        (d) => d.MEMBER_ID !== executive_id
+      );
 
-      if (insertedTasks.affectedRows > 0) {
-        const deleteQuery = `DELETE FROM Executive_Tasks WHERE EXECUTIVE_ID = ?`;
-        await mgmt_connection.query(deleteQuery, [member.user.id]);
-      }
+      await updateStoredData(updatedExecutivesData);
+
+      // const insertQuery = `INSERT IGNORE INTO Executive_Tasks_History (TASK_ID, EXECUTIVE_ID, EXECUTIVE_NAME, TASK_NAME, TASK_DESCRIPTION, TIME_RENDERED, DATE_CREATED)
+      // SELECT TASK_ID, EXECUTIVE_ID, EXECUTIVE_NAME, TASK_NAME, TASK_DESCRIPTION, TIME_RENDERED, DATE_CREATED
+      // FROM Executive_Tasks
+      // WHERE EXECUTIVE_ID = ?`;
+      // const [insertedTasks] = await mgmt_connection.query(insertQuery, [
+      //   member.user.id,
+      // ]);
+
+      // if (insertedTasks.affectedRows > 0) {
+      //   const deleteQuery = `DELETE FROM Executive_Tasks WHERE EXECUTIVE_ID = ?`;
+      //   await mgmt_connection.query(deleteQuery, [member.user.id]);
+      // }
 
       // send pbr results
       await client.channels.cache
@@ -179,7 +190,9 @@ module.exports = async (req, res) => {
         .get("1196800785338613852")
         .send({ embeds: anonRemarks });
 
-      await shenonUser.send({ embeds: publicRemarks });
+      if (process.env.node_env === "prod") {
+        await shenonUser.send({ embeds: publicRemarks });
+      }
 
       const votingChannel = client.channels.cache.get("1186662402247368704");
       const votingMessageFetch = await votingChannel.messages
@@ -219,4 +232,30 @@ function formatRenderedTime(totalTime) {
   } and ${totalMinutes} ${totalMinutes === 1 ? "minute" : "minutes"}`;
 
   return formattedTime;
+}
+
+const filePath = path.join(
+  __dirname,
+  "../../../../temp/executivesPbrData.json"
+);
+
+async function getStoredData() {
+  try {
+    const data = await fs.readFile(filePath, "utf-8");
+    const jsonObject = JSON.parse(data);
+    console.log("Executive data retrieved successfully");
+    return jsonObject;
+  } catch (error) {
+    console.log("Error retrieving data:", error);
+    return [];
+  }
+}
+
+async function updateStoredData(updatedData) {
+  try {
+    await fs.writeFile(filePath, JSON.stringify(updatedData));
+    console.log("Announcements updated successfully.");
+  } catch (error) {
+    console.error("Error updating announcements:", error);
+  }
 }
