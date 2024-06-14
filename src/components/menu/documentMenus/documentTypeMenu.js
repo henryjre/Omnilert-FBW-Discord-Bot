@@ -43,7 +43,7 @@ module.exports = {
 
     const role = await interaction.guild.roles.cache.get("1185935514042388520");
 
-    const membersWithRoles = role.members.map((m) => {
+    const membersWithRoles = await role.members.map((m) => {
       const name = m.nickname || m.user.username;
       return new StringSelectMenuOptionBuilder()
         .setLabel(name)
