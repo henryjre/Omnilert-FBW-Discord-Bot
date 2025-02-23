@@ -13,8 +13,8 @@ const authenticate = require("./auth");
 
 app.use(express.json());
 
-app.use("/shops", shopRoutes);
-app.use("/api", authenticate, routes);
+// app.use("/shops", shopRoutes);
+// app.use("/api", authenticate, routes);
 
 app.post("/github-webhook", (req, res) => {
   const signature = `sha256=${crypto
