@@ -58,18 +58,18 @@ function buildCaseReportModal(channel) {
     .setPlaceholder("Describe the problem in a detailed explanation.")
     .setRequired(true);
 
-  const fourthInput = new TextInputBuilder()
-    .setCustomId(`channelInput`)
-    .setLabel(`Channel (DO NOT CHANGE)`)
-    .setStyle(TextInputStyle.Short)
-    .setValue(channel)
-    .setRequired(true);
+  // const fourthInput = new TextInputBuilder()
+  //   .setCustomId(`channelInput`)
+  //   .setLabel(`Channel (DO NOT CHANGE)`)
+  //   .setStyle(TextInputStyle.Short)
+  //   .setValue(channel)
+  //   .setRequired(true);
 
   const firstActionRow = new ActionRowBuilder().addComponents(firstInput);
   const secondActionRow = new ActionRowBuilder().addComponents(secondInput);
-  const fourthActionRow = new ActionRowBuilder().addComponents(fourthInput);
+  // const fourthActionRow = new ActionRowBuilder().addComponents(fourthInput);
 
-  modal.addComponents(firstActionRow, secondActionRow, fourthActionRow);
+  modal.addComponents(firstActionRow, secondActionRow);
 
   return modal;
 }

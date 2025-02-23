@@ -8,7 +8,7 @@ module.exports = {
     name: "closeCaseConfirmation",
   },
   async execute(interaction, client) {
-    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+    await interaction.deferReply();
 
     const modalInput = interaction.fields
       .getTextInputValue("closeCaseInput")
@@ -38,12 +38,15 @@ module.exports = {
       });
 
       const replyEmbed = new EmbedBuilder()
-        .setDescription(`### Case Report Closed!`)
-        .setColor("Red");
+        .setDescription(
+          `## 🔔 UPDATE\n> **${
+            interaction.member?.nickname || interaction.user.globalName
+          }** has closed the case.`
+        )
+        .setColor("Yellow");
 
       await interaction.editReply({
         embeds: [replyEmbed],
-        flags: MessageFlags.Ephemeral,
       });
 
       await caseThreadChannel.edit({
@@ -61,13 +64,12 @@ module.exports = {
 
       const replyEmbed = new EmbedBuilder()
         .setDescription(
-          `🔴 ERROR: There was a **mismatch** on the case number you have entered.`
+          `🔴 ERROR: Cannot close the case. There was a **mismatch** on the case number input.`
         )
         .setColor("Red");
 
       return await interaction.editReply({
         embeds: [replyEmbed],
-        flags: MessageFlags.Ephemeral,
       });
     }
   },

@@ -4,6 +4,8 @@ const {
   ButtonStyle,
   EmbedBuilder,
   MessageFlags,
+  StringSelectMenuBuilder,
+  StringSelectMenuOptionBuilder,
 } = require("discord.js");
 
 const sqliteDb = require("../../../sqliteConnection.js");
@@ -18,9 +20,9 @@ module.exports = {
 
     const caseTitle = interaction.fields.getTextInputValue("titleInput");
     const caseProblem = interaction.fields.getTextInputValue("problemInput");
-    const channelInput = interaction.fields.getTextInputValue("channelInput");
+    // const channelInput = interaction.fields.getTextInputValue("channelInput");
 
-    const caseChannel = await client.channels.cache.get(channelInput);
+    const caseChannel = await client.channels.cache.get("1342895351631187970");
 
     if (!caseChannel) {
       return await interaction.editReply({
@@ -44,16 +46,25 @@ module.exports = {
     });
 
     const memberId = interaction.member?.user.id || interaction.user.id;
-    const memberName =
-      interaction.member?.nickname || interaction.user.globalName;
+    // const memberName =
+    //   interaction.member?.nickname || interaction.user.globalName;
     const threadId = caseThread.id;
+
+    const managementRole = await interaction.guild.roles.cache.get(
+      "1314413671245676685"
+    );
+
+    const membersWithRoles = await managementRole.members.map((m) => {
+      const name = m.nickname || m.user.username;
+      return new StringSelectMenuOptionBuilder().setLabel(name).setValue(name);
+    });
 
     const caseReportEmbed = new EmbedBuilder()
       .setTitle(`📌 ${caseFullTitle}`)
       .addFields([
         {
           name: "Case Leader",
-          value: memberName,
+          value: "To be added",
         },
         {
           name: "Case Title",
@@ -91,22 +102,28 @@ module.exports = {
       .setLabel("Close Case")
       .setStyle(ButtonStyle.Danger);
 
+    const userMenu = new StringSelectMenuBuilder()
+      .setCustomId("managementUserMenu")
+      .setOptions(membersWithRoles)
+      .setPlaceholder("Select the case leader.");
+
     const buttonRow = new ActionRowBuilder().addComponents(
       editCorrectiveActionButton,
       editResolutionButton,
       closeCaseButton
     );
+    const menuRow = new ActionRowBuilder().addComponents(userMenu);
 
     await caseThread.send({
       embeds: [caseReportEmbed],
-      components: [buttonRow],
+      components: [buttonRow, menuRow],
     });
 
     addCaseReport(caseTitle, memberId, threadId);
 
     const replyEmbed = new EmbedBuilder()
       .setDescription(
-        `## Case Report Submitted\nPlease check the <#${channelInput}> to check your report.`
+        `## Case Report Submitted\nPlease check the <#1342895351631187970> to check your report.`
       )
       .setColor("Green");
 

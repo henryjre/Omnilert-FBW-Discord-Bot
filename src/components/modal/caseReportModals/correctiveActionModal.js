@@ -5,7 +5,7 @@ module.exports = {
     name: "editCorrectiveActionModal",
   },
   async execute(interaction, client) {
-    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+    await interaction.deferReply();
 
     const modalInput = interaction.fields.getTextInputValue(
       "correctiveActionInput"
@@ -22,12 +22,15 @@ module.exports = {
     });
 
     const replyEmbed = new EmbedBuilder()
-      .setDescription(`### Corrective Action Edited!`)
-      .setColor("Blurple");
+      .setDescription(
+        `## 🔔 UPDATE\n> **${
+          interaction.member?.nickname || interaction.user.globalName
+        }** added the following corrective actions:\n\n*${modalInput}*`
+      )
+      .setColor("Yellow");
 
     await interaction.editReply({
       embeds: [replyEmbed],
-      flags: MessageFlags.Ephemeral,
     });
   },
 };

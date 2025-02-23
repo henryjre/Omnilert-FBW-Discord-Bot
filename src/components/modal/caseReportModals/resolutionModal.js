@@ -5,7 +5,7 @@ module.exports = {
     name: "editResolutionModal",
   },
   async execute(interaction, client) {
-    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+    await interaction.deferReply();
 
     const modalInput = interaction.fields.getTextInputValue("resolutionInput");
 
@@ -20,8 +20,12 @@ module.exports = {
     });
 
     const replyEmbed = new EmbedBuilder()
-      .setDescription(`### Resolution Edited!`)
-      .setColor("Green");
+      .setDescription(
+        `## 🔔 UPDATE\n> **${
+          interaction.member?.nickname || interaction.user.username
+        }** added the following resolution:\n\n*${modalInput}*`
+      )
+      .setColor("Yellow");
 
     await interaction.editReply({
       embeds: [replyEmbed],

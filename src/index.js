@@ -44,10 +44,10 @@ client.handleComponents();
 
 if (process.env.node_env === "prod") {
   client.login(process.env.prodToken);
+  require("./webhook/app.js");
 } else if (process.env.node_env === "dev") {
   client.login(process.env.testToken);
 }
 
 module.exports = client;
-require("./webhook/app.js");
 require("./sqliteConnection.js");
