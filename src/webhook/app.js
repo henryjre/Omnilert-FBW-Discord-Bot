@@ -35,7 +35,7 @@ app.post("/github-webhook", (req, res) => {
   exec("git diff --name-only HEAD^ HEAD", (err, stdout) => {
     if (err) return console.error(`Error checking changes: ${err}`);
 
-    let cmd = "cd /opt/discord-bot && git pull origin main";
+    let cmd = "cd /opt/omnilert-bot && git pull origin main";
 
     if (stdout.includes("package.json")) {
       cmd += " && npm install";
