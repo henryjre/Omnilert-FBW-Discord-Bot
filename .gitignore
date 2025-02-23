@@ -1,6 +1,12 @@
 # Created by https://www.toptal.com/developers/gitignore/api/visualstudiocode,node,dotenv,windows
 # Edit at https://www.toptal.com/developers/gitignore?templates=visualstudiocode,node,dotenv,windows
 
+# Ignore SQLite database files
+*.sqlite
+*.sqlite3
+*.db
+*.db3
+
 ### dotenv ###
 .env
 

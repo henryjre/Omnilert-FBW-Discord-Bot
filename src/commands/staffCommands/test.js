@@ -5,7 +5,7 @@ const {
   AttachmentBuilder,
 } = require("discord.js");
 // const conn = require("../../sqlConnection");
-const pools = require("../../sqlPools.js");
+// const pools = require("../../sqlPools.js");
 const { table } = require("table");
 const moment = require("moment-timezone");
 const { createCanvas, loadImage, registerFont } = require("canvas");

@@ -2,8 +2,8 @@ const { EmbedBuilder, AttachmentBuilder } = require("discord.js");
 const client = require("../../../../index");
 
 // const conn = require("../../../../sqlConnection");
-const pools = require("../../../../sqlPools.js");
-const XLSX = require("xlsx");
+// const pools = require("../../../../sqlPools.js");
+// // const XLSX = require("xlsx");
 
 const { customAlphabet } = require("nanoid");
 const nanoid = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 13);

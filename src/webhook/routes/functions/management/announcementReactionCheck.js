@@ -2,7 +2,7 @@ const { EmbedBuilder } = require("@discordjs/builders");
 const { ButtonBuilder, ButtonStyle, ActionRowBuilder } = require("discord.js");
 
 const client = require("../../../../index");
-const pools = require("../../../../sqlPools.js");
+// const pools = require("../../../../sqlPools.js");
 const moment = require("moment-timezone");
 
 const fs = require("fs").promises;

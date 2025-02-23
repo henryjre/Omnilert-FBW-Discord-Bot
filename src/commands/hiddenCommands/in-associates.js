@@ -5,7 +5,7 @@ const nanoid = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 13);
 const threadId = customAlphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 5);
 
 // const conn = require("../../sqlConnection");
-const pools = require("../../sqlPools.js");
+// const pools = require("../../sqlPools.js");
 
 module.exports = {
   name: "in-associates",

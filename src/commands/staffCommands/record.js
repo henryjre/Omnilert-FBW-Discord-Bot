@@ -7,9 +7,9 @@ const {
 } = require("discord.js");
 
 // const conn = require("../../sqlConnection");
-const pools = require("../../sqlPools.js");
+// const pools = require("../../sqlPools.js");
 
-const XLSX = require("xlsx");
+// const XLSX = require("xlsx");
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
 const { customAlphabet } = require("nanoid");

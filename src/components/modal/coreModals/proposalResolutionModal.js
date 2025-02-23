@@ -1,6 +1,5 @@
-const channel = require("sharp/lib/channel");
 // const conn = require("../../../sqlConnection");
-const pools = require("../../../sqlPools.js");
+// const pools = require("../../../sqlPools.js");
 
 module.exports = {
   data: {

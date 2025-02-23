@@ -9,7 +9,7 @@ const pesoFormatter = new Intl.NumberFormat("en-PH", {
 });
 
 // const conn = require("../../sqlConnection");
-const pools = require("../../sqlPools.js");
+// const pools = require("../../sqlPools.js");
 
 const commissionRates = require("../tiktokCommands/commission.json");
 

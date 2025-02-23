@@ -1,7 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 const moment = require("moment");
 // const conn = require("../../sqlConnection");
-const pools = require("../../sqlPools.js");
+// const pools = require("../../sqlPools.js");
 
 module.exports = {
   data: new SlashCommandBuilder()

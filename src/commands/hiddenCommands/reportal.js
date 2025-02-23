@@ -1,8 +1,8 @@
-const schedule = require("node-schedule");
+// const schedule = require("node-schedule");
 const { EmbedBuilder } = require("discord.js");
 
 // const conn = require("../../sqlConnection");
-const pools = require("../../sqlPools.js");
+// const pools = require("../../sqlPools.js");
 
 const ttsReminders = require("./reminderTts.json");
 

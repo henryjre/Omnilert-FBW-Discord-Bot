@@ -5,7 +5,7 @@ const {
   ActionRowBuilder,
 } = require("discord.js");
 const client = require("../../../../index");
-const pools = require("../../../../sqlPools.js");
+// const pools = require("../../../../sqlPools.js");
 
 const fs = require("fs").promises;
 const path = require("path");

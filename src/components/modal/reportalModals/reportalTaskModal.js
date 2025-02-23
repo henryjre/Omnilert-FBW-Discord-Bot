@@ -11,7 +11,7 @@ const { customAlphabet } = require("nanoid");
 const nanoid = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 13);
 
 // const conn = require("../../../sqlConnection.js");
-const pools = require("../../../sqlPools.js");
+// const pools = require("../../../sqlPools.js");
 
 module.exports = {
   data: {

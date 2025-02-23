@@ -54,7 +54,7 @@ function buildCaseReportModal(channel) {
     .setCustomId(`problemInput`)
     .setLabel(`Problem Description`)
     .setStyle(TextInputStyle.Paragraph)
-    .setMaxLength(500)
+    .setMaxLength(1000)
     .setPlaceholder("Describe the problem in a detailed explanation.")
     .setRequired(true);
 

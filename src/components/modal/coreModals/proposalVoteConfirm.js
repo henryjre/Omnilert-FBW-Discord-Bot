@@ -1,5 +1,5 @@
 // const conn = require("../../../sqlConnection");
-const pools = require("../../../sqlPools.js");
+// const pools = require("../../../sqlPools.js");
 const voteFile = require("../../menu/coreMenus/voteProposalOptions");
 
 const fs = require("fs").promises;

@@ -1,7 +1,7 @@
 const { ButtonBuilder, ButtonStyle, ActionRowBuilder } = require("discord.js");
 const client = require("../../../../index");
 // const conn = require("../../../../sqlConnection.js");
-const pools = require("../../../../sqlPools.js");
+// const pools = require("../../../../sqlPools.js");
 const fs = require("fs").promises;
 const path = require("path");
 

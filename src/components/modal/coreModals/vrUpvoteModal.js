@@ -1,6 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
 // const conn = require("../../../sqlConnection");
-const pools = require("../../../sqlPools.js");
+// const pools = require("../../../sqlPools.js");
 
 const fs = require("fs").promises;
 const path = require("path");

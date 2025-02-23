@@ -9,7 +9,7 @@ const {
 } = require("discord.js");
 const moment = require("moment-timezone");
 // const conn = require("../../sqlConnection");
-const pools = require("../../sqlPools.js");
+// const pools = require("../../sqlPools.js");
 const ExcelJS = require("exceljs");
 
 const commissionRates = require("./commission.json");

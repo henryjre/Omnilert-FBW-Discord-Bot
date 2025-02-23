@@ -1,4 +1,4 @@
-const pools = require("../../../../sqlPools.js");
+// const pools = require("../../../../sqlPools.js");
 
 module.exports = async (req, res) => {
   try {

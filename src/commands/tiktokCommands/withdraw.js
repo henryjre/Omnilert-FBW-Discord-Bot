@@ -8,7 +8,7 @@ const {
 } = require("discord.js");
 
 // const conn = require("../../sqlConnection");
-const pools = require("../../sqlPools.js");
+// const pools = require("../../sqlPools.js");
 const pesoFormatter = new Intl.NumberFormat("en-PH", {
   style: "currency",
   currency: "PHP",
@@ -162,13 +162,13 @@ module.exports = {
       .setCustomId("confirmWithdrawal")
       .setLabel("Confirm")
       .setStyle(ButtonStyle.Success)
-      .setDisabled(false);
+      .(false);
 
     const cancel = new ButtonBuilder()
       .setCustomId("cancelWithdrawal")
       .setLabel("Cancel")
       .setStyle(ButtonStyle.Danger)
-      .setDisabled(false);
+      .(false);
 
     const buttonRow = new ActionRowBuilder().addComponents(confirm, cancel);
 

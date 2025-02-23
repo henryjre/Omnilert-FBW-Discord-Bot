@@ -3,16 +3,18 @@ const {
   ButtonBuilder,
   ButtonStyle,
   EmbedBuilder,
+  MessageFlags,
 } = require("discord.js");
 
-const { getJsonFile } = require("../../../external_functions/jsonFunctions.js");
+const sqliteDb = require("../../../sqliteConnection.js");
+const chalk = require("chalk");
 
 module.exports = {
   data: {
     name: "createCaseReportModal",
   },
   async execute(interaction, client) {
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     const caseTitle = interaction.fields.getTextInputValue("titleInput");
     const caseProblem = interaction.fields.getTextInputValue("problemInput");
@@ -24,104 +26,112 @@ module.exports = {
       return await interaction.editReply({
         content:
           "🔴 ERROR: Cannot get the proposal channel. Please try again. Do not change the Channel input when submitting your proposal.",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
-    const storedReports = await getJsonFile("caseReports");
+    const caseId = getNextId();
 
-    if (storedReports === null) {
-      return await interaction.editReply({
-        content:
-          "🔴 ERROR: There was a problem while getting the case reports. Please report to the Technology and Development department.",
-        ephemeral: true,
-      });
-    }
+    const caseFullTitle = `CASE ${caseId} | ${caseTitle}`;
 
-    console.log(storedReports);
-
-    return;
-
-    let caseToStore = {
-      status: "open",
-      title: "[OPEN] ",
-    };
-
-    let sqlTableName, embedTitleType;
-    if (channelInput === "1204006892100128778") {
-      sqlTableName = "Executive_Proposals";
-      embedTitleType = "EXECUTIVE PROPOSAL";
-    } else {
-      sqlTableName = "Directors_Proposals";
-      embedTitleType = "DIRECTORS PROPOSAL";
-    }
-
-    // const connection = await conn.managementConnection();
-    const connection = await pools.managementPool.getConnection();
-
-    const insertQuery = `INSERT INTO ${sqlTableName} (TITLE, ISSUE, ABSTRACT) VALUES (?, ?, ?)`;
-    await connection
-      .query(insertQuery, [proposalTitle, proposalIssue, proposalAbstract])
-      .catch((err) => console.log(err));
-
-    const selectQuery = `SELECT ID FROM ${sqlTableName} WHERE ID = LAST_INSERT_ID()`;
-    const idResult = await connection.query(selectQuery);
-
-    const proposalNumber = String(idResult[0][0].ID).padStart(4, "0");
-
-    const embed = new EmbedBuilder()
-      .setDescription(
-        `## Proposal Submitted\nPlease check the <#${channelInput}> to check your proposal.`
-      )
-      .setColor("Green");
-
-    const proposalEmbed = new EmbedBuilder()
-      .setTitle(`📌 ${embedTitleType} #${proposalNumber}`)
-      .addFields([
-        {
-          name: "Title",
-          value: proposalTitle,
-        },
-        {
-          name: "Statement of the Problem",
-          value: proposalIssue,
-        },
-        {
-          name: "Proposed Solution",
-          value: proposalAbstract,
-        },
-      ])
-      .setAuthor({
-        name: `Anonymous`,
-      })
-      .setTimestamp(Date.now())
-      .setColor("#666600");
-
-    const startVoting = new ButtonBuilder()
-      .setCustomId("proposalVotingStart")
-      .setLabel("Open Voting")
-      .setStyle(ButtonStyle.Primary);
-
-    const buttonRow = new ActionRowBuilder().addComponents(startVoting);
-
-    await interaction.editReply({
-      embeds: [embed],
-      ephemeral: true,
+    const caseMessage = await caseChannel.send({
+      content: `# ${caseFullTitle}`,
     });
 
-    const proposalMessage = await proposalChannel.send({
-      embeds: [proposalEmbed],
+    const caseThread = await caseMessage.startThread({
+      name: `🟢 ${caseFullTitle}`,
+      autoArchiveDuration: 1440, // Archive after 60 minutes
+    });
+
+    const memberId = interaction.member?.user.id || interaction.user.id;
+    const memberName =
+      interaction.member?.nickname || interaction.user.globalName;
+    const threadId = caseThread.id;
+
+    const caseReportEmbed = new EmbedBuilder()
+      .setTitle(`📌 ${caseFullTitle}`)
+      .addFields([
+        {
+          name: "Case Leader",
+          value: memberName,
+        },
+        {
+          name: "Case Title",
+          value: caseTitle,
+        },
+        {
+          name: "Problem Description",
+          value: caseProblem,
+        },
+        {
+          name: "Immediate Corrective Actions",
+          value: "To be added",
+        },
+        {
+          name: "Resolution",
+          value: "To be added",
+        },
+      ])
+      // .setFooter({
+      //   iconURL: interaction.user.displayAvatarURL(),
+      //   text: `Reported by: ${memberName}`,
+      // })
+      .setColor("DarkGreen");
+
+    const editCorrectiveActionButton = new ButtonBuilder()
+      .setCustomId("editCorrectiveActionButton")
+      .setLabel("Edit Corrective Action")
+      .setStyle(ButtonStyle.Primary);
+    const editResolutionButton = new ButtonBuilder()
+      .setCustomId("editResolutionButton")
+      .setLabel("Edit Resolution")
+      .setStyle(ButtonStyle.Success);
+    const closeCaseButton = new ButtonBuilder()
+      .setCustomId("closeCaseButton")
+      .setLabel("Close Case")
+      .setStyle(ButtonStyle.Danger);
+
+    const buttonRow = new ActionRowBuilder().addComponents(
+      editCorrectiveActionButton,
+      editResolutionButton,
+      closeCaseButton
+    );
+
+    await caseThread.send({
+      embeds: [caseReportEmbed],
       components: [buttonRow],
     });
 
-    const updateQuery = `UPDATE Leviosa_Proposals SET PROPOSAL_NUMBER = ?, MESSAGE_ID = ? WHERE ID = ?`;
-    await connection.query(updateQuery, [
-      proposalNumber,
-      proposalMessage.id,
-      idResult[0][0].ID,
-    ]);
+    addCaseReport(caseTitle, memberId, threadId);
 
-    // await connection.end();
-    connection.release();
+    const replyEmbed = new EmbedBuilder()
+      .setDescription(
+        `## Case Report Submitted\nPlease check the <#${channelInput}> to check your report.`
+      )
+      .setColor("Green");
+
+    await interaction.editReply({
+      embeds: [replyEmbed],
+      flags: MessageFlags.Ephemeral,
+    });
   },
 };
+
+function getNextId() {
+  const row = sqliteDb
+    .prepare("SELECT id FROM CASE_REPORTS ORDER BY id DESC LIMIT 1")
+    .get();
+  if (!row) return "0001"; // If no existing data, start at 0001
+
+  const nextId = String(parseInt(row.id) + 1).padStart(4, "0"); // Convert to number, increment, then pad
+  return nextId;
+}
+
+function addCaseReport(caseTitle, memberId, threadId) {
+  const newId = getNextId();
+  const insert = sqliteDb.prepare(
+    "INSERT INTO CASE_REPORTS (id, case_title, case_leader_id, case_thread_id) VALUES (?, ?, ?, ?)"
+  );
+  insert.run(newId, caseTitle, memberId, threadId);
+  console.log(chalk.green(`🟢 New case report added with ID: #${newId}`));
+}

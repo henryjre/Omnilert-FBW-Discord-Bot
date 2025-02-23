@@ -1,7 +1,7 @@
 const { EmbedBuilder } = require("discord.js");
 const moment = require("moment-timezone");
 // const conn = require("../../sqlConnection.js");
-const pools = require("../../sqlPools.js");
+// const pools = require("../../sqlPools.js");
 // const { table } = require("table");
 
 module.exports = {

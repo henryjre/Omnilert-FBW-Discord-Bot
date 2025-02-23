@@ -7,7 +7,7 @@ const {
   StringSelectMenuBuilder,
 } = require("discord.js");
 // const conn = require("../../../sqlConnection.js");
-const pools = require("../../../sqlPools.js");
+// const pools = require("../../../sqlPools.js");
 
 module.exports = {
   data: {

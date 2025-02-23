@@ -1,6 +1,5 @@
 const { EmbedBuilder } = require("discord.js");
 // const conn = require("../../sqlConnection");
-const pools = require("../../sqlPools.js");
 
 const pesoFormatter = new Intl.NumberFormat("en-PH", {
   style: "currency",
