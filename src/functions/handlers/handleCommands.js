@@ -22,6 +22,14 @@ module.exports = (client) => {
             // console.log(`Command: ${command.data.name} has been passed throught the handler`);
           }
           break;
+        case "staffCommands":
+          for (const file of commandFiles) {
+            const command = require(`../../commands/${folder}/${file}`);
+            commands.set(command.data.name, command);
+            commandArray.push(command.data.toJSON());
+            // console.log(`Command: ${command.data.name} has been passed throught the handler`);
+          }
+          break;
         // case "hiddenCommands":
         //   for (const file of commandFiles) {
         //     const command = require(`../../commands/${folder}/${file}`);

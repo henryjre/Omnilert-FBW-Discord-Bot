@@ -1,6 +1,4 @@
 const { SlashCommandBuilder, AttachmentBuilder } = require("discord.js");
-const { createCanvas, loadImage, registerFont } = require("canvas");
-const sharp = require("sharp");
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
 

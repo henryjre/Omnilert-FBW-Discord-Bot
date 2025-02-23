@@ -3,7 +3,6 @@ const {
   AttachmentBuilder,
   EmbedBuilder,
 } = require("discord.js");
-const { createCanvas, loadImage, registerFont } = require("canvas");
 const moment = require("moment");
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
