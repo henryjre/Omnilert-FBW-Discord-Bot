@@ -31,7 +31,7 @@ app.post("/github-webhook", (req, res) => {
   console.log("Received push event from GitHub. Pulling latest changes...");
 
   exec(
-    "cd /opt/discord-bot && git pull origin main && npm install && pm2 restart discord-bot",
+    "cd /opt/omnilert-bot && git pull origin main && npm install && pm2 restart discord-bot",
     (err, stdout, stderr) => {
       if (err) {
         console.error(`Error: ${stderr}`);
