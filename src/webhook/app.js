@@ -2,8 +2,8 @@
 const express = require("express");
 // const helmet = require('helmet');
 const app = express();
-const routes = require("./routes");
-const shopRoutes = require("./shopRoutes");
+// const routes = require("./routes");
+// const shopRoutes = require("./shopRoutes");
 const PORT = process.env.PORT || 3000;
 const SECRET = process.env.githubSecret;
 
