@@ -154,6 +154,7 @@ module.exports = async (req, res) => {
       );
 
       const updateQuery = `UPDATE Executives SET PBR = ?, CUMULATIVE_PBR = (CUMULATIVE_PBR + ?), NAME = ? WHERE MEMBER_ID = ?`;
+      console.log("***** \n", pbrPerHour);
       await mgmt_connection.query(updateQuery, [
         parseFloat(pbrPerHour.toFixed(2)),
         parseFloat(pbrPerHour.toFixed(2)),

@@ -14,7 +14,7 @@ module.exports = (client) => {
       const { commands, commandArray } = client;
 
       switch (folder) {
-        case "staffCommands":
+        case "managementCommands":
           for (const file of commandFiles) {
             const command = require(`../../commands/${folder}/${file}`);
             commands.set(command.data.name, command);
@@ -22,41 +22,33 @@ module.exports = (client) => {
             // console.log(`Command: ${command.data.name} has been passed throught the handler`);
           }
           break;
-        case "tiktokCommands":
-          for (const file of commandFiles) {
-            const command = require(`../../commands/${folder}/${file}`);
-            commands.set(command.data.name, command);
-            commandArray.push(command.data.toJSON());
-            // console.log(`Command: ${command.data.name} has been passed throught the handler`);
-          }
-          break;
-        case "hiddenCommands":
-          for (const file of commandFiles) {
-            const command = require(`../../commands/${folder}/${file}`);
-            commands.set(command.name, command);
-          }
-          break;
-        case "reactionCommands":
-          for (const file of commandFiles) {
-            const command = require(`../../commands/${folder}/${file}`);
-            commands.set(command.name, command);
-          }
-          break;
+        // case "hiddenCommands":
+        //   for (const file of commandFiles) {
+        //     const command = require(`../../commands/${folder}/${file}`);
+        //     commands.set(command.name, command);
+        //   }
+        //   break;
+        // case "reactionCommands":
+        //   for (const file of commandFiles) {
+        //     const command = require(`../../commands/${folder}/${file}`);
+        //     commands.set(command.name, command);
+        //   }
+        //   break;
 
         default:
           break;
       }
     }
 
-    const guildId = "1049165537193754664";
-    let clientId, token;
+    let clientId, guildId, token;
 
     if (process.env.node_env === "prod") {
-      clientId = "1048079490493993000";
-      token = process.env.token;
+      clientId = process.env.prodClientId;
+      guildId = process.env.prodGuildId;
+      token = process.env.prodToken;
     } else if (process.env.node_env === "dev") {
       clientId = "1166638042698747924";
-      token = process.env.test;
+      token = process.env.testToken;
     }
 
     const rest = new REST({ version: "10" }).setToken(token);

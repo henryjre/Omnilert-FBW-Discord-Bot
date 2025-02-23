@@ -36,13 +36,13 @@ async function storeData(jsonArray) {
 
     const existingArray = existingData ? JSON.parse(existingData) : [];
 
-    if (existingArray.length > 0) {
-      console.log("Executive data is already stored");
-      return {
-        ok: false,
-        message: "There is an existing data currently stored.",
-      };
-    }
+    // if (existingArray.length > 0) {
+    //   console.log("Executive data is already stored");
+    //   return {
+    //     ok: false,
+    //     message: "There is an existing data currently stored.",
+    //   };
+    // }
 
     await fs.writeFile(filePath, JSON.stringify(jsonArray));
     console.log("Data stored successfully.");
