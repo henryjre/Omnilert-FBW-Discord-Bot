@@ -15,7 +15,6 @@ const rolesToRemove = departments.map((d) => d.role).filter(Boolean);
 
 // ✅ Employee Check-In
 const employeeCheckIn = async (req, res) => {
-  console.log(req.body);
   try {
     const {
       check_in,
@@ -115,18 +114,20 @@ const employeeCheckOut = async (req, res) => {
         .json({ ok: false, message: "Message has no embeds" });
     }
 
+    const checkInField = messageEmbed.data.fields?.find(
+      (f) => f.name === "Check-In"
+    );
+    const checkOutField = messageEmbed.data.fields?.find(
+      (f) => f.name === "Check-Out"
+    );
     const hoursWorkedField = messageEmbed.data.fields?.find(
       (f) => f.name === "Hours Worked"
     );
 
-    messageEmbed.data.fields.find((f) => f.name === "Check-In").value =
-      formattedCheckIn;
-    messageEmbed.data.fields.find((f) => f.name === "Check-Out").value =
-      formattedCheckOut;
+    if (checkInField) checkInField.value = formattedCheckIn;
+    if (checkOutField) checkOutField.value = formattedCheckOut;
     if (hoursWorkedField) {
-      messageEmbed.data.fields.find(
-        (f) => f.name === "Hours Worked"
-      ).value = `⏳ | ${workHours}`;
+      hoursWorkedField.value = `⏳ | ${workHours}`;
     } else {
       messageEmbed.data.fields.push({
         name: "Hours Worked",
