@@ -5,7 +5,7 @@ const { exec } = require("child_process");
 // const helmet = require('helmet');
 const app = express();
 // const routes = require("./routes");
-// const shopRoutes = require("./shopRoutes");
+const odooRoutes = require("./odooRoutes");
 const PORT = process.env.PORT || 3000;
 const SECRET = process.env.githubSecret;
 
@@ -15,7 +15,7 @@ const authenticate = require("./auth");
 
 app.use(express.json());
 
-// app.use("/shops", shopRoutes);
+app.use("/odoo", odooRoutes);
 // app.use("/api", authenticate, routes);
 
 app.post("/github-webhook", (req, res) => {
