@@ -39,7 +39,7 @@ const employeeCheckIn = async (req, res) => {
 
   const embed = new EmbedBuilder()
     .setTitle("Here is your image!")
-    .setImage(attachment);
+    .setImage("attachment://image.png");
 
   await client.channels.cache.get("1343462713363271780").send({
     embeds: [embed],
