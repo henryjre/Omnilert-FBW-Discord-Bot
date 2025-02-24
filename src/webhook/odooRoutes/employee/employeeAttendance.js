@@ -15,6 +15,7 @@ const rolesToRemove = departments.map((d) => d.role).filter(Boolean);
 
 // ✅ Employee Check-In
 const employeeCheckIn = async (req, res) => {
+  console.log(req.body);
   try {
     const {
       check_in,
