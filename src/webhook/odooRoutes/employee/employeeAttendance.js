@@ -1,5 +1,4 @@
-const { AttachmentBuilder, EmbedBuilder } = require("discord.js");
-const fs = require("fs");
+const { EmbedBuilder } = require("discord.js");
 
 const client = require("../../../index.js");
 
@@ -29,23 +28,46 @@ const departments = [
 const employeeCheckIn = async (req, res) => {
   const payload = req.body;
 
-  const checkInTime = payload.check_in;
+  console.log(payload);
 
-  const avatarBinary = payload.x_employee_avatar;
-  const binaryData = Buffer.from(avatarBinary, "binary");
-  fs.writeFileSync("image.png", binaryData);
+  const rawCheckInTime = payload.check_in;
+  const formattedTime = moment
+    .utc(rawCheckInTime)
+    .tz("Asia/Manila")
+    .format("MMMM D, YYYY [at] h:mm A");
 
-  const attachment = new AttachmentBuilder("image.png");
+  const department = departments.find((d) => d.id === payload.department_id);
+  const attendanceId = payload.id;
+  const employeeName = payload.x_employee_contact_name.split("-")[2].trim();
 
   const embed = new EmbedBuilder()
-    .setTitle("Here is your image!")
-    .setImage("attachment://image.png");
+    .setTitle("🗓️ Attendance Log")
+    .addFields(
+      {
+        name: "Employee",
+        value: `🪪 | ${employeeName}`,
+      },
+      {
+        name: "Branch",
+        value: `🏪 | ${department}`,
+      },
+      {
+        name: "Check-In",
+        value: `⏱️ | ${formattedTime}`,
+      },
+      {
+        name: "Check-Out",
+        valud: `⏱️ | Currently Working`,
+      }
+    )
+    .setColor("Blue");
 
   await client.channels.cache.get("1343462713363271780").send({
+    content: `Attendance ID: ${attendanceId}`,
     embeds: [embed],
   });
 
-  res.status(200).json({ ok: true, message: "success" });
+  return await res.status(200).json({ ok: true, message: "success" });
 };
 
 module.exports = { employeeCheckIn };
