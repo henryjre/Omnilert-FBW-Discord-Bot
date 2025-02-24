@@ -115,20 +115,18 @@ const employeeCheckOut = async (req, res) => {
         .json({ ok: false, message: "Message has no embeds" });
     }
 
-    const checkInField = messageEmbed.data.fields?.find(
-      (f) => f.name === "Check-In"
-    );
-    const checkOutField = messageEmbed.data.fields?.find(
-      (f) => f.name === "Check-Out"
-    );
     const hoursWorkedField = messageEmbed.data.fields?.find(
       (f) => f.name === "Hours Worked"
     );
 
-    if (checkInField) checkInField.value = formattedCheckIn;
-    if (checkOutField) checkOutField.value = formattedCheckOut;
+    messageEmbed.data.fields.find((f) => f.name === "Check-In").value =
+      formattedCheckIn;
+    messageEmbed.data.fields.find((f) => f.name === "Check-Out").value =
+      formattedCheckOut;
     if (hoursWorkedField) {
-      hoursWorkedField.value = `⏳ | ${workHours}`;
+      messageEmbed.data.fields.find(
+        (f) => f.name === "Hours Worked"
+      ).value = `⏳ | ${workHours}`;
     } else {
       messageEmbed.data.fields.push({
         name: "Hours Worked",
