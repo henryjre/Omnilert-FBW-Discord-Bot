@@ -44,7 +44,7 @@ function buildCaseReportModal(channel) {
 
   const firstInput = new TextInputBuilder()
     .setCustomId(`titleInput`)
-    .setLabel(`Case Title`)
+    .setLabel(`Case Title (Exclude Case Number)`)
     .setStyle(TextInputStyle.Short)
     .setPlaceholder("A short, clear name for the issue.")
     .setMaxLength(100)
