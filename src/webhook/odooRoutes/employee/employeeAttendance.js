@@ -97,7 +97,13 @@ const employeeCheckIn = async (req, res) => {
 
 const employeeCheckOut = async (req, res) => {
   try {
-    const { check_in, check_out, worked_hours, id: attendanceId } = req.body;
+    const {
+      x_discord_id,
+      check_in,
+      check_out,
+      worked_hours,
+      id: attendanceId,
+    } = req.body;
 
     if (x_discord_id) {
       const guild = client.guilds.cache.get("1314413189613490248");
