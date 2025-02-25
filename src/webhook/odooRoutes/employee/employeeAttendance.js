@@ -50,14 +50,24 @@ const employeeCheckIn = async (req, res) => {
     }
 
     // ✅ Handle role updates
-    if (x_discord_id && department?.role) {
+    if (x_discord_id) {
       const guild = client.guilds.cache.get("1314413189613490248");
       const discordMember = guild?.members.cache.get(x_discord_id);
+      let currentNickname =
+        discordMember.nickname || discordMember.user.username;
 
-      if (discordMember) {
+      if (currentNickname.includes("🔴")) {
+        currentNickname = currentNickname.replace("🔴", "🟢");
+      } else if (!currentNickname.startsWith("🟢")) {
+        currentNickname = "🟢 " + currentNickname;
+      }
+
+      if (department?.role) {
         await discordMember.roles.remove(rolesToRemove);
         await discordMember.roles.add(department.role);
       }
+
+      await discordMember.setNickname(currentNickname);
     }
 
     // ✅ Create and send new attendance log
@@ -88,6 +98,21 @@ const employeeCheckIn = async (req, res) => {
 const employeeCheckOut = async (req, res) => {
   try {
     const { check_in, check_out, worked_hours, id: attendanceId } = req.body;
+
+    if (x_discord_id) {
+      const guild = client.guilds.cache.get("1314413189613490248");
+      const discordMember = guild?.members.cache.get(x_discord_id);
+      let currentNickname =
+        discordMember.nickname || discordMember.user.username;
+
+      if (currentNickname.includes("🟢")) {
+        currentNickname = currentNickname.replace("🟢", "🔴");
+      } else if (!currentNickname.startsWith("🔴")) {
+        currentNickname = "🔴 " + currentNickname;
+      }
+
+      await discordMember.setNickname(currentNickname);
+    }
 
     const formattedCheckIn = formatTime(check_in);
     const formattedCheckOut = formatTime(check_out);

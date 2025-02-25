@@ -44,7 +44,7 @@ client.handleComponents();
 
 if (process.env.node_env === "prod") {
   client.login(process.env.prodToken);
-} else if (process.env.node_env === "dev") {
+} else if (process.env.node_env === "test") {
   client.login(process.env.testToken);
 }
 

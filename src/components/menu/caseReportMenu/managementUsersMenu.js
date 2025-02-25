@@ -1,16 +1,4 @@
-const {
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  EmbedBuilder,
-  TextInputBuilder,
-  TextInputStyle,
-  StringSelectMenuOptionBuilder,
-  StringSelectMenuBuilder,
-  ComponentType,
-  MessageFlags,
-  UserSelectMenuBuilder,
-} = require("discord.js");
+const { EmbedBuilder } = require("discord.js");
 
 module.exports = {
   data: {
