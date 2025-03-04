@@ -25,6 +25,8 @@ module.exports = {
     const interactionMember =
       interaction.member?.toString() || interaction.user.toString();
 
+    const parsedAmount = extractDigits(requestedAmount);
+
     const cashRequestEmbed = new EmbedBuilder()
       .setDescription(`## ${type.name} REQUEST`)
       .addFields([
@@ -34,7 +36,7 @@ module.exports = {
         },
         {
           name: "Requested Amount",
-          value: `💲 | ${requestedAmount}`,
+          value: `🪙 | ${parsedAmount}`,
         },
         {
           name: "Bank Name",
@@ -79,3 +81,13 @@ module.exports = {
     });
   },
 };
+
+function extractDigits(input) {
+  try {
+    if (typeof input !== "string") return input; // Return original if not a string
+    const digits = input.replace(/\D/g, "");
+    return digits ? `₱${parseInt(digits, 10)}` : input; // Return input if no digits found
+  } catch (error) {
+    return input; // Return original string if an error occurs
+  }
+}
