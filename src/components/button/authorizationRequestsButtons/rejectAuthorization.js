@@ -10,13 +10,13 @@ const {
 } = require("discord.js");
 
 const hrDepartmentChannel = "1342837776017657940";
-const financeDepartmentChannel = "857579210973380608";
+const financeDepartmentChannel = "1342837676700602471";
 
 const hrLogsChannel = "1343869449455009833";
-const financeLogsChannel = "862882711009493003";
+const financeLogsChannel = "1346465399369367645";
 
 const hrRole = "1314815153421680640";
-const financeRole = "864767409785143346";
+const financeRole = "1314815202679590984";
 
 module.exports = {
   data: {
@@ -60,7 +60,7 @@ module.exports = {
     if (interaction.member.roles.cache.has(financeRole)) {
       logsChannel = financeLogsChannel;
     } else if (interaction.member.roles.cache.has(hrRole)) {
-      logsChannel = hrDepartmentChannel;
+      logsChannel = hrLogsChannel;
     }
 
     const modal = new ModalBuilder()
