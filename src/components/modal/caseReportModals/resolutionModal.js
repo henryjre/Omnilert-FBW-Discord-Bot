@@ -22,7 +22,8 @@ module.exports = {
     const replyEmbed = new EmbedBuilder()
       .setDescription(
         `## 🔔 UPDATE\n> **${
-          interaction.member?.nickname || interaction.user.username
+          interaction.member?.nickname.replace(/^[🔴🟢]\s*/, "") ||
+          interaction.user.username
         }** added the following resolution:\n\n*${modalInput}*`
       )
       .setColor("Yellow");

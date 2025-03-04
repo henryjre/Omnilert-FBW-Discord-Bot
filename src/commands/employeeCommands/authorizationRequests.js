@@ -44,14 +44,52 @@ module.exports = {
               },
             ])
         )
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName("cash")
+        .setDescription("Request cash from Finance Department.")
+        .addStringOption((option) =>
+          option
+            .setName("option")
+            .setDescription("Select the request option.")
+            .setRequired(true)
+            .setChoices([
+              {
+                name: "💸 Salaries and Wages",
+                value: "salaries_wages",
+              },
+              {
+                name: "💵 Cash Advance",
+                value: "cash_advance",
+              },
+              {
+                name: "💳 Expense Reimbursement",
+                value: "expense_reimbursement",
+              },
+              {
+                name: "💰 Training Allowance",
+                value: "training_allowance",
+              },
+              {
+                name: "🚌 Transport Allowance",
+                value: "transport_allowance",
+              },
+            ])
+        )
     ),
   async execute(interaction, client) {
     const subcommand = interaction.options.getSubcommand();
 
     switch (subcommand) {
       case "authorization":
-        const option = interaction.options.getString("option");
-        await runCommand(interaction, client, option);
+        const authOptions = interaction.options.getString("option");
+        await runAuthorizationsCommand(interaction, client, authOptions);
+        break;
+
+      case "cash":
+        const cashOptions = interaction.options.getString("option");
+        await runCashRequestsCommand(interaction, client, cashOptions);
         break;
 
       default:
@@ -60,7 +98,7 @@ module.exports = {
   },
 };
 
-async function runCommand(interaction, client, option) {
+async function runAuthorizationsCommand(interaction, client, option) {
   const authRequests = ["absence", "tardiness", "undertime"];
 
   if (!authRequests.includes(option)) {
@@ -70,4 +108,8 @@ async function runCommand(interaction, client, option) {
   return await client.commands
     .get("auth_request")
     .execute(interaction, client, option);
+}
+
+async function runCashRequestsCommand(interaction, client, option) {
+  return await client.commands.get("cash_request").execute(interaction, client);
 }

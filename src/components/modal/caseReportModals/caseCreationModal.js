@@ -55,7 +55,7 @@ module.exports = {
     );
 
     const membersWithRoles = await managementRole.members.map((m) => {
-      const name = m.nickname || m.user.username;
+      const name = m.nickname.replace(/^[🔴🟢]\s*/, "") || m.user.username;
       return new StringSelectMenuOptionBuilder().setLabel(name).setValue(name);
     });
 

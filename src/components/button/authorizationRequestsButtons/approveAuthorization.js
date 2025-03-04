@@ -9,8 +9,14 @@ const {
   TextInputStyle,
 } = require("discord.js");
 
-const logsChannel = "1343869449455009833";
+const hrDepartmentChannel = "1342837776017657940";
+const financeDepartmentChannel = "1342837676700602471";
+
+const hrLogsChannel = "1343869449455009833";
+const financeLogsChannel = "1346465399369367645";
+
 const hrRole = "1314815153421680640";
+const financeRole = "1314815202679590984";
 
 module.exports = {
   data: {
@@ -31,7 +37,14 @@ module.exports = {
       .map((f) => f.value)
       .join("\n");
 
-    if (!interaction.member.roles.cache.has(hrRole)) {
+    if (
+      (!interaction.member.roles.cache.has(hrRole) &&
+        !interaction.member.roles.cache.has(financeRole)) ||
+      (interaction.member.roles.cache.has(hrRole) &&
+        interaction.message.channelId === financeDepartmentChannel) ||
+      (interaction.member.roles.cache.has(financeRole) &&
+        interaction.message.channelId === hrDepartmentChannel)
+    ) {
       replyEmbed
         .setDescription(`🔴 ERROR: You cannot use this button.`)
         .setColor("Red");
@@ -40,6 +53,14 @@ module.exports = {
         embeds: [replyEmbed],
         flags: MessageFlags.Ephemeral,
       });
+    }
+
+    let logsChannel;
+
+    if (interaction.member.roles.cache.has(financeRole)) {
+      logsChannel = financeLogsChannel;
+    } else if (interaction.member.roles.cache.has(hrRole)) {
+      logsChannel = hrLogsChannel;
     }
 
     const modal = new ModalBuilder()
@@ -79,11 +100,17 @@ module.exports = {
           modalResponse.fields.getTextInputValue("additionalNotes");
 
         if (details) {
-          messageEmbed.data.description += `\n\u200b\nAdditional notes from **${interaction.member.nickname}**:\n> *"${details}"*\n\u200b`;
+          messageEmbed.data.description += `\n\u200b\nAdditional notes from **${interaction.member.nickname.replace(
+            /^[🔴🟢]\s*/,
+            ""
+          )}**:\n> *"${details}"*\n\u200b`;
         }
 
         messageEmbed.data.footer = {
-          text: `Approved By: ${interaction.member.nickname}`,
+          text: `Approved By: ${interaction.member.nickname.replace(
+            /^[🔴🟢]\s*/,
+            ""
+          )}`,
         };
 
         messageEmbed.data.color = 5763719;

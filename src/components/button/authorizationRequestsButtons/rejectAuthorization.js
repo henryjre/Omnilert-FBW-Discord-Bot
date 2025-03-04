@@ -9,8 +9,14 @@ const {
   TextInputStyle,
 } = require("discord.js");
 
-const logsChannel = "1343869449455009833";
+const hrDepartmentChannel = "1342837776017657940";
+const financeDepartmentChannel = "857579210973380608";
+
+const hrLogsChannel = "1343869449455009833";
+const financeLogsChannel = "862882711009493003";
+
 const hrRole = "1314815153421680640";
+const financeRole = "864767409785143346";
 
 module.exports = {
   data: {
@@ -31,7 +37,14 @@ module.exports = {
       .map((f) => f.value)
       .join("\n");
 
-    if (!interaction.member.roles.cache.has(hrRole)) {
+    if (
+      (!interaction.member.roles.cache.has(hrRole) &&
+        !interaction.member.roles.cache.has(financeRole)) ||
+      (interaction.member.roles.cache.has(hrRole) &&
+        interaction.message.channelId === financeDepartmentChannel) ||
+      (interaction.member.roles.cache.has(financeRole) &&
+        interaction.message.channelId === hrDepartmentChannel)
+    ) {
       replyEmbed
         .setDescription(`🔴 ERROR: You cannot use this button.`)
         .setColor("Red");
@@ -40,6 +53,14 @@ module.exports = {
         embeds: [replyEmbed],
         flags: MessageFlags.Ephemeral,
       });
+    }
+
+    let logsChannel;
+
+    if (interaction.member.roles.cache.has(financeRole)) {
+      logsChannel = financeLogsChannel;
+    } else if (interaction.member.roles.cache.has(hrRole)) {
+      logsChannel = hrDepartmentChannel;
     }
 
     const modal = new ModalBuilder()
@@ -82,7 +103,10 @@ module.exports = {
         }
 
         messageEmbed.data.footer = {
-          text: `Rejected By: ${interaction.member.nickname}`,
+          text: `Rejected By: ${interaction.member.nickname.replace(
+            /^[🔴🟢]\s*/,
+            ""
+          )}`,
         };
 
         messageEmbed.data.color = 15548997;

@@ -9,6 +9,9 @@ const {
 const hrDepartmentChannel = "1342837776017657940";
 const hrRole = "1314815153421680640";
 
+const financeDepartmentChannel = "1342837676700602471";
+const financeRole = "1314815202679590984";
+
 module.exports = {
   data: {
     name: `confirmAuthRequest`,
@@ -34,7 +37,21 @@ module.exports = {
       });
     }
 
-    const hrDepartment = await client.channels.cache.get(hrDepartmentChannel);
+    let department, role, deptName;
+
+    if (interaction.message.interaction.commandName === "request cash") {
+      department = financeDepartmentChannel;
+      role = financeRole;
+      deptName = "Finance Department";
+    } else if (
+      interaction.message.interaction.commandName === "request authorization"
+    ) {
+      department = hrDepartmentChannel;
+      role = hrRole;
+      deptName = "HR Department";
+    }
+
+    const departmentChannel = await client.channels.cache.get(department);
 
     const confirmButton = new ButtonBuilder()
       .setCustomId("approveAuthorization")
@@ -51,8 +68,8 @@ module.exports = {
       rejectButton
     );
 
-    await hrDepartment.send({
-      content: `<@&${hrRole}>`,
+    await departmentChannel.send({
+      content: `<@&${role}>`,
       embeds: [messageEmbed],
       components: [buttonRow],
     });
@@ -61,7 +78,7 @@ module.exports = {
 
     replyEmbed
       .setDescription(
-        `You have confirmed the request. Please wait for the approval of the HR Department.`
+        `You have confirmed the request. Please wait for the approval of the ${deptName}.`
       )
       .setColor("Green");
 

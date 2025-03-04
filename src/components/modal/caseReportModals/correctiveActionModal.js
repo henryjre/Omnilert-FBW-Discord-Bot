@@ -24,7 +24,8 @@ module.exports = {
     const replyEmbed = new EmbedBuilder()
       .setDescription(
         `## 🔔 UPDATE\n> **${
-          interaction.member?.nickname || interaction.user.globalName
+          interaction.member?.nickname.replace(/^[🔴🟢]\s*/, "") ||
+          interaction.user.globalName
         }** added the following corrective actions:\n\n*${modalInput}*`
       )
       .setColor("Yellow");

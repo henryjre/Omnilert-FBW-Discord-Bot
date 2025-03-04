@@ -26,7 +26,8 @@ module.exports = {
       messageEmbed.data.footer = {
         icon_url: interaction.user.displayAvatarURL(),
         text: `This case has been closed by ${
-          interaction.member?.nickname || interaction.user.globalName
+          interaction.member?.nickname.replace(/^[🔴🟢]\s*/, "") ||
+          interaction.user.globalName
         }`,
       };
 
@@ -40,7 +41,8 @@ module.exports = {
       const replyEmbed = new EmbedBuilder()
         .setDescription(
           `## 🔔 UPDATE\n> **${
-            interaction.member?.nickname || interaction.user.globalName
+            interaction.member?.nickname.replace(/^[🔴🟢]\s*/, "") ||
+            interaction.user.globalName
           }** has closed the case.`
         )
         .setColor("Yellow");

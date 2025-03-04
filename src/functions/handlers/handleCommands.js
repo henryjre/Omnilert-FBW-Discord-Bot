@@ -52,15 +52,16 @@ module.exports = (client) => {
       }
     }
 
-    let clientId, token;
-    const guildId = process.env.prodGuildId;
+    let clientId, token, guildId;
 
     if (process.env.node_env === "prod") {
       clientId = process.env.prodClientId;
       token = process.env.prodToken;
+      guildId = process.env.prodGuildId;
     } else if (process.env.node_env === "test") {
       clientId = process.env.testClientId;
       token = process.env.testToken;
+      guildId = process.env.testGuildId;
     }
 
     const rest = new REST({ version: "10" }).setToken(token);
