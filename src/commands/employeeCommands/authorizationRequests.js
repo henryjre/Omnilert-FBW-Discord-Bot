@@ -42,6 +42,14 @@ module.exports = {
                 name: "🕧 Undertime Authorization Request",
                 value: "undertime",
               },
+              {
+                name: "💳 Payment",
+                value: "payment",
+              },
+              {
+                name: "💰 Replenishment",
+                value: "replenishment",
+              },
             ])
         )
     )
@@ -88,8 +96,7 @@ module.exports = {
         break;
 
       case "cash":
-        const cashOptions = interaction.options.getString("option");
-        await runCashRequestsCommand(interaction, client, cashOptions);
+        await runCashRequestsCommand(interaction, client);
         break;
 
       default:
@@ -100,16 +107,21 @@ module.exports = {
 
 async function runAuthorizationsCommand(interaction, client, option) {
   const authRequests = ["absence", "tardiness", "undertime"];
+  const financeRequests = ["payment", "replenishment"];
 
   if (!authRequests.includes(option)) {
     return await client.commands.get(option).execute(interaction, client);
+  } else if (financeRequests.includes(option)) {
+    return await client.commands
+      .get("finance_request")
+      .execute(interaction, client, option);
+  } else {
+    return await client.commands
+      .get("auth_request")
+      .execute(interaction, client, option);
   }
-
-  return await client.commands
-    .get("auth_request")
-    .execute(interaction, client, option);
 }
 
-async function runCashRequestsCommand(interaction, client, option) {
+async function runCashRequestsCommand(interaction, client) {
   return await client.commands.get("cash_request").execute(interaction, client);
 }

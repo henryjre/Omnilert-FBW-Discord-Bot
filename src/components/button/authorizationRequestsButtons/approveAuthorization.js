@@ -11,12 +11,14 @@ const {
 
 const hrDepartmentChannel = "1342837776017657940";
 const financeDepartmentChannel = "1342837676700602471";
+const ehChannel = "1342837500116336823";
 
 const hrLogsChannel = "1343869449455009833";
 const financeLogsChannel = "1346465399369367645";
 
 const hrRole = "1314815153421680640";
 const financeRole = "1314815202679590984";
+const ehRole = "1314414836926386257";
 
 module.exports = {
   data: {
@@ -39,11 +41,12 @@ module.exports = {
 
     if (
       (!interaction.member.roles.cache.has(hrRole) &&
-        !interaction.member.roles.cache.has(financeRole)) ||
+        !interaction.member.roles.cache.has(financeRole) &&
+        !interaction.member.roles.cache.has(ehRole)) ||
       (interaction.member.roles.cache.has(hrRole) &&
-        interaction.message.channelId === financeDepartmentChannel) ||
+        interaction.message.channelId !== hrDepartmentChannel) ||
       (interaction.member.roles.cache.has(financeRole) &&
-        interaction.message.channelId === hrDepartmentChannel)
+        interaction.message.channelId !== financeDepartmentChannel)
     ) {
       replyEmbed
         .setDescription(`🔴 ERROR: You cannot use this button.`)
@@ -59,7 +62,10 @@ module.exports = {
 
     if (interaction.member.roles.cache.has(financeRole)) {
       logsChannel = financeLogsChannel;
-    } else if (interaction.member.roles.cache.has(hrRole)) {
+    } else if (
+      interaction.member.roles.cache.has(hrRole) ||
+      interaction.member.roles.cache.has(ehRole)
+    ) {
       logsChannel = hrLogsChannel;
     }
 
