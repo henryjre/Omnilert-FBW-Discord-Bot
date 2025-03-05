@@ -109,16 +109,16 @@ async function runAuthorizationsCommand(interaction, client, option) {
   const authRequests = ["absence", "tardiness", "undertime"];
   const financeRequests = ["payment", "replenishment"];
 
-  if (!authRequests.includes(option)) {
-    return await client.commands.get(option).execute(interaction, client);
-  } else if (financeRequests.includes(option)) {
+  if (financeRequests.includes(option)) {
     return await client.commands
       .get("finance_request")
       .execute(interaction, client, option);
-  } else {
+  } else if (authRequests.includes(option)) {
     return await client.commands
       .get("auth_request")
       .execute(interaction, client, option);
+  } else {
+    return await client.commands.get(option)?.execute(interaction, client);
   }
 }
 
