@@ -29,7 +29,9 @@ module.exports = {
   async execute(interaction, client, option) {
     if (!interaction.member.roles.cache.has(financeRole)) {
       const replyEmbed = new EmbedBuilder()
-        .setDescription(`🔴 ERROR: You cannot use this command.`)
+        .setDescription(
+          `🔴 ERROR: Only <@&1314815202679590984> can use this command.`
+        )
         .setColor("Red");
 
       return await interaction.reply({

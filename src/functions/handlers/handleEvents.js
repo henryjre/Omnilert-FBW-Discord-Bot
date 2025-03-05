@@ -25,7 +25,7 @@ module.exports = (client) => {
           }
           break;
 
-        case "events":
+        case "custom":
           for (const file of eventFiles) {
             const event = require(`../../events/${folder}/${file}`);
             events.set(event.name, event);

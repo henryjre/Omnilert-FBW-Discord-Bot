@@ -3,6 +3,7 @@ const {
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
+  MessageFlags,
 } = require("discord.js");
 
 module.exports = {
@@ -15,7 +16,7 @@ module.exports = {
     if (!interaction.member.roles.cache.has(permissionRole)) {
       await interaction.reply({
         content: `🔴 ERROR: You cannot use this button.`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }

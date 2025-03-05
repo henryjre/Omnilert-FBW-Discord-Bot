@@ -15,7 +15,10 @@ module.exports = {
     let messageEmbed = interaction.message.embeds[0];
 
     const ownerField = messageEmbed.data.fields.find(
-      (f) => f.name === "Assigned Name" || f.name === "Employee Name"
+      (f) =>
+        f.name === "Assigned Name" ||
+        f.name === "Employee Name" ||
+        f.name.includes("Reported By")
     );
 
     const replyEmbed = new EmbedBuilder();
@@ -29,6 +32,11 @@ module.exports = {
         embeds: [replyEmbed],
         flags: MessageFlags.Ephemeral,
       });
+    }
+
+    if (interaction.message.hasThread) {
+      const thread = interaction.message.thread;
+      await thread.delete();
     }
 
     await interaction.message.delete();
