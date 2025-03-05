@@ -26,7 +26,7 @@ module.exports = {
   data: new SlashCommandBuilder().setName("finance_request"),
   pushToArray: false,
   async execute(interaction, client, option) {
-    if (interaction.member.roles.cache.has(financeRole)) {
+    if (!interaction.member.roles.cache.has(financeRole)) {
       const replyEmbed = new EmbedBuilder()
         .setDescription(`🔴 ERROR: You cannot use this command.`)
         .setColor("Red");
