@@ -85,8 +85,14 @@ module.exports = {
 function extractDigits(input) {
   try {
     if (typeof input !== "string") return input; // Return original if not a string
-    const digits = input.replace(/\D/g, "");
-    return digits ? `₱${parseInt(digits, 10)}` : input; // Return input if no digits found
+
+    const digits = input.replace(/\D/g, ""); // Remove non-digit characters
+    if (!digits) return input; // Return input if no digits found
+
+    // Convert to a number and format with commas
+    const amount = parseInt(digits, 10).toLocaleString("en-US");
+
+    return `₱${amount}.00`; // Ensure centavos are added
   } catch (error) {
     return input; // Return original string if an error occurs
   }
