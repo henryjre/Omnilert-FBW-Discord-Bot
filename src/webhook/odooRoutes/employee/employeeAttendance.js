@@ -83,6 +83,7 @@ const employeeCheckIn = async (req, res) => {
       .setColor("Blue");
 
     if (x_employee_avatar) {
+      console.log(x_employee_avatar);
       embed.setThumbnail(x_employee_avatar);
     }
 
