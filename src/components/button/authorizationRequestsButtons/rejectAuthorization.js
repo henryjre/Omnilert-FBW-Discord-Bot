@@ -17,6 +17,7 @@ const financeLogsChannel = "1346465399369367645";
 
 const hrRole = "1314815153421680640";
 const financeRole = "1314815202679590984";
+const ehRole = "1314414836926386257";
 
 module.exports = {
   data: {
@@ -39,11 +40,12 @@ module.exports = {
 
     if (
       (!interaction.member.roles.cache.has(hrRole) &&
-        !interaction.member.roles.cache.has(financeRole)) ||
+        !interaction.member.roles.cache.has(financeRole) &&
+        !interaction.member.roles.cache.has(ehRole)) ||
       (interaction.member.roles.cache.has(hrRole) &&
-        interaction.message.channelId === financeDepartmentChannel) ||
+        interaction.message.channelId !== hrDepartmentChannel) ||
       (interaction.member.roles.cache.has(financeRole) &&
-        interaction.message.channelId === hrDepartmentChannel)
+        interaction.message.channelId !== financeDepartmentChannel)
     ) {
       replyEmbed
         .setDescription(`🔴 ERROR: You cannot use this button.`)
