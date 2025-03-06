@@ -20,6 +20,8 @@ const hrRole = "1314815153421680640";
 const financeRole = "1314815202679590984";
 const ehRole = "1314414836926386257";
 
+const financeType = ["SALARY/WAGE", "CASH ADVANCE", "EXPENSE REIMBURSEMENT", "TRAINING ALLOWANCE", "TRANSPORT ALLOWANCE"]
+
 module.exports = {
   data: {
     name: `approveAuthorization`,
@@ -57,10 +59,15 @@ module.exports = {
         flags: MessageFlags.Ephemeral,
       });
     }
+    
+    const embedTitle = messageEmbed.data.description
+    const isFinanceType = financeType.some(type => embedTitle.includes(type));
 
     let logsChannel;
 
-    if (interaction.member.roles.cache.has(financeRole)) {
+if (isFinanceType) {
+  logsChannel = financeLogsChannel;
+} else if (interaction.member.roles.cache.has(financeRole)) {
       logsChannel = financeLogsChannel;
     } else if (
       interaction.member.roles.cache.has(hrRole) ||
