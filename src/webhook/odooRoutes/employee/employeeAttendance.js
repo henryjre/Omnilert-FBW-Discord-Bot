@@ -22,6 +22,7 @@ const employeeCheckIn = async (req, res) => {
       id: attendanceId,
       x_employee_contact_name,
       x_discord_id,
+      x_employee_avatar,
     } = req.body;
     const formattedTime = formatTime(check_in);
     const department = departments.find((d) => d.id === department_id);
@@ -80,6 +81,10 @@ const employeeCheckIn = async (req, res) => {
         { name: "Check-Out", value: `⏱️ | Currently Working` }
       )
       .setColor("Blue");
+
+    if (x_employee_avatar) {
+      embed.setThumbnail(x_employee_avatar);
+    }
 
     await attendanceChannel.send({
       content: `Attendance ID: ${attendanceId}`,
