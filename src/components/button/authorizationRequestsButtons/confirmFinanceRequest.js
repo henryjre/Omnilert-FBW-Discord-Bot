@@ -11,7 +11,7 @@ const ehRole = "1314414836926386257";
 
 module.exports = {
   data: {
-    name: `confirmAuthRequest`,
+    name: `confirmFinanceRequest`,
   },
   async execute(interaction, client) {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
