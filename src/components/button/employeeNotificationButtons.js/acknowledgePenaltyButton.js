@@ -1,28 +1,15 @@
-const {
-  ActionRowBuilder,
-  MessageFlags,
-  EmbedBuilder,
-  ButtonStyle,
-  ButtonBuilder,
-} = require("discord.js");
+const { MessageFlags, EmbedBuilder } = require("discord.js");
 
 module.exports = {
   data: {
-    name: `cancelAuthRequest`,
+    name: `acknowledgePenalty`,
   },
   async execute(interaction, client) {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     let messageEmbed = interaction.message.embeds[0];
 
-    const ownerFieldNames = [
-      "Assigned Name",
-      "Employee Name",
-      "Notification By",
-      "Reported By",
-    ];
-
-    const ownerField = messageEmbed.data.fields.find((f) =>
-      ownerFieldNames.includes(f.name)
+    const ownerField = messageEmbed.data.fields.find(
+      (f) => f.name === "Penalized Employee"
     );
 
     const replyEmbed = new EmbedBuilder();
@@ -38,14 +25,17 @@ module.exports = {
       });
     }
 
-    if (interaction.message.hasThread) {
-      const thread = interaction.message.thread;
-      await thread.delete();
-    }
+    messageEmbed.data.footer = {
+      text: `NOTIFICATION ACKNOWLEDGED`,
+    };
 
-    await interaction.message.delete();
+    messageEmbed.data.color = 5763719;
 
-    replyEmbed.setDescription(`You cancelled the request.`).setColor("Red");
+    await interaction.message.edit({ embeds: [messageEmbed] });
+
+    replyEmbed
+      .setDescription(`You have acknowledged this request`)
+      .setColor("Green");
 
     await interaction.editReply({ embeds: [replyEmbed] });
   },

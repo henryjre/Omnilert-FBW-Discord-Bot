@@ -160,8 +160,8 @@ const employeeCheckOut = async (req, res) => {
       (f) => f.name === "Hours Worked"
     );
 
-    if (checkInField) checkInField.value = formattedCheckIn;
-    if (checkOutField) checkOutField.value = formattedCheckOut;
+    if (checkInField) checkInField.value = `⏱️ | ${formattedCheckIn}`;
+    if (checkOutField) checkOutField.value = `⏱️ | ${formattedCheckOut}`;
     if (hoursWorkedField) {
       hoursWorkedField.value = `⏳ | ${workHours}`;
     } else {

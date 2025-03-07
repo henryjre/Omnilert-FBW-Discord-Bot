@@ -25,28 +25,28 @@ module.exports = {
 
     const embedFields = [
       {
-        name: "📆 Date Reported",
-        value: dateInput,
+        name: "Date Reported",
+        value: `📆 | ${dateInput}`,
       },
       {
-        name: "👤 Reported By",
-        value: interactionMember,
+        name: "Reported By",
+        value: `👤 | ${interactionMember}`,
       },
       {
-        name: "🛒 Branch",
-        value: branchInput,
+        name: "Branch",
+        value: `🛒 | ${branchInput}`,
       },
       {
-        name: "🗂️ Incident Type",
-        value: "To be added",
+        name: "Incident Type",
+        value: "🗂️ | To be added",
       },
       {
-        name: "📦 Damaged/Lost Asset",
-        value: assetInput,
+        name: "Damaged/Lost Asset",
+        value: `📦 | ${assetInput}`,
       },
       {
-        name: "📝 Incident Details",
-        value: detailsInput,
+        name: "Incident Details",
+        value: `📝 | ${detailsInput}`,
       },
     ];
 

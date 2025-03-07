@@ -1,8 +1,5 @@
 const { EmbedBuilder, MessageFlags } = require("discord.js");
 
-const sqliteDb = require("../../../sqliteConnection.js");
-const chalk = require("chalk");
-
 module.exports = {
   data: {
     name: "closeCaseConfirmation",

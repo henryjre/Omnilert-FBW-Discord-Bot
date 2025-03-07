@@ -8,12 +8,12 @@ module.exports = {
     let messageEmbed = interaction.message.embeds[0];
     const messageComponents = interaction.message.components;
 
-    const ownerField = messageEmbed.data.fields.find((f) =>
-      f.name.includes("Reported By")
+    const ownerField = messageEmbed.data.fields.find(
+      (f) => f.name === "Reported By"
     );
 
-    const typeField = messageEmbed.data.fields.find((f) =>
-      f.name.includes("Incident Type")
+    const typeField = messageEmbed.data.fields.find(
+      (f) => f.name === "Incident Type"
     );
 
     const replyEmbed = new EmbedBuilder();
@@ -30,7 +30,7 @@ module.exports = {
     }
 
     const selectedType = interaction.values[0];
-    typeField.value = selectedType;
+    typeField.value = `🗂️ | ${selectedType}`;
 
     await interaction.update({
       embeds: [messageEmbed],

@@ -13,14 +13,14 @@ module.exports = {
   async execute(interaction, client) {
     let messageEmbed = interaction.message.embeds[0];
 
-    const ownerField = messageEmbed.data.fields.find((f) =>
-      f.name.includes("Reported By")
+    const ownerField = messageEmbed.data.fields.find(
+      (f) => f.name === "Reported By"
     );
-    const typeField = messageEmbed.data.fields.find((f) =>
-      f.name.includes("Incident Type")
+    const typeField = messageEmbed.data.fields.find(
+      (f) => f.name === "Incident Type"
     );
-    const proofField = messageEmbed.data.fields.find((f) =>
-      f.name.includes("Images/Video Proof")
+    const proofField = messageEmbed.data.fields.find(
+      (f) => f.name === "Images/Video Proof"
     );
 
     const replyEmbed = new EmbedBuilder();
@@ -53,10 +53,10 @@ module.exports = {
       .setLabel("Cancel")
       .setStyle(ButtonStyle.Danger);
 
-    if (typeField.value === "To be added") {
+    if (typeField.value === "🗂️ | To be added") {
       confirmIncidentButton.setDisabled(true);
       messageEmbed.data.description = `## PLEASE EDIT INCIDENT TYPE TO CONTINUE`;
-    } else if (typeField.value === "Damage") {
+    } else if (typeField.value === "🗂️ | Damage") {
       if (!proofField) {
         confirmIncidentButton.setDisabled(true);
         messageEmbed.data.description = `## PLEASE ADD IMAGES/VIDEO PROOF.`;

@@ -20,8 +20,8 @@ module.exports = {
 
     let messageEmbed = interaction.message.embeds[0];
 
-    const ownerField = messageEmbed.data.fields.find((f) =>
-      f.name.includes("Reported By")
+    const ownerField = messageEmbed.data.fields.find(
+      (f) => f.name === "Reported By"
     );
 
     if (!ownerField.value.includes(interaction.user.id)) {
@@ -77,9 +77,9 @@ module.exports = {
         }
       }
 
-      newMessageEmbed.data.fields.find((f) =>
-        f.name.includes("Images/Video Proof")
-      ).value = newThread.id;
+      newMessageEmbed.data.fields.find(
+        (f) => f.name === "Images/Video Proof"
+      ).value = `📸 | ${newThread.id}`;
 
       await sentMessage.edit({ embeds: [newMessageEmbed] });
 

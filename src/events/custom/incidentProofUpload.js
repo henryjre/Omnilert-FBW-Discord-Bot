@@ -17,13 +17,13 @@ module.exports = {
 
     let messageEmbed = originalMessage.embeds[0];
 
-    const typeField = messageEmbed.data.fields.find((f) =>
-      f.name.includes("Incident Type")
+    const typeField = messageEmbed.data.fields.find(
+      (f) => f.name === "Incident Type"
     );
 
     messageEmbed.data.fields.push({
-      name: "📸 Images/Video Proof",
-      value: thread.id,
+      name: "Images/Video Proof",
+      value: `📸 | ${thread.id}`,
     });
 
     const editIncidentTypeButton = new ButtonBuilder()
@@ -43,7 +43,7 @@ module.exports = {
       .setLabel("Cancel")
       .setStyle(ButtonStyle.Danger);
 
-    if (typeField.value === "To be added") {
+    if (typeField.value === "🗂️ | To be added") {
       confirmIncidentButton.setDisabled(true);
       messageEmbed.data.description = `## PLEASE EDIT INCIDENT TYPE TO CONTINUE`;
     } else {

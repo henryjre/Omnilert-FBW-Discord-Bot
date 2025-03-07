@@ -10,4 +10,13 @@ db.exec(`
     );
 `);
 
+db.exec(`
+    CREATE TABLE IF NOT EXISTS penalty_payloads (
+        id TEXT PRIMARY KEY,
+        employee_id TEXT,
+        option TEXT,
+        mode TEXT
+    );
+`);
+
 module.exports = db;

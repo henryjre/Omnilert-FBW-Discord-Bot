@@ -16,8 +16,8 @@ module.exports = {
   async execute(interaction, client) {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     let messageEmbed = interaction.message.embeds[0];
-    const ownerField = messageEmbed.data.fields.find((f) =>
-      f.name.includes("Reported By")
+    const ownerField = messageEmbed.data.fields.find(
+      (f) => f.name === "Reported By"
     );
 
     const replyEmbed = new EmbedBuilder();
