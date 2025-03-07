@@ -20,6 +20,10 @@ module.exports = {
       (f) => f.name === "Notification By"
     );
 
+    const penalizedField = messageEmbed.data.fields.find(
+      (f) => f.name === "Penalized Employee"
+    );
+
     const replyEmbed = new EmbedBuilder();
 
     if (!ownerField.value.includes(interaction.user.id)) {
@@ -43,7 +47,7 @@ module.exports = {
     const buttonRow = new ActionRowBuilder().addComponents(confirmButton);
 
     await destinationChannel.send({
-      content: ownerField.value,
+      content: penalizedField.value.split("|")[1],
       embeds: [messageEmbed],
       components: [buttonRow],
     });

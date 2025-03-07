@@ -31,7 +31,7 @@ module.exports = {
 
     messageEmbed.data.color = 5763719;
 
-    await interaction.message.edit({ embeds: [messageEmbed] });
+    await interaction.message.edit({ embeds: [messageEmbed], components: [] });
 
     replyEmbed
       .setDescription(`You have acknowledged this request`)
