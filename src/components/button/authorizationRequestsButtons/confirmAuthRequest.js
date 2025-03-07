@@ -20,8 +20,16 @@ module.exports = {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     let messageEmbed = interaction.message.embeds[0];
 
-    const ownerField = messageEmbed.data.fields.find(
-      (f) => f.name === "Assigned Name" || f.name === "Employee Name"
+    const ownerFieldNames = [
+      "Assigned Name",
+      "Employee Name",
+      "Notification By",
+      "Reported By",
+      "Requested By",
+    ];
+
+    const ownerField = messageEmbed.data.fields.find((f) =>
+      ownerFieldNames.includes(f.name)
     );
 
     const replyEmbed = new EmbedBuilder();
