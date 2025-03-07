@@ -59,7 +59,7 @@ module.exports = {
       .setColor("#f3ff00"); // f3ff00 when approved
 
     const confirmButton = new ButtonBuilder()
-      .setCustomId("confirmFinanceRequest")
+      .setCustomId("confirmAuthRequest")
       .setLabel("Confirm")
       .setStyle(ButtonStyle.Success);
     const cancelButton = new ButtonBuilder()
