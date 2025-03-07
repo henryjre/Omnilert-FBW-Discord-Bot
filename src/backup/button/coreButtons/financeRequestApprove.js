@@ -1,4 +1,4 @@
-const { EmbedBuilder } = require("discord.js");
+const { EmbedBuilder, MessageFlags } = require("discord.js");
 
 module.exports = {
   data: {
@@ -11,7 +11,7 @@ module.exports = {
     if (!interactionMember.roles.cache.has("1174612428206641182")) {
       await interaction.reply({
         content: `You cannot approve this request.`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }

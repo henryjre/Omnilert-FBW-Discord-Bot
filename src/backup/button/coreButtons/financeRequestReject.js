@@ -4,6 +4,7 @@ const {
   TextInputBuilder,
   TextInputStyle,
   ActionRowBuilder,
+  MessageFlags,
 } = require("discord.js");
 
 module.exports = {
@@ -17,7 +18,7 @@ module.exports = {
     if (!interactionMember.roles.cache.has("1174612428206641182")) {
       await interaction.reply({
         content: `You cannot reject this request.`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
@@ -47,7 +48,7 @@ module.exports = {
           i.user.id === interaction.user.id;
 
         if (f) {
-          await i.deferReply({ ephemeral: true });
+          await i.deferReply({ flags: MessageFlags.Ephemeral });
         }
         return f;
       },
@@ -101,7 +102,7 @@ module.exports = {
       console.log(error);
       // await modalResponse.editReply({
       //   content: `🔴 ERROR: An error occurred while rejecting this request. Please try again.`,
-      //   ephemeral: true,
+      //   flags: MessageFlags.Ephemeral,
       // });
     }
   },

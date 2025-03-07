@@ -1,4 +1,9 @@
-const { InteractionType, Collection, EmbedBuilder } = require("discord.js");
+const {
+  InteractionType,
+  Collection,
+  EmbedBuilder,
+  MessageFlags,
+} = require("discord.js");
 module.exports = {
   name: "interactionCreate",
   async execute(interaction, client) {
@@ -34,7 +39,7 @@ module.exports = {
           await interaction
             .reply({
               embeds: [cooldownEmbed],
-              ephemeral: true,
+              flags: MessageFlags.Ephemeral,
             })
             .then(() => {
               setTimeout(() => {
@@ -55,7 +60,7 @@ module.exports = {
         console.error(error);
         await interaction.reply({
           content: `Something went wrong while executing this command...`,
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
     } else if (interaction.isButton()) {

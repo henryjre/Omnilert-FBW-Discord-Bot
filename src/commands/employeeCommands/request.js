@@ -83,6 +83,10 @@ module.exports = {
                 name: "🚌 Transport Allowance",
                 value: "transport_allowance",
               },
+              {
+                name: "📥 Cash Deposit",
+                value: "cash_deposit",
+              },
             ])
         )
     ),
@@ -123,5 +127,15 @@ async function runAuthorizationsCommand(interaction, client, option) {
 }
 
 async function runCashRequestsCommand(interaction, client) {
-  return await client.commands.get("cash_request").execute(interaction, client);
+  const opt = interaction.options.getString("option");
+
+  if (opt === "cash_deposit") {
+    return await client.commands
+      .get("cash_deposit_request")
+      .execute(interaction, client);
+  } else {
+    return await client.commands
+      .get("cash_request")
+      .execute(interaction, client);
+  }
 }

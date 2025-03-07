@@ -68,7 +68,7 @@ module.exports = {
       console.log(error);
       await interaction.followUp({
         content: "❌ An error occurred while processing your request.",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   },

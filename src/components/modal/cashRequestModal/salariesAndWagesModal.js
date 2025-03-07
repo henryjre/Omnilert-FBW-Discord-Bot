@@ -10,7 +10,6 @@ module.exports = {
     name: "salariesAndWagesRequestModal",
   },
   async execute(interaction, client) {
-    return;
     await interaction.deferReply();
 
     const referenceNumber =
