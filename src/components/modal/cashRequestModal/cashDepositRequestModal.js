@@ -37,11 +37,11 @@ module.exports = {
         },
         {
           name: "Amount",
-          value: `💲 | ${parsedAmount}`,
+          value: `💵 | ${parsedAmount}`,
         },
         {
           name: "Employees On Duty",
-          value: `👤 | ${employeesInput}`,
+          value: `${employeesInput}`,
         },
         {
           name: "Reason",

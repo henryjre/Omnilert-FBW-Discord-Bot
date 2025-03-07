@@ -82,7 +82,7 @@ async function buildModal(interaction) {
 
   const fifthInput = new TextInputBuilder()
     .setCustomId(`amountInput`)
-    .setLabel(`💲 Amount`)
+    .setLabel(`💵 Amount`)
     .setStyle(TextInputStyle.Short)
     .setMaxLength(100)
     .setPlaceholder("Enter the requested deposit amount.")
