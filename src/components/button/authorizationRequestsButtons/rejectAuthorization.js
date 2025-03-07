@@ -66,7 +66,7 @@ module.exports = {
     }
 
     const modal = new ModalBuilder()
-      .setCustomId(`approveRequest_${interaction.id}`)
+      .setCustomId(`rejectRequest_${interaction.id}`)
       .setTitle(`Reject Authorization`);
 
     const details = new TextInputBuilder()
@@ -84,7 +84,7 @@ module.exports = {
     const modalResponse = await interaction.awaitModalSubmit({
       filter: async (i) => {
         const f =
-          i.customId === `approveRequest_${interaction.id}` &&
+          i.customId === `rejectRequest_${interaction.id}` &&
           i.user.id === interaction.user.id;
 
         if (f) {
