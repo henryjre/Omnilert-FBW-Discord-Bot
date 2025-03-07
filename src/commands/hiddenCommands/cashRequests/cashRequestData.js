@@ -86,13 +86,17 @@ function extractDigits(input) {
   try {
     if (typeof input !== "string") return input; // Return original if not a string
 
-    const digits = input.replace(/\D/g, ""); // Remove non-digit characters
-    if (!digits) return input; // Return input if no digits found
+    // Extract digits and at most one decimal point
+    const match = input.match(/\d+(\.\d{0,2})?/);
+    if (!match) return input; // Return input if no valid number found
 
     // Convert to a number and format with commas
-    const amount = parseInt(digits, 10).toLocaleString("en-US");
+    const amount = parseFloat(match[0]).toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
 
-    return `₱${amount}.00`; // Ensure centavos are added
+    return `₱${amount}`; // Return properly formatted amount
   } catch (error) {
     return input; // Return original string if an error occurs
   }
