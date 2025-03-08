@@ -38,13 +38,16 @@ module.exports = {
 
     const replyEmbed = new EmbedBuilder();
 
+    const ownerFieldNames = [
+      "Assigned Name",
+      "Employee Name",
+      "Notification By",
+      "Reported By",
+      "Requested By",
+    ];
+
     const mentionableMembers = messageEmbed.data.fields
-      .filter(
-        (f) =>
-          f.name === "Assigned Name" ||
-          f.name === "Employee Name" ||
-          f.name === "Reliever Name"
-      )
+      .filter((f) => ownerFieldNames.includes(f.name))
       .map((f) => f.value)
       .join("\n");
 
