@@ -62,7 +62,7 @@ module.exports = {
         messageEmbed.data.description = `## PLEASE ADD IMAGES/VIDEO PROOF.`;
       } else {
         const proofThread = interaction.guild.channels.cache.get(
-          proofField.value
+          proofField.value.split("|")[1].trim()
         );
         const threadMessages = await proofThread.messages.fetch({ limit: 100 });
         const mediaMessages = threadMessages.filter((msg) =>
