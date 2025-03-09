@@ -23,7 +23,9 @@ module.exports = {
       (f) => f.name === "Images/Video Proof"
     );
 
-    console.log(proofField.value.split("|")[1].trim());
+    if (proofField) {
+      console.log(proofField.value.split("|")[1].trim());
+    }
 
     const replyEmbed = new EmbedBuilder();
 
