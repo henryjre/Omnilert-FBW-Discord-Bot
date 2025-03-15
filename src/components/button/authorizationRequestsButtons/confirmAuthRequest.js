@@ -19,6 +19,11 @@ module.exports = {
   async execute(interaction, client) {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     let messageEmbed = interaction.message.embeds[0];
+    let attachments = [];
+
+    if (interaction.message.attachments.size > 0) {
+      attachments = Array.from(message.attachments.values());
+    }
 
     const ownerFieldNames = [
       "Assigned Name",
@@ -76,11 +81,17 @@ module.exports = {
       rejectButton
     );
 
-    await departmentChannel.send({
+    const messagePayload = {
       content: `<@&${role}>`,
       embeds: [messageEmbed],
       components: [buttonRow],
-    });
+    };
+
+    if (attachments.length > 0) {
+      messagePayload.files = attachments;
+    }
+
+    await departmentChannel.send(messagePayload);
 
     await interaction.message.delete();
 
