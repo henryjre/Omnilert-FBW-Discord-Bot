@@ -132,7 +132,7 @@ module.exports = {
           messageEmbed.data.description += `\n\u200b\nAdditional notes from **${interaction.member.nickname.replace(
             /^[🔴🟢]\s*/,
             ""
-          )}**:\n>>> *${details}*\n\u200b`;
+          )}**:\n>>> *${details}*`;
         }
 
         messageEmbed.data.footer = {
