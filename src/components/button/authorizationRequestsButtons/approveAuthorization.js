@@ -36,6 +36,12 @@ module.exports = {
   async execute(interaction, client) {
     let messageEmbed = interaction.message.embeds[0];
 
+    let attachments = [];
+
+    if (interaction.message.attachments.size > 0) {
+      attachments = Array.from(message.attachments.values());
+    }
+
     const replyEmbed = new EmbedBuilder();
 
     const ownerFieldNames = [
@@ -138,12 +144,18 @@ module.exports = {
 
         messageEmbed.data.color = 5763719;
 
+        const messagePayload = {
+          content: mentionableMembers,
+          embeds: [messageEmbed],
+        };
+
+        if (attachments.length > 0) {
+          messagePayload.files = attachments;
+        }
+
         await client.channels.cache
           .get(logsChannel)
-          .send({
-            content: mentionableMembers,
-            embeds: [messageEmbed],
-          })
+          .send(messagePayload)
           .then((msg) => {
             interaction.message.delete();
           });
