@@ -39,7 +39,7 @@ module.exports = {
     let attachments = [];
 
     if (interaction.message.attachments.size > 0) {
-      attachments = Array.from(message.attachments.values());
+      attachments = Array.from(interaction.message.attachments.values());
     }
 
     const replyEmbed = new EmbedBuilder();
