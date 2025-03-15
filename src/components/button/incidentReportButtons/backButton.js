@@ -23,10 +23,6 @@ module.exports = {
       (f) => f.name === "Images/Video Proof"
     );
 
-    if (proofField) {
-      console.log(proofField.value.split("|")[1].trim());
-    }
-
     const replyEmbed = new EmbedBuilder();
 
     if (!ownerField.value.includes(interaction.user.id)) {

@@ -4,48 +4,49 @@ const {
   ActionRowBuilder,
   TextInputBuilder,
   TextInputStyle,
+  MessageFlags,
 } = require("discord.js");
-
-// const requestType = [
-//   {
-//     name: "💸 SALARY/WAGE",
-//     value: "salaries_wages",
-//     color: "#ff9d00",
-//   },
-//   {
-//     name: "💵 CASH ADVANCE",
-//     value: "cash_advance",
-//     color: "#edff00",
-//   },
-//   {
-//     name: "💳 EXPENSE REIMBURSEMENT",
-//     value: "expense_reimbursement",
-//     color: "#00ff9c",
-//   },
-//   {
-//     name: "💰 TRAINING ALLOWANCE",
-//     value: "training_allowance",
-//     color: "#00f9ff",
-//   },
-//   {
-//     name: "🚌 TRANSPORT ALLOWANCE",
-//     value: "transport_allowance",
-//     color: "#9e00ff",
-//   },
-// ];
 
 module.exports = {
   data: new SlashCommandBuilder().setName("cash_deposit_request"),
   pushToArray: false,
-  async execute(interaction, client) {
-    const modal = await buildModal();
+  async execute(interaction, client, attachmentFile) {
+    const modal = await buildModal(interaction);
     await interaction.showModal(modal);
+
+    const modalResponse = await interaction.awaitModalSubmit({
+      filter: async (i) => {
+        const isValid =
+          i.customId === `cdrModal_${interaction.id}` &&
+          i.user.id === interaction.user.id;
+
+        if (!isValid) return false;
+
+        await i.deferUpdate();
+        return true;
+      },
+      time: 300000,
+    });
+
+    try {
+      if (modalResponse.isModalSubmit()) {
+        return await client.commands
+          .get("cdr_data")
+          .execute(interaction, client, modalResponse, attachmentFile);
+      }
+    } catch (error) {
+      console.log(error);
+      await interaction.followUp({
+        content: "❌ An error occurred while processing your request.",
+        flags: MessageFlags.Ephemeral,
+      });
+    }
   },
 };
 
 async function buildModal(interaction) {
   const modal = new ModalBuilder()
-    .setCustomId(`cashDepositRequestModal`)
+    .setCustomId(`cdrModal_${interaction.id}`)
     .setTitle(`CASH DEPOSIT REQUEST`);
 
   const firstInput = new TextInputBuilder()

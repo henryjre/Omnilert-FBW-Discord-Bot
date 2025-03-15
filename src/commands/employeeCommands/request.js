@@ -89,6 +89,12 @@ module.exports = {
               },
             ])
         )
+        .addAttachmentOption((option) =>
+          option
+            .setName("attachment")
+            .setDescription("Add some optional attachment.")
+            .setRequired(false)
+        )
     ),
   async execute(interaction, client) {
     const subcommand = interaction.options.getSubcommand();
@@ -128,14 +134,15 @@ async function runAuthorizationsCommand(interaction, client, option) {
 
 async function runCashRequestsCommand(interaction, client) {
   const opt = interaction.options.getString("option");
+  const attachment = interaction.options.getAttachment("document");
 
   if (opt === "cash_deposit") {
     return await client.commands
       .get("cash_deposit_request")
-      .execute(interaction, client);
+      .execute(interaction, client, attachment);
   } else {
     return await client.commands
       .get("cash_request")
-      .execute(interaction, client);
+      .execute(interaction, client, attachment);
   }
 }

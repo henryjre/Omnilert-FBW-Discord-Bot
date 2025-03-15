@@ -38,7 +38,7 @@ const requestType = [
 module.exports = {
   data: new SlashCommandBuilder().setName("cash_request"),
   pushToArray: false,
-  async execute(interaction, client) {
+  async execute(interaction, client, attachmentFile) {
     const modalId = interaction.options.getString("option");
     const type = requestType.find((t) => t.value === modalId);
 
@@ -63,7 +63,7 @@ module.exports = {
       if (modalResponse.isModalSubmit()) {
         return await client.commands
           .get("cash_request_data")
-          .execute(interaction, client, type, modalResponse);
+          .execute(interaction, client, type, modalResponse, attachmentFile);
       }
     } catch (error) {
       console.log(error);

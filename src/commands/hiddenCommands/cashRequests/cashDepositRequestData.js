@@ -1,65 +1,60 @@
 const {
-  SlashCommandBuilder,
-
-  EmbedBuilder,
+  ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  ActionRowBuilder,
+  EmbedBuilder,
+  SlashCommandBuilder,
 } = require("discord.js");
 
 module.exports = {
-  data: new SlashCommandBuilder().setName("cash_request_data"),
+  data: new SlashCommandBuilder().setName("cdr_data"),
   pushToArray: false,
-  async execute(interaction, client, type, modalResponse, attachmentFile) {
-    const referenceNumber =
-      modalResponse.fields.getTextInputValue("referenceNumber");
-    const requestedAmount =
-      modalResponse.fields.getTextInputValue("requestedAmount");
-    const bankNameInput =
-      modalResponse.fields.getTextInputValue("bankNameInput");
-    const accountNameInput =
-      modalResponse.fields.getTextInputValue("accountNameInput");
-    const accountNumberInput =
-      modalResponse.fields.getTextInputValue("accountNumberInput");
+  async execute(interaction, client, modalResponse, attachmentFile) {
+    const dateInput = modalResponse.fields.getTextInputValue("dateInput");
+    const branchInput = modalResponse.fields.getTextInputValue("branchInput");
+    const employeesInput =
+      modalResponse.fields.getTextInputValue("employeesInput");
+    const reasonInput = modalResponse.fields.getTextInputValue("reasonInput");
+    const amountInput = modalResponse.fields.getTextInputValue("amountInput");
+
+    const parsedAmount = extractDigits(amountInput);
 
     const interactionMember =
       interaction.member?.toString() || interaction.user.toString();
 
-    const parsedAmount = extractDigits(requestedAmount);
-
-    const cashRequestEmbed = new EmbedBuilder()
-      .setDescription(`## ${type.name} REQUEST`)
+    const authRequestEmbed = new EmbedBuilder()
+      .setDescription(`## 📥 CASH DEPOSIT REQUEST`)
       .addFields([
         {
-          name: "Reference",
-          value: `🔗 | ${referenceNumber}`,
+          name: "Date",
+          value: `📆 | ${dateInput}`,
         },
         {
-          name: "Requested Amount",
-          value: `🪙 | ${parsedAmount}`,
+          name: "Branch",
+          value: `🛒 | ${branchInput}`,
         },
         {
-          name: "Bank Name",
-          value: `🏛️ | ${bankNameInput}`,
+          name: "Amount",
+          value: `💵 | ${parsedAmount}`,
         },
         {
-          name: "Account Name",
-          value: `👤 | ${accountNameInput}`,
+          name: "Employees On Duty",
+          value: `${employeesInput}`,
         },
         {
-          name: "Account Number",
-          value: `🔢 | ${accountNumberInput}`,
+          name: "Reason",
+          value: `❓ | ${reasonInput}`,
         },
         {
-          name: "Employee Name",
-          value: `🪪 | ${interactionMember}`,
+          name: "Requested By",
+          value: `${interactionMember}`,
         },
       ])
       // .setFooter({
       //   iconURL: interaction.user.displayAvatarURL(),
       //   text: `Submitted by: ${interactionMember}`,
       // })
-      .setColor(type.color);
+      .setColor("#f3ff00"); // f3ff00 when approved
 
     const confirmButton = new ButtonBuilder()
       .setCustomId("confirmAuthRequest")
@@ -76,7 +71,7 @@ module.exports = {
     );
 
     const messagePayload = {
-      embeds: [cashRequestEmbed],
+      embeds: [authRequestEmbed],
       components: [buttonRow],
     };
 
