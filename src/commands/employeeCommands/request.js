@@ -134,7 +134,7 @@ async function runAuthorizationsCommand(interaction, client, option) {
 
 async function runCashRequestsCommand(interaction, client) {
   const opt = interaction.options.getString("option");
-  const attachment = interaction.options.getAttachment("document");
+  const attachment = interaction.options.getAttachment("attachment");
 
   if (opt === "cash_deposit") {
     return await client.commands
