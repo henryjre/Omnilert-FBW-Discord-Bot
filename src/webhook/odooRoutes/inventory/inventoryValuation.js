@@ -82,9 +82,13 @@ const processBatch = async () => {
 
     let message = "## 🚩 UNUSUAL DISCREPANCY DETECTED\n\u200b\n";
 
-    for (const webhook of webhookBatch) {
+    for (let i = 0; i < webhookBatch.length; i++) {
+      const webhook = webhookBatch[i];
+
       message += `**📦 Product:** ${webhook.x_product_name}\n`;
       message += `**📊 Qty Difference:** ${webhook.quantity} ${webhook.x_uom_name}\n`;
+
+      // Add the separator only if it's NOT the last webhook
       if (i !== webhookBatch.length - 1) {
         message += `▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃\n`;
       }
