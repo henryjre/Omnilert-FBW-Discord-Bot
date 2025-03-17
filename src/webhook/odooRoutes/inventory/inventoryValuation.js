@@ -8,9 +8,8 @@ const client = require("../../../index");
 
 const config = {
   columns: {
-    0: { alignment: "center", width: 40 },
-    1: { alignment: "center", width: 10 },
-    2: { alignment: "center", width: 5 },
+    0: { alignment: "center", width: 25 },
+    1: { alignment: "center", width: 25 },
   },
 };
 
@@ -51,7 +50,7 @@ const processBatch = async () => {
     const filePath = path.resolve(__dirname, "../../../config/products.json");
     const threshold_data = JSON.parse(fs.readFileSync(filePath, "utf8"));
 
-    const tableData = [["Product Name", "Quantity", "Unit"]];
+    const tableData = [["Product Name", "Qty Difference"]];
 
     for (const webhook of webhookBatch) {
       const product_data = threshold_data.find(
@@ -69,8 +68,7 @@ const processBatch = async () => {
 
       tableData.push([
         webhook.x_product_name,
-        webhook.quantity.toString(),
-        webhook.x_uom_name,
+        `${webhook.quantity} ${webhook.x_uom_name}`,
       ]);
     }
 
