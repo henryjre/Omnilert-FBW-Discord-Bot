@@ -27,12 +27,16 @@ const receiveValuation = async (req, res) => {
       x_product_name,
     } = req.body;
 
+    console.log(req.body);
+
     const filePath = path.resolve(__dirname, "../../../config/products.json");
     const threshold_data = JSON.parse(fs.readFileSync(filePath, "utf8"));
 
     const product_data = threshold_data.find((d) => d.id === product_tmpl_id);
 
     const isFlagged = checkThreshold(quantity, product_data.threshold_value);
+
+    console.log(isFlagged);
 
     if (!isFlagged) return;
 
