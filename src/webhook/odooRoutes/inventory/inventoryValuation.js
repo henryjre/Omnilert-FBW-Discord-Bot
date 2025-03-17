@@ -51,7 +51,7 @@ const processBatch = async () => {
     const filePath = path.resolve(__dirname, "../../../config/products.json");
     const threshold_data = JSON.parse(fs.readFileSync(filePath, "utf8"));
 
-    const flaggedProducts = [];
+    const tableData = [["Product Name", "Quantity", "Unit"]];
 
     for (const webhook of webhookBatch) {
       const product_data = threshold_data.find(
@@ -67,35 +67,27 @@ const processBatch = async () => {
 
       if (!isFlagged) continue;
 
-      flaggedProducts.push(webhook);
+      tableData.push([
+        webhook.x_product_name,
+        webhook.quantity.toString(),
+        webhook.x_uom_name,
+      ]);
     }
 
-    if (flaggedProducts.length === 0) return;
+    if (tableData.length === 1) return;
 
-    const lastEntry = flaggedProducts.at(-1);
+    const lastEntry = webhookBatch.at(-1);
 
     const formattedTime = formatTime(lastEntry.create_date);
-    const timestampId = formatTimestamp(lastEntry.create_date);
+    // const timestampId = formatTimestamp(lastEntry.create_date);
 
     const targetChannel = client.channels.cache.get("1350859218474897468");
     if (!targetChannel) throw new Error("AIC discrepancy channel not found");
 
-    let message = "## 🚩 UNUSUAL DISCREPANCY DETECTED\n\u200b\n";
-
-    for (let i = 0; i < webhookBatch.length; i++) {
-      const webhook = webhookBatch[i];
-
-      message += `**📦 Product:** ${webhook.x_product_name}\n`;
-      message += `**📊 Qty Difference:** ${webhook.quantity} ${webhook.x_uom_name}\n`;
-
-      // Add the separator only if it's NOT the last webhook
-      if (i !== webhookBatch.length - 1) {
-        message += `▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃\n`;
-      }
-    }
+    const newTable = generateTable(tableData);
 
     const embed = new EmbedBuilder()
-      .setDescription(message)
+      .setDescription("## 🚩 UNUSUAL DISCREPANCY DETECTED")
       .addFields(
         { name: "Date", value: `📆 | ${formattedTime}` },
         { name: "AIC Reference", value: `🔗 | ${lastEntry.reference}` },
@@ -104,7 +96,7 @@ const processBatch = async () => {
       .setColor("Red");
 
     await targetChannel.send({
-      content: `AIC ID: ${timestampId}`,
+      content: newTable,
       embeds: [embed],
     });
 
