@@ -78,6 +78,11 @@ module.exports = {
 
         messageEmbed.data.color = 5763719;
 
+        if (interaction.message.hasThread) {
+          const thread = interaction.message.thread;
+          await thread.setArchived(true);
+        }
+
         await interaction.message.edit({
           embeds: [messageEmbed],
           components: [],

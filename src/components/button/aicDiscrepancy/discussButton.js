@@ -28,7 +28,7 @@ module.exports = {
         .setDescription(`🔴 ERROR: You cannot use this button.`)
         .setColor("Red");
 
-      return await interaction.reply({
+      return await interaction.editReply({
         embeds: [replyEmbed],
         flags: MessageFlags.Ephemeral,
       });
@@ -41,9 +41,9 @@ module.exports = {
     });
 
     await thread.send({
-      content: `This is the start of the discussion for unusual AIC discrepancy with reference ${
+      content: `This is the start of the discussion for unusual AIC discrepancy with reference: **${
         referenceField.value.split("|")[1]
-      }`,
+      }**`,
     });
 
     const resolveButton = new ButtonBuilder()
