@@ -1,4 +1,9 @@
-const { EmbedBuilder } = require("discord.js");
+const {
+  EmbedBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  ActionRowBuilder,
+} = require("discord.js");
 const moment = require("moment-timezone");
 const { table } = require("table");
 const fs = require("fs");
@@ -85,7 +90,7 @@ const processBatch = async () => {
     const newTable = generateTable(tableData);
 
     const embed = new EmbedBuilder()
-      .setDescription("## 🚩 UNUSUAL DISCREPANCY DETECTED")
+      .setDescription("## 🚩 AIC UNUSUAL DISCREPANCY")
       .addFields(
         { name: "Date", value: `📆 | ${formattedTime}` },
         { name: "AIC Reference", value: `🔗 | ${lastEntry.reference}` },
@@ -93,9 +98,24 @@ const processBatch = async () => {
       )
       .setColor("Red");
 
+    const discussButton = new ButtonBuilder()
+      .setCustomId("aicDiscussButton")
+      .setLabel("Open Discussion")
+      .setStyle(ButtonStyle.Primary);
+    const resolveButton = new ButtonBuilder()
+      .setCustomId("aicResolveButton")
+      .setLabel("Resolve")
+      .setStyle(ButtonStyle.Success);
+
+    const buttonRow = new ActionRowBuilder().addComponents(
+      resolveButton,
+      discussButton
+    );
+
     await targetChannel.send({
       content: newTable,
       embeds: [embed],
+      components: [buttonRow],
     });
 
     webhookBatch = [];
