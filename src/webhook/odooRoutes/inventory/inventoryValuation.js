@@ -8,7 +8,7 @@ const client = require("../../../index");
 
 const config = {
   columns: {
-    0: { alignment: "center", width: 50 },
+    0: { alignment: "center", width: 30 },
     1: { alignment: "center", width: 10 },
     2: { alignment: "center", width: 5 },
   },
