@@ -51,7 +51,7 @@ const processBatch = async () => {
     const filePath = path.resolve(__dirname, "../../../config/products.json");
     const threshold_data = JSON.parse(fs.readFileSync(filePath, "utf8"));
 
-    const tableData = [["Product Name", "Quantity", "Unit"]];
+    const flaggedProducts = [];
 
     for (const webhook of webhookBatch) {
       const product_data = threshold_data.find(
@@ -67,16 +67,12 @@ const processBatch = async () => {
 
       if (!isFlagged) continue;
 
-      tableData.push([
-        webhook.x_product_name,
-        webhook.quantity.toString(),
-        webhook.x_uom_name,
-      ]);
+      flaggedProducts.push(webhook);
     }
 
-    if (tableData.length === 1) return;
+    if (flaggedProducts.length === 0) return;
 
-    const lastEntry = webhookBatch.at(-1);
+    const lastEntry = flaggedProducts.at(-1);
 
     const formattedTime = formatTime(lastEntry.create_date);
     const timestampId = formatTimestamp(lastEntry.create_date);
@@ -84,11 +80,18 @@ const processBatch = async () => {
     const targetChannel = client.channels.cache.get("1350859218474897468");
     if (!targetChannel) throw new Error("AIC discrepancy channel not found");
 
-    const newTable = generateTable(tableData);
+    let message = "## 🚩 UNUSUAL DISCREPANCY DETECTED\n\u200b\n";
+
+    for (const webhook of webhookBatch) {
+      message += `**📦 Product:** ${webhook.x_product_name}\n`;
+      message += `**📊 Qty Difference:** ${webhook.quantity} ${webhook.x_uom_name}\n`;
+      if (i !== webhookBatch.length - 1) {
+        message += `▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃\n`;
+      }
+    }
 
     const embed = new EmbedBuilder()
-      .setTitle("🚩 UNUSUAL DISCREPANCY DETECTED")
-      .setDescription(newTable)
+      .setDescription(message)
       .addFields(
         { name: "Date", value: `📆 | ${formattedTime}` },
         { name: "AIC Reference", value: `🔗 | ${lastEntry.reference}` },
