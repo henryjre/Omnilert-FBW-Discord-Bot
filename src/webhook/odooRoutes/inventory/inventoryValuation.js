@@ -82,7 +82,7 @@ const receiveValuation = async (req, res) => {
       )
       .setColor("Red");
 
-    await attendanceChannel.send({
+    await targetChannel.send({
       content: `AIC ID: ${timestampId}`,
       embeds: [embed],
     });
