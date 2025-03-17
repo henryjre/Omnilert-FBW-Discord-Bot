@@ -88,7 +88,8 @@ const processBatch = async () => {
 
     let description = "## 🚩 UNUSUAL DISCREPANCY DETECTED**\n\u200b\n";
     for (const webhook of webhookBatch) {
-      description += `>>> **Product:** ${webhook.x_product_name}\n**Quantity:** ${webhook.quantity} ${webhook.x_uom_name}`;
+      description += `> **Product:** ${webhook.x_product_name}\n`;
+      description += `> **Quantity:** ${webhook.quantity} ${webhook.x_uom_name}`;
       description += `\n\u200b\n`;
     }
 
