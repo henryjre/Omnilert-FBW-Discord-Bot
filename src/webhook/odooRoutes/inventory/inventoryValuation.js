@@ -117,6 +117,7 @@ const processBatch = async () => {
     );
 
     await targetChannel.send({
+      content: `<@&1336990783341068348>`,
       embeds: [embed],
       components: [buttonRow],
     });
