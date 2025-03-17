@@ -1,0 +1,620 @@
+[
+  {
+    "id": 1222,
+    "name": "PCK1 - Blueberry",
+    "uom_name": "Pail of 3kg",
+    "threshold_value": 0
+  },
+  {
+    "id": 1223,
+    "name": "PCK1 - Caramel",
+    "uom_name": "Pack of 1kg",
+    "threshold_value": 0
+  },
+  {
+    "id": 1224,
+    "name": "PCK1 - Cheese Spread",
+    "uom_name": "Pack of 1kg",
+    "threshold_value": 0
+  },
+  {
+    "id": 1225,
+    "name": "PCK1 - Chicken Ham",
+    "uom_name": "Pack of 8pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 1226,
+    "name": "PCK1 - Chocolate",
+    "uom_name": "Pack of 3kg",
+    "threshold_value": 0
+  },
+  {
+    "id": 1227,
+    "name": "PCK1 - Cocoa",
+    "uom_name": "Pack of 1kg",
+    "threshold_value": 0
+  },
+  {
+    "id": 1229,
+    "name": "PCK1 - Cold Cup",
+    "uom_name": "Bundle of 100pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 1230,
+    "name": "PCK1 - Cold Lid",
+    "uom_name": "Bundle of 100pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 1232,
+    "name": "PCK1 - Cream Cheese",
+    "uom_name": "Block of 2kg",
+    "threshold_value": 0
+  },
+  {
+    "id": 1235,
+    "name": "PCK1 - Custard",
+    "uom_name": "Pack of 1kg",
+    "threshold_value": 0
+  },
+  {
+    "id": 1237,
+    "name": "PCK1 - Famous Blends Coffee",
+    "uom_name": "Pack of 15pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 1281,
+    "name": "PCK1 - Famous Brown Bag #4",
+    "uom_name": "Bundle of 500pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 1282,
+    "name": "PCK1 - Famous Brown Bag #8",
+    "uom_name": "Bundle of 500pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 1238,
+    "name": "PCK1 - Famous Drip Coffee",
+    "uom_name": "Pack of 10pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 1239,
+    "name": "PCK1 - Famous Mix",
+    "uom_name": "Box of 15kg",
+    "threshold_value": 0
+  },
+  {
+    "id": 1240,
+    "name": "PCK1 - Famous Wrapper",
+    "uom_name": "Bundle of 500pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 1241,
+    "name": "PCK1 - Garlic Mix",
+    "uom_name": "Pack of 10pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 1242,
+    "name": "PCK1 - Ham",
+    "uom_name": "Pack of 8pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 1243,
+    "name": "PCK1 - Hazelnut",
+    "uom_name": "Pail of 3kg",
+    "threshold_value": 0
+  },
+  {
+    "id": 1244,
+    "name": "PCK1 - Hot Cup",
+    "uom_name": "Bundle of 100pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 1246,
+    "name": "PCK1 - Hot Lid",
+    "uom_name": "Bundle of 100pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 1247,
+    "name": "PCK1 - Iced Tea Powder",
+    "uom_name": "Pack of 200g",
+    "threshold_value": 0
+  },
+  {
+    "id": 1248,
+    "name": "PCK1 - Mango Peach",
+    "uom_name": "Can of 630g",
+    "threshold_value": 0
+  },
+  {
+    "id": 1251,
+    "name": "PCK1 - Mayonnaise",
+    "uom_name": "Gallon of 3350g",
+    "threshold_value": 0
+  },
+  {
+    "id": 1283,
+    "name": "PCK1 - Non-stick Oil",
+    "uom_name": "Gallon of 5kg",
+    "threshold_value": 0
+  },
+  {
+    "id": 1252,
+    "name": "PCK1 - Peanut Butter",
+    "uom_name": "Jar of 1kg",
+    "threshold_value": 0
+  },
+  {
+    "id": 1253,
+    "name": "PCK1 - Spicy Chicken Floss",
+    "uom_name": "Pack of 500g",
+    "threshold_value": 0
+  },
+  {
+    "id": 1254,
+    "name": "PCK1 - Strawberry",
+    "uom_name": "Can of 610g",
+    "threshold_value": 0
+  },
+  {
+    "id": 1255,
+    "name": "PCK1 - Sugar Syrup",
+    "uom_name": "Gallon of 4.6kg",
+    "threshold_value": 0
+  },
+  {
+    "id": 1258,
+    "name": "PCK1 - White Chocolate",
+    "uom_name": "Pail of 3kg",
+    "threshold_value": 0
+  },
+  {
+    "id": 1284,
+    "name": "PCK2 - Beverage Take-out Bag Double",
+    "uom_name": "Bundle of 100pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 1285,
+    "name": "PCK2 - Beverage Take-out Bag Single",
+    "uom_name": "Bundle of 100pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 604,
+    "name": "PCK2 - Century Tuna",
+    "uom_name": "Can of 420g",
+    "threshold_value": 0
+  },
+  {
+    "id": 1231,
+    "name": "PCK2 - Corned Beef",
+    "uom_name": "Can of 260g",
+    "threshold_value": 0
+  },
+  {
+    "id": 1233,
+    "name": "PCK2 - Crushed Graham",
+    "uom_name": "Pack of 200g",
+    "threshold_value": 0
+  },
+  {
+    "id": 1234,
+    "name": "PCK2 - Crushed Oreo",
+    "uom_name": "Pack of 454g",
+    "threshold_value": 0
+  },
+  {
+    "id": 1236,
+    "name": "PCK2 - Famous Blends Choco",
+    "uom_name": "Pack of 12pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 1245,
+    "name": "PCK2 - Hot Cup Sleeves",
+    "uom_name": "Bundle of 100pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 1250,
+    "name": "PCK2 - Marshmallow",
+    "uom_name": "Pack of 1kg",
+    "threshold_value": 0
+  },
+  {
+    "id": 1276,
+    "name": "PCK2 - Reward Card",
+    "uom_name": "Bundle of 100pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 1256,
+    "name": "PCK2 - Unsalted Butter",
+    "uom_name": "Block of 225g",
+    "threshold_value": 0
+  },
+  {
+    "id": 1257,
+    "name": "PCK2 - Vegetable Oil",
+    "uom_name": "Pack of 1.8L",
+    "threshold_value": 0
+  },
+  {
+    "id": 820,
+    "name": "PRD - Famous Batter",
+    "uom_name": "g",
+    "threshold_value": 500
+  },
+  {
+    "id": 821,
+    "name": "PRD - Famous Brownie Batter",
+    "uom_name": "g",
+    "threshold_value": 200
+  },
+  {
+    "id": 822,
+    "name": "PRD - Famous Iced Tea",
+    "uom_name": "g",
+    "threshold_value": 9999
+  },
+  {
+    "id": 993,
+    "name": "PRD - Hawaiian Spread",
+    "uom_name": "g",
+    "threshold_value": 9999
+  },
+  {
+    "id": 824,
+    "name": "PRD - Tuna Garlic Spread",
+    "uom_name": "g",
+    "threshold_value": 200
+  },
+  {
+    "id": 1186,
+    "name": "SPK - Bottled Water",
+    "uom_name": "pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 942,
+    "name": "SPK - Coke Mismo 290ml",
+    "uom_name": "pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 1155,
+    "name": "SPK - Coke Swakto 190ml",
+    "uom_name": "pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 971,
+    "name": "SPK - Royal Mismo 250ml",
+    "uom_name": "pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 1156,
+    "name": "SPK - Royal Swakto 190ml",
+    "uom_name": "pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 813,
+    "name": "SPK - Sprite Mismo 290ml",
+    "uom_name": "pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 1157,
+    "name": "SPK - Sprite Swakto 190ml",
+    "uom_name": "pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 602,
+    "name": "SPK1 - Blueberry",
+    "uom_name": "g",
+    "threshold_value": 200
+  },
+  {
+    "id": 603,
+    "name": "SPK1 - Caramel",
+    "uom_name": "g",
+    "threshold_value": 200
+  },
+  {
+    "id": 605,
+    "name": "SPK1 - Cheese Spread",
+    "uom_name": "g",
+    "threshold_value": 200
+  },
+  {
+    "id": 606,
+    "name": "SPK1 - Chicken Ham",
+    "uom_name": "pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 607,
+    "name": "SPK1 - Chocolate",
+    "uom_name": "g",
+    "threshold_value": "+800"
+  },
+  {
+    "id": 608,
+    "name": "SPK1 - Cocoa",
+    "uom_name": "g",
+    "threshold_value": 100
+  },
+  {
+    "id": 609,
+    "name": "SPK1 - Cold Cup",
+    "uom_name": "pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 610,
+    "name": "SPK1 - Cold Lid",
+    "uom_name": "pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 613,
+    "name": "SPK1 - Cream Cheese",
+    "uom_name": "g",
+    "threshold_value": 200
+  },
+  {
+    "id": 616,
+    "name": "SPK1 - Custard",
+    "uom_name": "g",
+    "threshold_value": 200
+  },
+  {
+    "id": 620,
+    "name": "SPK1 - Famous Blends Coffee",
+    "uom_name": "pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 1198,
+    "name": "SPK1 - Famous Brown Bag #4",
+    "uom_name": "pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 1199,
+    "name": "SPK1 - Famous Brown Bag #8",
+    "uom_name": "pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 621,
+    "name": "SPK1 - Famous Drip Coffee",
+    "uom_name": "pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 622,
+    "name": "SPK1 - Famous Mix",
+    "uom_name": "kg",
+    "threshold_value": 0
+  },
+  {
+    "id": 623,
+    "name": "SPK1 - Famous Wrapper",
+    "uom_name": "pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 624,
+    "name": "SPK1 - Garlic Mix",
+    "uom_name": "pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 625,
+    "name": "SPK1 - Ham",
+    "uom_name": "pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 626,
+    "name": "SPK1 - Hazelnut",
+    "uom_name": "g",
+    "threshold_value": 200
+  },
+  {
+    "id": 628,
+    "name": "SPK1 - Hot Cup",
+    "uom_name": "pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 630,
+    "name": "SPK1 - Hot Lid",
+    "uom_name": "pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 631,
+    "name": "SPK1 - Iced Tea Powder",
+    "uom_name": "g",
+    "threshold_value": 50
+  },
+  {
+    "id": 632,
+    "name": "SPK1 - Mango Peach",
+    "uom_name": "g",
+    "threshold_value": 200
+  },
+  {
+    "id": 635,
+    "name": "SPK1 - Mayonnaise",
+    "uom_name": "g",
+    "threshold_value": 100
+  },
+  {
+    "id": 1280,
+    "name": "SPK1 - Non-stick Oil",
+    "uom_name": "g",
+    "threshold_value": 200
+  },
+  {
+    "id": 637,
+    "name": "SPK1 - Peanut Butter",
+    "uom_name": "g",
+    "threshold_value": 200
+  },
+  {
+    "id": 638,
+    "name": "SPK1 - Spicy Chicken Floss",
+    "uom_name": "g",
+    "threshold_value": 100
+  },
+  {
+    "id": 639,
+    "name": "SPK1 - Strawberry",
+    "uom_name": "g",
+    "threshold_value": 200
+  },
+  {
+    "id": 640,
+    "name": "SPK1 - Sugar Syrup",
+    "uom_name": "g",
+    "threshold_value": 100
+  },
+  {
+    "id": 643,
+    "name": "SPK1 - White Chocolate",
+    "uom_name": "g",
+    "threshold_value": 200
+  },
+  {
+    "id": 601,
+    "name": "SPK2 - Banana",
+    "uom_name": "pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 1196,
+    "name": "SPK2 - Beverage Take-out Bag Double",
+    "uom_name": "pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 1197,
+    "name": "SPK2 - Beverage Take-out Bag Single",
+    "uom_name": "pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 1181,
+    "name": "SPK2 - Coffee Mate Creamer",
+    "uom_name": "pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 1178,
+    "name": "SPK2 - Coke Mismo 290ml",
+    "uom_name": "pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 612,
+    "name": "SPK2 - Corned Beef",
+    "uom_name": "g",
+    "threshold_value": 20
+  },
+  {
+    "id": 614,
+    "name": "SPK2 - Crushed Graham",
+    "uom_name": "g",
+    "threshold_value": 100
+  },
+  {
+    "id": 615,
+    "name": "SPK2 - Crushed Oreo",
+    "uom_name": "g",
+    "threshold_value": 100
+  },
+  {
+    "id": 618,
+    "name": "SPK2 - Egg",
+    "uom_name": "pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 619,
+    "name": "SPK2 - Famous Blends Choco",
+    "uom_name": "pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 629,
+    "name": "SPK2 - Hot Cup Sleeves",
+    "uom_name": "pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 634,
+    "name": "SPK2 - Marshmallow",
+    "uom_name": "g",
+    "threshold_value": 100
+  },
+  {
+    "id": 1277,
+    "name": "SPK2 - Reward Card",
+    "uom_name": "pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 1177,
+    "name": "SPK2 - Robinsons Bottled Water",
+    "uom_name": "pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 1179,
+    "name": "SPK2 - Royal Mismo 250ml",
+    "uom_name": "pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 1182,
+    "name": "SPK2 - Splenda Sweetener",
+    "uom_name": "pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 1180,
+    "name": "SPK2 - Sprite Mismo 290ml",
+    "uom_name": "pc",
+    "threshold_value": 0
+  },
+  {
+    "id": 641,
+    "name": "SPK2 - Unsalted Butter",
+    "uom_name": "g",
+    "threshold_value": 50
+  },
+  {
+    "id": 642,
+    "name": "SPK2 - Vegetable Oil",
+    "uom_name": "g",
+    "threshold_value": 200
+  }
+]
