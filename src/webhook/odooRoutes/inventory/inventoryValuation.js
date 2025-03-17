@@ -14,61 +14,75 @@ const config = {
   },
 };
 
+let webhookBatch = []; // Store incoming webhooks
+let timer = null;
+const TIMEOUT = 3000; // 3 seconds delay
+
+const receiveValuation = (req, res) => {
+  const {
+    create_date,
+    reference,
+    x_uom_name,
+    product_tmpl_id,
+    quantity,
+    x_company_name,
+    x_product_name,
+  } = req.body;
+
+  webhookBatch.push({
+    create_date,
+    reference, // Using `_id` as `reference`
+    x_uom_name,
+    product_tmpl_id,
+    quantity,
+    x_company_name,
+    x_product_name,
+  });
+
+  resetTimer(); // Reset the timer
+  return res.status(200).json({ ok: true, message: "Webhook received" });
+};
+
 // ✅ AIC VALUATION FLAG
-const receiveValuation = async (req, res) => {
+const processBatch = async () => {
+  if (webhookBatch.length === 0) return;
+
   try {
-    const {
-      create_date,
-      reference,
-      x_uom_name,
-      product_tmpl_id,
-      quantity,
-      x_company_name,
-      x_product_name,
-    } = req.body;
-
-    console.log(req.body);
-
     const filePath = path.resolve(__dirname, "../../../config/products.json");
     const threshold_data = JSON.parse(fs.readFileSync(filePath, "utf8"));
 
-    const product_data = threshold_data.find((d) => d.id === product_tmpl_id);
+    const tableData = [["Product Name", "Quantity", "Unit"]];
 
-    const isFlagged = checkThreshold(quantity, product_data.threshold_value);
+    for (const webhook of webhookBatch) {
+      const product_data = threshold_data.find(
+        (d) => d.id === webhook.product_tmpl_id
+      );
 
-    console.log(isFlagged);
+      if (!product_data) continue;
 
-    if (!isFlagged) return;
+      const isFlagged = checkThreshold(
+        webhook.quantity,
+        product_data.threshold_value
+      );
 
-    const formattedTime = formatTime(create_date);
-    const timestampId = formatTimestamp(create_date);
+      if (!isFlagged) continue;
+
+      tableData.push([
+        webhook.x_product_name,
+        webhook.quantity.toString(),
+        webhook.x_uom_name,
+      ]);
+    }
+
+    if (tableData.length === 1) return;
+
+    const lastEntry = webhookBatch.at(-1);
+
+    const formattedTime = formatTime(lastEntry.create_date);
+    const timestampId = formatTimestamp(lastEntry.create_date);
 
     const targetChannel = client.channels.cache.get("1350859218474897468");
     if (!targetChannel) throw new Error("AIC discrepancy channel not found");
-
-    const channelMessages = await targetChannel.messages.fetch({
-      limit: 100,
-    });
-
-    const targetMessage = channelMessages.find((msg) =>
-      msg.content.includes(timestampId)
-    );
-
-    if (targetMessage) {
-      let messageEmbed = targetMessage.embeds[0];
-      let existingTable = extractTableFromEmbed(messageEmbed);
-      existingTable.push([x_product_name, quantity.toString(), x_uom_name]);
-
-      const updatedTable = generateTable(existingTable);
-      messageEmbed.description = updatedTable;
-
-      await targetMessage.edit({ embeds: [messageEmbed] });
-      return res.status(200).json({ ok: true, message: "AIC flag updated" });
-    }
-
-    // ✅ Create and send new aic flag
-    const tableData = [["Product Name", "Quantity", "Unit"]];
-    tableData.push([x_product_name, quantity.toString(), x_uom_name]);
 
     const newTable = generateTable(tableData);
 
@@ -77,8 +91,8 @@ const receiveValuation = async (req, res) => {
       .setDescription(newTable)
       .addFields(
         { name: "Date", value: `📆 | ${formattedTime}` },
-        { name: "AIC Reference", value: `🔗 | ${reference}` },
-        { name: "Branch", value: `🛒 | ${x_company_name}` }
+        { name: "AIC Reference", value: `🔗 | ${lastEntry.reference}` },
+        { name: "Branch", value: `🛒 | ${lastEntry.x_company_name}` }
       )
       .setColor("Red");
 
@@ -87,10 +101,13 @@ const receiveValuation = async (req, res) => {
       embeds: [embed],
     });
 
-    return res.status(200).json({ ok: true, message: "AIC flagged" });
+    webhookBatch = [];
+
+    return { ok: true, message: "AIC flagged" };
   } catch (error) {
+    webhookBatch = [];
     console.error("Check-In Error:", error);
-    return res.status(500).json({ ok: false, message: error.message });
+    return { ok: false, message: error.message };
   }
 };
 
@@ -135,19 +152,11 @@ function generateTable(data) {
   return "```\n" + table(data, config).trim() + "\n```";
 }
 
-function extractTableFromEmbed(embed) {
-  if (!embed || !embed.description) return [];
+function resetTimer() {
+  if (timer) clearTimeout(timer); // Clear the previous timer
 
-  const rows = embed.description
-    .split("\n")
-    .filter((line) => line.includes("|")) // Only keep table rows
-    .map(
-      (row) =>
-        row
-          .split("|")
-          .map((cell) => cell.trim())
-          .filter((cell) => cell.length > 0) // Remove empty cells
-    );
-
-  return rows;
+  timer = setTimeout(async () => {
+    const result = await processBatch();
+    console.log(result);
+  }, TIMEOUT); // Start a new timer
 }
