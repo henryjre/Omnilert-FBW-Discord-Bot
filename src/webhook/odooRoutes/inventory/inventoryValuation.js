@@ -152,18 +152,18 @@ function formatTimestamp(rawTime) {
 
 function checkThreshold(value, threshold) {
   if (typeof threshold === "string") {
-    if (threshold.includes("+")) {
-      // Handle positive values that cannot be negative
-      const [min, max] = [0, parseInt(threshold)];
-      return value < min || value > max;
-    } else if (threshold.includes("-")) {
-      // Handle negative values that cannot be positive
-      const numericThreshold = parseInt(threshold);
-      return value < numericThreshold || value > 0;
+    const numericValue = parseInt(threshold, 10);
+
+    if (threshold.endsWith("+")) {
+      // Example: "+800" means value must be between [0, 800]
+      return value < 0 || value > numericValue; // Flag if value is negative or exceeds 800
+    } else if (threshold.endsWith("-")) {
+      // Example: "-800" means value must be between [-800, 0]
+      return value < numericValue || value > 0; // Flag if value is outside this range
     }
   } else if (typeof threshold === "number") {
-    // Handle direct numeric threshold (e.g., just 10 or -10)
-    return value > threshold || value < -threshold;
+    // Example: 800 means symmetric threshold [-800, 800]
+    return Math.abs(value) > threshold;
   }
 
   return false; // Default case if threshold format is unknown
