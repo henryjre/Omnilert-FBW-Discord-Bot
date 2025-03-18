@@ -5,8 +5,12 @@ const {
   ActionRowBuilder,
   StringSelectMenuOptionBuilder,
   StringSelectMenuBuilder,
+  UserSelectMenuBuilder,
 } = require("discord.js");
 // // const schedule = require("node-schedule");
+
+const managementRole = "1314413671245676685";
+const serviceCrewRole = "1314413960274907238";
 
 let scheduledChecks = {};
 module.exports = {
@@ -14,26 +18,12 @@ module.exports = {
     name: "announcementModal",
   },
   async execute(interaction, client) {
-    const channel = interaction.fields.getTextInputValue("channelInput");
-
-    if (!["1197101506638381188", "1197101565421568082"].includes(channel)) {
-      await interaction.reply({
-        content: `🔴 ERROR: Cannot find announcement channel. Please do not change the announcement type input.`,
-        ephemeral: true,
-      });
-      return;
-    }
+    const channel = "855644300410486796";
 
     const title = interaction.fields.getTextInputValue("titleInput");
     const details = interaction.fields.getTextInputValue("announcementInput");
 
     await interaction.deferReply();
-
-    const role = await interaction.guild.roles.cache.get(
-      channel === "1197101506638381188"
-        ? "1185935514042388520"
-        : "1196806310524629062"
-    );
 
     // const embed = new EmbedBuilder()
     //   .setDescription(
@@ -61,23 +51,29 @@ module.exports = {
         iconURL: interaction.user.displayAvatarURL(),
         text: `If you are notified by this announcement, please acknowledge by reacting.`,
       })
-      .setColor(role.color);
+      .setColor("Blurple");
 
-    const membersWithRoles = role.members.map((m) =>
-      new StringSelectMenuOptionBuilder()
-        .setLabel(m.nickname)
-        .setValue(m.user.id)
-    );
-
-    const userMenu = new StringSelectMenuBuilder()
+    const roleMenu = new StringSelectMenuBuilder()
       .setCustomId("announcementMenu")
-      .setOptions(membersWithRoles)
-      .setMaxValues(membersWithRoles.length)
-      .setPlaceholder("Select the target users of your announcement.");
+      .setOptions([
+        new StringSelectMenuOptionBuilder()
+          .setLabel("Everyone")
+          .setValue("@everyone"),
+        new StringSelectMenuOptionBuilder()
+          .setLabel("Management")
+          .setValue(managementRole),
+        new StringSelectMenuOptionBuilder()
+          .setLabel("Service Crew/Employees")
+          .setValue(serviceCrewRole),
+      ])
+      .setMinValues(1)
+      .setMaxValues(1)
+      .setPlaceholder("Select target role/s.");
 
     const submit = new ButtonBuilder()
       .setCustomId("announcementSubmit")
       .setLabel("Announce")
+      .setDisabled(true)
       .setStyle(ButtonStyle.Success);
 
     const cancel = new ButtonBuilder()
@@ -85,7 +81,7 @@ module.exports = {
       .setLabel("Cancel")
       .setStyle(ButtonStyle.Danger);
 
-    const menuRow = new ActionRowBuilder().addComponents(userMenu);
+    const menuRow = new ActionRowBuilder().addComponents(roleMenu);
     const buttonRow = new ActionRowBuilder().addComponents(submit, cancel);
 
     // const proposalMessage = await client.channels.cache.get(channel).send({
