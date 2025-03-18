@@ -87,7 +87,7 @@ const processBatch = async () => {
     // const newTable = generateTable(tableData);
 
     let description = "## 🚩 UNUSUAL DISCREPANCY DETECTED\n\u200b\n";
-    for (const webhook of webhookBatch) {
+    for (const webhook of flaggedProducts) {
       description += `> **Product:** ${webhook.x_product_name}\n`;
       description += `> **Quantity:** ${webhook.quantity} ${webhook.x_uom_name}`;
       description += `\n\u200b\n`;
