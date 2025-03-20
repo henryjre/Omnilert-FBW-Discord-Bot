@@ -23,11 +23,10 @@ module.exports = {
     }
 
     const cancelEmbed = new EmbedBuilder()
-      .setTitle("Command Cancelled")
       .setDescription("You have cancelled the announcement.")
       .setColor("Red");
 
-    await interaction.channel.editReply({
+    await interaction.editReply({
       embeds: [cancelEmbed],
     });
 
