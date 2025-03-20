@@ -23,7 +23,7 @@ module.exports = {
         .setDescription(`🔴 ERROR: You cannot use this menu.`)
         .setColor("Red");
 
-      return await interaction.editReply({
+      return await interaction.reply({
         embeds: [replyEmbed],
         flags: MessageFlags.Ephemeral,
       });
@@ -32,7 +32,7 @@ module.exports = {
     await interaction.deferUpdate();
 
     const newFields = messageEmbed.data.fields.filter(
-      (item) => item.name !== "Recipient"
+      (item) => item.name !== "Recipients"
     );
 
     messageEmbed.data.fields = newFields;
