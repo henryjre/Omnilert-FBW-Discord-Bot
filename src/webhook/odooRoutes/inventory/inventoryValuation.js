@@ -32,6 +32,10 @@ const receiveValuation = (req, res) => {
     x_company_name,
     x_product_name,
   } = req.body;
+  
+  if (reference.startsWith("UB/")) {
+    return res.status(200).json({ ok: false, message: "Invalid reference" });
+  }
 
   webhookBatch.push({
     create_date,
