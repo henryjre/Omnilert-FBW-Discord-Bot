@@ -92,12 +92,12 @@ function extractDigits(input) {
   try {
     if (typeof input !== "string") return input; // Return original if not a string
 
-    // Extract digits and at most one decimal point
-    const match = input.match(/\d+(\.\d{0,2})?/);
+    // Extract a valid number (including thousands separators)
+    const match = input.match(/[\d,]+(\.\d{0,2})?/);
     if (!match) return input; // Return input if no valid number found
 
-    // Convert to a number and format with commas
-    const amount = parseFloat(match[0]).toLocaleString("en-US", {
+    // Remove commas and convert to a number
+    const amount = parseFloat(match[0].replace(/,/g, "")).toLocaleString("en-US", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
