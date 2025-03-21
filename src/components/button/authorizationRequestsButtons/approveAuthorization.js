@@ -184,6 +184,8 @@ async function insertToGoogleSheet(messageEmbed, client) {
     client
   );
 
+  console.log(type, date, branch, shift, employeeName);
+
   const auth = new google.auth.GoogleAuth({
     credentials,
     scopes: ["https://www.googleapis.com/auth/spreadsheets"],
