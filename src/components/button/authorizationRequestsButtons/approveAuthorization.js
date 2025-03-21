@@ -226,7 +226,10 @@ async function filterData(embed, client) {
 
   // Helper function to get field value safely
   const getFieldValue = (name) =>
-    fields.find((f) => f.name === name)?.value || "";
+    fields
+      .find((f) => f.name === name)
+      ?.value.split("|")[1]
+      .trim() || "";
 
   // Extract user ID from Discord mention format
   const extractUserId = (mention) => {
@@ -257,7 +260,7 @@ async function filterData(embed, client) {
       }
     }
 
-    return member.nickname || member.user.username; // Prefer nickname
+    return member.nickname.replace(/^[🔴🟢]\s*/, "") || member.user.username; // Prefer nickname
   };
 
   switch (true) {
