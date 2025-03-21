@@ -260,9 +260,7 @@ async function filterData(embed, client) {
     }
 
     // Clean nickname format: Remove emojis/symbols at the start
-    return (member.nickname || member.user.username)
-      .replace(/^[^\w\s]+/, "")
-      .trim();
+    return member.nickname.replace(/^[🔴🟢]\s*/, "") || member.user.username;
   };
 
   // Determine the request type
@@ -303,11 +301,14 @@ async function filterData(embed, client) {
   // Common field assignments with safe fallback
   data.date = getFieldValue("Date");
   data.branch = getFieldValue("Branch");
-  data.shift = data.shift || getFieldValue("Shift");
 
   // Assign employee name for cases that don’t have custom logic
   if (!data.employeeName) {
     data.employeeName = await getUserNickname(getFieldValue("Employee Name"));
+  }
+
+  if (!data.shift) {
+    data.shift = getFieldValue("Shift");
   }
 
   return data;
