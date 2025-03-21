@@ -30,7 +30,7 @@ Should you need to learn more or ask questions, feel free to send a message to t
 To become part of Omnilert discord, click the **Join** button below and submit your **\`full name\`** and your **\`active email address\`**.
 `;
 
-const botRoleId = "1344653256709636106";
+const botRoleId = "1343052940818255986";
 
 module.exports = {
   data: new SlashCommandBuilder().setName("welcome_message"),
