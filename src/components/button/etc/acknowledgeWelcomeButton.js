@@ -54,10 +54,8 @@ module.exports = {
       embeds: [messageEmbed],
     };
 
-    if (role) {
-      messagePayload.content = `<@&${techRole}>, please create an Odoo account first before acknowledging this request.`;
-      messagePayload.components = [buttonRow];
-    }
+    messagePayload.content = `<@&${techRole}>, please create an Odoo account first before acknowledging this request.`;
+    messagePayload.components = [buttonRow];
 
     await departmentChannel.send(messagePayload);
 
