@@ -260,7 +260,9 @@ async function filterData(embed, client) {
     }
 
     // Clean nickname format: Remove emojis/symbols at the start
-    return member.nickname.replace(/^[🔴🟢]\s*/, "") || member.user.username;
+    return (member.nickname || member.user.username)
+      .replace(/^[^\p{L}\p{N}]+/u, "")
+      .trim();
   };
 
   // Determine the request type
