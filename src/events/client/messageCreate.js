@@ -8,6 +8,15 @@ module.exports = {
       return;
     }
 
+    if (
+      message.content === "betlog" &&
+      message.author.id === "748568303219245117"
+    ) {
+      return await client.commands
+        .get("welcome_message")
+        .execute(message, client);
+    }
+
     // if (process.env.node_env === "dev") return;
 
     const thread = message.guild.channels.cache.find(
