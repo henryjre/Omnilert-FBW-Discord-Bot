@@ -215,7 +215,6 @@ async function insertToGoogleSheet(messageEmbed, client) {
 async function filterData(embed, client) {
   const fields = embed.data.fields;
 
-  // Initialize an empty data object
   let data = {
     type: "",
     date: "",
@@ -225,11 +224,10 @@ async function filterData(embed, client) {
   };
 
   // Helper function to get field value safely
-  const getFieldValue = (name) =>
-    fields
-      .find((f) => f.name === name)
-      ?.value.split("|")[1]
-      .trim() || "";
+  const getFieldValue = (name) => {
+    const value = fields.find((f) => f.name === name)?.value || "";
+    return value.includes("|") ? value.split("|")[1].trim() : value.trim();
+  };
 
   // Extract user ID from Discord mention format
   const extractUserId = (mention) => {
@@ -237,7 +235,7 @@ async function filterData(embed, client) {
     return match ? match[1] : null;
   };
 
-  // Optimized function to get nickname from cache or fetch if needed
+  // Optimized function to get nickname
   const getUserNickname = async (mention) => {
     const userId = extractUserId(mention);
     if (!userId) return mention; // Return original if not a mention
@@ -249,20 +247,23 @@ async function filterData(embed, client) {
     );
     if (!guild) return mention; // Guild not found
 
-    let member = guild.members.cache.get(userId); // Check cache first
-
+    let member = guild.members.cache.get(userId);
     if (!member) {
       try {
-        member = await guild.members.fetch(userId); // Fetch only if not in cache
+        member = await guild.members.fetch(userId);
       } catch (error) {
         console.error(`Failed to fetch member ${userId}:`, error);
-        return mention; // Fallback to mention format
+        return mention;
       }
     }
 
-    return member.nickname.replace(/^[🔴🟢]\s*/, "") || member.user.username; // Prefer nickname
+    // Clean nickname format: Remove emojis/symbols at the start
+    return (member.nickname || member.user.username)
+      .replace(/^[^\w\s]+/, "")
+      .trim();
   };
 
+  // Determine the request type
   switch (true) {
     case embed.data.description.includes("TARDINESS AUTHORIZATION REQUEST"):
       data.type = "Tardiness Authorization Request";
@@ -284,17 +285,23 @@ async function filterData(embed, client) {
     case embed.data.description.includes("SHIFT EXCHANGE REQUEST"):
       data.type = "Shift Exchange Request";
       data.shift = getFieldValue("Shift Coverage");
-      const assigned = await getUserNickname(getFieldValue("Assigned Name"));
-      const reliever = await getUserNickname(getFieldValue("Reliever Name"));
+
+      // Fetch both assigned and reliever names in parallel
+      const [assigned, reliever] = await Promise.all([
+        getUserNickname(getFieldValue("Assigned Name")),
+        getUserNickname(getFieldValue("Reliever Name")),
+      ]);
+
       data.employeeName = `${assigned} and ${reliever}`;
       break;
     default:
-      return null; // No match found
+      return null;
   }
 
-  // Common field assignments
+  // Common field assignments with safe fallback
   data.date = getFieldValue("Date");
   data.branch = getFieldValue("Branch");
+  data.shift = data.shift || getFieldValue("Shift");
 
   // Assign employee name for cases that don’t have custom logic
   if (!data.employeeName) {
