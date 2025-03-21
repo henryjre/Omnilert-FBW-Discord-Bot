@@ -9,6 +9,12 @@ const {
   TextInputStyle,
 } = require("discord.js");
 
+const { google } = require("googleapis");
+
+const credentials = JSON.parse(
+  Buffer.from(process.env.googleServiceAccountKey, "base64").toString("utf8")
+);
+
 const hrDepartmentChannel = "1342837776017657940";
 const financeDepartmentChannel = "1342837676700602471";
 const ehChannel = "1342837500116336823";
@@ -159,6 +165,8 @@ module.exports = {
           .then((msg) => {
             interaction.message.delete();
           });
+
+        await insertToGoogleSheet(messageEmbed, client);
       }
     } catch (error) {
       console.log(error);
@@ -169,3 +177,126 @@ module.exports = {
     }
   },
 };
+
+async function insertToGoogleSheet(messageEmbed, client) {
+  const { type, date, branch, shift, employeeName } = await filterData(
+    messageEmbed,
+    client
+  );
+
+  const auth = new google.auth.GoogleAuth({
+    credentials,
+    scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+  });
+
+  const sheets = google.sheets({ version: "v4", auth });
+
+  const spreadsheetId = process.env.sheetId; // Replace with actual ID
+  const sheetName = "Authorization Requests";
+
+  const values = [[type, date, branch, shift, employeeName]];
+
+  try {
+    // Append data to the sheet
+    const response = await sheets.spreadsheets.values.append({
+      spreadsheetId,
+      range: `${sheetName}!A:E`, // Target range
+      valueInputOption: "USER_ENTERED", // Lets Google format date values
+      insertDataOption: "INSERT_ROWS",
+      resource: { values },
+    });
+
+    console.log("Data successfully inserted:", response.data.updates);
+  } catch (error) {
+    console.error("Error inserting data:", error);
+  }
+}
+
+async function filterData(embed, client) {
+  const fields = embed.data.fields;
+
+  // Initialize an empty data object
+  let data = {
+    type: "",
+    date: "",
+    branch: "",
+    shift: "",
+    employeeName: "",
+  };
+
+  // Helper function to get field value safely
+  const getFieldValue = (name) =>
+    fields.find((f) => f.name === name)?.value || "";
+
+  // Extract user ID from Discord mention format
+  const extractUserId = (mention) => {
+    const match = mention.match(/^<@!?(\d+)>$/);
+    return match ? match[1] : null;
+  };
+
+  // Optimized function to get nickname from cache or fetch if needed
+  const getUserNickname = async (mention) => {
+    const userId = extractUserId(mention);
+    if (!userId) return mention; // Return original if not a mention
+
+    const guild = client.guilds.cache.get(
+      process.env.node_env === "prod"
+        ? process.env.prodGuildId
+        : process.env.testGuildId
+    );
+    if (!guild) return mention; // Guild not found
+
+    let member = guild.members.cache.get(userId); // Check cache first
+
+    if (!member) {
+      try {
+        member = await guild.members.fetch(userId); // Fetch only if not in cache
+      } catch (error) {
+        console.error(`Failed to fetch member ${userId}:`, error);
+        return mention; // Fallback to mention format
+      }
+    }
+
+    return member.nickname || member.user.username; // Prefer nickname
+  };
+
+  switch (true) {
+    case embed.data.description.includes("TARDINESS AUTHORIZATION REQUEST"):
+      data.type = "Tardiness Authorization Request";
+      break;
+    case embed.data.description.includes("ABSENCE AUTHORIZATION REQUEST"):
+      data.type = "Absence Authorization Request";
+      break;
+    case embed.data.description.includes("UNDERTIME AUTHORIZATION REQUEST"):
+      data.type = "Undertime Authorization Request";
+      break;
+    case embed.data.description.includes("INTERIM DUTY FORM"):
+      data.type = "Interim Duty Form";
+      data.shift = getFieldValue("Shift Coverage");
+      break;
+    case embed.data.description.includes("OVERTIME CLAIM"):
+      data.type = "Overtime Claim";
+      data.shift = getFieldValue("Shift Coverage");
+      break;
+    case embed.data.description.includes("SHIFT EXCHANGE REQUEST"):
+      data.type = "Shift Exchange Request";
+      data.shift = getFieldValue("Shift Coverage");
+      const assigned = await getUserNickname(getFieldValue("Assigned Name"));
+      const reliever = await getUserNickname(getFieldValue("Reliever Name"));
+      data.employeeName = `${assigned} and ${reliever}`;
+      break;
+    default:
+      return null; // No match found
+  }
+
+  // Common field assignments
+  data.date = getFieldValue("Date");
+  data.branch = getFieldValue("Branch");
+
+  // Assign employee name for cases that don’t have custom logic
+  if (!data.employeeName) {
+    data.employeeName = await getUserNickname(getFieldValue("Employee Name"));
+  }
+
+  return data;
+}
