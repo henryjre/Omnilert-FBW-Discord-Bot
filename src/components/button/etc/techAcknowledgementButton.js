@@ -90,6 +90,11 @@ module.exports = {
 
         messageEmbed.data.color = 5763719;
 
+        messageEmbed.data.description = messageEmbed.data.description.replace(
+          "👋 NEW MEMBER REQUEST",
+          "EMPLOYEE DETAILS"
+        );
+
         await client.channels.cache
           .get(finalTargetChannel)
           .send({
