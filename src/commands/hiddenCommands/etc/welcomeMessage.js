@@ -25,9 +25,9 @@ https://drive.google.com/file/d/1-2iHw95g-cwEPWPUq54N_Kq1CtCzMgU-/view?usp=shari
 
 https://docs.google.com/document/d/18uEPbgeWJjPXr91wOkMyFGQqOlJBA0PxgJ8UdQTNAg4/edit?usp=sharing
 
-Should you need to learn more or ask questions, feel free to send a message to the <#1314821211955400764> channel or mention <@748568303219245117>
+Should you need to learn more or ask questions, feel free to send a message to the <#1337236598269415496> channel or mention <@748568303219245117>
 
-To become part of Omnilert discord, click the **Join** button below and submit your **\`full name\`** and your **\`active email address\`**.
+To become part of Omnilert discord, click the **JOIN** button below and submit your **\`full name\`** and your **\`active email address\`**.
 `;
 
 const botRoleId = "1343052940818255986";
