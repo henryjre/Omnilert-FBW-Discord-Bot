@@ -10,6 +10,7 @@ const {
 } = require("discord.js");
 
 const techRole = "1314815091908022373";
+const hrRole = "1314815153421680640";
 const finalTargetChannel = "1352693339421671608";
 
 module.exports = {
@@ -98,7 +99,7 @@ module.exports = {
         await client.channels.cache
           .get(finalTargetChannel)
           .send({
-            content: `<@${memberId.value}>`,
+            content: `<@&${hrRole}>`,
             embeds: [messageEmbed],
           })
           .then((msg) => {
