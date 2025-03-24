@@ -99,7 +99,7 @@ module.exports = {
         await client.channels.cache
           .get(finalTargetChannel)
           .send({
-            content: `<@&${hrRole}>`,
+            content: `<@&${memberId.value}>`,
             embeds: [messageEmbed],
           })
           .then((msg) => {
