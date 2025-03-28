@@ -166,7 +166,9 @@ module.exports = {
             interaction.message.delete();
           });
 
-        await insertToGoogleSheet(messageEmbed, client);
+        if (!isFinanceType) {
+          await insertToGoogleSheet(messageEmbed, client);
+        }
       }
     } catch (error) {
       console.log(error);

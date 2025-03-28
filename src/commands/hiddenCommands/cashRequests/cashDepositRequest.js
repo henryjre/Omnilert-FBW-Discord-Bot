@@ -25,7 +25,7 @@ module.exports = {
         await i.deferUpdate();
         return true;
       },
-      time: 300000,
+      time: 600000,
     });
 
     try {
