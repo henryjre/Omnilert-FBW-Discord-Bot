@@ -5,7 +5,6 @@ module.exports = {
     name: `announcementAddAttachment`,
   },
   async execute(interaction, client) {
-    await interaction.deferUpdate();
     let messageEmbed = interaction.message.embeds[0];
 
     const ownerField = messageEmbed.data.fields.find(
@@ -30,10 +29,12 @@ module.exports = {
       )
     );
 
-    console.log(existingThread);
-
     if (existingThread) {
-      const attachments = await fetchThreadAttachments(interaction);
+      await interaction.deferUpdate();
+      const attachments = await fetchThreadAttachments(
+        interaction,
+        existingThread
+      );
       const embedsToSend = [];
 
       if (attachments.media.length > 0) {
@@ -59,6 +60,8 @@ module.exports = {
       });
     }
 
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
     const thread = await interaction.message.startThread({
       name: `Announcement Attachment Upload - ${interaction.message.id}`,
       autoArchiveDuration: 60, // Archive after 1 hour
@@ -79,23 +82,13 @@ module.exports = {
   },
 };
 
-async function fetchThreadAttachments(interaction) {
+async function fetchThreadAttachments(interaction, thread) {
   const attachments = {
     media: [],
     pdf: [],
   };
 
   try {
-    // Fetch the thread from cache or API
-    const thread = await interaction.guild.channels.cache.get(
-      interaction.message.id
-    );
-
-    if (!thread?.isThread()) {
-      console.error("The specified ID does not correspond to a thread.");
-      return attachments;
-    }
-
     // Fetch the last 100 messages from the thread
     const messages = await thread.messages.fetch({ limit: 100 });
 
