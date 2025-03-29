@@ -12,8 +12,10 @@ module.exports = {
       (f) => f.name === "Prepared By"
     );
 
+    const replyEmbed = new EmbedBuilder();
+
     if (!ownerField.value.includes(interaction.user.id)) {
-      const replyEmbed = new EmbedBuilder()
+      replyEmbed
         .setDescription(`🔴 ERROR: You cannot use this menu.`)
         .setColor("Red");
 
