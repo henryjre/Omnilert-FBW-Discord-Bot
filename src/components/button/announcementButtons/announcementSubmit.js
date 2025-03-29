@@ -2,7 +2,8 @@ const fs = require("fs").promises;
 const { EmbedBuilder } = require("discord.js");
 const path = require("path");
 
-const targetChannel = "1314416941481328650";
+const generalChannel = "1314416941481328650";
+const managementChannel = "1314416207553761403";
 
 module.exports = {
   data: {
@@ -29,6 +30,12 @@ module.exports = {
       });
     }
 
+    let channel = generalChannel;
+
+    if (targetField.value.includes("1314413671245676685")) {
+      channel = managementChannel;
+    }
+
     await interaction.deferUpdate();
 
     const newFields = messageEmbed.data.fields.filter(
@@ -37,12 +44,10 @@ module.exports = {
 
     messageEmbed.data.fields = newFields;
 
-    const announcementMessage = await client.channels.cache
-      .get(targetChannel)
-      .send({
-        content: targetField.value,
-        embeds: [messageEmbed],
-      });
+    const announcementMessage = await client.channels.cache.get(channel).send({
+      content: targetField.value,
+      embeds: [messageEmbed],
+    });
 
     await interaction.message.delete();
 
