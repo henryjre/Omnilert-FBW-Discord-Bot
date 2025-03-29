@@ -118,12 +118,12 @@ module.exports = {
 
     if (messageComponents.length > 0) {
       await interaction.editReply({
-        embeds: [embedsToSend],
+        embeds: embedsToSend,
         components: messageComponents,
       });
     } else {
       await interaction.editReply({
-        embeds: [embedsToSend],
+        embeds: embedsToSend,
       });
     }
   },
