@@ -113,6 +113,8 @@ module.exports = {
       messageComponents.push(menuRow, buttonRow);
     }
 
+    interaction.message.embeds[0] = messageEmbed;
+
     if (messageComponents.length > 0) {
       await interaction.editReply({
         embeds: [interaction.message.embeds],
