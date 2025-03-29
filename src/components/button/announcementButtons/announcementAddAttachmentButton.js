@@ -76,7 +76,7 @@ module.exports = {
       .setDescription(`Please go to ${thread} and upload your attachments.`)
       .setColor("Green");
 
-    return await interaction.reply({
+    return await interaction.editReply({
       embeds: [replyEmbed],
     });
   },
