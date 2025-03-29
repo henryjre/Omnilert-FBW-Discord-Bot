@@ -92,8 +92,10 @@ async function fetchThreadAttachments(interaction, thread) {
     // Fetch the last 100 messages from the thread
     const messages = await thread.messages.fetch({ limit: 100 });
 
+    const reversedMessages = messages.reverse();
+
     // Iterate over each message and extract attachments
-    messages.forEach((msg) => {
+    reversedMessages.forEach((msg) => {
       msg.attachments.forEach((attachment) => {
         const contentType = attachment.contentType;
 
