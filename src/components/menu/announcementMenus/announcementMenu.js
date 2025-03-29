@@ -113,7 +113,10 @@ module.exports = {
       messageComponents.push(menuRow, buttonRow);
     }
 
-    interaction.message.embeds[0] = messageEmbed;
+    const updatedEmbeds = [
+      messageEmbed,
+      ...interaction.message.embeds.slice(1),
+    ];
 
     if (messageComponents.length > 0) {
       await interaction.editReply({
