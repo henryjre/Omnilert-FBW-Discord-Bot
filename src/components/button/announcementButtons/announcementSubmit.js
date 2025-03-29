@@ -48,7 +48,9 @@ module.exports = {
     const announcementMessage = await client.channels.cache.get(channel).send({
       content: targetField.value,
       embeds: interaction.message.embeds,
-      files: interaction.message.attachments,
+      files: interaction.message.attachments?.map(
+        (attachment) => attachment.url
+      ),
     });
 
     const existingThread = await interaction.channel.threads.cache.find((t) =>
