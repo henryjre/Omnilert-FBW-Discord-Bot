@@ -51,6 +51,14 @@ module.exports = {
       files: interaction.message.attachments,
     });
 
+    const existingThread = await interaction.channel.threads.cache.find((t) =>
+      t.name.includes(
+        `Announcement Attachment Upload - ${interaction.message.id}`
+      )
+    );
+
+    await existingThread.delete();
+
     await interaction.message.delete();
 
     // if (channel === "1197101506638381188") {
