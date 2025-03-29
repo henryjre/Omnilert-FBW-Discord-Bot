@@ -55,9 +55,7 @@ module.exports = {
         files: attachments.pdf,
       });
 
-      return await existingThread.send({
-        content: `📸 ${interaction.user.toString()}, please upload the attachments here. Currently, you can only attach **IMAGES** and **PDF** files to the announcement.`,
-      });
+      return;
     }
 
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
