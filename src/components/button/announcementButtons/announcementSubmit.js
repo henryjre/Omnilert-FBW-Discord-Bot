@@ -48,6 +48,7 @@ module.exports = {
     const announcementMessage = await client.channels.cache.get(channel).send({
       content: targetField.value,
       embeds: [interaction.message.embeds],
+      files: [interaction.message.attachments],
     });
 
     await interaction.message.delete();
