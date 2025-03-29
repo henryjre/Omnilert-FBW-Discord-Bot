@@ -93,25 +93,34 @@ module.exports = {
         .setDisabled(false)
         .setStyle(ButtonStyle.Success);
 
+      const addAttachment = new ButtonBuilder()
+        .setCustomId("announcementAddAttachment")
+        .setLabel("Add Attachments")
+        .setStyle(ButtonStyle.Primary);
+
       const cancel = new ButtonBuilder()
         .setCustomId("announcementCancel")
         .setLabel("Cancel")
         .setStyle(ButtonStyle.Danger);
 
       const menuRow = new ActionRowBuilder().addComponents(roleMenu);
-      const buttonRow = new ActionRowBuilder().addComponents(submit, cancel);
+      const buttonRow = new ActionRowBuilder().addComponents(
+        submit,
+        addAttachment,
+        cancel
+      );
 
       messageComponents.push(menuRow, buttonRow);
     }
 
     if (messageComponents.length > 0) {
       await interaction.editReply({
-        embeds: [messageEmbed],
+        embeds: [interaction.message.embeds],
         components: messageComponents,
       });
     } else {
       await interaction.editReply({
-        embeds: [messageEmbed],
+        embeds: [interaction.message.embeds],
       });
     }
   },
