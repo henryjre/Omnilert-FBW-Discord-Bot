@@ -3,17 +3,13 @@ const {
   MessageFlags,
   AttachmentBuilder,
   EmbedBuilder,
+  ChannelType,
+  ButtonBuilder,
+  ButtonStyle,
+  ActionRowBuilder,
 } = require("discord.js");
-const fs = require("fs");
-const { table } = require("table");
-
-const { odooLogin, jsonRpc } = require("../../odooRpc.js");
-
-const dbName = process.env.odoo_db;
-const password = process.env.odoo_password;
 
 module.exports = {
-  cooldown: 10,
   data: new SlashCommandBuilder()
     .setName("ping")
     .setDescription("Testing purposes!"),
@@ -30,44 +26,33 @@ module.exports = {
       return;
     }
 
-    // const getResults = await odooFunc();
+    const embed1 = new EmbedBuilder()
+      .setURL("https://omnilert.odoo.com/")
+      .setDescription("Sample Embed for Testing");
 
-    // const updatedData = getResults.data.map((item) => ({
-    //   ...item,
-    //   threshold_value: 0,
-    // }));
+    const confirmIncidentButton = new ButtonBuilder()
+      .setCustomId("confimrSampleButton")
+      .setLabel("Confirm")
+      .setStyle(ButtonStyle.Success);
 
-    // const formattedJson = JSON.stringify(updatedData, null, 2);
-
-    // const filePath = "products.json";
-    // fs.writeFileSync(filePath, formattedJson);
-
-    const data = [
-      ["Product Name", "Quantity", "Unit"],
-      ["PRD - Famous Brownie Batter", "100", "g"],
-      ["SPK1 - Cheese Spread", "-500", "g"],
-      ["SPK1 - Chocolate", "900", "g"],
-    ];
-
-    // Table options
-    const config = {
-      columns: {
-        0: { alignment: "center", width: 30 },
-        1: { alignment: "center", width: 10 },
-        2: { alignment: "center", width: 5 },
-      },
-    };
-
-    const tableString = "```" + table(data, config) + "```";
-
-    const embed = new EmbedBuilder()
-      .setTitle("Inventory Table")
-      .setDescription(tableString)
-      .setColor(0x00ae86);
+    const buttonRow1 = new ActionRowBuilder().addComponents(
+      confirmIncidentButton
+    );
 
     // Send the JSON file as an attachment
-    await interaction.channel.send({
-      embeds: [embed],
+    const sampleMessage = await interaction.channel.send({
+      embeds: [embed1],
+      components: [buttonRow1],
+    });
+
+    const thread = await sampleMessage.startThread({
+      name: `Sample Upload - ${interaction.id}`,
+      autoArchiveDuration: 60, // Archive after 1 hour
+      type: ChannelType.PrivateThread, // Set to 'GuildPrivateThread' if only the user should see it
+    });
+
+    await thread.send({
+      content: `📸 **${interaction.user.toString()}, please upload the images or videos here as proof.**`,
     });
 
     const newMessage = `API Latency: ${client.ws.ping}\nClient Ping: ${
@@ -83,52 +68,3 @@ module.exports = {
     });
   },
 };
-
-async function odooFunc() {
-  // const { category } = req.body;
-
-  try {
-    const params = {
-      model: "product.template",
-      method: "search_read",
-      domain: [
-        ["categ_id", "in", [31, 9, 7]],
-        // ["company_id", "in", [branch.cid]],
-      ],
-      fields: ["name", "uom_name", "id"], //discount mode: per_order, per_point, percent
-      offset: null,
-      limit: null,
-      //   order: "date asc",
-    };
-
-    const request = await jsonRpc("call", {
-      service: "object",
-      method: "execute",
-      args: [
-        dbName,
-        2,
-        password,
-        params.model,
-        params.method,
-        params.domain,
-        params.fields,
-        params.offset,
-        params.limit,
-        // params.order,
-      ],
-    });
-
-    if (request.error) {
-      throw new Error("rpc_error");
-    }
-
-    if (!request.result?.length) {
-      throw new Error("no_data_found");
-    }
-
-    return { ok: true, message: "success", data: request.result };
-  } catch (error) {
-    console.error("Error:", error);
-    return { ok: false, message: error.message, data: [] };
-  }
-}
