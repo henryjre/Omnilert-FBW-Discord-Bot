@@ -16,6 +16,7 @@ module.exports = {
     name: `announcementMenu`,
   },
   async execute(interaction, client) {
+    let embedsToSend = interaction.message.embeds;
     let messageEmbed = interaction.message.embeds[0];
 
     const ownerField = messageEmbed.data.fields.find(
@@ -113,19 +114,16 @@ module.exports = {
       messageComponents.push(menuRow, buttonRow);
     }
 
-    const updatedEmbeds = [
-      messageEmbed,
-      ...interaction.message.embeds.slice(1),
-    ];
+    embedsToSend[0] = messageEmbed;
 
     if (messageComponents.length > 0) {
       await interaction.editReply({
-        embeds: [interaction.message.embeds],
+        embeds: [embedsToSend],
         components: messageComponents,
       });
     } else {
       await interaction.editReply({
-        embeds: [interaction.message.embeds],
+        embeds: [embedsToSend],
       });
     }
   },
