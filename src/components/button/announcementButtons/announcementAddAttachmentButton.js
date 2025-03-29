@@ -5,7 +5,7 @@ module.exports = {
     name: `announcementAddAttachment`,
   },
   async execute(interaction, client) {
-    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+    await interaction.deferUpdate();
     let messageEmbed = interaction.message.embeds[0];
 
     const ownerField = messageEmbed.data.fields.find(
@@ -16,10 +16,10 @@ module.exports = {
 
     if (!ownerField.value.includes(interaction.user.id)) {
       replyEmbed
-        .setDescription(`🔴 ERROR: You cannot use this menu.`)
+        .setDescription(`🔴 ERROR: You cannot use this button.`)
         .setColor("Red");
 
-      return await interaction.editReply({
+      return await interaction.reply({
         embeds: [replyEmbed],
       });
     }
@@ -71,7 +71,7 @@ module.exports = {
       .setDescription(`Please go to ${thread} and upload your attachments.`)
       .setColor("Green");
 
-    return await interaction.editReply({
+    return await interaction.reply({
       embeds: [replyEmbed],
     });
   },
