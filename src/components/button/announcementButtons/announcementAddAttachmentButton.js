@@ -24,11 +24,13 @@ module.exports = {
       });
     }
 
-    const existingThread = interaction.channel.threads.cache.find((t) =>
+    const existingThread = await interaction.channel.threads.cache.find((t) =>
       t.name.includes(
         `Announcement Attachment Upload  - ${interaction.message.id}`
       )
     );
+
+    console.log(existingThread);
 
     if (existingThread) {
       const attachments = await fetchThreadAttachments(interaction);
