@@ -76,13 +76,22 @@ module.exports = {
       .setDisabled(true)
       .setStyle(ButtonStyle.Success);
 
+    const addAttachment = new ButtonBuilder()
+      .setCustomId("announcementAddAttachment")
+      .setLabel("Add Attachments")
+      .setStyle(ButtonStyle.Primary);
+
     const cancel = new ButtonBuilder()
       .setCustomId("announcementCancel")
       .setLabel("Cancel")
       .setStyle(ButtonStyle.Danger);
 
     const menuRow = new ActionRowBuilder().addComponents(roleMenu);
-    const buttonRow = new ActionRowBuilder().addComponents(submit, cancel);
+    const buttonRow = new ActionRowBuilder().addComponents(
+      submit,
+      addAttachment,
+      cancel
+    );
 
     // const proposalMessage = await client.channels.cache.get(channel).send({
     //   content: role.toString(),

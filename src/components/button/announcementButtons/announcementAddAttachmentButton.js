@@ -1,0 +1,121 @@
+const { EmbedBuilder, MessageFlags, ChannelType } = require("discord.js");
+
+module.exports = {
+  data: {
+    name: `announcementAddAttachment`,
+  },
+  async execute(interaction, client) {
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+    let messageEmbed = interaction.message.embeds[0];
+
+    const ownerField = messageEmbed.data.fields.find(
+      (f) => f.name === "Prepared By"
+    );
+
+    if (!ownerField.value.includes(interaction.user.id)) {
+      const replyEmbed = new EmbedBuilder()
+        .setDescription(`🔴 ERROR: You cannot use this menu.`)
+        .setColor("Red");
+
+      return await interaction.editReply({
+        embeds: [replyEmbed],
+      });
+    }
+
+    const existingThread = interaction.channel.threads.cache.find((t) =>
+      t.name.includes(
+        `Announcement Attachment Upload  - ${interaction.message.id}`
+      )
+    );
+
+    if (existingThread) {
+      const attachments = await fetchThreadAttachments(interaction);
+      const embedsToSend = [];
+
+      if (attachments.media.length > 0) {
+        attachments.media.forEach((attachment) =>
+          embedsToSend.push(
+            new EmbedBuilder(messageEmbed.data)
+              .setImage(attachment)
+              .setURL("https://omnilert.odoo.com/")
+          )
+        );
+      } else {
+        const mainEmbed = new EmbedBuilder(messageEmbed.data);
+        embedsToSend.push(mainEmbed);
+      }
+
+      await interaction.message.edit({
+        embeds: embedsToSend,
+        files: attachments.pdf,
+      });
+
+      return await existingThread.send({
+        content: `📸 ${interaction.user.toString()}, please upload the attachments here. Currently, you can only attach **IMAGES** and **PDF** files to the announcement.`,
+      });
+    }
+
+    const thread = await interaction.message.startThread({
+      name: `Announcement Attachment Upload - ${interaction.message.id}`,
+      autoArchiveDuration: 60, // Archive after 1 hour
+      type: ChannelType.PrivateThread, // Set to 'GuildPrivateThread' if only the user should see it
+    });
+
+    await thread.send({
+      content: `📸 **${interaction.user.toString()}, please upload the attachments here. Currently, you can only attach **IMAGES** and **PDF** files to the announcement.`,
+    });
+
+    replyEmbed
+      .setDescription(`Please go to ${thread} and upload your attachments.`)
+      .setColor("Green");
+
+    return await interaction.editReply({
+      embeds: [replyEmbed],
+    });
+  },
+};
+
+async function fetchThreadAttachments(interaction) {
+  const attachments = {
+    media: [],
+    pdf: [],
+  };
+
+  try {
+    // Fetch the thread from cache or API
+    const thread = await interaction.guild.channels.cache.get(
+      interaction.message.id
+    );
+
+    if (!thread?.isThread()) {
+      console.error("The specified ID does not correspond to a thread.");
+      return attachments;
+    }
+
+    // Fetch the last 100 messages from the thread
+    const messages = await thread.messages.fetch({ limit: 100 });
+
+    // Iterate over each message and extract attachments
+    messages.forEach((msg) => {
+      msg.attachments.forEach((attachment) => {
+        const contentType = attachment.contentType;
+
+        // Filter for media (images/videos) and PDF files
+        if (
+          contentType?.startsWith("image/") ||
+          contentType?.startsWith("video/")
+        ) {
+          attachments.media.push(attachment.url);
+        } else if (contentType === "application/pdf") {
+          attachments.pdf.push(attachment.url);
+        }
+      });
+    });
+
+    console.log("Attachments:", attachments);
+    return attachments;
+  } catch (error) {
+    console.error("Error fetching thread attachments:", error);
+    return attachments;
+  }
+}

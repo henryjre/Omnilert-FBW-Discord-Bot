@@ -11,6 +11,7 @@ module.exports = {
   },
   async execute(interaction, client) {
     let messageEmbed = interaction.message.embeds[0];
+
     const ownerField = messageEmbed.data.fields.find(
       (f) => f.name === "Prepared By"
     );
@@ -46,7 +47,7 @@ module.exports = {
 
     const announcementMessage = await client.channels.cache.get(channel).send({
       content: targetField.value,
-      embeds: [messageEmbed],
+      embeds: [interaction.message.embeds],
     });
 
     await interaction.message.delete();
