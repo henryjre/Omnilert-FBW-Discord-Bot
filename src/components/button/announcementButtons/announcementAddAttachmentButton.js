@@ -46,7 +46,7 @@ module.exports = {
           )
         );
       } else {
-        const mainEmbed = new EmbedBuilder(messageEmbed.data);
+        const mainEmbed = new EmbedBuilder(messageEmbed.data).setImage("");
         embedsToSend.push(mainEmbed);
       }
 
