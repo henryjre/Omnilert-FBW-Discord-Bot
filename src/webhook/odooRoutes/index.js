@@ -4,7 +4,12 @@ const inventory = require("./inventory");
 
 // /odoo/employee
 odooRoutes.use("/employee", employee);
+
+// /odoo/inventory
 odooRoutes.use("/inventory", inventory);
+
+// /odoo/pos
+odooRoutes.use("/pos", pos);
 
 // /odoo/
 odooRoutes.get("/", (req, res) => {
