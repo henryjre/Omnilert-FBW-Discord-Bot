@@ -2,6 +2,12 @@ const { EmbedBuilder, ChannelType } = require("discord.js");
 const moment = require("moment-timezone");
 
 const client = require("../../../index.js");
+const pesoFormatter = new Intl.NumberFormat("en-PH", {
+  style: "currency",
+  currency: "PHP",
+  maximumFractionDigits: 2,
+  minimumFractionDigits: 2,
+});
 
 const sessionChannelId = "1357021400363303143";
 // ✅ Employee Check-In
@@ -18,10 +24,10 @@ const sessionOpen = async (req, res) => {
   const currentDate = getFormattedDate();
   const sessionChannel = client.channels.cache.get(sessionChannelId);
   const threadName = `${currentDate} | ${x_company_name} | ${name}`;
-  const pesoEndBal = formatToPeso(cash_register_balance_end);
-  const pesoStartBal = formatToPeso(cash_register_balance_start);
+  const pesoEndBal = pesoFormatter.format(cash_register_balance_end);
+  const pesoStartBal = pesoFormatter.format(cash_register_balance_start);
   const cashDiff = cash_register_balance_end - cash_register_balance_start;
-  const cashDiffBal = formatToPeso(cashDiff);
+  const cashDiffBal = pesoFormatter.format(cashDiff);
 
   // sending the session name as a message content
   const sessionMessage = await sessionChannel.send({
@@ -88,24 +94,4 @@ function formatDateTime(datetime, timezone = "Asia/Manila") {
   return moment
     .tz(datetime, "YYYY-MM-DD HH:mm:ss", timezone)
     .format("MMMM DD, YYYY [at] h:mm A");
-}
-
-function formatToPeso(input) {
-  try {
-    if (typeof input !== "string") return input; // Return original if not a string
-
-    // Extract digits and at most one decimal point
-    const match = input.match(/\d+(\.\d{0,2})?/);
-    if (!match) return input; // Return input if no valid number found
-
-    // Convert to a number and format with commas
-    const amount = parseFloat(match[0]).toLocaleString("en-US", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-
-    return `₱${amount}`; // Return properly formatted amount
-  } catch (error) {
-    return input; // Return original string if an error occurs
-  }
 }
