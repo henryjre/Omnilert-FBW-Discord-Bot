@@ -1,6 +1,7 @@
 const odooRoutes = require("express").Router();
 const employee = require("./employee");
 const inventory = require("./inventory");
+const pos = require("./pos");
 
 // /odoo/employee
 odooRoutes.use("/employee", employee);
