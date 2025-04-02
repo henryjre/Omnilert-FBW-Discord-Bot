@@ -59,7 +59,9 @@ module.exports = {
       )
     );
 
-    await existingThread.delete();
+    if (existingThread) {
+      await existingThread.delete();
+    }
 
     await interaction.message.delete();
 
