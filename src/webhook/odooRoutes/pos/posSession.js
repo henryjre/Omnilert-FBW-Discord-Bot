@@ -35,34 +35,37 @@ const sessionOpen = async (req, res) => {
   });
 
   //creating an embed for the session
-
-  const openingEmbed = new EmbedBuilder()
-    .setTitle(` 🟢 Register Open`)
-    .setColor("Green")
-    .addFields(
-      { name: "Session Name", value: name },
-      { name: "Branch", value: x_company_name },
-      { name: "Opening Date", value: formatDateTime(start_at) },
-      {
-        name: "Opening Cash Counted",
-        value: pesoStartBal,
-      },
-      {
-        name: "Opening Cash Expected",
-        value: pesoEndBal,
-      },
-      {
-        name: "Opening Cash Difference",
-        value: cashDiffBal,
-      }
-    );
+  const fields = [
+    { name: "Session Name", value: name },
+    { name: "Branch", value: x_company_name },
+    { name: "Opening Date", value: formatDateTime(start_at) },
+    {
+      name: "Opening Cash Counted",
+      value: pesoStartBal,
+    },
+    {
+      name: "Opening Cash Expected",
+      value: pesoEndBal,
+    },
+    {
+      name: "Opening Cash Difference",
+      value: cashDiffBal,
+    },
+  ];
 
   if (opening_notes) {
-    openingEmbed.addFields({
+    fields.push({
       name: "Opening Notes",
       value: `*${opening_notes}*`,
     });
   }
+
+  console.log(fields);
+
+  const openingEmbed = new EmbedBuilder()
+    .setTitle(` 🟢 Register Open`)
+    .setColor("Green")
+    .addFields(fields);
 
   await sessionThread.send({ embeds: openingEmbed });
 
