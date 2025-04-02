@@ -73,7 +73,7 @@ const sessionOpen = async (req, res) => {
     .setColor("Green")
     .addFields(fields);
 
-  await sessionThread.send({ embeds: openingEmbed });
+  await sessionThread.send({ embeds: [openingEmbed] });
 
   return res.status(200).json({ ok: true, message: "Webhook received" });
 };
