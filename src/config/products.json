@@ -38,7 +38,7 @@
   {
     "id": 1229,
     "name": "PCK1 - Cold Cup",
-    "uom_name": "Bundle of 100pc",
+    "uom_name": "Bundle of 50pc",
     "threshold_value": 0
   },
   {
@@ -116,13 +116,13 @@
   {
     "id": 1244,
     "name": "PCK1 - Hot Cup",
-    "uom_name": "Bundle of 100pc",
+    "uom_name": "Bundle of 25pc",
     "threshold_value": 0
   },
   {
     "id": 1246,
     "name": "PCK1 - Hot Lid",
-    "uom_name": "Bundle of 100pc",
+    "uom_name": "Bundle of 50pc",
     "threshold_value": 0
   },
   {
