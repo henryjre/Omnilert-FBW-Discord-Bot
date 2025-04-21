@@ -206,6 +206,8 @@ const refundOrder = async (req, res) => {
     x_session_name,
   } = req.body;
 
+  console.log(req.body);
+
   const verificationChannel = client.channels.cache.get(verificationChannelId);
   const orderDate = formatDateTime(date_order);
 
