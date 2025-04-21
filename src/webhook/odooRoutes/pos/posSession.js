@@ -20,6 +20,8 @@ const sessionOpen = async (req, res) => {
     x_company_name,
   } = req.body;
 
+  console.log(req.body);
+
   const currentDate = getFormattedDate();
   const sessionChannel = client.channels.cache.get(sessionChannelId);
   const threadName = `${currentDate} | ${x_company_name} | ${name}`;
@@ -64,8 +66,6 @@ const sessionOpen = async (req, res) => {
       value: `*${opening_notes}*`,
     });
   }
-
-  console.log(opening_notes, fields);
 
   const openingEmbed = new EmbedBuilder()
     .setTitle(` 🟢 Register Open`)
