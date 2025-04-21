@@ -104,6 +104,8 @@ const discountOrder = async (req, res) => {
     x_session_name,
   } = req.body;
 
+  console.log("discount", req.body);
+
   const verificationChannel = client.channels.cache.get(verificationChannelId);
   const orderDate = formatDateTime(date_order);
 
@@ -288,6 +290,8 @@ const tokenPayOrder = async (req, res) => {
     x_order_lines,
     x_session_name,
   } = req.body;
+
+  console.log("token pay", req.body);
 
   const verificationChannel = client.channels.cache.get(verificationChannelId);
   const orderDate = formatDateTime(date_order);
