@@ -206,8 +206,6 @@ const refundOrder = async (req, res) => {
     x_session_name,
   } = req.body;
 
-  console.log(req.body);
-
   const verificationChannel = client.channels.cache.get(verificationChannelId);
   const orderDate = formatDateTime(date_order);
 
@@ -268,7 +266,7 @@ const refundOrder = async (req, res) => {
     .setLabel("Add Reason")
     .setStyle(ButtonStyle.Success);
 
-  const buttonRow = new ActionRowBuilder().addComponents(confirm, reject);
+  const buttonRow = new ActionRowBuilder().addComponents(addReason);
 
   const orderDiscordMessage = await verificationChannel.send({
     content: mentionable,
