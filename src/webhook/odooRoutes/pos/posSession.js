@@ -20,8 +20,6 @@ const sessionOpen = async (req, res) => {
     x_company_name,
   } = req.body;
 
-  console.log(req.body);
-
   const currentDate = getFormattedDate();
   const sessionChannel = client.channels.cache.get(sessionChannelId);
   const threadName = `${currentDate} | ${x_company_name} | ${name}`;
@@ -155,4 +153,14 @@ function getFormattedDate(timezone = "Asia/Manila") {
 
 function getCurrentFormattedDate(timezone = "Asia/Manila") {
   return moment().tz(timezone).format("MMMM DD, YYYY [at] h:mm A");
+}
+
+function formatDateTime(datetime, timezone = "Asia/Manila") {
+  if (!datetime) {
+    return null;
+  }
+
+  return moment
+    .tz(datetime, "YYYY-MM-DD HH:mm:ss", timezone)
+    .format("MMMM DD, YYYY [at] h:mm A");
 }
