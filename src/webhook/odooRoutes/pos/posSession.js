@@ -15,7 +15,6 @@ const sessionOpen = async (req, res) => {
   const {
     cash_register_balance_end,
     cash_register_balance_start,
-    start_at,
     name,
     opening_notes,
     x_company_name,
@@ -44,7 +43,7 @@ const sessionOpen = async (req, res) => {
   const fields = [
     { name: "Session Name", value: name },
     { name: "Branch", value: x_company_name },
-    { name: "Opening Date", value: formatDateTime(start_at) },
+    { name: "Opening Date", value: getCurrentFormattedDate() },
     {
       name: "Opening Cash Counted",
       value: pesoStartBal,
@@ -66,8 +65,6 @@ const sessionOpen = async (req, res) => {
     });
   }
 
-  console.log(fields);
-
   const openingEmbed = new EmbedBuilder()
     .setTitle(` 🟢 Register Open`)
     .setColor("Green")
@@ -86,12 +83,6 @@ function getFormattedDate(timezone = "Asia/Manila") {
   return moment().tz(timezone).format("MMMM DD, YYYY");
 }
 
-function formatDateTime(datetime, timezone = "Asia/Manila") {
-  if (!datetime) {
-    return null;
-  }
-
-  return moment
-    .tz(datetime, "YYYY-MM-DD HH:mm:ss", timezone)
-    .format("MMMM DD, YYYY [at] h:mm A");
+function getCurrentFormattedDate(timezone = "Asia/Manila") {
+  return moment().tz(timezone).format("MMMM DD, YYYY [at] h:mm A");
 }
