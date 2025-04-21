@@ -194,7 +194,177 @@ const discountOrder = async (req, res) => {
   return res.status(200).json({ ok: true, message: "Webhook received" });
 };
 
-module.exports = { sessionOpen, discountOrder };
+const refundOrder = async (req, res) => {
+  const {
+    cashier,
+    amount_total,
+    date_order,
+    name,
+    x_company_name,
+    x_discord_id,
+    x_order_lines,
+    x_session_name,
+  } = req.body;
+
+  const verificationChannel = client.channels.cache.get(verificationChannelId);
+  const orderDate = formatDateTime(date_order);
+
+  let mentionable;
+
+  if (x_discord_id) {
+    mentionable = `<@${x_discord_id}>`;
+  } else {
+    const department = departments.find((d) => d.name === x_company_name);
+    mentionable = `<@&${department.role}>`;
+  }
+
+  let orderLinesMessage = "";
+
+  for (const order of x_order_lines) {
+    orderLinesMessage += `> **Name:** ${order.product_name}\n`;
+    orderLinesMessage += `> **Quantity:** ${order.qty} ${order.uom_name}\n`;
+    orderLinesMessage += `> **Unit Price:** ${pesoFormatter.format(
+      order.price_unit
+    )} ${order.uom_name}`;
+    orderLinesMessage += `\n\n`;
+  }
+
+  //creating an embed for the session
+  const fields = [
+    { name: "Session Name", value: x_session_name },
+    { name: "Order Reference", value: name },
+    { name: "Branch", value: x_company_name },
+    { name: "Order Date", value: orderDate },
+    {
+      name: "Cashier",
+      value: cashier,
+    },
+    {
+      name: "Discord User",
+      value: x_discord_id ? `<@${x_discord_id}>` : "No user found",
+    },
+    {
+      name: "Products",
+      value: orderLinesMessage,
+    },
+    {
+      name: "Order Total",
+      value: pesoFormatter.format(amount_total),
+    },
+  ];
+
+  const orderEmbed = new EmbedBuilder()
+    .setDescription(`## ↩️ Order Refund Verification`)
+    .setColor("Blue")
+    .addFields(fields)
+    .setFooter({
+      text: `Click the "Add Reason" button and explain the reason for refund.`,
+    });
+
+  const addReason = new ButtonBuilder()
+    .setCustomId("posOrderVerificationRefundReason")
+    .setLabel("Add Reason")
+    .setStyle(ButtonStyle.Success);
+
+  const buttonRow = new ActionRowBuilder().addComponents(confirm, reject);
+
+  const orderDiscordMessage = await verificationChannel.send({
+    content: mentionable,
+    embeds: [orderEmbed],
+    components: [buttonRow],
+  });
+
+  return res.status(200).json({ ok: true, message: "Webhook received" });
+};
+
+const tokenPayOrder = async (req, res) => {
+  const {
+    cashier,
+    amount_total,
+    date_order,
+    name,
+    x_company_name,
+    x_discord_id,
+    x_order_lines,
+    x_session_name,
+  } = req.body;
+
+  const verificationChannel = client.channels.cache.get(verificationChannelId);
+  const orderDate = formatDateTime(date_order);
+
+  let mentionable;
+
+  if (x_discord_id) {
+    mentionable = `<@${x_discord_id}>`;
+  } else {
+    const department = departments.find((d) => d.name === x_company_name);
+    mentionable = `<@&${department.role}>`;
+  }
+
+  let orderLinesMessage = "";
+
+  for (const order of x_order_lines) {
+    orderLinesMessage += `> **Name:** ${order.product_name}\n`;
+    orderLinesMessage += `> **Quantity:** ${order.qty} ${order.uom_name}\n`;
+    orderLinesMessage += `> **Unit Price:** ${pesoFormatter.format(
+      order.price_unit
+    )} ${order.uom_name}`;
+    orderLinesMessage += `\n\n`;
+  }
+
+  //creating an embed for the session
+  const fields = [
+    { name: "Session Name", value: x_session_name },
+    { name: "Order Reference", value: name },
+    { name: "Branch", value: x_company_name },
+    { name: "Order Date", value: orderDate },
+    {
+      name: "Cashier",
+      value: cashier,
+    },
+    {
+      name: "Discord User",
+      value: x_discord_id ? `<@${x_discord_id}>` : "No user found",
+    },
+    {
+      name: "Products",
+      value: orderLinesMessage,
+    },
+    {
+      name: "Order Total",
+      value: pesoFormatter.format(amount_total),
+    },
+  ];
+
+  const orderEmbed = new EmbedBuilder()
+    .setDescription(`## 🪙 Token Pay Order Verification`)
+    .setColor("Orange")
+    .addFields(fields)
+    .setFooter({
+      text: `Click the "Approve" button to confirm the approval of the order. Reject to add rejection reason.`,
+    });
+
+  const confirm = new ButtonBuilder()
+    .setCustomId("posOrderVerificationApprove")
+    .setLabel("Approve")
+    .setStyle(ButtonStyle.Success);
+
+  const reject = new ButtonBuilder()
+    .setCustomId("posOrderVerificationReject")
+    .setLabel("Reject")
+    .setStyle(ButtonStyle.Danger);
+  const buttonRow = new ActionRowBuilder().addComponents(confirm, reject);
+
+  const orderDiscordMessage = await verificationChannel.send({
+    content: mentionable,
+    embeds: [orderEmbed],
+    components: [buttonRow],
+  });
+
+  return res.status(200).json({ ok: true, message: "Webhook received" });
+};
+
+module.exports = { sessionOpen, discountOrder, refundOrder, tokenPayOrder };
 
 ////////////////////////// HELPER FUNCTIONS /////////////////////////////////////////
 
