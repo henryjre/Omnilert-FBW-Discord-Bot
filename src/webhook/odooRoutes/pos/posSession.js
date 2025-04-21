@@ -124,7 +124,7 @@ const discountOrder = async (req, res) => {
     orderLinesMessage += `> **Unit Price:** ${pesoFormatter.format(
       order.price_unit
     )} ${order.uom_name}`;
-    orderLinesMessage += `\n\u200b\n`;
+    orderLinesMessage += `\n\n`;
   }
 
   //creating an embed for the session
