@@ -66,7 +66,7 @@ const sessionOpen = async (req, res) => {
     });
   }
 
-  console.logO(fields);
+  console.log(fields);
 
   const openingEmbed = new EmbedBuilder()
     .setTitle(` 🟢 Register Open`)
