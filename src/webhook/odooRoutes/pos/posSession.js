@@ -8,6 +8,7 @@ const {
 const moment = require("moment-timezone");
 
 const client = require("../../../index.js");
+const { content } = require("googleapis/build/src/apis/content/index.js");
 const pesoFormatter = new Intl.NumberFormat("en-PH", {
   style: "currency",
   currency: "PHP",
@@ -176,6 +177,7 @@ const discountOrder = async (req, res) => {
   const buttonRow = new ActionRowBuilder().addComponents(confirm, reject);
 
   const orderDiscordMessage = await verificationChannel.send({
+    content: mentionable,
     embeds: [orderEmbed],
     components: [buttonRow],
   });
