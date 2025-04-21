@@ -119,7 +119,7 @@ const discountOrder = async (req, res) => {
 
   for (const order of x_order_lines) {
     orderLinesMessage += `> **Name:** ${order.product_name}\n`;
-    orderLinesMessage += `> **Quantity:** ${order.qty} ${order.uom_name}`;
+    orderLinesMessage += `> **Quantity:** ${order.qty} ${order.uom_name}\n`;
     orderLinesMessage += `> **Unit Price:** ${pesoFormatter.format(
       order.price_unit
     )} ${order.uom_name}`;
@@ -156,7 +156,7 @@ const discountOrder = async (req, res) => {
   );
 
   const orderEmbed = new EmbedBuilder()
-    .setDescription(`## 🔔 ${orderVerif} Verification`)
+    .setDescription(`## 🔔 ${orderVerif.product_name} Verification`)
     .setColor("Yellow")
     .addFields(fields)
     .setFooter({
