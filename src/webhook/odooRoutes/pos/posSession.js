@@ -58,12 +58,14 @@ const sessionOpen = async (req, res) => {
     },
   ];
 
-  if (opening_notes?.length > 0) {
+  if (opening_notes && opening_notes.length > 0) {
     fields.push({
       name: "Opening Notes",
       value: `*${opening_notes}*`,
     });
   }
+
+  console.log(opening_notes, fields);
 
   const openingEmbed = new EmbedBuilder()
     .setTitle(` 🟢 Register Open`)
