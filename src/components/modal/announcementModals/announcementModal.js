@@ -11,6 +11,10 @@ const {
 
 const managementRole = "1314413671245676685";
 const serviceCrewRole = "1314413960274907238";
+const jasaRole = "1336991998791385129";
+const primarkRole = "1336992011525558312";
+const robinsonRole = "1336992014545190933";
+const dhvsuRole = "1336992007910068225";
 
 let scheduledChecks = {};
 module.exports = {
@@ -65,6 +69,18 @@ module.exports = {
         new StringSelectMenuOptionBuilder()
           .setLabel("Service Crew/Employees")
           .setValue(serviceCrewRole),
+        new StringSelectMenuOptionBuilder()
+          .setLabel("JASA Employees")
+          .setValue(jasaRole),
+        new StringSelectMenuOptionBuilder()
+          .setLabel("Primark Employees")
+          .setValue(primarkRole),
+        new StringSelectMenuOptionBuilder()
+          .setLabel("Robinsons Employees")
+          .setValue(robinsonRole),
+        new StringSelectMenuOptionBuilder()
+          .setLabel("DHVSU Employees")
+          .setValue(dhvsuRole),
       ])
       .setMinValues(1)
       .setMaxValues(1)
