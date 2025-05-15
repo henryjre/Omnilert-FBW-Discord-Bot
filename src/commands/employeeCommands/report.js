@@ -7,6 +7,8 @@ const {
   MessageFlags,
 } = require("discord.js");
 
+const commandsChannel = "1372559141071228998";
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("report")
@@ -40,6 +42,13 @@ module.exports = {
       const modal = buildCaseReportModal();
       await interaction.showModal(modal);
     } else if (subcommand === "incident") {
+      if (interaction.channel.id !== commandsChannel) {
+        return await interaction.reply({
+          content:
+            "This command can only be used in the <#1372559141071228998> channel.",
+          ephemeral: true,
+        });
+      }
       if (interaction.channel.isThread()) {
         return await interaction.reply({
           content: `🔴 ERROR: You cannot use this command on a thread.`,
