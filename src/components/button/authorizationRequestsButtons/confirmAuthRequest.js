@@ -6,10 +6,10 @@ const {
   ButtonBuilder,
 } = require("discord.js");
 
-const hrDepartmentChannel = "1342837776017657940";
+const hrDepartmentChannel = "1372557527715156049";
 const hrRole = "1314815153421680640";
 
-const financeDepartmentChannel = "1342837676700602471";
+const financeDepartmentChannel = "1372557255966330981";
 const financeRole = "1314815202679590984";
 
 module.exports = {

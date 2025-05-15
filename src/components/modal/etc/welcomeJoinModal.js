@@ -8,7 +8,7 @@ const {
 
 const serviceCrewRole = "1314413960274907238";
 const botRoleId = "1343052940818255986";
-const hrChannel = "1342837776017657940";
+const hrChannel = "1372557527715156049";
 const hrRole = "1314815153421680640";
 
 module.exports = {

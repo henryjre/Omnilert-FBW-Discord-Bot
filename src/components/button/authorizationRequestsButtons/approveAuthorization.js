@@ -15,9 +15,9 @@ const credentials = JSON.parse(
   Buffer.from(process.env.googleServiceAccountKey, "base64").toString("utf8")
 );
 
-const hrDepartmentChannel = "1342837776017657940";
-const financeDepartmentChannel = "1342837676700602471";
-const ehChannel = "1342837500116336823";
+const hrDepartmentChannel = "1372557527715156049";
+const financeDepartmentChannel = "1372557255966330981";
+const ehChannel = "1372556586089844876";
 
 const hrLogsChannel = "1343869449455009833";
 const financeLogsChannel = "1346465399369367645";

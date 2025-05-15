@@ -6,7 +6,7 @@ const {
   ButtonBuilder,
 } = require("discord.js");
 
-const ehChannel = "1342837500116336823";
+const ehChannel = "1372556586089844876";
 const ehRole = "1314414836926386257";
 
 module.exports = {

@@ -8,7 +8,7 @@ const {
 
 const hrRole = "1314815153421680640";
 
-const techDeptChannel = "1342837831684460574";
+const techDeptChannel = "1372557914019074129";
 const techRole = "1314815091908022373";
 
 const finalTargetChannel = "1352693339421671608";
