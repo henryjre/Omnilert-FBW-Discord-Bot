@@ -1,22 +1,17 @@
 module.exports = {
   name: "voiceStateUpdate",
   async execute(oldState, newState, client) {
-    const meetingChannels = [
-      "1186355359699439766",
-      "1201761715318947851",
-      "1207251622124720168",
-    ];
+    const officeChannels = ["1314413190074994690"];
 
-    if (process.env.node_env === "dev") return;
+    if (process.env.node_env === "test") return;
 
-    if (newState.channel) {
-      if (meetingChannels.includes(newState.channelId)) {
-        client.events.get("meetingEnter").execute(newState, client);
-      }
-    } else if (oldState.channel) {
-      if (meetingChannels.includes(oldState.channelId)) {
-        client.events.get("meetingLeave").execute(oldState, client);
-      }
+    if (newState.channel && officeChannels.includes(newState.channel.id)) {
+      client.events.get("managementIn").execute(oldState, newState, client);
+    } else if (
+      oldState.channel &&
+      officeChannels.includes(oldState.channel.id)
+    ) {
+      client.events.get("managementOut").execute(oldState, newState, client);
     }
   },
 };
