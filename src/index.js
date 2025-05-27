@@ -50,5 +50,7 @@ if (process.env.node_env === "prod") {
 
 module.exports = client;
 
-require("./webhook/app.js");
+if (process.env.node_env === "prod") {
+  require("./webhook/app.js");
+}
 require("./sqliteConnection.js");
