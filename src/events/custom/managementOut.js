@@ -8,15 +8,15 @@ const { callOdooAttendanceWebhook } = require("../../odooRpc.js");
 module.exports = {
   name: "managementOut",
   async execute(oldState, newState, client) {
-    console.log("Management out");
-
     const member = oldState.member;
 
+    // If member only has service employee role, deny access
     if (
-      !member.roles.cache.has(managementRole) ||
-      member.roles.cache.has(serviceEmployeeRole)
-    )
+      member.roles.cache.has(serviceEmployeeRole) &&
+      !member.roles.cache.has(managementRole)
+    ) {
       return;
+    }
 
     const memberId = member.id;
 
