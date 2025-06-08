@@ -75,12 +75,6 @@ async function searchActiveAttendance(discordId, attendanceId) {
   }
 
   try {
-    // First authenticate
-    const uid = await odooLogin();
-    if (!uid) {
-      throw new Error("Failed to authenticate with Odoo");
-    }
-
     // Build domain with optional attendance ID exclusion
     const domain = [
       ["x_discord_id", "=", discordId],
@@ -97,7 +91,7 @@ async function searchActiveAttendance(discordId, attendanceId) {
       method: "execute_kw",
       args: [
         process.env.odoo_db,
-        uid,
+        2,
         process.env.odoo_password,
         "hr.attendance",
         "search_read",
