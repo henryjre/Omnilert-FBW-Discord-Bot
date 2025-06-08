@@ -2,6 +2,7 @@ const { EmbedBuilder } = require("discord.js");
 const moment = require("moment-timezone");
 
 const client = require("../../../index");
+const { searchActiveAttendance } = require("../../../odooRpc");
 
 const departments = [
   { id: 1, name: "DHVSU Bacolor", role: "1336992007910068225" },
@@ -109,6 +110,9 @@ const employeeCheckOut = async (req, res) => {
       worked_hours,
       id: attendanceId,
     } = req.body;
+
+    const activeAttendance = await searchActiveAttendance(attendanceId);
+    console.log(activeAttendance);
 
     if (x_discord_id) {
       const guild = client.guilds.cache.get("1314413189613490248");
