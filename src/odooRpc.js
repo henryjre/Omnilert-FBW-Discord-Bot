@@ -74,12 +74,6 @@ async function searchActiveAttendance(discordId) {
   }
 
   try {
-    // First authenticate
-    const uid = await odooLogin();
-    if (!uid) {
-      throw new Error("Failed to authenticate with Odoo");
-    }
-
     // Search for active attendance directly using x_discord_id
     const activeAttendance = await jsonRpc("call", {
       service: "object",
