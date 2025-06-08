@@ -80,8 +80,6 @@ async function searchActiveAttendance(discordId) {
       method: "execute_kw",
       args: [
         process.env.odoo_db,
-        uid,
-        process.env.odoo_password,
         "hr.attendance",
         "search_read",
         [
