@@ -62,7 +62,12 @@ async function odooLogin() {
   }
 }
 
-async function createOrUpdateAttendance(discordId, retryCount = 3) {
+/**
+ * Searches for active attendance records based on Discord ID
+ * @param {string} discordId - The Discord user ID to search for
+ * @returns {Promise<object>} - The response containing active attendance information
+ */
+async function searchActiveAttendance(discordId) {
   // Validate input
   if (!discordId || typeof discordId !== "string") {
     throw new Error("Invalid Discord ID format");
@@ -75,34 +80,8 @@ async function createOrUpdateAttendance(discordId, retryCount = 3) {
       throw new Error("Failed to authenticate with Odoo");
     }
 
-    // Optimize 1: Combined query for employee using related field
-    const employee = await jsonRpc("call", {
-      service: "object",
-      method: "execute_kw",
-      args: [
-        process.env.odoo_db,
-        uid,
-        process.env.odoo_password,
-        "hr.employee",
-        "search_read",
-        [[["user_partner_id.x_discord_id", "=", discordId]]],
-        { fields: ["id"] },
-      ],
-    });
-
-    if (!employee.result || employee.result.length === 0) {
-      throw new Error(`No employee found with Discord ID: ${discordId}`);
-    }
-
-    const employeeId = employee.result[0].id;
-    // Optimize 2: Cache the formatted date
-    const formattedDate = new Date()
-      .toISOString()
-      .replace("T", " ")
-      .split(".")[0];
-
-    // Optimize 3: Use a single query to check for open attendance
-    const openAttendance = await jsonRpc("call", {
+    // Search for active attendance directly using x_discord_id
+    const activeAttendance = await jsonRpc("call", {
       service: "object",
       method: "execute_kw",
       args: [
@@ -113,65 +92,19 @@ async function createOrUpdateAttendance(discordId, retryCount = 3) {
         "search_read",
         [
           [
-            ["employee_id", "=", employeeId],
+            ["x_discord_id", "=", discordId],
             ["check_out", "=", false],
           ],
         ],
-        { fields: ["id", "check_in"] },
+        {
+          fields: ["id", "employee_id", "check_in", "in_mode", "x_discord_id"],
+        },
       ],
     });
 
-    // Optimize 4: Use a single RPC call for either update or create
-    const result =
-      openAttendance.result && openAttendance.result.length > 0
-        ? await jsonRpc("call", {
-            service: "object",
-            method: "execute_kw",
-            args: [
-              process.env.odoo_db,
-              uid,
-              process.env.odoo_password,
-              "hr.attendance",
-              "write",
-              [
-                [openAttendance.result[0].id],
-                {
-                  check_out: formattedDate,
-                },
-              ],
-            ],
-          })
-        : await jsonRpc("call", {
-            service: "object",
-            method: "execute_kw",
-            args: [
-              process.env.odoo_db,
-              uid,
-              process.env.odoo_password,
-              "hr.attendance",
-              "create",
-              [
-                [
-                  {
-                    employee_id: employeeId,
-                    check_in: formattedDate,
-                  },
-                ],
-              ],
-            ],
-          });
-
-    return result;
+    return activeAttendance.result;
   } catch (error) {
-    // Optimize 5: Retry logic for network issues
-    if (
-      retryCount > 0 &&
-      (error.message.includes("network") || error.message.includes("timeout"))
-    ) {
-      console.log(`Retrying... ${retryCount} attempts left`);
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second before retry
-      return createOrUpdateAttendance(discordId, retryCount - 1);
-    }
+    console.error("Error searching active attendance:", error);
     throw error;
   }
 }
@@ -216,4 +149,5 @@ module.exports = {
   jsonRpc,
   odooLogin,
   callOdooAttendanceWebhook,
+  searchActiveAttendance,
 };
