@@ -63,33 +63,45 @@ async function odooLogin() {
 }
 
 /**
- * Searches for active attendance records based on Discord ID
+ * Searches for active attendance records based on Discord ID, excluding a specific attendance ID
  * @param {string} discordId - The Discord user ID to search for
+ * @param {number} [attendanceId] - Optional attendance ID to exclude from the search
  * @returns {Promise<object>} - The response containing active attendance information
  */
-async function searchActiveAttendance(discordId) {
+async function searchActiveAttendance(discordId, attendanceId) {
   // Validate input
   if (!discordId || typeof discordId !== "string") {
     throw new Error("Invalid Discord ID format");
   }
 
   try {
+    // First authenticate
+    const uid = await odooLogin();
+    if (!uid) {
+      throw new Error("Failed to authenticate with Odoo");
+    }
+
+    // Build domain with optional attendance ID exclusion
+    const domain = [
+      ["x_discord_id", "=", discordId],
+      ["check_out", "=", false],
+    ];
+
+    if (attendanceId) {
+      domain.push(["id", "!=", attendanceId]);
+    }
+
     // Search for active attendance directly using x_discord_id
     const activeAttendance = await jsonRpc("call", {
       service: "object",
       method: "execute_kw",
       args: [
         process.env.odoo_db,
-        2,
+        uid,
         process.env.odoo_password,
         "hr.attendance",
         "search_read",
-        [
-          [
-            ["x_discord_id", "=", discordId],
-            ["check_out", "=", false],
-          ],
-        ],
+        [domain],
         {
           fields: ["id", "employee_id", "check_in", "in_mode", "x_discord_id"],
         },
