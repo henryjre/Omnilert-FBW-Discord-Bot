@@ -111,22 +111,23 @@ const employeeCheckOut = async (req, res) => {
       id: attendanceId,
     } = req.body;
 
-    const activeAttendance = await searchActiveAttendance(x_discord_id);
-    console.log(activeAttendance);
-
     if (x_discord_id) {
-      const guild = client.guilds.cache.get("1314413189613490248");
-      const discordMember = guild?.members.cache.get(x_discord_id);
-      let currentNickname =
-        discordMember.nickname || discordMember.user.username;
+      const activeAttendance = await searchActiveAttendance(x_discord_id);
 
-      if (currentNickname.includes("🟢")) {
-        currentNickname = currentNickname.replace("🟢", "🔴");
-      } else if (!currentNickname.startsWith("🔴")) {
-        currentNickname = "🔴 " + currentNickname;
+      if (!activeAttendance) {
+        const guild = client.guilds.cache.get("1314413189613490248");
+        const discordMember = guild?.members.cache.get(x_discord_id);
+        let currentNickname =
+          discordMember.nickname || discordMember.user.username;
+
+        if (currentNickname.includes("🟢")) {
+          currentNickname = currentNickname.replace("🟢", "🔴");
+        } else if (!currentNickname.startsWith("🔴")) {
+          currentNickname = "🔴 " + currentNickname;
+        }
+
+        await discordMember.setNickname(currentNickname);
       }
-
-      await discordMember.setNickname(currentNickname);
     }
 
     const formattedCheckIn = formatTime(check_in);
