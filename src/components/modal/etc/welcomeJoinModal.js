@@ -20,6 +20,16 @@ module.exports = {
 
     const nameInput = interaction.fields.getTextInputValue("nameInput");
     const emailInput = interaction.fields.getTextInputValue("emailInput");
+    const nicknameInput = interaction.fields.getTextInputValue("nicknameInput");
+
+    const nickname = `🔴 ${nicknameInput} - Service Crew`;
+
+    // Change the member's nickname to the nicknameInput
+    try {
+      await interaction.member.setNickname(nickname);
+    } catch (error) {
+      console.error("Error changing nickname:", error);
+    }
 
     const interactionMember =
       interaction.member?.toString() || interaction.user.toString();
