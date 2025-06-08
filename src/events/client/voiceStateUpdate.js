@@ -5,12 +5,9 @@ module.exports = {
 
     if (process.env.node_env === "test") return;
 
-    if (newState.channel && officeChannels.includes(newState.channel.id)) {
+    if (newState.channel) {
       client.events.get("managementIn").execute(oldState, newState, client);
-    } else if (
-      oldState.channel &&
-      officeChannels.includes(oldState.channel.id)
-    ) {
+    } else if (!newState.channel) {
       client.events.get("managementOut").execute(oldState, newState, client);
     }
   },
