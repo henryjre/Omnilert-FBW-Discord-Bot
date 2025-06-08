@@ -113,6 +113,7 @@ const employeeCheckOut = async (req, res) => {
 
     if (x_discord_id) {
       const activeAttendance = await searchActiveAttendance(x_discord_id);
+      console.log(activeAttendance);
 
       if (!activeAttendance) {
         const guild = client.guilds.cache.get("1314413189613490248");
