@@ -116,9 +116,8 @@ const employeeCheckOut = async (req, res) => {
         x_discord_id,
         attendanceId
       );
-      console.log(activeAttendance);
 
-      if (!activeAttendance) {
+      if (activeAttendance.length <= 0) {
         const guild = client.guilds.cache.get("1314413189613490248");
         const discordMember = guild?.members.cache.get(x_discord_id);
         let currentNickname =
