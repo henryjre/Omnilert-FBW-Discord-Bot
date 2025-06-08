@@ -45,10 +45,19 @@ function buildJoinModal() {
     .setMaxLength(200)
     .setRequired(true);
 
+  const thirdInput = new TextInputBuilder()
+    .setCustomId(`nicknameInput`)
+    .setLabel(`DISPLAY NAME`)
+    .setStyle(TextInputStyle.Short)
+    .setPlaceholder(`Your name/nickname in this server`)
+    .setMaxLength(14)
+    .setRequired(true);
+
   const firstActionRow = new ActionRowBuilder().addComponents(firstInput);
   const secondActionRow = new ActionRowBuilder().addComponents(secondInput);
+  const thirdActionRow = new ActionRowBuilder().addComponents(thirdInput);
 
-  modal.addComponents(firstActionRow, secondActionRow);
+  modal.addComponents(firstActionRow, secondActionRow, thirdActionRow);
 
   return modal;
 }
