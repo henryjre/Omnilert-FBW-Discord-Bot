@@ -112,7 +112,10 @@ const employeeCheckOut = async (req, res) => {
     } = req.body;
 
     if (x_discord_id) {
-      const activeAttendance = await searchActiveAttendance(x_discord_id);
+      const activeAttendance = await searchActiveAttendance(
+        x_discord_id,
+        attendanceId
+      );
       console.log(activeAttendance);
 
       if (!activeAttendance) {
