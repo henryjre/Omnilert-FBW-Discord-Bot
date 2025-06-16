@@ -32,14 +32,14 @@ const sessionOpen = async (req, res) => {
   const {
     cash_register_balance_end,
     cash_register_balance_start,
-    name,
+    display_name,
     opening_notes,
     x_company_name,
   } = req.body;
 
   const currentDate = getFormattedDate();
   const sessionChannel = client.channels.cache.get(sessionChannelId);
-  const threadName = `${currentDate} | ${x_company_name} | ${name}`;
+  const threadName = `${currentDate} | ${x_company_name} | ${display_name}`;
   const pesoEndBal = pesoFormatter.format(cash_register_balance_end);
   const pesoStartBal = pesoFormatter.format(cash_register_balance_start);
   const cashDiff = cash_register_balance_end - cash_register_balance_start;
@@ -58,7 +58,7 @@ const sessionOpen = async (req, res) => {
 
   //creating an embed for the session
   const fields = [
-    { name: "Session Name", value: name },
+    { name: "Session Name", value: display_name },
     { name: "Branch", value: x_company_name },
     { name: "Opening Date", value: getCurrentFormattedDate() },
     {
