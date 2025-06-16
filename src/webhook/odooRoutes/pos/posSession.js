@@ -93,6 +93,7 @@ const sessionOpen = async (req, res) => {
 };
 
 const discountOrder = async (req, res) => {
+  console.log("discount order received");
   const {
     cashier,
     amount_total,
