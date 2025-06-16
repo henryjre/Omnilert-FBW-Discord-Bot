@@ -16,9 +16,6 @@ const pesoFormatter = new Intl.NumberFormat("en-PH", {
   minimumFractionDigits: 2,
 });
 
-const sessionChannelId = "1357021400363303143";
-const verificationChannelId = "1363852188966846674";
-
 const departments = [
   {
     id: 3,
