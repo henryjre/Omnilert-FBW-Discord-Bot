@@ -20,11 +20,41 @@ const sessionChannelId = "1357021400363303143";
 const verificationChannelId = "1363852188966846674";
 
 const departments = [
-  { id: 1, name: "DHVSU Bacolor", role: "1336992007910068225" },
-  { id: 4, name: "Primark Center Guagua", role: "1336992011525558312" },
-  { id: 5, name: "Robinsons Starmills CSFP", role: "1336992014545190933" },
-  { id: 6, name: "Main Omnilert", role: null },
-  { id: 7, name: "JASA Hiway Guagua", role: "1336991998791385129" },
+  {
+    id: 3,
+    name: "DHVSU Bacolor",
+    role: "1336992007910068225",
+    posChannel: "1384203391529390100",
+    verificationChannel: "1384203470386630656",
+  },
+  {
+    id: 2,
+    name: "Primark Center Guagua",
+    role: "1336992011525558312",
+    posChannel: "1384203710523244604",
+    verificationChannel: "1384203919449784460",
+  },
+  {
+    id: 4,
+    name: "Robinsons Starmills CSFP",
+    role: "1336992014545190933",
+    posChannel: "1384203781738205236",
+    verificationChannel: "1384203979780784159",
+  },
+  {
+    id: 1,
+    name: "Main Omnilert",
+    role: null,
+    posChannel: null,
+    verificationChannel: null,
+  },
+  {
+    id: 5,
+    name: "JASA Hiway Guagua",
+    role: "1336991998791385129",
+    posChannel: "1384203842702278747",
+    verificationChannel: "1384204044175937577",
+  },
 ];
 
 // ✅ Employee Check-In
@@ -35,10 +65,17 @@ const sessionOpen = async (req, res) => {
     display_name,
     opening_notes,
     x_company_name,
+    company_id
   } = req.body;
 
+  const department = departments.find((d) => d.id === company_id);
+
+  if (!department) {
+    return res.status(200).json({ ok: true, message: "Webhook received" });
+  }
+
   const currentDate = getFormattedDate();
-  const sessionChannel = client.channels.cache.get(sessionChannelId);
+  const sessionChannel = client.channels.cache.get(department.posChannel);
   const threadName = `${currentDate} | ${x_company_name} | ${display_name}`;
   const pesoEndBal = pesoFormatter.format(cash_register_balance_end);
   const pesoStartBal = pesoFormatter.format(cash_register_balance_start);
@@ -93,7 +130,6 @@ const sessionOpen = async (req, res) => {
 };
 
 const discountOrder = async (req, res) => {
-  console.log("discount order received");
   const {
     cashier,
     amount_total,
@@ -103,11 +139,27 @@ const discountOrder = async (req, res) => {
     x_discord_id,
     x_order_lines,
     x_session_name,
+    company_id
   } = req.body;
 
   console.log("discount", req.body);
 
-  const verificationChannel = client.channels.cache.get(verificationChannelId);
+  const targetProductIds = [1032, 1033, 1034];
+  const orderVerif = x_order_lines.find((o) =>
+    targetProductIds.includes(o.product_id)
+  );
+
+  if (!orderVerif) {
+    return res.status(200).json({ ok: true, message: "Webhook received" });
+  }
+
+  const department = departments.find((d) => d.id === company_id);
+
+  if (!department) {
+    return res.status(200).json({ ok: true, message: "Webhook received" });
+  }
+
+  const verificationChannel = client.channels.cache.get(department.verificationChannel);
   const orderDate = formatDateTime(date_order);
 
   let mentionable;
@@ -115,7 +167,6 @@ const discountOrder = async (req, res) => {
   if (x_discord_id) {
     mentionable = `<@${x_discord_id}>`;
   } else {
-    const department = departments.find((d) => d.name === x_company_name);
     mentionable = `<@&${department.role}>`;
   }
 
@@ -153,11 +204,6 @@ const discountOrder = async (req, res) => {
       value: pesoFormatter.format(amount_total),
     },
   ];
-
-  const targetProductIds = [1032, 1033, 1034];
-  const orderVerif = x_order_lines.find((o) =>
-    targetProductIds.includes(o.product_id)
-  );
 
   const orderEmbed = new EmbedBuilder()
     .setDescription(`## 🔔 ${orderVerif.product_name} Verification`)
@@ -207,9 +253,16 @@ const refundOrder = async (req, res) => {
     x_discord_id,
     x_order_lines,
     x_session_name,
+    company_id
   } = req.body;
 
-  const verificationChannel = client.channels.cache.get(verificationChannelId);
+  const department = departments.find((d) => d.id === company_id);
+
+  if (!department) {
+    return res.status(200).json({ ok: true, message: "Webhook received" });
+  }
+
+  const verificationChannel = client.channels.cache.get(department.verificationChannel);
   const orderDate = formatDateTime(date_order);
 
   let mentionable;
@@ -217,7 +270,6 @@ const refundOrder = async (req, res) => {
   if (x_discord_id) {
     mentionable = `<@${x_discord_id}>`;
   } else {
-    const department = departments.find((d) => d.name === x_company_name);
     mentionable = `<@&${department.role}>`;
   }
 
@@ -290,11 +342,16 @@ const tokenPayOrder = async (req, res) => {
     x_discord_id,
     x_order_lines,
     x_session_name,
+    company_id
   } = req.body;
 
-  console.log("token pay", req.body);
+  const department = departments.find((d) => d.id === company_id);
 
-  const verificationChannel = client.channels.cache.get(verificationChannelId);
+  if (!department) {
+    return res.status(200).json({ ok: true, message: "Webhook received" });
+  }
+
+  const verificationChannel = client.channels.cache.get(department.verificationChannel);
   const orderDate = formatDateTime(date_order);
 
   let mentionable;
@@ -302,7 +359,6 @@ const tokenPayOrder = async (req, res) => {
   if (x_discord_id) {
     mentionable = `<@${x_discord_id}>`;
   } else {
-    const department = departments.find((d) => d.name === x_company_name);
     mentionable = `<@&${department.role}>`;
   }
 
