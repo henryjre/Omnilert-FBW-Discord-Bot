@@ -343,6 +343,8 @@ const tokenPayOrder = async (req, res) => {
     company_id
   } = req.body;
 
+  console.log("tokenPay", req.body);
+
   const department = departments.find((d) => d.id === company_id);
 
   if (!department) {
