@@ -16,43 +16,7 @@ const pesoFormatter = new Intl.NumberFormat("en-PH", {
   minimumFractionDigits: 2,
 });
 
-const departments = [
-  {
-    id: 3,
-    name: "DHVSU Bacolor",
-    role: "1336992007910068225",
-    posChannel: "1384203391529390100",
-    verificationChannel: "1384203470386630656",
-  },
-  {
-    id: 2,
-    name: "Primark Center Guagua",
-    role: "1336992011525558312",
-    posChannel: "1384203710523244604",
-    verificationChannel: "1384203919449784460",
-  },
-  {
-    id: 4,
-    name: "Robinsons Starmills CSFP",
-    role: "1336992014545190933",
-    posChannel: "1384203781738205236",
-    verificationChannel: "1384203979780784159",
-  },
-  {
-    id: 1,
-    name: "Main Omnilert",
-    role: null,
-    posChannel: null,
-    verificationChannel: null,
-  },
-  {
-    id: 5,
-    name: "JASA Hiway Guagua",
-    role: "1336991998791385129",
-    posChannel: "1384203842702278747",
-    verificationChannel: "1384204044175937577",
-  },
-];
+const departments = require("../../../config/departments.json");
 
 // ✅ Employee Check-In
 const sessionOpen = async (req, res) => {
@@ -62,7 +26,7 @@ const sessionOpen = async (req, res) => {
     display_name,
     opening_notes,
     x_company_name,
-    company_id
+    company_id,
   } = req.body;
 
   const department = departments.find((d) => d.id === company_id);
@@ -136,7 +100,7 @@ const discountOrder = async (req, res) => {
     x_discord_id,
     x_order_lines,
     x_session_name,
-    company_id
+    company_id,
   } = req.body;
 
   console.log("discount", req.body);
@@ -156,7 +120,9 @@ const discountOrder = async (req, res) => {
     return res.status(200).json({ ok: true, message: "Webhook received" });
   }
 
-  const verificationChannel = client.channels.cache.get(department.verificationChannel);
+  const verificationChannel = client.channels.cache.get(
+    department.verificationChannel
+  );
   const orderDate = formatDateTime(date_order);
 
   let mentionable;
@@ -250,7 +216,7 @@ const refundOrder = async (req, res) => {
     x_discord_id,
     x_order_lines,
     x_session_name,
-    company_id
+    company_id,
   } = req.body;
 
   const department = departments.find((d) => d.id === company_id);
@@ -259,7 +225,9 @@ const refundOrder = async (req, res) => {
     return res.status(200).json({ ok: true, message: "Webhook received" });
   }
 
-  const verificationChannel = client.channels.cache.get(department.verificationChannel);
+  const verificationChannel = client.channels.cache.get(
+    department.verificationChannel
+  );
   const orderDate = formatDateTime(date_order);
 
   let mentionable;
@@ -340,7 +308,7 @@ const tokenPayOrder = async (req, res) => {
     x_customer_discord_id,
     x_order_lines,
     x_session_name,
-    company_id
+    company_id,
   } = req.body;
 
   console.log("tokenPay", req.body);
@@ -351,7 +319,9 @@ const tokenPayOrder = async (req, res) => {
     return res.status(200).json({ ok: true, message: "Webhook received" });
   }
 
-  const verificationChannel = client.channels.cache.get(department.verificationChannel);
+  const verificationChannel = client.channels.cache.get(
+    department.verificationChannel
+  );
   const orderDate = formatDateTime(date_order);
 
   let mentionable;
@@ -385,7 +355,9 @@ const tokenPayOrder = async (req, res) => {
     },
     {
       name: "Customer",
-      value: x_customer_discord_id ? `<@${x_customer_discord_id}>` : "No user found",
+      value: x_customer_discord_id
+        ? `<@${x_customer_discord_id}>`
+        : "No user found",
     },
     {
       name: "Products",
