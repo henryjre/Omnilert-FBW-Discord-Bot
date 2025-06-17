@@ -21,7 +21,6 @@ module.exports = {
 
     await originalMessage.edit({
       embeds: [messageEmbed],
-      components: [buttonRow1, buttonRow2],
     });
   },
 };
