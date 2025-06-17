@@ -90,6 +90,10 @@ const sessionOpen = async (req, res) => {
   return res.status(200).json({ ok: true, message: "Webhook received" });
 };
 
+const sessionClose = async (req, res) => {
+  console.log("session close", req.body);
+};
+
 const discountOrder = async (req, res) => {
   const {
     cashier,
@@ -395,7 +399,13 @@ const tokenPayOrder = async (req, res) => {
   return res.status(200).json({ ok: true, message: "Webhook received" });
 };
 
-module.exports = { sessionOpen, discountOrder, refundOrder, tokenPayOrder };
+module.exports = {
+  sessionOpen,
+  sessionClose,
+  discountOrder,
+  refundOrder,
+  tokenPayOrder,
+};
 
 ////////////////////////// HELPER FUNCTIONS /////////////////////////////////////////
 
