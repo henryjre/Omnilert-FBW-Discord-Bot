@@ -73,6 +73,8 @@ module.exports = {
           text: `${messageEmbed.data.footer.text}\n\u200b\nAudited By: ${auditor}\nAudit Opinion: *"${details}"*`,
         };
 
+        messageEmbed.data.color = 5793266;
+
         await interaction.message.edit({
           embeds: [messageEmbed],
         });
