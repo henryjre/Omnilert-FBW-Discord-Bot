@@ -7,7 +7,7 @@ const {
   TextInputStyle,
 } = require("discord.js");
 
-const accountingRole = "1314413671245676685";
+const accountingRole = "1314815202679590984";
 
 module.exports = {
   data: {
