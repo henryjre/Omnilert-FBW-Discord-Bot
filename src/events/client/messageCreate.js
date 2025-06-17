@@ -29,6 +29,12 @@ module.exports = {
           .get("incidentProofUpload")
           .execute(message, thread, client);
       }
+
+      if (thread.name.includes("Discount Proof")) {
+        return await client.events
+          .get("orderDiscountProof")
+          .execute(message, thread, client);
+      }
     }
   },
 };
