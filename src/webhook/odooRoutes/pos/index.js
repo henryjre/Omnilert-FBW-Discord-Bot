@@ -4,10 +4,14 @@ const {
   discountOrder,
   refundOrder,
   tokenPayOrder,
+  sessionClose,
 } = require("./posSession");
 
 // /odoo/pos/pos_open
 pos.post("/pos_open", sessionOpen);
+
+// /odoo/pos/pos_close
+pos.post("/pos_close", sessionClose);
 
 // /odoo/pos/discount_order
 pos.post("/discount_order", discountOrder);
