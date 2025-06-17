@@ -107,7 +107,6 @@ module.exports = {
         };
 
         await posThread.send({
-          content: `<@${messageMention.id}>`,
           embeds: [messageEmbed],
         });
 
