@@ -624,7 +624,9 @@ function groupCashInOutByType(data) {
     const name = parts.slice(2).join("-");
     const amount = Math.abs(item.amount);
 
-    grouped[type].push({ name, amount });
+    if (type) {
+      grouped[type].push({ name, amount });
+    }
   });
 
   return { out: grouped.out, in: grouped.in };
