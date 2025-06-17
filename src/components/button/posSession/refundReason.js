@@ -2,12 +2,12 @@ const {
   ActionRowBuilder,
   MessageFlags,
   EmbedBuilder,
-  ButtonStyle,
-  ButtonBuilder,
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
 } = require("discord.js");
+
+const departments = require("../../../config/departments.json");
 
 module.exports = {
   data: {
@@ -18,8 +18,11 @@ module.exports = {
 
     const replyEmbed = new EmbedBuilder();
 
-    const sessionName = messageEmbed.data.fields.find(
+    const sessionField = messageEmbed.data.fields.find(
       (f) => f.name === "Session Name"
+    );
+    const cashierField = messageEmbed.data.fields.find(
+      (f) => f.name === "Cashier"
     );
 
     const messageMention = interaction.message.mentions.users.first();
@@ -67,38 +70,48 @@ module.exports = {
 
     try {
       if (modalResponse.isModalSubmit()) {
-        const details =
-          modalResponse.fields.getTextInputValue("additionalNotes");
+        const details = modalResponse.fields.getTextInputValue("refundReason");
+
+        const cashierName = cashierField.value.split("-")[1];
+        const sessionName = sessionField.value;
+
+        const department = departments.find(
+          (d) => d.verificationChannel === interaction.message.channelId
+        );
+
+        const posChannel = client.channels.cache.get(department.posChannel);
+
+        const sessionMessage = await posChannel.messages
+          .fetch({ limit: 100 })
+          .then((messages) =>
+            messages.find((msg) => msg.content.includes(sessionName))
+          );
+
+        const posThread = await sessionMessage.threads
+          .fetch()
+          .then((threads) => threads.threads.first());
 
         if (details) {
-          messageEmbed.data.description += `\n\u200b\nReason for Rejection:\n> *"${details}"*\n\u200b`;
+          messageEmbed.data.description += `\n\u200b\nReason for Refund:\n> *"${details}"*\n\u200b`;
         }
 
         messageEmbed.data.footer = {
-          text: `Rejected By: ${interaction.member.nickname.replace(
-            /^[🔴🟢]\s*/,
-            ""
-          )}`,
+          text: `Refunded By: ${cashierName}`,
         };
 
-        messageEmbed.data.color = 15548997;
+        await posThread.send({
+          content: `<@${messageMention.id}>`,
+          embeds: [messageEmbed],
+        });
 
-        await client.channels.cache
-          .get(logsChannel)
-          .send({
-            content: mentionableMembers,
-            embeds: [messageEmbed],
-          })
-          .then((msg) => {
-            interaction.message.delete();
-          });
+        await interaction.message.delete();
       }
     } catch (error) {
       console.log(error);
-      // await modalResponse.followUp({
-      //   content: `🔴 ERROR: An error occurred while creating your signature request. Please try again.`,
-      //   ephemeral: true,
-      // });
+      await modalResponse.followUp({
+        content: `🔴 ERROR: An error occurred while creating your signature request. Please try again.`,
+        ephemeral: true,
+      });
     }
   },
 };
