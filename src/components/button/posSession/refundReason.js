@@ -89,6 +89,13 @@ module.exports = {
 
         const posThread = await sessionMessage.threads.fetchActive();
 
+        if (!posThread) {
+          return await modalResponse.followUp({
+            content: `🔴 ERROR: No thread found.`,
+            ephemeral: true,
+          });
+        }
+
         if (details) {
           messageEmbed.data.description += `\n\u200b\nReason for Refund:\n> *"${details}"*\n\u200b`;
         }
