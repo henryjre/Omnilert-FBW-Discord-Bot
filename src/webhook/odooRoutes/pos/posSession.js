@@ -195,7 +195,7 @@ const discountOrder = async (req, res) => {
   });
 
   const proofThread = await orderDiscordMessage.startThread({
-    name: `Image Proof - ${orderDiscordMessage.id}`,
+    name: `Discount Proof - ${orderDiscordMessage.id}`,
     type: ChannelType.PublicThread, // Set to 'GuildPrivateThread' if only the user should see it
   });
 
