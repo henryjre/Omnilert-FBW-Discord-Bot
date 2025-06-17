@@ -87,8 +87,6 @@ module.exports = {
             messages.find((msg) => msg.content.includes(sessionName))
           );
 
-        console.log(sessionMessage);
-
         const posThread = await sessionMessage.thread;
 
         if (!posThread) {
