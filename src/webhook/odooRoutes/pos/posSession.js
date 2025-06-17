@@ -337,6 +337,7 @@ const tokenPayOrder = async (req, res) => {
     name,
     x_company_name,
     x_discord_id,
+    x_customer_discord_id,
     x_order_lines,
     x_session_name,
     company_id
@@ -353,8 +354,8 @@ const tokenPayOrder = async (req, res) => {
 
   let mentionable;
 
-  if (x_discord_id) {
-    mentionable = `<@${x_discord_id}>`;
+  if (x_customer_discord_id) {
+    mentionable = `<@${x_customer_discord_id}>`;
   } else {
     mentionable = `<@&${department.role}>`;
   }
@@ -381,8 +382,8 @@ const tokenPayOrder = async (req, res) => {
       value: cashier,
     },
     {
-      name: "Discord User",
-      value: x_discord_id ? `<@${x_discord_id}>` : "No user found",
+      name: "Customer",
+      value: x_customer_discord_id ? `<@${x_customer_discord_id}>` : "No user found",
     },
     {
       name: "Products",
