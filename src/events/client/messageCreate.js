@@ -24,7 +24,7 @@ module.exports = {
     );
 
     if (thread) {
-      if (thread.name.includes("Image Proof")) {
+      if (thread.name.includes("Proof Upload")) {
         return await client.events
           .get("incidentProofUpload")
           .execute(message, thread, client);
