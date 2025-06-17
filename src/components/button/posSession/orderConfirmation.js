@@ -53,10 +53,7 @@ module.exports = {
           messages.find((msg) => msg.content.includes(sessionName))
         );
 
-      // Correct way to get thread in v14
-      const posThread = await sessionMessage.threads
-        .fetch()
-        .then((threads) => threads.threads.first());
+      const posThread = await sessionMessage.thread;
 
       if (!posThread) {
         return await interaction.followUp({
