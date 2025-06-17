@@ -101,7 +101,10 @@ module.exports = {
         }
 
         messageEmbed.data.footer = {
-          text: `Refunded By: ${cashierName}`,
+          text: `Refunded By: ${interaction.member.nickname.replace(
+            /^[🔴🟢]\s*/,
+            ""
+          )}`,
         };
 
         await posThread.send({
