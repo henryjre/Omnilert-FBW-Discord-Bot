@@ -104,6 +104,8 @@ const sessionClose = async (req, res) => {
     x_statement_lines,
   } = req.body;
 
+  console.log("sessionClose", req.body);
+
   const department = departments.find((d) => d.id === company_id);
 
   if (!department) {
@@ -294,8 +296,6 @@ const discountOrder = async (req, res) => {
     x_session_name,
     company_id,
   } = req.body;
-
-  console.log("discount", req.body);
 
   const targetProductIds = [1032, 1033, 1034];
   const orderVerif = x_order_lines.find((o) =>
