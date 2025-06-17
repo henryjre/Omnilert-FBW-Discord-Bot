@@ -1,4 +1,10 @@
-const { MessageFlags, EmbedBuilder } = require("discord.js");
+const {
+  MessageFlags,
+  EmbedBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  ActionRowBuilder,
+} = require("discord.js");
 
 const departments = require("../../../config/departments.json");
 
@@ -47,7 +53,7 @@ module.exports = {
     if (!posThread) {
       return await interaction.reply({
         content: `🔴 ERROR: No thread found.`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -58,8 +64,16 @@ module.exports = {
       )}`,
     };
 
+    const submit = new ButtonBuilder()
+      .setCustomId("posOrderAudit")
+      .setLabel("Audit")
+      .setStyle(ButtonStyle.Primary);
+
+    const buttonRow = new ActionRowBuilder().addComponents(submit);
+
     await posThread.send({
       embeds: [messageEmbed],
+      components: [buttonRow],
     });
 
     await interaction.message.delete();
