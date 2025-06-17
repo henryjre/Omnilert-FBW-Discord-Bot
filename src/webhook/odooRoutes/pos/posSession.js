@@ -104,8 +104,6 @@ const sessionClose = async (req, res) => {
     x_statement_lines,
   } = req.body;
 
-  console.log("sessionClose", req.body);
-
   const department = departments.find((d) => d.id === company_id);
 
   if (!department) {
@@ -232,21 +230,21 @@ const sessionClose = async (req, res) => {
     },
     {
       name: "Cash Report",
-      value: `**Cash In:** ${
+      value: `> **Cash In:**\n${
         cashInOut && cashInOut.in.length > 0
           ? cashInOut.in
               .map(
                 (item) =>
-                  `> **${item.name}:** ${pesoFormatter.format(item.amount)}`
+                  `- **${item.name}:** ${pesoFormatter.format(item.amount)}`
               )
               .join("\n")
           : ""
-      }\n**Cash Out:** ${
+      }\n> **Cash Out:**\n${
         cashInOut && cashInOut.out.length > 0
           ? cashInOut.out
               .map(
                 (item) =>
-                  `> **${item.name}:** ${pesoFormatter.format(item.amount)}`
+                  `- **${item.name}:** ${pesoFormatter.format(item.amount)}`
               )
               .join("\n")
           : ""
