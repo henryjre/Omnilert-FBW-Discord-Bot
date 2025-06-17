@@ -123,10 +123,7 @@ const sessionClose = async (req, res) => {
   const posThread = await sessionMessage?.thread;
 
   if (!posThread) {
-    return await interaction.followUp({
-      content: `🔴 ERROR: No thread found.`,
-      flags: MessageFlags.Ephemeral,
-    });
+    return res.status(200).json({ ok: true, message: "Webhook received" });
   }
 
   const pesoEndBal = pesoFormatter.format(cash_register_balance_end); //expected
