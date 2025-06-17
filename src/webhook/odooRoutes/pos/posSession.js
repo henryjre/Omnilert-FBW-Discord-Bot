@@ -91,7 +91,166 @@ const sessionOpen = async (req, res) => {
 };
 
 const sessionClose = async (req, res) => {
-  console.log("session close", req.body);
+  const {
+    cash_register_balance_end,
+    cash_register_balance_end_real,
+    cash_register_balance_start,
+    cash_register_difference,
+    display_name,
+    closing_notes,
+    x_company_name,
+    company_id,
+    x_discount_orders,
+    x_payment_methods,
+    x_refund_orders,
+    x_statement_lines,
+  } = req.body;
+
+  const department = departments.find((d) => d.id === company_id);
+
+  if (!department) {
+    return res.status(200).json({ ok: true, message: "Webhook received" });
+  }
+
+  const sessionChannel = client.channels.cache.get(department.posChannel);
+
+  const sessionMessage = await sessionChannel.messages
+    .fetch({ limit: 100 })
+    .then((messages) =>
+      messages.find((msg) => msg.content.includes(display_name))
+    );
+
+  const posThread = await sessionMessage?.thread;
+
+  if (!posThread) {
+    return await interaction.followUp({
+      content: `🔴 ERROR: No thread found.`,
+      flags: MessageFlags.Ephemeral,
+    });
+  }
+
+  const pesoEndBal = pesoFormatter.format(cash_register_balance_end); //expected
+  const pesoEndBalReal = pesoFormatter.format(cash_register_balance_end_real); //counted
+  const cashDiffBal = pesoFormatter.format(cash_register_difference);
+
+  const totalDiscountOrders = Object.values(
+    x_discount_orders.reduce((acc, item) => {
+      const key = item.product_id;
+      if (!acc[key]) {
+        acc[key] = {
+          name: item.product_name,
+          amount: 0,
+        };
+      }
+      acc[key].amount += Math.abs(item.price_unit);
+      return acc;
+    }, {})
+  );
+
+  const totalRefunds = x_refund_orders.reduce(
+    (total, item) => total + Math.abs(item.price_unit),
+    0
+  );
+
+  const netSales = x_payment_methods.reduce(
+    (total, item) => total + Math.abs(item.amount),
+    0
+  );
+
+  const discountSales = totalDiscountOrders.reduce(
+    (total, item) => total + Math.abs(item.amount),
+    0
+  );
+
+  const cashPayments = x_payment_methods.find(
+    (item) => item.payment_method_id === 26
+  );
+
+  const grossSales = netSales + totalRefunds + discountSales;
+
+  const cashInOut = groupCashInOutByType(x_statement_lines);
+
+  const closingFields = [
+    { name: "Session Name", value: display_name },
+    { name: "Branch", value: x_company_name },
+    { name: "Closing Date", value: getCurrentFormattedDate() },
+    {
+      name: "Closing Cash Counted",
+      value: pesoEndBalReal,
+    },
+    {
+      name: "Closing Cash Expected",
+      value: pesoEndBal,
+    },
+    {
+      name: "Closing Cash Difference",
+      value: cashDiffBal,
+    },
+  ];
+
+  const salesReportFields = [
+    {
+      name: "Sales Report",
+      value: `> **Net Sales:** ${pesoFormatter.format(
+        netSales
+      )}\n${totalDiscountOrders
+        .map(
+          (item) => `> **${item.name}:** ${pesoFormatter.format(item.amount)}`
+        )
+        .join("\n")}\n> **Refund Claims:** ${pesoFormatter.format(
+        totalRefunds
+      )}\n> **Gross Sales:** ${pesoFormatter.format(grossSales)}`,
+    },
+    {
+      name: "Non-Cash Report",
+      value: `${x_payment_methods
+        .filter((item) => item.payment_method_id !== 26)
+        .map(
+          (item) =>
+            `> **${item.payment_method_name}:** ${pesoFormatter.format(
+              item.amount
+            )}`
+        )
+        .filter(Boolean)
+        .join("\n")}`,
+    },
+    {
+      name: "Cash Report",
+      value: `**Cash In:** ${cashInOut.in
+        .map(
+          (item) => `> **${item.name}:** ${pesoFormatter.format(item.amount)}`
+        )
+        .join("\n")}\n**Cash Out:** ${cashInOut.out
+        .map(
+          (item) => `> **${item.name}:** ${pesoFormatter.format(item.amount)}`
+        )
+        .join("\n")}\n**Payments:** ${pesoFormatter.format(
+        cashPayments.amount
+      )}`,
+    },
+  ];
+
+  const reportEmbed = new EmbedBuilder()
+    .setTitle(` 📊 Register Report`)
+    .setColor("Aqua")
+    .addFields(salesReportFields);
+
+  const closingEmbed = new EmbedBuilder()
+    .setTitle(` 🔴 Register Closed`)
+    .setColor("Red")
+    .addFields(closingFields);
+
+  const submit = new ButtonBuilder()
+    .setCustomId("posOrderAudit")
+    .setLabel("Audit")
+    .setStyle(ButtonStyle.Primary);
+
+  const buttonRow = new ActionRowBuilder().addComponents(submit);
+
+  await posThread.send({ embeds: [reportEmbed], components: [buttonRow] });
+  await posThread.send({ embeds: [closingEmbed] });
+
+  return res.status(200).json({ ok: true, message: "Webhook received" });
 };
 
 const discountOrder = async (req, res) => {
@@ -425,4 +584,19 @@ function formatDateTime(datetime, timezone = "Asia/Manila") {
   return moment
     .tz(datetime, "YYYY-MM-DD HH:mm:ss", timezone)
     .format("MMMM DD, YYYY [at] h:mm A");
+}
+
+function groupCashInOutByType(data) {
+  const grouped = { out: [], in: [] };
+
+  data.forEach((item) => {
+    const parts = item.payment_ref.split("-");
+    const type = parts[1];
+    const name = parts.slice(2).join("-");
+    const amount = Math.abs(item.amount);
+
+    grouped[type].push({ name, amount });
+  });
+
+  return { out: grouped.out, in: grouped.in };
 }
