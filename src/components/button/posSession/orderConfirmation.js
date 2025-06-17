@@ -15,6 +15,7 @@ module.exports = {
       const sessionField = messageEmbed.data.fields.find(
         (f) => f.name === "Session Name"
       );
+      const image = messageEmbed.data.image;
 
       const messageMention = interaction.message.mentions.users.first();
 
@@ -31,28 +32,12 @@ module.exports = {
 
       await interaction.deferUpdate();
 
-      const threadMessages = await interaction.message.thread.messages.fetch({
-        limit: 10,
-      });
-
-      const imageMessage = threadMessages.find((message) =>
-        message.attachments.some((attachment) =>
-          attachment.contentType?.startsWith("image/")
-        )
-      );
-
-      if (!imageMessage) {
-        return interaction.message.thread.send({
-          content: `🔴 ERROR: No image found. Please send a photo as proof in this thread and click "Confirm" to verify.`,
+      if (!image) {
+        return await interaction.followUp({
+          content: `🔴 ERROR: No proof of order found. Please send a photo as proof in the thread below and click "Confirm" to verify.`,
+          flags: MessageFlags.Ephemeral,
         });
       }
-
-      const imageAttachment = imageMessage.attachments.find((attachment) =>
-        attachment.contentType?.startsWith("image/")
-      );
-
-      // Correct way to set image in v14
-      messageEmbed.image = { url: imageAttachment.url };
 
       const sessionName = sessionField.value;
 
@@ -74,9 +59,9 @@ module.exports = {
         .then((threads) => threads.threads.first());
 
       if (!posThread) {
-        return await interaction.reply({
+        return await interaction.followUp({
           content: `🔴 ERROR: No thread found.`,
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
 
@@ -100,7 +85,7 @@ module.exports = {
         await interaction.followUp({
           content:
             "🔴 ERROR: Failed to clean up messages. Please contact an administrator.",
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
     } catch (error) {
@@ -108,7 +93,7 @@ module.exports = {
       await interaction.followUp({
         content:
           "🔴 ERROR: An error occurred while processing your confirmation. Please try again.",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   },
