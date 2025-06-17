@@ -62,12 +62,12 @@ module.exports = {
         });
       }
 
-      messageEmbed.setFooter({
-        text: `Confirmed By: ${interaction.member.nickname.replace(
+      messageEmbed.data.footer = {
+        text: `Approved By: ${interaction.member.nickname.replace(
           /^[🔴🟢]\s*/,
           ""
         )}`,
-      });
+      };
 
       await posThread.send({
         embeds: [messageEmbed],
