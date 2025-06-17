@@ -87,9 +87,7 @@ module.exports = {
             messages.find((msg) => msg.content.includes(sessionName))
           );
 
-        const posThread = await sessionMessage.threads
-          .fetch()
-          .then((threads) => threads.threads.first());
+        const posThread = await sessionMessage.threads.fetchActive();
 
         if (details) {
           messageEmbed.data.description += `\n\u200b\nReason for Refund:\n> *"${details}"*\n\u200b`;
