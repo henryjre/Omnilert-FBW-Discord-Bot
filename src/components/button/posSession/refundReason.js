@@ -87,7 +87,9 @@ module.exports = {
             messages.find((msg) => msg.content.includes(sessionName))
           );
 
-        const posThread = await sessionMessage.threads.fetchActive();
+        console.log(sessionMessage);
+
+        const posThread = await sessionMessage.thread;
 
         if (!posThread) {
           return await modalResponse.followUp({
