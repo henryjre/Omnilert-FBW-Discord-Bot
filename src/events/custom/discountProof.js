@@ -17,7 +17,7 @@ module.exports = {
 
     let messageEmbed = originalMessage.embeds[0];
 
-    messageEmbed.image = { url: latestImageAttachment.url };
+    messageEmbed.data.image = { url: latestImageAttachment.url };
 
     await originalMessage.edit({
       embeds: [messageEmbed],
