@@ -63,7 +63,7 @@ module.exports = {
       }
 
       messageEmbed.data.footer = {
-        text: `Approved By: ${interaction.member.nickname.replace(
+        text: `Confirmed By: ${interaction.member.nickname.replace(
           /^[🔴🟢]\s*/,
           ""
         )}`,
