@@ -69,9 +69,15 @@ module.exports = {
           messageEmbed.data.description += `\n\u200b\nAudit Opinion:\n> *"${details}"*\n\u200b`;
         }
 
-        messageEmbed.data.footer = {
-          text: `${messageEmbed.data.footer.text}\n\u200b\nAudited By: ${auditor}\nAudit Opinion: ${details}`,
-        };
+        if (messageEmbed.data.footer) {
+          messageEmbed.data.footer = {
+            text: `${messageEmbed.data.footer.text}\n\u200b\nAudited By: ${auditor}\nAudit Opinion: ${details}`,
+          };
+        } else {
+          messageEmbed.data.footer = {
+            text: `Audited By: ${auditor}\nAudit Opinion: ${details}`,
+          };
+        }
 
         messageEmbed.data.color = 5793266;
 
