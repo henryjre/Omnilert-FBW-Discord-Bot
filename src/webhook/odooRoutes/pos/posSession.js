@@ -177,7 +177,10 @@ const sessionClose = async (req, res) => {
 
   const grossSales = netSales + totalRefunds + discountSales;
 
-  const cashInOut = groupCashInOutByType(x_statement_lines);
+  let cashInOut;
+  if (x_statement_lines) {
+    cashInOut = groupCashInOutByType(x_statement_lines);
+  }
 
   const closingFields = [
     { name: "Session Name", value: display_name },
@@ -231,7 +234,7 @@ const sessionClose = async (req, res) => {
     {
       name: "Cash Report",
       value: `**Cash In:** ${
-        cashInOut.in.length > 0
+        cashInOut && cashInOut.in.length > 0
           ? cashInOut.in
               .map(
                 (item) =>
@@ -240,7 +243,7 @@ const sessionClose = async (req, res) => {
               .join("\n")
           : ""
       }\n**Cash Out:** ${
-        cashInOut.out.length > 0
+        cashInOut && cashInOut.out.length > 0
           ? cashInOut.out
               .map(
                 (item) =>
