@@ -94,10 +94,8 @@ const sessionClose = async (req, res) => {
   const {
     cash_register_balance_end,
     cash_register_balance_end_real,
-    cash_register_balance_start,
     cash_register_difference,
     display_name,
-    closing_notes,
     x_company_name,
     company_id,
     x_discount_orders,
@@ -133,37 +131,48 @@ const sessionClose = async (req, res) => {
   const pesoEndBalReal = pesoFormatter.format(cash_register_balance_end_real); //counted
   const cashDiffBal = pesoFormatter.format(cash_register_difference);
 
-  const totalDiscountOrders = Object.values(
-    x_discount_orders.reduce((acc, item) => {
-      const key = item.product_id;
-      if (!acc[key]) {
-        acc[key] = {
-          name: item.product_name,
-          amount: 0,
-        };
-      }
-      acc[key].amount += Math.abs(item.price_unit);
-      return acc;
-    }, {})
-  );
+  let totalDiscountOrders,
+    discountSales = 0;
+  if (x_discount_orders) {
+    totalDiscountOrders = Object.values(
+      x_discount_orders.reduce((acc, item) => {
+        const key = item.product_id;
+        if (!acc[key]) {
+          acc[key] = {
+            name: item.product_name,
+            amount: 0,
+          };
+        }
+        acc[key].amount += Math.abs(item.price_unit);
+        return acc;
+      }, {})
+    );
 
-  const totalRefunds = x_refund_orders.reduce(
-    (total, item) => total + Math.abs(item.price_unit),
-    0
-  );
+    discountSales = totalDiscountOrders.reduce(
+      (total, item) => total + Math.abs(item.amount),
+      0
+    );
+  }
+
+  let totalRefunds = 0;
+  if (x_refund_orders) {
+    totalRefunds = x_refund_orders.reduce(
+      (total, item) => total + Math.abs(item.price_unit),
+      0
+    );
+  }
 
   const netSales = x_payment_methods.reduce(
     (total, item) => total + Math.abs(item.amount),
     0
   );
 
-  const discountSales = totalDiscountOrders.reduce(
-    (total, item) => total + Math.abs(item.amount),
-    0
-  );
-
   const cashPayments = x_payment_methods.find(
     (item) => item.payment_method_id === 26
+  );
+
+  const otherPayments = x_payment_methods.filter(
+    (item) => item.payment_method_id !== 26
   );
 
   const grossSales = netSales + totalRefunds + discountSales;
@@ -191,42 +200,59 @@ const sessionClose = async (req, res) => {
   const salesReportFields = [
     {
       name: "Sales Report",
-      value: `> **Net Sales:** ${pesoFormatter.format(
-        netSales
-      )}\n${totalDiscountOrders
-        .map(
-          (item) => `> **${item.name}:** ${pesoFormatter.format(item.amount)}`
-        )
-        .join("\n")}\n> **Refund Claims:** ${pesoFormatter.format(
+      value: `> **Net Sales:** ${pesoFormatter.format(netSales)}\n${
+        totalDiscountOrders
+          ? totalDiscountOrders
+              .map(
+                (item) =>
+                  `> **${item.name}:** ${pesoFormatter.format(item.amount)}`
+              )
+              .join("\n")
+          : ""
+      }\n> **Refund Claims:** ${pesoFormatter.format(
         totalRefunds
       )}\n> **Gross Sales:** ${pesoFormatter.format(grossSales)}`,
     },
     {
       name: "Non-Cash Report",
-      value: `${x_payment_methods
-        .filter((item) => item.payment_method_id !== 26)
-        .map(
-          (item) =>
-            `> **${item.payment_method_name}:** ${pesoFormatter.format(
-              item.amount
-            )}`
-        )
-        .filter(Boolean)
-        .join("\n")}`,
+      value: `${
+        otherPayments
+          ? otherPayments
+              .map(
+                (item) =>
+                  `> **${item.payment_method_name}:** ${pesoFormatter.format(
+                    item.amount
+                  )}`
+              )
+              .join("\n")
+          : ""
+      }`,
     },
     {
       name: "Cash Report",
-      value: `**Cash In:** ${cashInOut.in
-        .map(
-          (item) => `> **${item.name}:** ${pesoFormatter.format(item.amount)}`
-        )
-        .join("\n")}\n**Cash Out:** ${cashInOut.out
-        .map(
-          (item) => `> **${item.name}:** ${pesoFormatter.format(item.amount)}`
-        )
-        .join("\n")}\n**Payments:** ${pesoFormatter.format(
-        cashPayments.amount
-      )}`,
+      value: `**Cash In:** ${
+        cashInOut.in.length > 0
+          ? cashInOut.in
+              .map(
+                (item) =>
+                  `> **${item.name}:** ${pesoFormatter.format(item.amount)}`
+              )
+              .join("\n")
+          : ""
+      }\n**Cash Out:** ${
+        cashInOut.out.length > 0
+          ? cashInOut.out
+              .map(
+                (item) =>
+                  `> **${item.name}:** ${pesoFormatter.format(item.amount)}`
+              )
+              .join("\n")
+          : ""
+      }\n**Payments:** ${
+        cashPayments
+          ? pesoFormatter.format(cashPayments.amount)
+          : pesoFormatter.format(0)
+      }`,
     },
   ];
 
