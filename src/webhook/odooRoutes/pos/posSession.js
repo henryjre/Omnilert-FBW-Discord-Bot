@@ -90,193 +90,258 @@ const sessionOpen = async (req, res) => {
   return res.status(200).json({ ok: true, message: "Webhook received" });
 };
 
+/**
+ * Finds a discount order by ID
+ * @param {Array} orders - Array of discount orders
+ * @param {number} id - Discount ID to find
+ * @returns {Object|null} Found discount order or null
+ */
+const findDiscount = (orders, id) =>
+  orders?.find((item) => item.id === id) ?? null;
+
 const sessionClose = async (req, res) => {
-  const {
-    cash_register_balance_end,
-    cash_register_balance_end_real,
-    cash_register_difference,
-    display_name,
-    x_company_name,
-    company_id,
-    x_discount_orders,
-    x_payment_methods,
-    x_refund_orders,
-    x_statement_lines,
-  } = req.body;
+  try {
+    const {
+      cash_register_balance_end,
+      cash_register_balance_end_real,
+      cash_register_difference,
+      display_name,
+      x_company_name,
+      company_id,
+      x_discount_orders,
+      x_payment_methods,
+      x_refund_orders,
+      x_statement_lines,
+    } = req.body;
 
-  const department = departments.find((d) => d.id === company_id);
+    const department = departments.find((d) => d.id === company_id);
 
-  if (!department) {
-    return res.status(200).json({ ok: true, message: "Webhook received" });
-  }
+    if (!department) {
+      return res.status(200).json({ ok: true, message: "Webhook received" });
+    }
 
-  const sessionChannel = client.channels.cache.get(department.posChannel);
+    const sessionChannel = client.channels.cache.get(department.posChannel);
+    if (!sessionChannel) {
+      return res.status(200).json({ ok: true, message: "Channel not found" });
+    }
 
-  const sessionMessage = await sessionChannel.messages
-    .fetch({ limit: 100 })
-    .then((messages) =>
-      messages.find((msg) => msg.content.includes(display_name))
+    const sessionMessage = await sessionChannel.messages
+      .fetch({ limit: 100 })
+      .then((messages) =>
+        messages.find((msg) => msg.content.includes(display_name))
+      );
+
+    const posThread = await sessionMessage?.thread;
+
+    if (!posThread) {
+      return res.status(200).json({ ok: true, message: "Webhook received" });
+    }
+
+    const pesoEndBal = pesoFormatter.format(cash_register_balance_end); //expected
+    const pesoEndBalReal = pesoFormatter.format(cash_register_balance_end_real); //counted
+    const cashDiffBal = pesoFormatter.format(cash_register_difference);
+
+    let totalDiscountOrders,
+      discountSales = 0;
+    if (x_discount_orders) {
+      totalDiscountOrders = Object.values(
+        x_discount_orders.reduce((acc, item) => {
+          const key = item.product_id;
+          if (!acc[key]) {
+            acc[key] = {
+              id: key,
+              name: item.product_name,
+              amount: 0,
+            };
+          }
+          acc[key].amount += Math.abs(item.price_unit);
+          return acc;
+        }, {})
+      );
+
+      discountSales = totalDiscountOrders.reduce(
+        (total, item) => total + Math.abs(item.amount),
+        0
+      );
+    }
+
+    const pwdDiscount = findDiscount(totalDiscountOrders, 1032);
+    const xopb = findDiscount(totalDiscountOrders, 1033);
+    const gc100 = findDiscount(totalDiscountOrders, 1034);
+    const tokenPay = findDiscount(totalDiscountOrders, 1153);
+
+    const otherPayments = x_payment_methods.filter(
+      (item) => item.payment_method_name !== "Cash"
     );
 
-  const posThread = await sessionMessage?.thread;
+    const totalOtherPayments =
+      otherPayments.length > 0
+        ? otherPayments.reduce((total, item) => total + Math.abs(item.amount), 0)
+        : 0;
 
-  if (!posThread) {
-    return res.status(200).json({ ok: true, message: "Webhook received" });
-  }
+    let totalRefunds = 0;
+    if (x_refund_orders) {
+      totalRefunds = x_refund_orders.reduce(
+        (total, item) => total + Math.abs(item.price_unit),
+        0
+      );
+    }
 
-  const pesoEndBal = pesoFormatter.format(cash_register_balance_end); //expected
-  const pesoEndBalReal = pesoFormatter.format(cash_register_balance_end_real); //counted
-  const cashDiffBal = pesoFormatter.format(cash_register_difference);
-
-  let totalDiscountOrders,
-    discountSales = 0;
-  if (x_discount_orders) {
-    totalDiscountOrders = Object.values(
-      x_discount_orders.reduce((acc, item) => {
-        const key = item.product_id;
-        if (!acc[key]) {
-          acc[key] = {
-            name: item.product_name,
-            amount: 0,
-          };
-        }
-        acc[key].amount += Math.abs(item.price_unit);
-        return acc;
-      }, {})
-    );
-
-    discountSales = totalDiscountOrders.reduce(
+    const netSales = x_payment_methods.reduce(
       (total, item) => total + Math.abs(item.amount),
       0
     );
-  }
 
-  let totalRefunds = 0;
-  if (x_refund_orders) {
-    totalRefunds = x_refund_orders.reduce(
-      (total, item) => total + Math.abs(item.price_unit),
-      0
+    const cashPayments = x_payment_methods.find(
+      (item) => item.payment_method_name === "Cash"
     );
-  }
 
-  const netSales = x_payment_methods.reduce(
-    (total, item) => total + Math.abs(item.amount),
-    0
-  );
+    const grossSales = netSales + totalRefunds + discountSales;
 
-  const cashPayments = x_payment_methods.find(
-    (item) => item.payment_method_id === 26
-  );
+    let cashInOut;
+    if (x_statement_lines) {
+      cashInOut = groupCashInOutByType(x_statement_lines);
+    }
 
-  const otherPayments = x_payment_methods.filter(
-    (item) => item.payment_method_id !== 26
-  );
+    const closingFields = [
+      { name: "Session Name", value: display_name },
+      { name: "Branch", value: x_company_name },
+      { name: "Closing Date", value: getCurrentFormattedDate() },
+      {
+        name: "Closing Cash Counted",
+        value: pesoEndBalReal,
+      },
+      {
+        name: "Closing Cash Expected",
+        value: pesoEndBal,
+      },
+      {
+        name: "Closing Cash Difference",
+        value: cashDiffBal,
+      },
+    ];
 
-  const grossSales = netSales + totalRefunds + discountSales;
+    const salesReportFields = [
+      {
+        name: "PWD and Senior Discount",
+        value: pwdDiscount
+          ? pesoFormatter.format(pwdDiscount.amount)
+          : pesoFormatter.format(0),
+      },
+      {
+        name: "XOPB",
+        value: xopb ? pesoFormatter.format(xopb.amount) : pesoFormatter.format(0),
+      },
+      {
+        name: "GC100",
+        value: gc100
+          ? pesoFormatter.format(gc100.amount)
+          : pesoFormatter.format(0),
+      },
+      {
+        name: "Token Pay",
+        value: tokenPay
+          ? pesoFormatter.format(tokenPay.amount)
+          : pesoFormatter.format(0),
+      },
+      {
+        name: "Refund Claims",
+        value: pesoFormatter.format(totalRefunds),
+      },
+      {
+        name: "Gross Sales",
+        value: pesoFormatter.format(grossSales),
+      },
+    ];
 
-  let cashInOut;
-  if (x_statement_lines) {
-    cashInOut = groupCashInOutByType(x_statement_lines);
-  }
+    let nonCashReportFields =
+      otherPayments.length > 0
+        ? otherPayments.map((item) => ({
+            name: item.payment_method_name,
+            value: pesoFormatter.format(item.amount),
+          }))
+        : [];
 
-  const closingFields = [
-    { name: "Session Name", value: display_name },
-    { name: "Branch", value: x_company_name },
-    { name: "Closing Date", value: getCurrentFormattedDate() },
-    {
-      name: "Closing Cash Counted",
-      value: pesoEndBalReal,
-    },
-    {
-      name: "Closing Cash Expected",
-      value: pesoEndBal,
-    },
-    {
-      name: "Closing Cash Difference",
-      value: cashDiffBal,
-    },
-  ];
+    if (otherPayments.length > 0) {
+      nonCashReportFields.push({
+        name: "Total Non-Cash Payments",
+        value: pesoFormatter.format(totalOtherPayments),
+      });
+    }
 
-  const salesReportFields = [
-    {
-      name: "Sales Report",
-      value: `> **Net Sales:** ${pesoFormatter.format(netSales)}\n${
-        totalDiscountOrders
-          ? totalDiscountOrders
-              .map(
-                (item) =>
-                  `> **${item.name}:** ${pesoFormatter.format(item.amount)}`
-              )
-              .join("\n")
-          : ""
-      }\n> **Refund Claims:** ${pesoFormatter.format(
-        totalRefunds
-      )}\n> **Gross Sales:** ${pesoFormatter.format(grossSales)}`,
-    },
-    {
-      name: "Non-Cash Report",
-      value: `${
-        otherPayments
-          ? otherPayments
-              .map(
-                (item) =>
-                  `> **${item.payment_method_name}:** ${pesoFormatter.format(
-                    item.amount
-                  )}`
-              )
-              .join("\n")
-          : ""
-      }`,
-    },
-    {
-      name: "Cash Report",
-      value: `> **Cash In:**\n${
-        cashInOut && cashInOut.in.length > 0
-          ? cashInOut.in
-              .map(
-                (item) =>
-                  `- **${item.name}:** ${pesoFormatter.format(item.amount)}`
-              )
-              .join("\n")
-          : ""
-      }\n> **Cash Out:**\n${
-        cashInOut && cashInOut.out.length > 0
-          ? cashInOut.out
-              .map(
-                (item) =>
-                  `- **${item.name}:** ${pesoFormatter.format(item.amount)}`
-              )
-              .join("\n")
-          : ""
-      }\n**Payments:** ${
-        cashPayments
+    const cashReportFields = [
+      {
+        name: "Cash In",
+        value:
+          cashInOut && cashInOut.in.length > 0
+            ? cashInOut.in
+                .map(
+                  (item) =>
+                    `> **${item.name}:** ${pesoFormatter.format(item.amount)}`
+                )
+                .join("\n")
+            : "No cash in found.",
+      },
+      {
+        name: "Cash Out",
+        value:
+          cashInOut && cashInOut.out.length > 0
+            ? cashInOut.out
+                .map(
+                  (item) =>
+                    `> **${item.name}:** ${pesoFormatter.format(item.amount)}`
+                )
+                .join("\n")
+            : "No cash out found.",
+      },
+      {
+        name: "Payments",
+        value: cashPayments
           ? pesoFormatter.format(cashPayments.amount)
-          : pesoFormatter.format(0)
-      }`,
-    },
-  ];
+          : pesoFormatter.format(0),
+      },
+    ];
 
-  const reportEmbed = new EmbedBuilder()
-    .setTitle(` 📊 Register Report`)
-    .setColor("Aqua")
-    .addFields(salesReportFields);
+    const salesReportEmbed = new EmbedBuilder()
+      .setTitle(` 📊 Sales Report`)
+      .setColor("#FF0000")
+      .addFields(salesReportFields);
 
-  const closingEmbed = new EmbedBuilder()
-    .setTitle(` 🔴 Register Closed`)
-    .setColor("Red")
-    .addFields(closingFields);
+    const nonCashReportEmbed = new EmbedBuilder()
+      .setTitle(` 📊 Non-Cash Report`)
+      .setColor("#FF0000")
+      .addFields(nonCashReportFields);
 
-  const submit = new ButtonBuilder()
-    .setCustomId("posOrderAudit")
-    .setLabel("Audit")
-    .setStyle(ButtonStyle.Primary);
+    const cashReportEmbed = new EmbedBuilder()
+      .setTitle(` 📊 Cash Report`)
+      .setColor("#FF0000")
+      .addFields(cashReportFields);
 
-  const buttonRow = new ActionRowBuilder().addComponents(submit);
+    const closingEmbed = new EmbedBuilder()
+      .setTitle(` 🔴 Register Closed`)
+      .setColor("#FF0000")
+      .addFields(closingFields);
 
-  await posThread.send({ embeds: [reportEmbed], components: [buttonRow] });
-  await posThread.send({ embeds: [closingEmbed] });
+    const submit = new ButtonBuilder()
+      .setCustomId("posOrderAudit")
+      .setLabel("Audit")
+      .setStyle(ButtonStyle.Primary);
 
-  return res.status(200).json({ ok: true, message: "Webhook received" });
+    const buttonRow = new ActionRowBuilder().addComponents(submit);
+
+    await posThread.send({ embeds: [salesReportEmbed], components: [buttonRow] });
+    await posThread.send({
+      embeds: [nonCashReportEmbed],
+      components: [buttonRow],
+    });
+    await posThread.send({ embeds: [cashReportEmbed], components: [buttonRow] });
+    await posThread.send({ embeds: [closingEmbed] });
+
+    return res.status(200).json({ ok: true, message: "Webhook received" });
+  } catch (error) {
+    console.error("Error in sessionClose:", error);
+    return res.status(200).json({ ok: true, message: "Webhook received" });
+  }
 };
 
 const discountOrder = async (req, res) => {
