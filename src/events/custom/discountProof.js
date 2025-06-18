@@ -1,4 +1,4 @@
-const { ButtonBuilder, ButtonStyle, ActionRowBuilder } = require("discord.js");
+const { AttachmentBuilder } = require("discord.js");
 
 const cdnChannel = "1384688917155938354";
 
@@ -15,13 +15,11 @@ module.exports = {
 
     const latestImageAttachment = mediaAttachments.last();
 
-    console.log(latestImageAttachment);
-
-    return
+    const reupload = AttachmentBuilder.from(latestImageAttachment);
 
     const cdnMessage = await client.channels.cache.get(cdnChannel).send({
       content: `Sent by ${message.author.toString()}\nTimestamp: ${message.createdAt.toLocaleString()}`,
-      attachments: [latestImageAttachment],
+      attachments: [reupload],
     });
 
     const cdnMessageAttachment = cdnMessage.attachments.first();
