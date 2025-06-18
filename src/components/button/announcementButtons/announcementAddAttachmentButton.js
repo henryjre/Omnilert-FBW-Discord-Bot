@@ -1,5 +1,7 @@
 const { EmbedBuilder, MessageFlags, ChannelType } = require("discord.js");
 
+const cdnChannel = "1384688917155938354";
+
 module.exports = {
   data: {
     name: `announcementAddAttachment`,
@@ -94,17 +96,33 @@ async function fetchThreadAttachments(interaction, thread) {
 
     // Iterate over each message and extract attachments
     reversedMessages.forEach((msg) => {
-      msg.attachments.forEach((attachment) => {
+      msg.attachments.forEach(async (attachment) => {
         const contentType = attachment.contentType;
+
+        const cdnMessage = await client.channels.cache.get(cdnChannel).send({
+          content: `Sent by ${msg.author.toString()}\nTimestamp: ${msg.createdAt.toLocaleString(
+            "en-US",
+            {
+              timeZone: "Asia/Manila",
+            }
+          )}`,
+          files: [attachment.url],
+        });
+
+        const cdnMessageAttachment = cdnMessage.attachments.first();
 
         // Filter for media (images/videos) and PDF files
         if (
           contentType?.startsWith("image/") ||
           contentType?.startsWith("video/")
         ) {
-          attachments.media.push(attachment.url);
+          attachments.media.push(
+            cdnMessageAttachment.proxyURL || cdnMessageAttachment.url
+          );
         } else if (contentType === "application/pdf") {
-          attachments.pdf.push(attachment.url);
+          attachments.pdf.push(
+            cdnMessageAttachment.proxyURL || cdnMessageAttachment.url
+          );
         }
       });
     });
