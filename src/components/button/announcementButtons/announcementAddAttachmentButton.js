@@ -38,6 +38,7 @@ module.exports = {
         existingThread
       );
       const embedsToSend = [];
+      const filesToSend = [];
 
       if (attachments.media.length > 0) {
         attachments.media.forEach((attachment) =>
@@ -47,6 +48,7 @@ module.exports = {
               .setURL("https://omnilert.odoo.com/")
           )
         );
+        attachments.pdf.forEach((attachment) => filesToSend.push(attachment));
       } else {
         const mainEmbed = new EmbedBuilder(messageEmbed.data).setImage("");
         embedsToSend.push(mainEmbed);
@@ -54,7 +56,7 @@ module.exports = {
 
       await interaction.message.edit({
         embeds: embedsToSend,
-        files: attachments.pdf,
+        files: filesToSend,
       });
 
       return;
@@ -94,38 +96,45 @@ async function fetchThreadAttachments(interaction, thread, client) {
 
     const reversedMessages = messages.reverse();
 
-    // Iterate over each message and extract attachments
-    await reversedMessages.forEach(async (msg) => {
-      await msg.attachments.forEach(async (attachment) => {
+    for (const msg of reversedMessages) {
+      for (const attachment of msg.attachments.values()) {
         const contentType = attachment.contentType;
 
-        const cdnMessage = await client.channels.cache.get(cdnChannel).send({
-          content: `Sent by ${msg.author.toString()}\nTimestamp: ${msg.createdAt.toLocaleString(
-            "en-US",
-            {
-              timeZone: "Asia/Manila",
-            }
-          )}`,
-          files: [attachment.url],
-        });
+        try {
+          const cdnMessage = await client.channels.cache.get(cdnChannel).send({
+            content: `Sent by ${msg.author.toString()}\nTimestamp: ${msg.createdAt.toLocaleString(
+              "en-US",
+              {
+                timeZone: "Asia/Manila",
+              }
+            )}`,
+            files: [attachment.url],
+          });
 
-        const cdnMessageAttachment = cdnMessage.attachments.first();
+          const cdnMessageAttachment = cdnMessage.attachments.first();
+          if (!cdnMessageAttachment) continue;
 
-        // Filter for media (images/videos) and PDF files
-        if (
-          contentType?.startsWith("image/") ||
-          contentType?.startsWith("video/")
-        ) {
-          attachments.media.push(
-            cdnMessageAttachment.proxyURL || cdnMessageAttachment.url
+          const attachmentUrl =
+            cdnMessageAttachment.proxyURL || cdnMessageAttachment.url;
+
+          // Filter for media (images/videos) and PDF files
+          if (
+            contentType?.startsWith("image/") ||
+            contentType?.startsWith("video/")
+          ) {
+            attachments.media.push(attachmentUrl);
+          } else if (contentType === "application/pdf") {
+            attachments.pdf.push(attachmentUrl);
+          }
+        } catch (attachmentError) {
+          console.error(
+            `Error processing attachment: ${attachmentError.message}`
           );
-        } else if (contentType === "application/pdf") {
-          attachments.pdf.push(
-            cdnMessageAttachment.proxyURL || cdnMessageAttachment.url
-          );
+          // Continue with next attachment even if one fails
+          continue;
         }
-      });
-    });
+      }
+    }
 
     console.log("Attachments:", attachments);
     return attachments;
