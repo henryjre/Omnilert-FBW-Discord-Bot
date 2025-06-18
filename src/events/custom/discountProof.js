@@ -28,8 +28,6 @@ module.exports = {
 
     console.log(cdnMessageAttachment);
 
-    return;
-
     const originalMessage = await thread.fetchStarterMessage();
 
     let messageEmbed = originalMessage.embeds[0];
