@@ -1,5 +1,7 @@
 const { EmbedBuilder, MessageFlags } = require("discord.js");
 
+const cdnChannelId = "1384688917155938354";
+
 module.exports = {
   data: {
     name: `announcementCancel`,
@@ -38,6 +40,16 @@ module.exports = {
 
     if (existingThread) {
       await existingThread.delete();
+
+      const cdnChannel = await client.channels.cache.get(cdnChannelId);
+      const messages = await cdnChannel.messages.fetch({ limit: 100 });
+      const targetMessages = messages.filter((msg) =>
+        msg.content.includes(interaction.message.id)
+      );
+
+      if (targetMessages.size > 0) {
+        await cdnChannel.bulkDelete(targetMessages);
+      }
     }
 
     await interaction.message.delete();
