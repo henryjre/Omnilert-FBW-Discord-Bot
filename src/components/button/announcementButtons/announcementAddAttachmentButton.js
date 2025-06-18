@@ -95,8 +95,8 @@ async function fetchThreadAttachments(interaction, thread) {
     const reversedMessages = messages.reverse();
 
     // Iterate over each message and extract attachments
-    reversedMessages.forEach((msg) => {
-      msg.attachments.forEach(async (attachment) => {
+    reversedMessages.forEach(async (msg) => {
+      await msg.attachments.forEach(async (attachment) => {
         const contentType = attachment.contentType;
 
         const cdnMessage = await client.channels.cache.get(cdnChannel).send({
