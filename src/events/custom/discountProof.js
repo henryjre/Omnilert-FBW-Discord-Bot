@@ -14,7 +14,12 @@ module.exports = {
     const latestImageAttachment = mediaAttachments.last();
 
     const cdnMessage = await client.channels.cache.get(cdnChannel).send({
-      content: `Sent by ${message.author.toString()}\nTimestamp: ${message.createdAt.toLocaleString()}`,
+      content: `Sent by ${message.author.toString()}\nTimestamp: ${message.createdAt.toLocaleString(
+        "en-US",
+        {
+          timeZone: "Asia/Manila",
+        }
+      )}`,
       files: [latestImageAttachment.url],
     });
 
