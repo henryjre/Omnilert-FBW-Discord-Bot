@@ -1,5 +1,7 @@
 const { ButtonBuilder, ButtonStyle, ActionRowBuilder } = require("discord.js");
 
+const cdnChannel = "1384688917155938354";
+
 module.exports = {
   name: "orderDiscountProof",
   async execute(message, thread, client) {
@@ -13,11 +15,18 @@ module.exports = {
 
     const latestImageAttachment = mediaAttachments.last();
 
+    const cdnMessage = await client.channels.cache.get(cdnChannel).send({
+      content: `Sent by ${message.author.toString()}\nTimestamp: ${message.createdAt.toLocaleString()}`,
+      attachments: [latestImageAttachment],
+    });
+
+    const cdnMessageAttachment = cdnMessage.attachments.first();
+
     const originalMessage = await thread.fetchStarterMessage();
 
     let messageEmbed = originalMessage.embeds[0];
 
-    messageEmbed.data.image = { url: latestImageAttachment.url };
+    messageEmbed.data.image = { url: cdnMessageAttachment.proxyURL };
 
     await originalMessage.edit({
       embeds: [messageEmbed],
