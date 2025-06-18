@@ -97,6 +97,8 @@ async function fetchThreadAttachments(interaction, thread, client) {
     const reversedMessages = messages.reverse();
 
     for (const msg of reversedMessages) {
+      if (msg.attachments.size <= 0) continue;  
+
       for (const attachment of msg.attachments) {
         const contentType = attachment.contentType;
 
