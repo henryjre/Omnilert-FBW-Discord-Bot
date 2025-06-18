@@ -393,6 +393,130 @@ const discountOrder = async (req, res) => {
   return res.status(200).json({ ok: true, message: "Webhook received" });
 };
 
+const nonCashOrder = async (req, res) => {
+  const {
+    cashier,
+    amount_total,
+    date_order,
+    name,
+    x_company_name,
+    x_discord_id,
+    x_order_lines,
+    x_session_name,
+    company_id,
+    x_payments,
+  } = req.body;
+
+  const payments = x_payments.filter((p) => p.name !== "Cash");
+  if (payments.length === 0) {
+    return res.status(200).json({ ok: true, message: "Webhook received" });
+  }
+
+  const department = departments.find((d) => d.id === company_id);
+
+  if (!department) {
+    return res.status(200).json({ ok: true, message: "Webhook received" });
+  }
+
+  const verificationChannel = client.channels.cache.get(
+    department.verificationChannel
+  );
+  const orderDate = formatDateTime(date_order);
+
+  let mentionable;
+
+  if (x_discord_id) {
+    mentionable = `<@${x_discord_id}>`;
+  } else {
+    mentionable = `<@&${department.role}>`;
+  }
+
+  let orderLinesMessage = "";
+
+  for (const order of x_order_lines) {
+    orderLinesMessage += `> **Name:** ${order.product_name}\n`;
+    orderLinesMessage += `> **Quantity:** ${order.qty} ${order.uom_name}\n`;
+    orderLinesMessage += `> **Unit Price:** ${pesoFormatter.format(
+      order.price_unit
+    )} ${order.uom_name}`;
+    orderLinesMessage += `\n\n`;
+  }
+
+  let paymentMessage = x_payments
+    ? x_payments
+        .map(
+          (p) =>
+            `> **${p.payment_method_name}:** ${pesoFormatter.format(p.amount)}`
+        )
+        .join("\n")
+    : "No payments found";
+
+  //creating an embed for the session
+  const fields = [
+    { name: "Session Name", value: x_session_name },
+    { name: "Order Reference", value: name },
+    { name: "Branch", value: x_company_name },
+    { name: "Order Date", value: orderDate },
+    {
+      name: "Cashier",
+      value: cashier,
+    },
+    {
+      name: "Discord User",
+      value: x_discord_id ? `<@${x_discord_id}>` : "No user found",
+    },
+    {
+      name: "Products",
+      value: orderLinesMessage,
+    },
+    {
+      name: "Order Total",
+      value: pesoFormatter.format(amount_total),
+    },
+    {
+      name: "Payments",
+      value: paymentMessage,
+    },
+  ];
+
+  const orderEmbed = new EmbedBuilder()
+    .setDescription(`## 🔔 Non-Cash Payment Verification`)
+    .setColor("Grey")
+    .addFields(fields)
+    .setFooter({
+      text: `Please send the receipt in the thread below this message and click "Confirm" to verify.`,
+    });
+
+  const confirm = new ButtonBuilder()
+    .setCustomId("posOrderVerificationConfirm")
+    .setLabel("Confirm")
+    .setStyle(ButtonStyle.Success);
+
+  const reject = new ButtonBuilder()
+    .setCustomId("posOrderVerificationReject")
+    .setLabel("Reject")
+    .setStyle(ButtonStyle.Danger);
+
+  const buttonRow = new ActionRowBuilder().addComponents(confirm, reject);
+
+  const orderDiscordMessage = await verificationChannel.send({
+    content: mentionable,
+    embeds: [orderEmbed],
+    components: [buttonRow],
+  });
+
+  const proofThread = await orderDiscordMessage.startThread({
+    name: `Receipt Proof - ${orderDiscordMessage.id}`,
+    type: ChannelType.PublicThread, // Set to 'GuildPrivateThread' if only the user should see it
+  });
+
+  await proofThread.send({
+    content: `📸 **${mentionable}, please upload the PWD ID or captured image here as proof.**`,
+  });
+
+  return res.status(200).json({ ok: true, message: "Webhook received" });
+};
+
 const refundOrder = async (req, res) => {
   const {
     cashier,
@@ -588,6 +712,7 @@ module.exports = {
   discountOrder,
   refundOrder,
   tokenPayOrder,
+  nonCashOrder,
 };
 
 ////////////////////////// HELPER FUNCTIONS /////////////////////////////////////////
