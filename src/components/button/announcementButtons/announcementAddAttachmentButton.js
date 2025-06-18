@@ -168,7 +168,6 @@ async function fetchThreadAttachments(interaction, thread, client) {
       }
     }
 
-    console.log("Attachments:", attachments);
     return attachments;
   } catch (error) {
     console.error("Error fetching thread attachments:", error);
