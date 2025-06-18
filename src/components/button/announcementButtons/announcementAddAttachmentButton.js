@@ -127,7 +127,9 @@ async function fetchThreadAttachments(interaction, thread, client) {
         const files = attachmentBatch.map((item) => item.attachment.url);
 
         // Create a single content message for the batch
-        const content = `Sent by ${attachmentBatch[0].author.toString()}\nTimestamp: ${attachmentBatch[0].timestamp.toLocaleString(
+        const content = `Message ID: ${
+          interaction.message.id
+        }\nSent by ${attachmentBatch[0].author.toString()}\nTimestamp: ${attachmentBatch[0].timestamp.toLocaleString(
           "en-US",
           {
             timeZone: "Asia/Manila",
