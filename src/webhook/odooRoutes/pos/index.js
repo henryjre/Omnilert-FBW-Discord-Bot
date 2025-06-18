@@ -5,6 +5,7 @@ const {
   refundOrder,
   tokenPayOrder,
   sessionClose,
+  nonCashOrder,
 } = require("./posSession");
 
 // /odoo/pos/pos_open
