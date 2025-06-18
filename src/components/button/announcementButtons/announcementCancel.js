@@ -30,6 +30,16 @@ module.exports = {
       embeds: [cancelEmbed],
     });
 
+    const existingThread = await interaction.channel.threads.cache.find((t) =>
+      t.name.includes(
+        `Announcement Attachment Upload - ${interaction.message.id}`
+      )
+    );
+
+    if (existingThread) {
+      await existingThread.delete();
+    }
+
     await interaction.message.delete();
   },
 };
