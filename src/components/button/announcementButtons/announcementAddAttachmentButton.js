@@ -51,7 +51,7 @@ module.exports = {
         );
         attachments.pdf.forEach((attachment) => filesToSend.push(attachment));
       } else {
-        const mainEmbed = new EmbedBuilder(messageEmbed.data).setImage("");
+        const mainEmbed = new EmbedBuilder(messageEmbed.data);
         embedsToSend.push(mainEmbed);
       }
 
