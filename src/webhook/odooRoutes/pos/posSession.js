@@ -263,12 +263,18 @@ const sessionClose = async (req, res) => {
       },
     ];
 
-    let nonCashReportFields =
+    const nonCashReportFields =
       otherPayments.length > 0
-        ? otherPayments.map((item) => ({
-            name: item.payment_method_name,
-            value: pesoFormatter.format(item.amount),
-          }))
+        ? [
+            ...otherPayments.map((item) => ({
+              name: item.payment_method_name,
+              value: pesoFormatter.format(item.amount),
+            })),
+            {
+              name: "Total Non-Cash Payments",
+              value: pesoFormatter.format(totalOtherPayments),
+            },
+          ]
         : [];
 
     if (otherPayments.length > 0) {
