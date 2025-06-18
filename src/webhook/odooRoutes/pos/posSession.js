@@ -444,10 +444,7 @@ const nonCashOrder = async (req, res) => {
 
   let paymentMessage = x_payments
     ? x_payments
-        .map(
-          (p) =>
-            `> **${p.payment_method_name}:** ${pesoFormatter.format(p.amount)}`
-        )
+        .map((p) => `> **${p.name}:** ${pesoFormatter.format(p.amount)}`)
         .join("\n")
     : "No payments found";
 
@@ -470,12 +467,12 @@ const nonCashOrder = async (req, res) => {
       value: orderLinesMessage,
     },
     {
-      name: "Order Total",
-      value: pesoFormatter.format(amount_total),
-    },
-    {
       name: "Payments",
       value: paymentMessage,
+    },
+    {
+      name: "Order Total",
+      value: pesoFormatter.format(amount_total),
     },
   ];
 
