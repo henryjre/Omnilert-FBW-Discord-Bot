@@ -30,7 +30,10 @@ module.exports = {
           .execute(message, thread, client);
       }
 
-      if (thread.name.includes("Discount Proof")) {
+      if (
+        thread.name.includes("Discount Proof") ||
+        thread.name.includes("Receipt Proof")
+      ) {
         return await client.events
           .get("orderDiscountProof")
           .execute(message, thread, client);
