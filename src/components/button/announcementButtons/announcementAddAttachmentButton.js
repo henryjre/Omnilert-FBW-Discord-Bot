@@ -95,7 +95,7 @@ async function fetchThreadAttachments(interaction, thread) {
     const reversedMessages = messages.reverse();
 
     // Iterate over each message and extract attachments
-    reversedMessages.forEach(async (msg) => {
+    await reversedMessages.forEach(async (msg) => {
       await msg.attachments.forEach(async (attachment) => {
         const contentType = attachment.contentType;
 
