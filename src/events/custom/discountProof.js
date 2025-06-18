@@ -15,6 +15,10 @@ module.exports = {
 
     const latestImageAttachment = mediaAttachments.last();
 
+    console.log(latestImageAttachment);
+
+    return
+
     const cdnMessage = await client.channels.cache.get(cdnChannel).send({
       content: `Sent by ${message.author.toString()}\nTimestamp: ${message.createdAt.toLocaleString()}`,
       attachments: [latestImageAttachment],
@@ -23,6 +27,8 @@ module.exports = {
     const cdnMessageAttachment = cdnMessage.attachments.first();
 
     console.log(cdnMessageAttachment);
+
+    return;
 
     const originalMessage = await thread.fetchStarterMessage();
 
