@@ -35,7 +35,8 @@ module.exports = {
       await interaction.deferUpdate();
       const attachments = await fetchThreadAttachments(
         interaction,
-        existingThread
+        existingThread,
+        client
       );
       const embedsToSend = [];
       const filesToSend = [];
