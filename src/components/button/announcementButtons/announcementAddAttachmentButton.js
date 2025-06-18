@@ -96,10 +96,12 @@ async function fetchThreadAttachments(interaction, thread, client) {
 
     const reversedMessages = messages.reverse();
 
-    for (const msg of reversedMessages) {
-      if (msg.attachments.size <= 0) continue;  
+    for (const [_, msg] of reversedMessages) {
+      // Destructure the message from the Collection
+      if (!msg || !msg.attachments || msg.attachments.size <= 0) continue;
 
-      for (const attachment of msg.attachments) {
+      for (const [_, attachment] of msg.attachments) {
+        // Destructure the attachment from the Collection
         const contentType = attachment.contentType;
 
         try {
@@ -132,7 +134,6 @@ async function fetchThreadAttachments(interaction, thread, client) {
           console.error(
             `Error processing attachment: ${attachmentError.message}`
           );
-          // Continue with next attachment even if one fails
           continue;
         }
       }
