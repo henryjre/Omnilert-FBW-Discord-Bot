@@ -16,6 +16,9 @@ pos.post("/pos_close", sessionClose);
 // /odoo/pos/discount_order
 pos.post("/discount_order", discountOrder);
 
+// /odoo/pos/non_cash_order
+pos.post("/non_cash_order", nonCashOrder);
+
 // /odoo/pos/refund_order
 pos.post("/refund_order", refundOrder);
 
