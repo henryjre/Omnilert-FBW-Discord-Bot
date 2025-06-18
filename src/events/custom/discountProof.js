@@ -22,6 +22,8 @@ module.exports = {
 
     const cdnMessageAttachment = cdnMessage.attachments.first();
 
+    console.log(cdnMessageAttachment);
+
     const originalMessage = await thread.fetchStarterMessage();
 
     let messageEmbed = originalMessage.embeds[0];
