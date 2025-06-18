@@ -94,47 +94,73 @@ async function fetchThreadAttachments(interaction, thread, client) {
   try {
     // Fetch the last 100 messages from the thread
     const messages = await thread.messages.fetch({ limit: 100 });
-
     const reversedMessages = messages.reverse();
 
+    // Process messages in parallel batches
+    const messageBatches = [];
     for (const [_, msg] of reversedMessages) {
-      // Destructure the message from the Collection
       if (!msg || !msg.attachments || msg.attachments.size <= 0) continue;
+      messageBatches.push(msg);
+    }
 
-      for (const [_, attachment] of msg.attachments) {
-        // Destructure the attachment from the Collection
-        const contentType = attachment.contentType;
+    // Process messages in parallel, 10 at a time
+    for (let i = 0; i < messageBatches.length; i += 10) {
+      const batch = messageBatches.slice(i, i + 10);
+      const batchPromises = batch.map(async (msg) => {
+        const msgAttachments = [];
+        for (const [_, attachment] of msg.attachments) {
+          msgAttachments.push({
+            attachment,
+            author: msg.author,
+            timestamp: msg.createdAt,
+          });
+        }
+        return msgAttachments;
+      });
+
+      const batchResults = await Promise.all(batchPromises);
+      const flattenedAttachments = batchResults.flat();
+
+      // Send to CDN in parallel, 10 at a time
+      for (let j = 0; j < flattenedAttachments.length; j += 10) {
+        const attachmentBatch = flattenedAttachments.slice(j, j + 10);
+        const files = attachmentBatch.map((item) => item.attachment.url);
+
+        // Create a single content message for the batch
+        const content = `Sent by ${attachmentBatch[0].author.toString()}\nTimestamp: ${attachmentBatch[0].timestamp.toLocaleString(
+          "en-US",
+          {
+            timeZone: "Asia/Manila",
+          }
+        )}`;
 
         try {
           const cdnMessage = await client.channels.cache.get(cdnChannel).send({
-            content: `Sent by ${msg.author.toString()}\nTimestamp: ${msg.createdAt.toLocaleString(
-              "en-US",
-              {
-                timeZone: "Asia/Manila",
-              }
-            )}`,
-            files: [attachment.url],
+            content,
+            files,
           });
 
-          const cdnMessageAttachment = cdnMessage.attachments.first();
-          if (!cdnMessageAttachment) continue;
+          // Process attachments in parallel
+          const attachmentPromises = Array.from(
+            cdnMessage.attachments.values()
+          ).map(async (cdnAttachment, index) => {
+            const originalAttachment = attachmentBatch[index].attachment;
+            const contentType = originalAttachment.contentType;
+            const attachmentUrl = cdnAttachment.proxyURL || cdnAttachment.url;
 
-          const attachmentUrl =
-            cdnMessageAttachment.proxyURL || cdnMessageAttachment.url;
+            if (
+              contentType?.startsWith("image/") ||
+              contentType?.startsWith("video/")
+            ) {
+              attachments.media.push(attachmentUrl);
+            } else if (contentType === "application/pdf") {
+              attachments.pdf.push(attachmentUrl);
+            }
+          });
 
-          // Filter for media (images/videos) and PDF files
-          if (
-            contentType?.startsWith("image/") ||
-            contentType?.startsWith("video/")
-          ) {
-            attachments.media.push(attachmentUrl);
-          } else if (contentType === "application/pdf") {
-            attachments.pdf.push(attachmentUrl);
-          }
-        } catch (attachmentError) {
-          console.error(
-            `Error processing attachment: ${attachmentError.message}`
-          );
+          await Promise.all(attachmentPromises);
+        } catch (batchError) {
+          console.error(`Error processing batch: ${batchError.message}`);
           continue;
         }
       }
