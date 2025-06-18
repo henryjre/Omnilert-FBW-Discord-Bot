@@ -176,7 +176,10 @@ const sessionClose = async (req, res) => {
 
     const totalOtherPayments =
       otherPayments.length > 0
-        ? otherPayments.reduce((total, item) => total + Math.abs(item.amount), 0)
+        ? otherPayments.reduce(
+            (total, item) => total + Math.abs(item.amount),
+            0
+          )
         : 0;
 
     let totalRefunds = 0;
@@ -223,6 +226,10 @@ const sessionClose = async (req, res) => {
 
     const salesReportFields = [
       {
+        name: "Gross Sales",
+        value: pesoFormatter.format(grossSales),
+      },
+      {
         name: "PWD and Senior Discount",
         value: pwdDiscount
           ? pesoFormatter.format(pwdDiscount.amount)
@@ -230,7 +237,9 @@ const sessionClose = async (req, res) => {
       },
       {
         name: "XOPB",
-        value: xopb ? pesoFormatter.format(xopb.amount) : pesoFormatter.format(0),
+        value: xopb
+          ? pesoFormatter.format(xopb.amount)
+          : pesoFormatter.format(0),
       },
       {
         name: "GC100",
@@ -249,8 +258,8 @@ const sessionClose = async (req, res) => {
         value: pesoFormatter.format(totalRefunds),
       },
       {
-        name: "Gross Sales",
-        value: pesoFormatter.format(grossSales),
+        name: "Net Sales",
+        value: pesoFormatter.format(netSales),
       },
     ];
 
@@ -295,7 +304,7 @@ const sessionClose = async (req, res) => {
             : "No cash out found.",
       },
       {
-        name: "Payments",
+        name: "Cash Payments",
         value: cashPayments
           ? pesoFormatter.format(cashPayments.amount)
           : pesoFormatter.format(0),
@@ -329,12 +338,18 @@ const sessionClose = async (req, res) => {
 
     const buttonRow = new ActionRowBuilder().addComponents(submit);
 
-    await posThread.send({ embeds: [salesReportEmbed], components: [buttonRow] });
+    await posThread.send({
+      embeds: [salesReportEmbed],
+      components: [buttonRow],
+    });
     await posThread.send({
       embeds: [nonCashReportEmbed],
       components: [buttonRow],
     });
-    await posThread.send({ embeds: [cashReportEmbed], components: [buttonRow] });
+    await posThread.send({
+      embeds: [cashReportEmbed],
+      components: [buttonRow],
+    });
     await posThread.send({ embeds: [closingEmbed] });
 
     return res.status(200).json({ ok: true, message: "Webhook received" });
