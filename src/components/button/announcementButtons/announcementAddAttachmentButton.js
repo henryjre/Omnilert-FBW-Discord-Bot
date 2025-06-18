@@ -82,7 +82,7 @@ module.exports = {
   },
 };
 
-async function fetchThreadAttachments(interaction, thread) {
+async function fetchThreadAttachments(interaction, thread, client) {
   const attachments = {
     media: [],
     pdf: [],
