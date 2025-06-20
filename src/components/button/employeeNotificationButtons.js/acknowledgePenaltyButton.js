@@ -25,9 +25,13 @@ module.exports = {
       });
     }
 
-    messageEmbed.data.footer = {
-      text: `NOTIFICATION ACKNOWLEDGED`,
-    };
+    if (messageEmbed.data.footer) {
+      messageEmbed.data.footer.text += `\n\u200b\nNOTIFICATION ACKNOWLEDGED`;
+    } else {
+      messageEmbed.data.footer = {
+        text: `NOTIFICATION ACKNOWLEDGED`,
+      };
+    }
 
     messageEmbed.data.color = 5763719;
 
