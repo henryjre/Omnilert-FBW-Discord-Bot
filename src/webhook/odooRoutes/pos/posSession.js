@@ -277,13 +277,6 @@ const sessionClose = async (req, res) => {
           ]
         : [];
 
-    if (otherPayments.length > 0) {
-      nonCashReportFields.push({
-        name: "Total Non-Cash Payments",
-        value: pesoFormatter.format(totalOtherPayments),
-      });
-    }
-
     const cashReportFields = [
       {
         name: "Cash In",
