@@ -7,7 +7,7 @@ const {
   TextInputStyle,
 } = require("discord.js");
 
-const accountingRole = "1314815202679590984";
+const managementRole = "1314413671245676685";
 
 module.exports = {
   data: {
@@ -18,7 +18,7 @@ module.exports = {
 
     const replyEmbed = new EmbedBuilder();
 
-    if (!interaction.member.roles.cache.has(accountingRole)) {
+    if (!interaction.member.roles.cache.has(managementRole)) {
       replyEmbed
         .setDescription(`🔴 ERROR: You cannot use this button.`)
         .setColor("Red");
