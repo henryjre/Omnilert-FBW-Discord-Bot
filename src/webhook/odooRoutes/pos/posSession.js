@@ -112,6 +112,7 @@ const sessionClose = async (req, res) => {
       x_payment_methods,
       x_refund_orders,
       x_statement_lines,
+      closing_notes,
     } = req.body;
 
     const department = departments.find((d) => d.id === company_id);
@@ -329,6 +330,10 @@ const sessionClose = async (req, res) => {
       .setTitle(` 🔴 Register Closed`)
       .setColor("#FF0000")
       .addFields(closingFields);
+
+    if (closing_notes && closing_notes.length > 0) {
+      closingEmbed.setDescription(`${closing_notes}`);
+    }
 
     const submit = new ButtonBuilder()
       .setCustomId("posOrderAudit")
