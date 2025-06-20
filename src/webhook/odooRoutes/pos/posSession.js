@@ -332,7 +332,7 @@ const sessionClose = async (req, res) => {
       .addFields(closingFields);
 
     if (closing_notes && closing_notes.length > 0) {
-      closingEmbed.setDescription(`${closing_notes}`);
+      closingEmbed.setDescription(`>>> *${closing_notes}*`);
     }
 
     const submit = new ButtonBuilder()
