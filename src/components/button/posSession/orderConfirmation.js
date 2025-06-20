@@ -61,14 +61,15 @@ module.exports = {
 
       const posThread = await sessionMessage.thread;
 
+      console.log(posThread);
+
       if (!posThread) {
         return await interaction.followUp({
           content: `🔴 ERROR: No thread found.`,
           flags: MessageFlags.Ephemeral,
         });
+        W;
       }
-
-      const threadName = posThread.name;
 
       messageEmbed.data.footer = {
         text: `Confirmed By: ${interaction.member.nickname.replace(
@@ -88,6 +89,8 @@ module.exports = {
         embeds: [messageEmbed],
         components: [buttonRow],
       });
+
+      const threadName = posThread.name;
 
       if (threadName.includes("Token Pay Proof")) {
         const customerField = messageEmbed.data.fields.find(
