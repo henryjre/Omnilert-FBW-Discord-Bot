@@ -68,6 +68,8 @@ module.exports = {
         });
       }
 
+      const threadName = posThread.name;
+
       messageEmbed.data.footer = {
         text: `Confirmed By: ${interaction.member.nickname.replace(
           /^[🔴🟢]\s*/,
@@ -86,6 +88,40 @@ module.exports = {
         embeds: [messageEmbed],
         components: [buttonRow],
       });
+
+      if (threadName.includes("Token Pay Proof")) {
+        const customerField = messageEmbed.data.fields.find(
+          (f) => f.name === "Customer"
+        );
+
+        const customer = customerField.value;
+
+        if (customer !== "No user found") {
+          const confirmButton = new ButtonBuilder()
+            .setCustomId("acknowledgePenalty")
+            .setLabel("Acknowledge")
+            .setStyle(ButtonStyle.Success);
+
+          const acknowledgeButtonRow = new ActionRowBuilder().addComponents(
+            confirmButton
+          );
+
+          const employeeNotifChannel = client.channels.cache.get(
+            "1347592755706200155"
+          );
+
+          messageEmbed.data.description = messageEmbed.data.description.replace(
+            "Verification",
+            "Notification"
+          );
+
+          await employeeNotifChannel.send({
+            content: customer,
+            embeds: [messageEmbed],
+            components: [acknowledgeButtonRow],
+          });
+        }
+      }
 
       // Add error handling for deletions
       try {
