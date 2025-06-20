@@ -110,7 +110,20 @@ module.exports = {
           embeds: [messageEmbed],
         });
 
-        await interaction.message.delete();
+        try {
+          await interaction.message.delete();
+
+          if (interaction.message.thread) {
+            await interaction.message.thread.delete();
+          }
+        } catch (error) {
+          console.error("Error deleting messages:", error);
+          await interaction.followUp({
+            content:
+              "🔴 ERROR: Failed to clean up messages. Please contact an administrator.",
+            flags: MessageFlags.Ephemeral,
+          });
+        }
       }
     } catch (error) {
       console.log(error);
