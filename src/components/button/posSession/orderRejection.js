@@ -5,6 +5,8 @@ const {
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
+  ButtonBuilder,
+  ButtonStyle,
 } = require("discord.js");
 
 const departments = require("../../../config/departments.json");
@@ -105,9 +107,17 @@ module.exports = {
           )}`,
         };
 
+        const submit = new ButtonBuilder()
+          .setCustomId("posOrderAudit")
+          .setLabel("Audit")
+          .setStyle(ButtonStyle.Primary);
+
+        const buttonRow = new ActionRowBuilder().addComponents(submit);
+
         await posThread.send({
           content: `<@&${managementRole}>`,
           embeds: [messageEmbed],
+          components: [buttonRow],
         });
 
         try {
