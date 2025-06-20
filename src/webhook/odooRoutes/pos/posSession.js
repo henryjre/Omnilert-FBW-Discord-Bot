@@ -716,12 +716,14 @@ const tokenPayOrder = async (req, res) => {
   );
   const orderDate = formatDateTime(date_order);
 
-  let mentionable;
+  let mentionable, customerMentionable;
 
-  if (x_customer_discord_id) {
-    mentionable = `<@${x_customer_discord_id}>`;
+  if (x_discord_id) {
+    mentionable = `<@${x_discord_id}>`;
+    customerMentionable = `<@${x_customer_discord_id}>`;
   } else {
     mentionable = `<@&${department.role}>`;
+    customerMentionable = `the crew customer`;
   }
 
   let orderLinesMessage = "";
@@ -766,12 +768,12 @@ const tokenPayOrder = async (req, res) => {
     .setColor("Orange")
     .addFields(fields)
     .setFooter({
-      text: `Click the "Approve" button to confirm the approval of the order. Reject to add rejection reason.`,
+      text: `Please send a photo as proof in the thread below this message and click "Confirm" to verify.`,
     });
 
   const confirm = new ButtonBuilder()
-    .setCustomId("posOrderVerificationApprove")
-    .setLabel("Approve")
+    .setCustomId("posOrderVerificationConfirm")
+    .setLabel("Confirm")
     .setStyle(ButtonStyle.Success);
 
   const reject = new ButtonBuilder()
@@ -784,6 +786,15 @@ const tokenPayOrder = async (req, res) => {
     content: mentionable,
     embeds: [orderEmbed],
     components: [buttonRow],
+  });
+
+  const proofThread = await orderDiscordMessage.startThread({
+    name: `Token Pay Proof - ${orderDiscordMessage.id}`,
+    type: ChannelType.PublicThread, // Set to 'GuildPrivateThread' if only the user should see it
+  });
+
+  await proofThread.send({
+    content: `📸 **${mentionable}, please upload the captured picture of ${customerMentionable} ordering here as proof.**`,
   });
 
   return res.status(200).json({ ok: true, message: "Webhook received" });
