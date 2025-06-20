@@ -32,7 +32,8 @@ module.exports = {
 
       if (
         thread.name.includes("Discount Proof") ||
-        thread.name.includes("Receipt Proof")
+        thread.name.includes("Receipt Proof") ||
+        thread.name.includes("Token Pay Proof")
       ) {
         return await client.events
           .get("orderDiscountProof")
