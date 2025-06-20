@@ -61,8 +61,6 @@ module.exports = {
 
       const posThread = await sessionMessage.thread;
 
-      console.log(posThread);
-
       if (!posThread) {
         return await interaction.followUp({
           content: `🔴 ERROR: No thread found.`,
@@ -90,9 +88,7 @@ module.exports = {
         components: [buttonRow],
       });
 
-      const threadName = posThread.name;
-
-      if (threadName.includes("Token Pay Proof")) {
+      if (interaction.message.thread.name.includes("Token Pay Proof")) {
         const customerField = messageEmbed.data.fields.find(
           (f) => f.name === "Customer"
         );
