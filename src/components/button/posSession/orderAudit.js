@@ -65,8 +65,10 @@ module.exports = {
 
         const auditor = interaction.member.nickname.replace(/^[🔴🟢]\s*/, "");
 
-        if (details) {
+        if (messageEmbed.data.description) {
           messageEmbed.data.description += `\n\u200b\nAudit Opinion:\n> *"${details}"*\n\u200b`;
+        } else {
+          messageEmbed.data.description = `Audit Opinion:\n> *"${details}"*`;
         }
 
         if (messageEmbed.data.footer) {
