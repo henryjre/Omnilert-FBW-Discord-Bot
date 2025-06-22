@@ -354,7 +354,7 @@ const sessionClose = async (req, res) => {
       embeds: [cashReportEmbed],
       components: [buttonRow],
     });
-    await posThread.send({ embeds: [closingEmbed] });
+    await posThread.send({ embeds: [closingEmbed], components: [buttonRow] });
 
     return res.status(200).json({ ok: true, message: "Webhook received" });
   } catch (error) {
