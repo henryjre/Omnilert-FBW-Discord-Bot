@@ -97,7 +97,7 @@ module.exports = {
         }
 
         if (details) {
-          messageEmbed.data.description += `\n\u200b\nReason for Refund:\n> *"${details}"*\n\u200b`;
+          messageEmbed.data.description += `\n\u200b\nReason for Rejection:\n> *"${details}"*\n\u200b`;
         }
 
         messageEmbed.data.footer = {
