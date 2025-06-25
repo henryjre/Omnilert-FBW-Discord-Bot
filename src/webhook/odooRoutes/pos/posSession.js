@@ -837,7 +837,7 @@ const ispeOrder = async (req, res) => {
   const fields = [
     { name: "Session Name", value: x_pos_session },
     { name: "Order Reference", value: name },
-    { name: "Vendor Reference", value: partner_ref },
+    { name: "Vendor Reference", value: partner_ref || "N/A" },
     { name: "Branch", value: departmentName },
     { name: "Confirmation Date", value: orderDate },
     {
@@ -850,7 +850,7 @@ const ispeOrder = async (req, res) => {
     },
   ];
 
-  console.log(fields)
+  console.log(fields);
 
   const orderEmbed = new EmbedBuilder()
     .setDescription(`## 🛒 ISPE Order Verification`)
