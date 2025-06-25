@@ -25,7 +25,12 @@ module.exports = {
 
       const messageMention = interaction.message.mentions.users.first();
 
-      if (interaction.user.id !== messageMention?.id) {
+      const isNotMentionedUser = interaction.user.id !== messageMention?.id;
+      const doesNotHaveRole = !interaction.member.roles.cache.has(
+        messageMention?.id
+      );
+
+      if (isNotMentionedUser || doesNotHaveRole) {
         replyEmbed
           .setDescription(`🔴 ERROR: You cannot use this button.`)
           .setColor("Red");
