@@ -33,12 +33,12 @@ module.exports = {
 
     let messageEmbed = originalMessage.embeds[0];
 
+    const messageEmbedsArray = originalMessage.embeds;
+
     messageEmbed.data.fields.push({
       name: "Cashier",
       value: message.author.toString(),
     });
-
-    const newEmbeds = [messageEmbed];
 
     for (const attachment of cdnAttachmentsUrls) {
       const attachmentEmbed = {
@@ -48,11 +48,11 @@ module.exports = {
         },
       };
 
-      newEmbeds.push(attachmentEmbed);
+      messageEmbedsArray.push(attachmentEmbed);
     }
 
     await originalMessage.edit({
-      embeds: newEmbeds,
+      embeds: messageEmbedsArray,
     });
   },
 };
