@@ -35,9 +35,14 @@ module.exports = {
 
     const messageEmbedsArray = originalMessage.embeds;
 
-    messageEmbed.data.fields.push({
-      name: "Cashier",
-      value: message.author.toString(),
+    const cashierField = messageEmbed.data.fields.find(
+      (field) => field.name === "Cashier"
+    );
+
+    if (!cashierField) {
+      messageEmbed.data.fields.push({
+        name: "Cashier",
+        value: message.author.toString(),
     });
 
     for (const attachment of cdnAttachmentsUrls) {
