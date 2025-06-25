@@ -798,15 +798,6 @@ const tokenPayOrder = async (req, res) => {
   return res.status(200).json({ ok: true, message: "Webhook received" });
 };
 
-module.exports = {
-  sessionOpen,
-  sessionClose,
-  discountOrder,
-  refundOrder,
-  tokenPayOrder,
-  nonCashOrder,
-};
-
 const ispeOrder = async (req, res) => {
   const {
     amount_total,
@@ -892,6 +883,16 @@ const ispeOrder = async (req, res) => {
   });
 
   return res.status(200).json({ ok: true, message: "Webhook received" });
+};
+
+module.exports = {
+  sessionOpen,
+  sessionClose,
+  discountOrder,
+  refundOrder,
+  tokenPayOrder,
+  nonCashOrder,
+  ispeOrder,
 };
 
 ////////////////////////// HELPER FUNCTIONS /////////////////////////////////////////
