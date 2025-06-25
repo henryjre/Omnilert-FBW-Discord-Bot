@@ -850,8 +850,6 @@ const ispeOrder = async (req, res) => {
     },
   ];
 
-  console.log(fields);
-
   const orderEmbed = new EmbedBuilder()
     .setDescription(`## 🛒 ISPE Order Verification`)
     .setURL("https://omnilert.odoo.com/")
