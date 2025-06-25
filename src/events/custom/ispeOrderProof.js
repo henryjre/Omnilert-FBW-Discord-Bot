@@ -31,7 +31,12 @@ module.exports = {
 
     const originalMessage = await thread.fetchStarterMessage();
 
-    const messageEmbed = originalMessage.embeds[0];
+    let messageEmbed = originalMessage.embeds[0];
+
+    messageEmbed.data.fields.push({
+      name: "Cashier",
+      value: message.author.toString(),
+    });
 
     const newEmbeds = [messageEmbed];
 
