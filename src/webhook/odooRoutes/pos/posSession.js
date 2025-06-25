@@ -411,7 +411,7 @@ const discountOrder = async (req, res) => {
     orderLinesMessage += `> **Quantity:** ${order.qty} ${order.uom_name}\n`;
     orderLinesMessage += `> **Unit Price:** ${pesoFormatter.format(
       order.price_unit
-    )} ${order.uom_name}`;
+    )}`;
     orderLinesMessage += `\n\n`;
   }
 
@@ -522,7 +522,7 @@ const nonCashOrder = async (req, res) => {
     orderLinesMessage += `> **Quantity:** ${order.qty} ${order.uom_name}\n`;
     orderLinesMessage += `> **Unit Price:** ${pesoFormatter.format(
       order.price_unit
-    )} ${order.uom_name}`;
+    )}`;
     orderLinesMessage += `\n\n`;
   }
 
@@ -637,7 +637,7 @@ const refundOrder = async (req, res) => {
     orderLinesMessage += `> **Quantity:** ${order.qty} ${order.uom_name}\n`;
     orderLinesMessage += `> **Unit Price:** ${pesoFormatter.format(
       order.price_unit
-    )} ${order.uom_name}`;
+    )}`;
     orderLinesMessage += `\n\n`;
   }
 
@@ -731,7 +731,7 @@ const tokenPayOrder = async (req, res) => {
     orderLinesMessage += `> **Quantity:** ${order.qty} ${order.uom_name}\n`;
     orderLinesMessage += `> **Unit Price:** ${pesoFormatter.format(
       order.price_unit
-    )} ${order.uom_name}`;
+    )}`;
     orderLinesMessage += `\n\n`;
   }
 
@@ -805,6 +805,93 @@ module.exports = {
   refundOrder,
   tokenPayOrder,
   nonCashOrder,
+};
+
+const ispeOrder = async (req, res) => {
+  const {
+    amount_total,
+    name,
+    partner_ref,
+    x_pos_session,
+    company_id,
+    x_order_line_details,
+    date_approve,
+  } = req.body;
+
+  const department = departments.find((d) => d.id === company_id);
+
+  if (!department) {
+    return res.status(200).json({ ok: true, message: "Webhook received" });
+  }
+
+  const departmentName = department.name;
+  const mentionable = `<@&${department.role}>`;
+
+  const orderDate = formatDateTime(date_approve);
+
+  let orderLinesMessage = "";
+
+  for (const order of x_order_line_details) {
+    orderLinesMessage += `> **Name:** ${order.product_name}\n`;
+    orderLinesMessage += `> **Quantity:** ${order.quantity} ${order.uom_name}\n`;
+    orderLinesMessage += `> **Unit Price:** ${pesoFormatter.format(
+      order.price_unit
+    )}`;
+    orderLinesMessage += `\n\n`;
+  }
+
+  const fields = [
+    { name: "Session Name", value: x_pos_session },
+    { name: "Order Reference", value: name },
+    { name: "Vendor Reference", value: partner_ref },
+    { name: "Branch", value: departmentName },
+    { name: "Confirmation Date", value: orderDate },
+    {
+      name: "Products",
+      value: orderLinesMessage,
+    },
+    {
+      name: "Amount Total",
+      value: pesoFormatter.format(amount_total),
+    },
+  ];
+
+  const orderEmbed = new EmbedBuilder()
+    .setDescription(`## 🛒 ISPE Order Verification`)
+    .setURL("https://omnilert.odoo.com/")
+    .setColor("White")
+    .addFields(fields)
+    .setFooter({
+      text: `Please send the receipts as proof in the thread below this message and click "Confirm" to verify.`,
+    });
+
+  const confirm = new ButtonBuilder()
+    .setCustomId("posOrderVerificationConfirm")
+    .setLabel("Confirm")
+    .setStyle(ButtonStyle.Success);
+
+  const reject = new ButtonBuilder()
+    .setCustomId("posOrderVerificationReject")
+    .setLabel("Reject")
+    .setStyle(ButtonStyle.Danger);
+  const buttonRow = new ActionRowBuilder().addComponents(confirm, reject);
+
+  const orderDiscordMessage = await verificationChannel.send({
+    content: mentionable,
+    embeds: [orderEmbed],
+    components: [buttonRow],
+  });
+
+  const proofThread = await orderDiscordMessage.startThread({
+    name: `ISPE Receipts Proof - ${orderDiscordMessage.id}`,
+    type: ChannelType.PublicThread, // Set to 'GuildPrivateThread' if only the user should see it
+  });
+
+  await proofThread.send({
+    content: `📸 **${mentionable}, please upload the receipts here as proof.**`,
+  });
+
+  return res.status(200).json({ ok: true, message: "Webhook received" });
 };
 
 ////////////////////////// HELPER FUNCTIONS /////////////////////////////////////////
