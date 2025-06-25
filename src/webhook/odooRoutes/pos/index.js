@@ -6,6 +6,7 @@ const {
   tokenPayOrder,
   sessionClose,
   nonCashOrder,
+  ispeOrder,
 } = require("./posSession");
 
 // /odoo/pos/pos_open
@@ -25,5 +26,8 @@ pos.post("/refund_order", refundOrder);
 
 // /odoo/pos/token_pay_order
 pos.post("/token_pay_order", tokenPayOrder);
+
+// /odoo/pos/ispe_order
+pos.post("/ispe_order", ispeOrder);
 
 module.exports = pos;
