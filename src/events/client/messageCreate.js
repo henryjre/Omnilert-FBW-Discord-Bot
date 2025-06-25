@@ -39,6 +39,12 @@ module.exports = {
           .get("orderDiscountProof")
           .execute(message, thread, client);
       }
+
+      if (thread.name.includes("ISPE Receipts Proof")) {
+        return await client.events
+          .get("ispeOrderProof")
+          .execute(message, thread, client);
+      }
     }
   },
 };
