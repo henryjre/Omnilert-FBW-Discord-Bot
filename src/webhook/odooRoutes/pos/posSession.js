@@ -817,6 +817,9 @@ const ispeOrder = async (req, res) => {
 
   const departmentName = department.name;
   const mentionable = `<@&${department.role}>`;
+  const verificationChannel = client.channels.cache.get(
+    department.verificationChannel
+  );
 
   const orderDate = formatDateTime(date_approve);
 
