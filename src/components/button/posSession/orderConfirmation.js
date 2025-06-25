@@ -23,22 +23,39 @@ module.exports = {
       );
       const image = messageEmbed.data.image;
 
-      const messageMention = interaction.message.mentions.users.first();
+      const mentionedUser = interaction.message.mentions.users.first();
+      const mentionedRole = interaction.message.mentions.roles.first();
 
-      const isNotMentionedUser = interaction.user.id !== messageMention?.id;
-      const doesNotHaveRole = !interaction.member.roles.cache.has(
-        messageMention?.id
-      );
+      if (mentionedUser) {
+        // Handle user mention
+        const isNotMentionedUser = interaction.user.id !== mentionedUser.id;
 
-      if (isNotMentionedUser) {
-        replyEmbed
-          .setDescription(`🔴 ERROR: You cannot use this button.`)
-          .setColor("Red");
+        if (isNotMentionedUser) {
+          replyEmbed
+            .setDescription(`🔴 ERROR: You cannot use this button.`)
+            .setColor("Red");
 
-        return await interaction.reply({
-          embeds: [replyEmbed],
-          flags: MessageFlags.Ephemeral,
-        });
+          return await interaction.reply({
+            embeds: [replyEmbed],
+            flags: MessageFlags.Ephemeral,
+          });
+        }
+      } else if (mentionedRole) {
+        // Handle role mention
+        const doesNotHaveRole = !interaction.member.roles.cache.has(
+          mentionedRole.id
+        );
+
+        if (doesNotHaveRole) {
+          replyEmbed
+            .setDescription(`🔴 ERROR: You cannot use this button.`)
+            .setColor("Red");
+
+          return await interaction.reply({
+            embeds: [replyEmbed],
+            flags: MessageFlags.Ephemeral,
+          });
+        }
       }
 
       await interaction.deferUpdate();
