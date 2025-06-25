@@ -30,7 +30,7 @@ module.exports = {
         messageMention?.id
       );
 
-      if (isNotMentionedUser || doesNotHaveRole) {
+      if (isNotMentionedUser) {
         replyEmbed
           .setDescription(`🔴 ERROR: You cannot use this button.`)
           .setColor("Red");
