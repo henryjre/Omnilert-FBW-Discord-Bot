@@ -122,6 +122,10 @@ const sessionClose = async (req, res) => {
     }
 
     const sessionChannel = client.channels.cache.get(department.posChannel);
+    const verificationChannel = client.channels.cache.get(
+      department.verificationChannel
+    );
+
     if (!sessionChannel) {
       return res.status(200).json({ ok: true, message: "Channel not found" });
     }
@@ -355,6 +359,38 @@ const sessionClose = async (req, res) => {
       components: [buttonRow],
     });
     await posThread.send({ embeds: [closingEmbed], components: [buttonRow] });
+
+    // const pcfEmbed = new EmbedBuilder()
+    //   .setDescription(`## 📝 PCF Report`)
+    //   .setColor("White")
+    //   .addFields([
+    //     {
+    //       name: "Opening PCF Expected",
+    //       value: "N/A",
+    //     },
+    //     {
+    //       name: "Closing PCF Expected",
+    //       value: "N/A",
+    //     },
+    //     {
+    //       name: "Closing PCF Counted",
+    //       value: "N/A",
+    //     },
+    //     {
+    //       name: "Closing PCF Difference",
+    //       value: "N/A",
+    //     },
+    //   ])
+    //   .setFooter({
+    //     text: "Please click the 'Input' button to add details to the PCF report.",
+    //   });
+
+    // const inputButton = new ButtonBuilder()
+    //   .setCustomId("posPcfInput")
+    //   .setLabel("Input")
+    //   .setStyle(ButtonStyle.Primary);
+
+    // await posThread.send({ embeds: [pcfEmbed] });
 
     return res.status(200).json({ ok: true, message: "Webhook received" });
   } catch (error) {
