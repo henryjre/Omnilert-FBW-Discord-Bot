@@ -43,7 +43,8 @@ module.exports = {
       messageEmbed.data.fields.push({
         name: "Cashier",
         value: message.author.toString(),
-    });
+      });
+    }
 
     for (const attachment of cdnAttachmentsUrls) {
       const attachmentEmbed = {
