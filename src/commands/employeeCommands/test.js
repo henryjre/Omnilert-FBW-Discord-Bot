@@ -3,6 +3,6 @@ module.exports = {
     .setName("ping")
     .setDescription("Testing purposes!"),
   async execute(interaction, client) {
-    
+    interaction.reply("pong!")
   },
 };
