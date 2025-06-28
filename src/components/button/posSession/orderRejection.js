@@ -26,17 +26,39 @@ module.exports = {
       (f) => f.name === "Session Name"
     );
 
-    const messageMention = interaction.message.mentions.users.first();
+    const mentionedUser = interaction.message.mentions.users.first();
+    const mentionedRole = interaction.message.mentions.roles.first();
 
-    if (interaction.user.id !== messageMention?.id) {
-      replyEmbed
-        .setDescription(`🔴 ERROR: You cannot use this button.`)
-        .setColor("Red");
+    if (mentionedUser) {
+      // Handle user mention
+      const isNotMentionedUser = interaction.user.id !== mentionedUser.id;
 
-      return await interaction.reply({
-        embeds: [replyEmbed],
-        flags: MessageFlags.Ephemeral,
-      });
+      if (isNotMentionedUser) {
+        replyEmbed
+          .setDescription(`🔴 ERROR: You cannot use this button.`)
+          .setColor("Red");
+
+        return await interaction.reply({
+          embeds: [replyEmbed],
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+    } else if (mentionedRole) {
+      // Handle role mention
+      const doesNotHaveRole = !interaction.member.roles.cache.has(
+        mentionedRole.id
+      );
+
+      if (doesNotHaveRole) {
+        replyEmbed
+          .setDescription(`🔴 ERROR: You cannot use this button.`)
+          .setColor("Red");
+
+        return await interaction.reply({
+          embeds: [replyEmbed],
+          flags: MessageFlags.Ephemeral,
+        });
+      }
     }
 
     const modal = new ModalBuilder()
