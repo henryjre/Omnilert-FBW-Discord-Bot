@@ -14,14 +14,17 @@ module.exports = {
   },
   async execute(interaction, client) {
     try {
-      let messageEmbed = interaction.message.embeds[0];
+      let allEmbeds = interaction.message.embeds;
+      const messageEmbed = allEmbeds[0];
 
       const replyEmbed = new EmbedBuilder();
 
       const sessionField = messageEmbed.data.fields.find(
         (f) => f.name === "Session Name"
       );
+
       const image = messageEmbed.data.image;
+      const url = messageEmbed.data.url;
 
       const mentionedUser = interaction.message.mentions.users.first();
       const mentionedRole = interaction.message.mentions.roles.first();
@@ -60,7 +63,7 @@ module.exports = {
 
       await interaction.deferUpdate();
 
-      if (!image) {
+      if (!image && !url) {
         return await interaction.followUp({
           content: `🔴 ERROR: No proof of order found. Please send a photo as proof in the thread below and click "Confirm" to verify.`,
           flags: MessageFlags.Ephemeral,
@@ -106,7 +109,7 @@ module.exports = {
       const buttonRow = new ActionRowBuilder().addComponents(submit);
 
       await posThread.send({
-        embeds: [messageEmbed],
+        embeds: allEmbeds,
         components: [buttonRow],
       });
 
@@ -138,7 +141,7 @@ module.exports = {
 
           await employeeNotifChannel.send({
             content: customer,
-            embeds: [messageEmbed],
+            embeds: allEmbeds,
             components: [acknowledgeButtonRow],
           });
         }
