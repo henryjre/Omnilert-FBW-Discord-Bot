@@ -14,7 +14,8 @@ module.exports = {
     name: `posOrderAudit`,
   },
   async execute(interaction, client) {
-    let messageEmbed = interaction.message.embeds[0];
+    let allEmbeds = interaction.message.embeds;
+    const messageEmbed = allEmbeds[0];
 
     const replyEmbed = new EmbedBuilder();
 
@@ -63,7 +64,7 @@ module.exports = {
       if (modalResponse.isModalSubmit()) {
         const details = modalResponse.fields.getTextInputValue("auditReason");
 
-        const auditor = interaction.member.nickname.replace(/^[🔴🟢]\s*/, "")
+        const auditor = interaction.member.nickname.replace(/^[🔴🟢]\s*/, "");
 
         if (messageEmbed.data.footer) {
           messageEmbed.data.footer = {
@@ -78,7 +79,7 @@ module.exports = {
         messageEmbed.data.color = 5793266;
 
         await interaction.message.edit({
-          embeds: [messageEmbed],
+          embeds: allEmbeds,
           components: [],
         });
       }
