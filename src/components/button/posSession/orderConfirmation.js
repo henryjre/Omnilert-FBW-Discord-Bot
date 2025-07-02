@@ -113,7 +113,10 @@ module.exports = {
         components: [buttonRow],
       });
 
-      if (interaction.message.thread.name.includes("Token Pay Proof")) {
+      if (
+        interaction.message.thread &&
+        interaction.message.thread.name.includes("Token Pay Proof")
+      ) {
         const customerField = messageEmbed.data.fields.find(
           (f) => f.name === "Customer"
         );
