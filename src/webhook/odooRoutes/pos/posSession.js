@@ -190,7 +190,7 @@ const sessionClose = async (req, res) => {
     let totalRefunds = 0;
     if (x_refund_orders) {
       totalRefunds = x_refund_orders.reduce(
-        (total, item) => total + Math.abs(item.price_unit),
+        (total, item) => total + Math.abs(item.price_unit * item.qty),
         0
       );
     }
