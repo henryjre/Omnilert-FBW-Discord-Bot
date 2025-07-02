@@ -18,7 +18,8 @@ module.exports = {
     name: `posOrderVerificationReject`,
   },
   async execute(interaction, client) {
-    let messageEmbed = interaction.message.embeds[0];
+    let allEmbeds = interaction.message.embeds;
+    const messageEmbed = allEmbeds[0];
 
     const replyEmbed = new EmbedBuilder();
 
@@ -138,7 +139,7 @@ module.exports = {
 
         await posThread.send({
           content: `<@&${managementRole}>`,
-          embeds: [messageEmbed],
+          embeds: allEmbeds,
           components: [buttonRow],
         });
 
