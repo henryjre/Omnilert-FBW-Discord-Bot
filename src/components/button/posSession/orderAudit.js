@@ -63,13 +63,7 @@ module.exports = {
       if (modalResponse.isModalSubmit()) {
         const details = modalResponse.fields.getTextInputValue("auditReason");
 
-        const auditor = interaction.member.nickname.replace(/^[🔴🟢]\s*/, "");
-
-        if (messageEmbed.data.description) {
-          messageEmbed.data.description += `\n\u200b\nAudit Opinion:\n> *"${details}"*\n\u200b`;
-        } else {
-          messageEmbed.data.description = `Audit Opinion:\n> *"${details}"*`;
-        }
+        const auditor = interaction.member.nickname.replace(/^[🔴🟢]\s*/, "")
 
         if (messageEmbed.data.footer) {
           messageEmbed.data.footer = {
