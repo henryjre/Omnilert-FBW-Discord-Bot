@@ -366,6 +366,7 @@ const sessionClose = async (req, res) => {
 
     const pcfEmbed = new EmbedBuilder()
       .setDescription(`## 📝 PCF Report`)
+      .setURL("https://omnilert.odoo.com/")
       .setColor("White")
       .addFields([
         {
@@ -393,12 +394,21 @@ const sessionClose = async (req, res) => {
         text: "Please click the 'Input' button to add details to the PCF report.",
       });
 
+    const confirm = new ButtonBuilder()
+      .setCustomId("posOrderVerificationConfirm")
+      .setLabel("Confirm")
+      .setDisabled(true)
+      .setStyle(ButtonStyle.Success);
+
     const inputButton = new ButtonBuilder()
       .setCustomId("posPcfInput")
       .setLabel("Input")
-      .setStyle(ButtonStyle.Success);
+      .setStyle(ButtonStyle.Secondary);
 
-    const pcfButtonRow = new ActionRowBuilder().addComponents(inputButton);
+    const pcfButtonRow = new ActionRowBuilder().addComponents(
+      confirm,
+      inputButton
+    );
 
     await verificationChannel.send({
       content: `<@&${department.role}>`,
