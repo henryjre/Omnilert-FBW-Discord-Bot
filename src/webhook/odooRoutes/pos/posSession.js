@@ -360,37 +360,50 @@ const sessionClose = async (req, res) => {
     });
     await posThread.send({ embeds: [closingEmbed], components: [buttonRow] });
 
-    // const pcfEmbed = new EmbedBuilder()
-    //   .setDescription(`## 📝 PCF Report`)
-    //   .setColor("White")
-    //   .addFields([
-    //     {
-    //       name: "Opening PCF Expected",
-    //       value: "N/A",
-    //     },
-    //     {
-    //       name: "Closing PCF Expected",
-    //       value: "N/A",
-    //     },
-    //     {
-    //       name: "Closing PCF Counted",
-    //       value: "N/A",
-    //     },
-    //     {
-    //       name: "Closing PCF Difference",
-    //       value: "N/A",
-    //     },
-    //   ])
-    //   .setFooter({
-    //     text: "Please click the 'Input' button to add details to the PCF report.",
-    //   });
+    if (company_id !== 3) {
+      return res.status(200).json({ ok: true, message: "Webhook received" });
+    }
 
-    // const inputButton = new ButtonBuilder()
-    //   .setCustomId("posPcfInput")
-    //   .setLabel("Input")
-    //   .setStyle(ButtonStyle.Primary);
+    const pcfEmbed = new EmbedBuilder()
+      .setDescription(`## 📝 PCF Report`)
+      .setColor("White")
+      .addFields([
+        {
+          name: "Session Name",
+          value: display_name,
+        },
+        {
+          name: "Opening PCF Expected",
+          value: "N/A",
+        },
+        {
+          name: "Closing PCF Expected",
+          value: "N/A",
+        },
+        {
+          name: "Closing PCF Counted",
+          value: "N/A",
+        },
+        {
+          name: "Closing PCF Difference",
+          value: "N/A", // closing counted - closing expected
+        },
+      ])
+      .setFooter({
+        text: "Please click the 'Input' button to add details to the PCF report.",
+      });
 
-    // await posThread.send({ embeds: [pcfEmbed] });
+    const inputButton = new ButtonBuilder()
+      .setCustomId("posPcfInput")
+      .setLabel("Input")
+      .setStyle(ButtonStyle.Success);
+
+    const pcfButtonRow = new ActionRowBuilder().addComponents(inputButton);
+
+    await verificationChannel.send({
+      embeds: [pcfEmbed],
+      components: [pcfButtonRow],
+    });
 
     return res.status(200).json({ ok: true, message: "Webhook received" });
   } catch (error) {
@@ -862,10 +875,14 @@ const ispeOrder = async (req, res) => {
   let orderLinesMessage = "";
 
   for (const order of x_order_line_details) {
-    orderLinesMessage += `> **Name:** ${order.product_name}\n`;
-    orderLinesMessage += `> **Quantity:** ${order.quantity} ${order.uom_name}\n`;
+    orderLinesMessage += `> **Name:** ${
+      order.product_name || "No Product Name"
+    }\n`;
+    orderLinesMessage += `> **Quantity:** ${order.quantity || "N/A"} ${
+      order.uom_name || "N/A"
+    }\n`;
     orderLinesMessage += `> **Unit Price:** ${pesoFormatter.format(
-      order.price_unit
+      order.price_unit || "N/A"
     )}`;
     orderLinesMessage += `\n\n`;
   }
