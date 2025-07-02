@@ -62,8 +62,8 @@ module.exports = {
     }
 
     const modal = new ModalBuilder()
-      .setCustomId(`tokenPayReject_${interaction.id}`)
-      .setTitle(`Token Pay Reject Reason`);
+      .setCustomId(`orderReject${interaction.id}`)
+      .setTitle(`Order Reject Reason`);
 
     const details = new TextInputBuilder()
       .setCustomId(`rejectReason`)
@@ -80,7 +80,7 @@ module.exports = {
     const modalResponse = await interaction.awaitModalSubmit({
       filter: async (i) => {
         const f =
-          i.customId === `tokenPayReject_${interaction.id}` &&
+          i.customId === `orderReject${interaction.id}` &&
           i.user.id === interaction.user.id;
 
         if (f) {
