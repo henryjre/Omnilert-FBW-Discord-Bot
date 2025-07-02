@@ -22,7 +22,7 @@ const managementRole = "1314413671245676685";
 
 module.exports = {
   data: {
-    name: `posOrderVerificationReject`,
+    name: `posPcfInput`,
   },
   async execute(interaction, client) {
     let messageEmbed = interaction.message.embeds[0];
