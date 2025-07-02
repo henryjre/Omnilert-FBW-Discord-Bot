@@ -152,7 +152,9 @@ module.exports = {
 
       // Add error handling for deletions
       try {
-        await interaction.message.thread.delete();
+        if (interaction.message.thread) {
+          await interaction.message.thread.delete();
+        }
         await interaction.message.delete();
       } catch (error) {
         console.error("Error deleting messages:", error);
