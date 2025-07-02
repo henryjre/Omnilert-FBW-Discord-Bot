@@ -175,9 +175,9 @@ const sessionClose = async (req, res) => {
     const gc100 = findDiscount(totalDiscountOrders, 1034);
     const tokenPay = findDiscount(totalDiscountOrders, 1153);
 
-    const otherPayments = x_payment_methods.filter(
-      (item) => item.payment_method_name !== "Cash"
-    );
+    const otherPayments = x_payment_methods
+      ? x_payment_methods.filter((item) => item.payment_method_name !== "Cash")
+      : [];
 
     const totalOtherPayments =
       otherPayments.length > 0
