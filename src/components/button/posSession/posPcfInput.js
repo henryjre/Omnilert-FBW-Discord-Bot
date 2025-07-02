@@ -171,27 +171,6 @@ module.exports = {
         countedField.value = pesoCounted;
         differenceField.value = pesoDifference;
 
-        const department = departments.find(
-          (d) => d.verificationChannel === interaction.message.channelId
-        );
-
-        const posChannel = client.channels.cache.get(department.posChannel);
-
-        const sessionMessage = await posChannel.messages
-          .fetch({ limit: 100 })
-          .then((messages) =>
-            messages.find((msg) => msg.content.includes(sessionName))
-          );
-
-        const posThread = await sessionMessage.thread;
-
-        if (!posThread) {
-          return await modalResponse.followUp({
-            content: `🔴 ERROR: No thread found.`,
-            flags: MessageFlags.Ephemeral,
-          });
-        }
-
         messageEmbed.data.footer = {
           text: `Input By: ${interaction.member.nickname.replace(
             /^[🔴🟢]\s*/,
@@ -199,32 +178,25 @@ module.exports = {
           )}\n\u200b`,
         };
 
-        const submit = new ButtonBuilder()
-          .setCustomId("posOrderAudit")
-          .setLabel("Audit")
-          .setStyle(ButtonStyle.Primary);
+        const confirm = new ButtonBuilder()
+          .setCustomId("posOrderVerificationConfirm")
+          .setLabel("Confirm")
+          .setStyle(ButtonStyle.Success);
 
-        const buttonRow = new ActionRowBuilder().addComponents(submit);
+        const inputButton = new ButtonBuilder()
+          .setCustomId("posPcfInput")
+          .setLabel("Edit Input")
+          .setStyle(ButtonStyle.Secondary);
 
-        await posThread.send({
+        const buttonRow = new ActionRowBuilder().addComponents(
+          confirm,
+          inputButton
+        );
+
+        await interaction.message.edit({
           embeds: [messageEmbed],
           components: [buttonRow],
         });
-
-        try {
-          await interaction.message.delete();
-
-          if (interaction.message.thread) {
-            await interaction.message.thread.delete();
-          }
-        } catch (error) {
-          console.error("Error deleting messages:", error);
-          await interaction.followUp({
-            content:
-              "🔴 ERROR: Failed to clean up messages. Please contact an administrator.",
-            flags: MessageFlags.Ephemeral,
-          });
-        }
       }
     } catch (error) {
       console.log(error);
