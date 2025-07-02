@@ -401,6 +401,7 @@ const sessionClose = async (req, res) => {
     const pcfButtonRow = new ActionRowBuilder().addComponents(inputButton);
 
     await verificationChannel.send({
+      content: `<@&${department.role}>`,
       embeds: [pcfEmbed],
       components: [pcfButtonRow],
     });
