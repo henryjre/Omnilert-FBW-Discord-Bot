@@ -360,10 +360,6 @@ const sessionClose = async (req, res) => {
     });
     await posThread.send({ embeds: [closingEmbed], components: [buttonRow] });
 
-    if (company_id !== 3) {
-      return res.status(200).json({ ok: true, message: "Webhook received" });
-    }
-
     const pcfEmbed = new EmbedBuilder()
       .setDescription(`## 📝 PCF Report`)
       .setURL("https://omnilert.odoo.com/")
