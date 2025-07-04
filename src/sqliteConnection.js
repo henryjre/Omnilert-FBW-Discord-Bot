@@ -19,4 +19,16 @@ db.exec(`
     );
 `);
 
+db.exec(`
+    CREATE TABLE IF NOT EXISTS pos_sessions (
+        id TEXT PRIMARY KEY,
+        opening_cash REAL,
+        opening_pcf REAL,
+        ispe_total REAL,
+        topup_pcf REAL,
+        closing_pcf REAL,
+        cashout_deposit REAL
+    );
+`);
+
 module.exports = db;
