@@ -66,6 +66,20 @@ module.exports = {
     } else if (interaction.isButton()) {
       const { buttons } = client;
       const { customId } = interaction;
+
+      // Handle dynamic cash breakdown buttons
+      if (customId.startsWith("cashBreakdown_")) {
+        const button = buttons.get("cashBreakdown");
+        if (!button) return new Error("No code for this button.");
+        try {
+          await button.execute(interaction, client);
+        } catch (error) {
+          console.error(error);
+        }
+        return;
+      }
+
+      // Handle static buttons as usual
       const button = buttons.get(customId);
       if (!button) return new Error("No code for this button.");
 
