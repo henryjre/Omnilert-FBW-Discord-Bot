@@ -30,11 +30,15 @@ module.exports = {
           .execute(message, thread, client);
       }
 
-      if (
-        thread.name.includes("Discount Proof") ||
-        thread.name.includes("Receipt Proof") ||
-        thread.name.includes("Token Pay Proof")
-      ) {
+      const proofTypes = [
+        "Discount Proof",
+        "Receipt Proof",
+        "Token Pay Proof",
+        "PCF Breakdown Proof",
+        "Cash Breakdown Proof",
+      ];
+
+      if (proofTypes.some((type) => thread.name.includes(type))) {
         return await client.events
           .get("orderDiscountProof")
           .execute(message, thread, client);
