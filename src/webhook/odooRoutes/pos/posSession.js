@@ -35,6 +35,10 @@ const sessionOpen = async (req, res) => {
     return res.status(200).json({ ok: true, message: "Webhook received" });
   }
 
+  const verificationChannel = client.channels.cache.get(
+    department.verificationChannel
+  );
+
   const currentDate = getFormattedDate();
   const sessionChannel = client.channels.cache.get(department.posChannel);
   const threadName = `${currentDate} | ${x_company_name} | ${display_name}`;
@@ -86,6 +90,118 @@ const sessionOpen = async (req, res) => {
     .addFields(fields);
 
   await sessionThread.send({ embeds: [openingEmbed] });
+
+  if (company_id !== 3) {
+    return res.status(200).json({ ok: true, message: "Webhook received" });
+  }
+
+  const openingCashFields = [
+    { name: "Session Name", value: display_name },
+    {
+      name: "Opening Cash Expected",
+      value: pesoEndBal,
+    },
+    {
+      name: "Opening Cash Counted",
+      value: "₱0.00",
+    },
+  ];
+
+  const openingcashEmbed = new EmbedBuilder()
+    .setURL("https://omnilert.odoo.com/")
+    .setDescription(`## 📝 Opening Cash Breakdown`)
+    .setColor("Green")
+    .setFooter({
+      text: "Add cash breakdown details by selecting the denomination below and inputting the amount.",
+    })
+    .addFields(openingCashFields);
+
+  const openingPcfEmbed = new EmbedBuilder()
+    .setURL("https://omnilert.odoo.com/")
+    .setDescription(`## 💰 Opening PCF Breakdown`)
+    .setColor("DarkGreen")
+    .setFooter({
+      text: "Add PCF breakdown details by selecting the denomination below and inputting the amount.",
+    })
+    .addFields(
+      { name: "Session Name", value: display_name },
+      {
+        name: "Opening PCF Counted",
+        value: "₱0.00",
+      }
+    );
+
+  const confirm = new ButtonBuilder()
+    .setCustomId("posOrderVerificationConfirm")
+    .setLabel("Confirm")
+    .setStyle(ButtonStyle.Success);
+
+  const reset = new ButtonBuilder()
+    .setCustomId("cashBreakdownReset")
+    .setLabel("Reset")
+    .setStyle(ButtonStyle.Danger);
+
+  const buttonRow = new ActionRowBuilder().addComponents(confirm, reset);
+
+  const denominations = [
+    { label: "₱1000", id: "1000" },
+    { label: "₱500", id: "500" },
+    { label: "₱200", id: "200" },
+    { label: "₱100", id: "100" },
+    { label: "₱50", id: "50" },
+    { label: "₱20", id: "20" },
+    { label: "₱10", id: "10" },
+    { label: "₱5", id: "5" },
+    { label: "₱1", id: "1" },
+    { label: "₱0.50", id: "0.50" },
+    { label: "₱0.25", id: "0.25" },
+  ];
+
+  const denomButtonRows = [];
+  for (let i = 0; i < denominations.length; i += 3) {
+    const row = new ActionRowBuilder();
+    row.addComponents(
+      ...denominations
+        .slice(i, i + 3)
+        .map((denom) =>
+          new ButtonBuilder()
+            .setCustomId(`cashBreakdown_${denom.id}`)
+            .setLabel(denom.label)
+            .setStyle(ButtonStyle.Primary)
+        )
+    );
+    denomButtonRows.push(row);
+  }
+
+  const message = await verificationChannel.send({
+    content: `<@&${department.role}>`,
+    embeds: [openingcashEmbed],
+    components: [...denomButtonRows, buttonRow],
+  });
+
+  const proofThread = await message.startThread({
+    name: `Cash Breakdown Proof - ${message.id}`,
+    type: ChannelType.PublicThread, // Set to 'GuildPrivateThread' if only the user should see it
+  });
+
+  await proofThread.send({
+    content: `📸 **${department.role}, please upload the picture of the opening cash as proof here.**`,
+  });
+
+  const pcfMessage = await verificationChannel.send({
+    content: `<@&${department.role}>`,
+    embeds: [openingPcfEmbed],
+    components: [...denomButtonRows, buttonRow],
+  });
+
+  const pcfProofThread = await pcfMessage.startThread({
+    name: `PCF Breakdown Proof - ${pcfMessage.id}`,
+    type: ChannelType.PublicThread, // Set to 'GuildPrivateThread' if only the user should see it
+  });
+
+  await pcfProofThread.send({
+    content: `📸 **${department.role}, please upload the picture of the opening PCF as proof here.**`,
+  });
 
   return res.status(200).json({ ok: true, message: "Webhook received" });
 };
@@ -399,7 +515,7 @@ const sessionClose = async (req, res) => {
     const inputButton = new ButtonBuilder()
       .setCustomId("posPcfInput")
       .setLabel("Input")
-      .setStyle(ButtonStyle.Secondary);
+      .setStyle(ButtonStyle.Primary);
 
     const pcfButtonRow = new ActionRowBuilder().addComponents(
       confirm,
