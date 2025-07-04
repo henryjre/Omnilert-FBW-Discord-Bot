@@ -1,0 +1,49 @@
+const { EmbedBuilder } = require("discord.js");
+
+const pesoFormatter = new Intl.NumberFormat("en-PH", {
+  style: "currency",
+  currency: "PHP",
+  maximumFractionDigits: 2,
+  minimumFractionDigits: 2,
+});
+
+module.exports = {
+  data: {
+    name: "cashBreakdownReset",
+  },
+  async execute(interaction, client) {
+    if (interaction.message.embeds[0].data.footer.text.includes("Reset by:")) {
+      return await interaction.update({
+        embeds: interaction.message.embeds,
+        components: interaction.message.components,
+      });
+    }
+
+    const staticHeader = "## 📝 Opening Cash Breakdown";
+    const resetDescription = `${staticHeader}\n\n>>> *Total: 0.00 ₱*`;
+    const interactedMember = interaction.member.nickname.replace(
+      /^[🔴🟢]\s*/,
+      ""
+    );
+
+    const embed = EmbedBuilder.from(interaction.message.embeds[0]);
+    embed.setDescription(resetDescription);
+    embed.setFooter({
+      text: `Cash breakdown has been reset. Please input the cash breakdown details by selecting the denomination below and inputting the amount.\n\nReset by: ${interactedMember}`,
+    });
+
+    const cashCountedField = embed.data.fields.find(
+      (f) =>
+        f.name === "Opening Cash Counted" || f.name === "Opening PCF Counted"
+    );
+
+    if (cashCountedField) {
+      cashCountedField.value = pesoFormatter.format(0);
+    }
+
+    await interaction.update({
+      embeds: [embed],
+      components: interaction.message.components,
+    });
+  },
+};
