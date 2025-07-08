@@ -27,8 +27,8 @@ module.exports = {
     // 2. Parse current embed description for existing breakdown
     const embed = EmbedBuilder.from(interaction.message.embeds[0]);
 
-    const staticHeader = "## 📝 Opening Cash Breakdown";
-    let description = embed.data.description || staticHeader;
+    const staticHeader = embed.data.description;
+    let description = embed.data.description;
 
     let breakdown = description.replace(staticHeader, "").trim();
     if (breakdown.startsWith(">>> *") && breakdown.endsWith("*")) {
