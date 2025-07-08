@@ -488,7 +488,7 @@ const sessionClose = async (req, res) => {
     });
     await posThread.send({ embeds: [closingEmbed], components: [buttonRow] });
 
-    if (department.id === 1) {
+    if (department.id === 3) {
       const totalPCfTopUp = netPcfTotal(cashInOut);
       const closingPcfExpected = x_opening_pcf + totalPCfTopUp - x_ispe_total;
 
