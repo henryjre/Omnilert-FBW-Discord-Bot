@@ -150,7 +150,6 @@ module.exports = {
         const cashExpectedField = embed.data.fields.find((f) =>
           f.name.includes("Opening Cash Expected")
         );
-        const cashExpectedValue = extractPesoValue(cashExpectedField.value);
 
         const differenceField = embed.data.fields.find((f) =>
           f.name.includes("Opening Cash Difference")
@@ -161,14 +160,10 @@ module.exports = {
         }
 
         if (differenceField) {
+          const cashExpectedValue = extractPesoValue(cashExpectedField.value);
           differenceField.value = pesoFormatter.format(
             total - cashExpectedValue
           );
-        } else {
-          embed.addFields({
-            name: "Opening Cash Difference (Discord)",
-            value: pesoFormatter.format(total - cashExpectedValue),
-          });
         }
 
         embed.setDescription(`${staticHeader}\n\n>>> *${newDescription}*`);
