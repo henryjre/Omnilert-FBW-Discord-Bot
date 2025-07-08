@@ -177,12 +177,14 @@ module.exports = {
         const cashExpectedField = embed.data.fields.find(
           (f) =>
             f.name.includes("Opening Cash Expected") ||
+            f.name.includes("Opening PCF Expected") ||
             f.name.includes("Closing PCF Expected")
         );
 
         const differenceField = embed.data.fields.find(
           (f) =>
             f.name.includes("Opening Cash Difference") ||
+            f.name.includes("Opening PCF Difference") ||
             f.name.includes("Closing PCF Difference")
         );
 
