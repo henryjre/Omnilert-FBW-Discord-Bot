@@ -45,11 +45,11 @@ module.exports = {
     if (embedDescription.includes("Opening PCF")) {
       staticHeader = "## 💰 Opening PCF Breakdown";
     } else if (embedDescription.includes("Opening Cash")) {
-      staticHeader = "## 📝 Opening Cash Breakdown";
+      staticHeader = "## 📝 Opening Change Fund Breakdown";
     } else if (embedDescription.includes("Closing PCF")) {
       staticHeader = "## 💰 Closing PCF Breakdown";
     } else if (embedDescription.includes("Closing Cash")) {
-      staticHeader = "## 📝 Closing Cash Breakdown";
+      staticHeader = "## 📝 Closing Change Fund Breakdown";
     } else if (embedDescription.includes("PCF Report")) {
       staticHeader = "## 📝 PCF Report";
     }
