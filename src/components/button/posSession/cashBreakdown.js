@@ -27,9 +27,23 @@ module.exports = {
     // 2. Parse current embed description for existing breakdown
     const embed = EmbedBuilder.from(interaction.message.embeds[0]);
 
-    const staticHeader = embed.data.description.includes("PCF")
-      ? "## 💰 Opening PCF Breakdown"
-      : "## 📝 Opening Cash Breakdown";
+    let staticHeader;
+    if (interaction.message.embeds[0].description.includes("Opening PCF")) {
+      staticHeader = "## 💰 Opening PCF Breakdown";
+    } else if (
+      interaction.message.embeds[0].description.includes("Opening Cash")
+    ) {
+      staticHeader = "## 📝 Opening Cash Breakdown";
+    } else if (
+      interaction.message.embeds[0].description.includes("Closing PCF")
+    ) {
+      staticHeader = "## 💰 Closing PCF Breakdown";
+    } else if (
+      interaction.message.embeds[0].description.includes("Closing Cash")
+    ) {
+      staticHeader = "## 📝 Closing Cash Breakdown";
+    }
+
     let description = embed.data.description;
 
     let breakdown = description.replace(staticHeader, "").trim();
