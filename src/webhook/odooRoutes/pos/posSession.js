@@ -29,6 +29,7 @@ const sessionOpen = async (req, res) => {
     opening_notes,
     x_company_name,
     company_id,
+    x_closing_pcf,
   } = req.body;
 
   const department = departments.find((d) => d.id === company_id);
@@ -131,6 +132,10 @@ const sessionOpen = async (req, res) => {
     })
     .addFields(
       { name: "Session Name", value: display_name },
+      {
+        name: "Opening PCF Expected",
+        value: pesoFormatter.format(x_closing_pcf),
+      },
       {
         name: "Opening PCF Counted",
         value: "₱0.00",
