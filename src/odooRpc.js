@@ -145,9 +145,33 @@ async function callOdooAttendanceWebhook(action, url, discordId) {
   }
 }
 
+async function updateClosingPcfBalance(balance, company_id, session_id) {
+  const payload = {
+    closing_pcf: balance,
+    session_id: session_id,
+    company_id: company_id,
+  };
+
+  const webhookUrl = `https://omnilert-testing.odoo.com/web/hook/${process.env.ODOO_CLOSING_PCF_SECRET}`;
+
+  try {
+    const response = await axios.post(webhookUrl, payload, {
+      headers: { "Content-Type": "application/json" },
+    });
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error calling Odoo webhook:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+}
+
 module.exports = {
   jsonRpc,
   odooLogin,
   callOdooAttendanceWebhook,
   searchActiveAttendance,
+  updateClosingPcfBalance,
 };
