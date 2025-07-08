@@ -565,6 +565,15 @@ const sessionClose = async (req, res) => {
         embeds: [pcfEmbed],
         components: [...denomButtonRows, buttonRow],
       });
+
+      const pcfThread = await pcfMessage.startThread({
+        name: `PCF Report - ${pcfMessage.id}`,
+        type: ChannelType.PublicThread,
+      });
+
+      await pcfThread.send({
+        content: `📸 **<@&${department.role}>, please upload the picture of the PCF here.**`,
+      });
     } else {
       const pcfEmbed = new EmbedBuilder()
         .setDescription(`## 📝 PCF Report`)
