@@ -116,10 +116,10 @@ const sessionOpen = async (req, res) => {
 
   const openingcashEmbed = new EmbedBuilder()
     .setURL("https://omnilert.odoo.com/")
-    .setDescription(`## 📝 Opening Cash Breakdown`)
+    .setDescription(`## 📝 Opening Change Fund Breakdown`)
     .setColor("Green")
     .setFooter({
-      text: "Add cash breakdown details by selecting the denomination below and inputting the amount.",
+      text: "Add change fund breakdown details by selecting the denomination below and inputting the amount.",
     })
     .addFields(openingCashFields);
 
@@ -194,7 +194,7 @@ const sessionOpen = async (req, res) => {
   });
 
   const proofThread = await message.startThread({
-    name: `Cash Breakdown Proof - ${message.id}`,
+    name: `CF Breakdown Proof - ${message.id}`,
     type: ChannelType.PublicThread, // Set to 'GuildPrivateThread' if only the user should see it
   });
 
@@ -567,6 +567,15 @@ const sessionClose = async (req, res) => {
         content: `<@&${department.role}>`,
         embeds: [pcfEmbed],
         components: [...denomButtonRows, buttonRow],
+      });
+
+      const pcfThread = await pcfMessage.startThread({
+        name: `PCF Report Proof - ${pcfMessage.id}`,
+        type: ChannelType.PublicThread,
+      });
+
+      await pcfThread.send({
+        content: `📸 **<@&${department.role}>, please upload the picture of the closing PCF here.**`,
       });
     } else {
       const pcfEmbed = new EmbedBuilder()
