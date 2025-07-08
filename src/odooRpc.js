@@ -1,6 +1,7 @@
 const axios = require("axios");
 
 const rpcUrl = "https://omnilert.odoo.com/jsonrpc";
+const webhookUrl = "https://omnilert.odoo.com/web/hook/";
 
 async function jsonRpc(method, params) {
   const data = {
@@ -152,10 +153,12 @@ async function updateClosingPcfBalance(balance, company_id, session_id) {
     company_id: company_id,
   };
 
-  const webhookUrl = `https://omnilert-testing.odoo.com/web/hook/9483caae-0655-4e6f-bf8a-be59fa1cb584`;
+  // const url = webhookUrl + process.env.ODOO_CLOSING_PCF_SECRET;
+  const url =
+    "https://omnilert-testing.odoo.com/web/hook/9483caae-0655-4e6f-bf8a-be59fa1cb584";
 
   try {
-    const response = await axios.post(webhookUrl, payload, {
+    const response = await axios.post(url, payload, {
       headers: { "Content-Type": "application/json" },
     });
     return response.data;
