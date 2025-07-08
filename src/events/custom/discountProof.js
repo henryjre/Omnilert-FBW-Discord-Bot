@@ -45,7 +45,7 @@ module.exports = {
       );
 
       if (confirmButtonIndex !== -1) {
-        confirmButtonRow.components[confirmButtonIndex].setDisabled(false);
+        confirmButtonRow.components[confirmButtonIndex].disabled = false;
       }
     }
 
