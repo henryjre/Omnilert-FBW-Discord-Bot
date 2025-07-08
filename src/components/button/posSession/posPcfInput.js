@@ -16,6 +16,8 @@ const pesoFormatter = new Intl.NumberFormat("en-PH", {
   minimumFractionDigits: 2,
 });
 
+const { updateClosingPcfBalance } = require("../../../odooRpc.js");
+
 const departments = require("../../../config/departments.json");
 
 const managementRole = "1314413671245676685";
@@ -26,6 +28,12 @@ module.exports = {
   },
   async execute(interaction, client) {
     let messageEmbed = interaction.message.embeds[0];
+
+    const department = departments.find(
+      (d) => d.verificationChannel === interaction.message.channelId
+    );
+
+    const departmentId = department.id;
 
     const replyEmbed = new EmbedBuilder();
 
@@ -197,6 +205,8 @@ module.exports = {
           embeds: [messageEmbed],
           components: [buttonRow],
         });
+
+        await updateClosingPcfBalance(countedParsed, departmentId, sessionName);
       }
     } catch (error) {
       console.log(error);
