@@ -1064,7 +1064,7 @@ const ispeOrder = async (req, res) => {
   return res.status(200).json({ ok: true, message: "Webhook received" });
 };
 
-const posCashOut = async (req, res) => {
+const posCashOutCashIn = async (req, res) => {
   const { amount_total, create_date, payment_ref, company_id } = req.body;
 
   const department = departments.find((d) => d.id === company_id);
@@ -1081,19 +1081,23 @@ const posCashOut = async (req, res) => {
 
   const orderDate = formatDateTime(create_date);
   const sessionName = paymentRef[0] || "N/A";
-  const cashOutReason = paymentRef[1] || "N/A";
+  const cashOutReason = paymentRef[2] || "N/A";
+  const type = paymentRef[1] || "out";
+
+  const title = type === "out" ? "📤 CASH OUT" : "📥 CASH IN";
+  const color = type === "out" ? "#9b001f" : "#0e9b00";
 
   const pcfEmbed = new EmbedBuilder()
-    .setDescription(`## 📤 CASH OUT Verification`)
+    .setDescription(`## ${title} Verification`)
     .setURL("https://omnilert.odoo.com/")
-    .setColor("#9b001f")
+    .setColor(color)
     .addFields([
       {
         name: "Session Name",
         value: sessionName,
       },
       {
-        name: "Cash Out Date",
+        name: `${type === "out" ? "Cash Out" : "Cash In"} Date`,
         value: orderDate,
       },
       {
@@ -1101,12 +1105,14 @@ const posCashOut = async (req, res) => {
         value: pesoFormatter.format(amount_total),
       },
       {
-        name: "Cash Out Reason",
+        name: `${type === "out" ? "Cash Out" : "Cash In"} Reason`,
         value: cashOutReason,
       },
     ])
     .setFooter({
-      text: `Please send the image of the cash out money as proof in the thread below this message and click "Confirm" to verify.`,
+      text: `Please send the image of the ${
+        type === "out" ? "cash out" : "cash in"
+      } money as proof in the thread below this message and click "Confirm" to verify.`,
     });
 
   const confirm = new ButtonBuilder()
@@ -1121,18 +1127,22 @@ const posCashOut = async (req, res) => {
   const buttonRow = new ActionRowBuilder().addComponents(confirm, reject);
 
   const orderDiscordMessage = await verificationChannel.send({
-    content: department.role,
+    content: `<@&${department.role}>`,
     embeds: [pcfEmbed],
     components: [buttonRow],
   });
 
   const proofThread = await orderDiscordMessage.startThread({
-    name: `Cash Out Proof - ${orderDiscordMessage.id}`,
+    name: `${type === "out" ? "Cash Out" : "Cash In"} Proof - ${
+      orderDiscordMessage.id
+    }`,
     type: ChannelType.PublicThread, // Set to 'GuildPrivateThread' if only the user should see it
   });
 
   await proofThread.send({
-    content: `📸 **${department.role}, please upload the image of the cash out money here as proof.**`,
+    content: `📸 **${department.role}, please upload the image of the ${
+      type === "out" ? "cash out" : "cash in"
+    } money here as proof.**`,
   });
 
   return res.status(200).json({ ok: true, message: "Webhook received" });
@@ -1146,7 +1156,7 @@ module.exports = {
   tokenPayOrder,
   nonCashOrder,
   ispeOrder,
-  posCashOut,
+  posCashOutCashIn,
 };
 
 ////////////////////////// HELPER FUNCTIONS /////////////////////////////////////////
