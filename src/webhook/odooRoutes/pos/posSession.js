@@ -139,6 +139,10 @@ const sessionOpen = async (req, res) => {
       {
         name: "Opening PCF Counted",
         value: "₱0.00",
+      },
+      {
+        name: "Opening PCF Difference",
+        value: pesoFormatter.format(0 - x_closing_pcf),
       }
     );
 
@@ -550,7 +554,6 @@ const sessionClose = async (req, res) => {
       const confirm = new ButtonBuilder()
         .setCustomId("posOrderVerificationConfirm")
         .setLabel("Confirm")
-        .setDisabled(true)
         .setStyle(ButtonStyle.Success);
 
       const reset = new ButtonBuilder()
@@ -564,15 +567,6 @@ const sessionClose = async (req, res) => {
         content: `<@&${department.role}>`,
         embeds: [pcfEmbed],
         components: [...denomButtonRows, buttonRow],
-      });
-
-      const pcfThread = await pcfMessage.startThread({
-        name: `PCF Report - ${pcfMessage.id}`,
-        type: ChannelType.PublicThread,
-      });
-
-      await pcfThread.send({
-        content: `📸 **<@&${department.role}>, please upload the picture of the PCF here.**`,
       });
     } else {
       const pcfEmbed = new EmbedBuilder()
