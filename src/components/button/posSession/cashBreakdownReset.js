@@ -19,7 +19,23 @@ module.exports = {
       });
     }
 
-    const staticHeader = "## 📝 Opening Cash Breakdown";
+    let staticHeader;
+    if (interaction.message.embeds[0].description.includes("Opening PCF")) {
+      staticHeader = "## 💰 Opening PCF Breakdown";
+    } else if (
+      interaction.message.embeds[0].description.includes("Opening Cash")
+    ) {
+      staticHeader = "## 📝 Opening Cash Breakdown";
+    } else if (
+      interaction.message.embeds[0].description.includes("Closing PCF")
+    ) {
+      staticHeader = "## 💰 Closing PCF Breakdown";
+    } else if (
+      interaction.message.embeds[0].description.includes("Closing Cash")
+    ) {
+      staticHeader = "## 📝 Closing Cash Breakdown";
+    }
+
     const resetDescription = `${staticHeader}\n\n>>> *Total: 0.00 ₱*`;
     const interactedMember = interaction.member.nickname.replace(
       /^[🔴🟢]\s*/,
