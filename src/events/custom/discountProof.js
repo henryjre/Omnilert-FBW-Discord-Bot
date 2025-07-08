@@ -28,9 +28,17 @@ module.exports = {
     const originalMessage = await thread.fetchStarterMessage();
 
     let messageEmbed = originalMessage.embeds[0];
+
     const messageComponents = originalMessage.components;
 
-    console.log(messageComponents);
+    // Find the component with id "posOrderVerificationConfirm"
+    const confirmButton = messageComponents
+      .flatMap((row) => row.components)
+      .find(
+        (component) => component.customId === "posOrderVerificationConfirm"
+      );
+
+    console.log(confirmButton);
 
     messageEmbed.data.image = { url: cdnMessageAttachment.proxyURL };
 
