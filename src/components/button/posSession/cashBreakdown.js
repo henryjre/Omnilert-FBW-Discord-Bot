@@ -27,7 +27,9 @@ module.exports = {
     // 2. Parse current embed description for existing breakdown
     const embed = EmbedBuilder.from(interaction.message.embeds[0]);
 
-    const staticHeader = embed.data.description;
+    const staticHeader = embed.data.description.includes("PCF")
+      ? "## 💰 Opening PCF Breakdown"
+      : "## 📝 Opening Cash Breakdown";
     let description = embed.data.description;
 
     let breakdown = description.replace(staticHeader, "").trim();
@@ -138,7 +140,7 @@ module.exports = {
               maximumFractionDigits: 2,
             })} ₱`;
         } else {
-          newDescription += `Total: 0.00 ₱`;
+          newDescription += ``;
         }
 
         const cashCountedField = embed.data.fields.find(
