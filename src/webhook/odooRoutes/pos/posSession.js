@@ -64,15 +64,15 @@ const sessionOpen = async (req, res) => {
     { name: "Branch", value: x_company_name },
     { name: "Opening Date", value: getCurrentFormattedDate() },
     {
-      name: "Opening Cash Counted",
+      name: "Opening Cash Counted (ODOO)",
       value: pesoStartBal,
     },
     {
-      name: "Opening Cash Expected",
+      name: "Opening Cash Expected (ODOO)",
       value: pesoEndBal,
     },
     {
-      name: "Opening Cash Difference",
+      name: "Opening Cash Difference (ODOO)",
       value: cashDiffBal,
     },
   ];
@@ -98,11 +98,11 @@ const sessionOpen = async (req, res) => {
   const openingCashFields = [
     { name: "Session Name", value: display_name },
     {
-      name: "Opening Cash Expected",
+      name: "Opening Cash Expected (ODOO)",
       value: pesoEndBal,
     },
     {
-      name: "Opening Cash Counted",
+      name: "Opening Cash Counted (Discord)",
       value: "₱0.00",
     },
   ];
