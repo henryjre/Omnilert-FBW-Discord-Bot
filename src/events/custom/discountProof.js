@@ -28,6 +28,9 @@ module.exports = {
     const originalMessage = await thread.fetchStarterMessage();
 
     let messageEmbed = originalMessage.embeds[0];
+    const messageComponents = originalMessage.components;
+
+    console.log(messageComponents);
 
     messageEmbed.data.image = { url: cdnMessageAttachment.proxyURL };
 
