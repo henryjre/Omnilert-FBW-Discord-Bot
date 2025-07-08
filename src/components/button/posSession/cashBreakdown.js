@@ -14,6 +14,9 @@ const pesoFormatter = new Intl.NumberFormat("en-PH", {
   minimumFractionDigits: 2,
 });
 
+const departments = require("../../../data/departments.json");
+const { updateClosingPcfBalance } = require("../../../odooRpc.js");
+
 module.exports = {
   data: {
     name: `cashBreakdown`,
@@ -27,20 +30,25 @@ module.exports = {
     // 2. Parse current embed description for existing breakdown
     const embed = EmbedBuilder.from(interaction.message.embeds[0]);
 
+    const embedDescription = embed.data.description;
+    const sessionField = embed.data.fields.find((f) =>
+      f.name.includes("Session Name")
+    );
+
+    const department = departments.find(
+      (d) => d.verificationChannel === interaction.message.channelId
+    );
+
+    const departmentId = department.id;
+
     let staticHeader;
-    if (interaction.message.embeds[0].description.includes("Opening PCF")) {
+    if (embedDescription.includes("Opening PCF")) {
       staticHeader = "## 💰 Opening PCF Breakdown";
-    } else if (
-      interaction.message.embeds[0].description.includes("Opening Cash")
-    ) {
+    } else if (embedDescription.includes("Opening Cash")) {
       staticHeader = "## 📝 Opening Cash Breakdown";
-    } else if (
-      interaction.message.embeds[0].description.includes("Closing PCF")
-    ) {
+    } else if (embedDescription.includes("Closing PCF")) {
       staticHeader = "## 💰 Closing PCF Breakdown";
-    } else if (
-      interaction.message.embeds[0].description.includes("Closing Cash")
-    ) {
+    } else if (embedDescription.includes("Closing Cash")) {
       staticHeader = "## 📝 Closing Cash Breakdown";
     }
 
@@ -154,7 +162,7 @@ module.exports = {
               maximumFractionDigits: 2,
             })} ₱`;
         } else {
-          newDescription += ``;
+          newDescription += `Total: 0.00 ₱`;
         }
 
         const cashCountedField = embed.data.fields.find(
@@ -188,6 +196,22 @@ module.exports = {
           embeds: [embed],
           components: interaction.message.components,
         });
+
+        if (embedDescription.includes("Opening PCF")) {
+          await updateClosingPcfBalance(
+            total,
+            departmentId,
+            sessionField.value,
+            "opening"
+          );
+        } else if (embedDescription.includes("Closing PCF")) {
+          await updateClosingPcfBalance(
+            total,
+            departmentId,
+            sessionField.value,
+            "closing"
+          );
+        }
       }
     } catch (error) {
       console.log(error);
