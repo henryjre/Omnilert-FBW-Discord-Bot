@@ -146,11 +146,12 @@ async function callOdooAttendanceWebhook(action, url, discordId) {
   }
 }
 
-async function updateClosingPcfBalance(balance, company_id, session_id) {
+async function updateClosingPcfBalance(balance, company_id, session_id, type) {
   const payload = {
-    closing_pcf: balance,
+    amount: balance,
     session_id: session_id,
     company_id: company_id,
+    type: type,
   };
 
   // const url = webhookUrl + process.env.ODOO_CLOSING_PCF_SECRET;
