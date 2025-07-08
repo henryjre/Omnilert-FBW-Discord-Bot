@@ -165,8 +165,6 @@ const sessionOpen = async (req, res) => {
     { label: "₱10", id: "10" },
     { label: "₱5", id: "5" },
     { label: "₱1", id: "1" },
-    { label: "₱0.50", id: "0.50" },
-    { label: "₱0.25", id: "0.25" },
   ];
 
   const denomButtonRows = [];
