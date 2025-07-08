@@ -134,6 +134,7 @@ const sessionOpen = async (req, res) => {
   const confirm = new ButtonBuilder()
     .setCustomId("posOrderVerificationConfirm")
     .setLabel("Confirm")
+    .setDisabled(true)
     .setStyle(ButtonStyle.Success);
 
   const reset = new ButtonBuilder()
@@ -1118,6 +1119,7 @@ const posCashOutCashIn = async (req, res) => {
   const confirm = new ButtonBuilder()
     .setCustomId("posOrderVerificationConfirm")
     .setLabel("Confirm")
+    .setDisabled(true)
     .setStyle(ButtonStyle.Success);
 
   const reject = new ButtonBuilder()
