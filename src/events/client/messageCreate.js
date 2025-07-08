@@ -35,9 +35,10 @@ module.exports = {
         "Receipt Proof",
         "Token Pay Proof",
         "PCF Breakdown Proof",
-        "Cash Breakdown Proof",
+        "CF Breakdown Proof",
         "Cash Out Proof",
         "Cash In Proof",
+        "PCF Report Proof",
       ];
 
       if (proofTypes.some((type) => thread.name.includes(type))) {
