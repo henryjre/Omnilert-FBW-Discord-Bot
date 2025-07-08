@@ -13,14 +13,14 @@ module.exports = {
   async execute(interaction, client) {
     const embed = new EmbedBuilder()
       .setURL("https://omnilert.odoo.com/")
-      .setDescription("## 📝 Opening Cash Breakdown")
+      .setDescription("## 📝 Opening Change Fund Breakdown")
       .addFields({
         name: "Opening Cash Counted",
         value: "₱0.00",
       })
       .setColor("Green")
       .setFooter({
-        text: "Add cash breakdown details by selecting the denomination below and inputting the amount.",
+        text: "Add change fund breakdown details by selecting the denomination below and inputting the amount.",
       });
 
     const confirm = new ButtonBuilder()
