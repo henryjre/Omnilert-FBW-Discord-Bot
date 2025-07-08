@@ -14,7 +14,7 @@ const pesoFormatter = new Intl.NumberFormat("en-PH", {
   minimumFractionDigits: 2,
 });
 
-const departments = require("../../../data/departments.json");
+const departments = require("../../../config/departments.json");
 const { updateClosingPcfBalance } = require("../../../odooRpc.js");
 
 module.exports = {
