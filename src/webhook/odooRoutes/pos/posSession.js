@@ -1064,8 +1064,77 @@ const ispeOrder = async (req, res) => {
   return res.status(200).json({ ok: true, message: "Webhook received" });
 };
 
-const posCashIn = async (req, res) => {
-  console.log(req.body);
+const posCashOut = async (req, res) => {
+  const { amount_total, create_date, payment_ref, company_id } = req.body;
+
+  const department = departments.find((d) => d.id === company_id);
+
+  if (!department) {
+    return res.status(200).json({ ok: true, message: "Webhook received" });
+  }
+
+  const verificationChannel = client.channels.cache.get(
+    department.verificationChannel
+  );
+
+  const paymentRef = payment_ref.split("-");
+
+  const orderDate = formatDateTime(create_date);
+  const sessionName = paymentRef[0] || "N/A";
+  const cashOutReason = paymentRef[1] || "N/A";
+
+  const pcfEmbed = new EmbedBuilder()
+    .setDescription(`## 📤 CASH OUT Verification`)
+    .setURL("https://omnilert.odoo.com/")
+    .setColor("#9b001f")
+    .addFields([
+      {
+        name: "Session Name",
+        value: sessionName,
+      },
+      {
+        name: "Cash Out Date",
+        value: orderDate,
+      },
+      {
+        name: "Total Amount",
+        value: pesoFormatter.format(amount_total),
+      },
+      {
+        name: "Cash Out Reason",
+        value: cashOutReason,
+      },
+    ])
+    .setFooter({
+      text: `Please send the image of the cash out money as proof in the thread below this message and click "Confirm" to verify.`,
+    });
+
+  const confirm = new ButtonBuilder()
+    .setCustomId("posOrderVerificationConfirm")
+    .setLabel("Confirm")
+    .setStyle(ButtonStyle.Success);
+
+  const reject = new ButtonBuilder()
+    .setCustomId("posOrderVerificationReject")
+    .setLabel("Reject")
+    .setStyle(ButtonStyle.Danger);
+  const buttonRow = new ActionRowBuilder().addComponents(confirm, reject);
+
+  const orderDiscordMessage = await verificationChannel.send({
+    content: department.role,
+    embeds: [pcfEmbed],
+    components: [buttonRow],
+  });
+
+  const proofThread = await orderDiscordMessage.startThread({
+    name: `Cash Out Proof - ${orderDiscordMessage.id}`,
+    type: ChannelType.PublicThread, // Set to 'GuildPrivateThread' if only the user should see it
+  });
+
+  await proofThread.send({
+    content: `📸 **${department.role}, please upload the image of the cash out money here as proof.**`,
+  });
+
   return res.status(200).json({ ok: true, message: "Webhook received" });
 };
 
@@ -1077,7 +1146,7 @@ module.exports = {
   tokenPayOrder,
   nonCashOrder,
   ispeOrder,
-  posCashIn,
+  posCashOut,
 };
 
 ////////////////////////// HELPER FUNCTIONS /////////////////////////////////////////
