@@ -34,11 +34,30 @@ module.exports = {
 
     const cashCountedField = embed.data.fields.find(
       (f) =>
-        f.name === "Opening Cash Counted" || f.name === "Opening PCF Counted"
+        f.name.includes("Opening Cash Counted") ||
+        f.name.includes("Opening PCF Counted")
+    );
+
+    const cashExpectedField = embed.data.fields.find((f) =>
+      f.name.includes("Opening Cash Expected")
+    );
+    const cashExpectedValue = extractPesoValue(cashExpectedField.value);
+
+    const cashDifferenceField = embed.data.fields.find((f) =>
+      f.name.includes("Opening Cash Difference")
     );
 
     if (cashCountedField) {
       cashCountedField.value = pesoFormatter.format(0);
+    }
+
+    if (cashDifferenceField) {
+      cashDifferenceField.value = pesoFormatter.format(0 - cashExpectedValue);
+    } else {
+      embed.addFields({
+        name: "Opening Cash Difference (Discord)",
+        value: pesoFormatter.format(0 - cashExpectedValue),
+      });
     }
 
     await interaction.update({
@@ -47,3 +66,14 @@ module.exports = {
     });
   },
 };
+
+function extractPesoValue(currencyStr) {
+  // Remove the peso sign and commas, then trim whitespace
+  const numericStr = currencyStr.replace("₱", "").replace(/,/g, "").trim();
+  // Parse as float
+  const value = parseFloat(numericStr);
+  if (isNaN(value)) {
+    throw new Error(`Invalid currency string: "${currencyStr}"`);
+  }
+  return value;
+}
