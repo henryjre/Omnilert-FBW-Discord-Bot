@@ -32,18 +32,28 @@ module.exports = {
     const messageComponents = originalMessage.components;
 
     // Find the component with id "posOrderVerificationConfirm"
-    const confirmButton = messageComponents
-      .flatMap((row) => row.components)
-      .find(
+    // Find the component with id "posOrderVerificationConfirm" and enable it
+    const confirmButtonRow = messageComponents.find((row) =>
+      row.components.some(
+        (component) => component.customId === "posOrderVerificationConfirm"
+      )
+    );
+
+    if (confirmButtonRow) {
+      const confirmButtonIndex = confirmButtonRow.components.findIndex(
         (component) => component.customId === "posOrderVerificationConfirm"
       );
 
-    console.log(confirmButton);
+      if (confirmButtonIndex !== -1) {
+        confirmButtonRow.components[confirmButtonIndex].setDisabled(false);
+      }
+    }
 
     messageEmbed.data.image = { url: cdnMessageAttachment.proxyURL };
 
     await originalMessage.edit({
       embeds: [messageEmbed],
+      components: messageComponents,
     });
   },
 };
