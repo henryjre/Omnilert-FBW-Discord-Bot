@@ -25,11 +25,11 @@ module.exports = {
     if (embedDescription.includes("Opening PCF")) {
       staticHeader = "## 💰 Opening PCF Breakdown";
     } else if (embedDescription.includes("Opening Cash")) {
-      staticHeader = "## 📝 Opening Cash Breakdown";
+      staticHeader = "## 📝 Opening Change Fund Breakdown";
     } else if (embedDescription.includes("Closing PCF")) {
       staticHeader = "## 💰 Closing PCF Breakdown";
     } else if (embedDescription.includes("Closing Cash")) {
-      staticHeader = "## 📝 Closing Cash Breakdown";
+      staticHeader = "## 📝 Closing Change Fund Breakdown";
     } else if (embedDescription.includes("PCF Report")) {
       staticHeader = "## 📝 PCF Report";
     }
@@ -43,7 +43,7 @@ module.exports = {
     const embed = EmbedBuilder.from(interaction.message.embeds[0]);
     embed.setDescription(resetDescription);
     embed.setFooter({
-      text: `Cash breakdown has been reset. Please input the cash breakdown details by selecting the denomination below and inputting the amount.\n\nReset by: ${interactedMember}`,
+      text: `Change fund breakdown has been reset. Please input the change fund breakdown details by selecting the denomination below and inputting the amount.\n\nReset by: ${interactedMember}`,
     });
 
     const cashCountedField = embed.data.fields.find(
