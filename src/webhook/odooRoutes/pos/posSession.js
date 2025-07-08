@@ -105,6 +105,10 @@ const sessionOpen = async (req, res) => {
       name: "Opening Cash Counted (Discord)",
       value: "₱0.00",
     },
+    {
+      name: "Opening Cash Difference (Discord)",
+      value: pesoFormatter.format(0 - cash_register_balance_end),
+    },
   ];
 
   const openingcashEmbed = new EmbedBuilder()
