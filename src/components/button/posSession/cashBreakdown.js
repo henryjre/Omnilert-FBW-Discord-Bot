@@ -50,6 +50,8 @@ module.exports = {
       staticHeader = "## 💰 Closing PCF Breakdown";
     } else if (embedDescription.includes("Closing Cash")) {
       staticHeader = "## 📝 Closing Cash Breakdown";
+    } else if (embedDescription.includes("PCF Report")) {
+      staticHeader = "## 📝 PCF Report";
     }
 
     let description = embed.data.description;
@@ -168,15 +170,20 @@ module.exports = {
         const cashCountedField = embed.data.fields.find(
           (f) =>
             f.name.includes("Opening Cash Counted") ||
-            f.name.includes("Opening PCF Counted")
+            f.name.includes("Opening PCF Counted") ||
+            f.name.includes("Closing PCF Counted")
         );
 
-        const cashExpectedField = embed.data.fields.find((f) =>
-          f.name.includes("Opening Cash Expected")
+        const cashExpectedField = embed.data.fields.find(
+          (f) =>
+            f.name.includes("Opening Cash Expected") ||
+            f.name.includes("Closing PCF Expected")
         );
 
-        const differenceField = embed.data.fields.find((f) =>
-          f.name.includes("Opening Cash Difference")
+        const differenceField = embed.data.fields.find(
+          (f) =>
+            f.name.includes("Opening Cash Difference") ||
+            f.name.includes("Closing PCF Difference")
         );
 
         if (cashCountedField) {
@@ -204,7 +211,10 @@ module.exports = {
             sessionField.value,
             "opening"
           );
-        } else if (embedDescription.includes("Closing PCF")) {
+        } else if (
+          embedDescription.includes("Closing PCF") ||
+          embedDescription.includes("PCF Report")
+        ) {
           await updateClosingPcfBalance(
             total,
             departmentId,
