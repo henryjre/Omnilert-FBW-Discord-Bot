@@ -19,21 +19,19 @@ module.exports = {
       });
     }
 
+    const embedDescription = interaction.message.embeds[0].data.description;
+
     let staticHeader;
-    if (interaction.message.embeds[0].description.includes("Opening PCF")) {
+    if (embedDescription.includes("Opening PCF")) {
       staticHeader = "## 💰 Opening PCF Breakdown";
-    } else if (
-      interaction.message.embeds[0].description.includes("Opening Cash")
-    ) {
+    } else if (embedDescription.includes("Opening Cash")) {
       staticHeader = "## 📝 Opening Cash Breakdown";
-    } else if (
-      interaction.message.embeds[0].description.includes("Closing PCF")
-    ) {
+    } else if (embedDescription.includes("Closing PCF")) {
       staticHeader = "## 💰 Closing PCF Breakdown";
-    } else if (
-      interaction.message.embeds[0].description.includes("Closing Cash")
-    ) {
+    } else if (embedDescription.includes("Closing Cash")) {
       staticHeader = "## 📝 Closing Cash Breakdown";
+    } else if (embedDescription.includes("PCF Report")) {
+      staticHeader = "## 📝 PCF Report";
     }
 
     const resetDescription = `${staticHeader}\n\n>>> *Total: 0.00 ₱*`;
@@ -51,15 +49,20 @@ module.exports = {
     const cashCountedField = embed.data.fields.find(
       (f) =>
         f.name.includes("Opening Cash Counted") ||
-        f.name.includes("Opening PCF Counted")
+        f.name.includes("Opening PCF Counted") ||
+        f.name.includes("Closing PCF Counted")
     );
 
-    const cashExpectedField = embed.data.fields.find((f) =>
-      f.name.includes("Opening Cash Expected")
+    const cashExpectedField = embed.data.fields.find(
+      (f) =>
+        f.name.includes("Opening Cash Expected") ||
+        f.name.includes("Closing PCF Expected")
     );
 
-    const cashDifferenceField = embed.data.fields.find((f) =>
-      f.name.includes("Opening Cash Difference")
+    const cashDifferenceField = embed.data.fields.find(
+      (f) =>
+        f.name.includes("Opening Cash Difference") ||
+        f.name.includes("Closing PCF Difference")
     );
 
     if (cashCountedField) {
