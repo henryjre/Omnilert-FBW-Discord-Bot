@@ -94,10 +94,6 @@ const sessionOpen = async (req, res) => {
 
   await sessionThread.send({ embeds: [openingEmbed] });
 
-  if (company_id !== 3) {
-    return res.status(200).json({ ok: true, message: "Webhook received" });
-  }
-
   const openingCashFields = [
     { name: "Session Name", value: display_name },
     {
@@ -492,144 +488,90 @@ const sessionClose = async (req, res) => {
     });
     await posThread.send({ embeds: [closingEmbed], components: [buttonRow] });
 
-    if (department.id === 3) {
-      const totalPCfTopUp = netPcfTotal(cashInOut);
-      const closingPcfExpected = x_opening_pcf + totalPCfTopUp - x_ispe_total;
+    const totalPCfTopUp = netPcfTotal(cashInOut);
+    const closingPcfExpected = x_opening_pcf + totalPCfTopUp - x_ispe_total;
 
-      const pcfEmbed = new EmbedBuilder()
-        .setDescription(`## 📝 PCF Report`)
-        .setURL("https://omnilert.odoo.com/")
-        .setColor("White")
-        .addFields([
-          {
-            name: "Session Name",
-            value: display_name,
-          },
-          {
-            name: "Opening PCF Expected",
-            value: pesoFormatter.format(x_opening_pcf),
-          },
-          {
-            name: "Closing PCF Expected",
-            value: pesoFormatter.format(closingPcfExpected),
-          },
-          {
-            name: "Closing PCF Counted",
-            value: pesoFormatter.format(0),
-          },
-          {
-            name: "Closing PCF Difference",
-            value: pesoFormatter.format(0 - closingPcfExpected),
-          },
-        ]);
+    const pcfEmbed = new EmbedBuilder()
+      .setDescription(`## 📝 PCF Report`)
+      .setURL("https://omnilert.odoo.com/")
+      .setColor("White")
+      .addFields([
+        {
+          name: "Session Name",
+          value: display_name,
+        },
+        {
+          name: "Opening PCF Expected",
+          value: pesoFormatter.format(x_opening_pcf),
+        },
+        {
+          name: "Closing PCF Expected",
+          value: pesoFormatter.format(closingPcfExpected),
+        },
+        {
+          name: "Closing PCF Counted",
+          value: pesoFormatter.format(0),
+        },
+        {
+          name: "Closing PCF Difference",
+          value: pesoFormatter.format(0 - closingPcfExpected),
+        },
+      ]);
 
-      const denominations = [
-        { label: "₱1000", id: "1000" },
-        { label: "₱500", id: "500" },
-        { label: "₱200", id: "200" },
-        { label: "₱100", id: "100" },
-        { label: "₱50", id: "50" },
-        { label: "₱20", id: "20" },
-        { label: "₱10", id: "10" },
-        { label: "₱5", id: "5" },
-        { label: "₱1", id: "1" },
-      ];
+    const denominations = [
+      { label: "₱1000", id: "1000" },
+      { label: "₱500", id: "500" },
+      { label: "₱200", id: "200" },
+      { label: "₱100", id: "100" },
+      { label: "₱50", id: "50" },
+      { label: "₱20", id: "20" },
+      { label: "₱10", id: "10" },
+      { label: "₱5", id: "5" },
+      { label: "₱1", id: "1" },
+    ];
 
-      const denomButtonRows = [];
-      for (let i = 0; i < denominations.length; i += 3) {
-        const row = new ActionRowBuilder();
-        row.addComponents(
-          ...denominations
-            .slice(i, i + 3)
-            .map((denom) =>
-              new ButtonBuilder()
-                .setCustomId(`cashBreakdown_${denom.id}`)
-                .setLabel(denom.label)
-                .setStyle(ButtonStyle.Primary)
-            )
-        );
-        denomButtonRows.push(row);
-      }
-
-      const confirm = new ButtonBuilder()
-        .setCustomId("posOrderVerificationConfirm")
-        .setLabel("Confirm")
-        .setStyle(ButtonStyle.Success);
-
-      const reset = new ButtonBuilder()
-        .setCustomId("cashBreakdownReset")
-        .setLabel("Reset")
-        .setStyle(ButtonStyle.Danger);
-
-      const buttonRow = new ActionRowBuilder().addComponents(confirm, reset);
-
-      const pcfMessage = await verificationChannel.send({
-        content: `<@&${department.role}>`,
-        embeds: [pcfEmbed],
-        components: [...denomButtonRows, buttonRow],
-      });
-
-      const pcfThread = await pcfMessage.startThread({
-        name: `PCF Report Proof - ${pcfMessage.id}`,
-        type: ChannelType.PublicThread,
-      });
-
-      await pcfThread.send({
-        content: `📸 **<@&${department.role}>, please upload the picture of the closing PCF here.**`,
-      });
-    } else {
-      const pcfEmbed = new EmbedBuilder()
-        .setDescription(`## 📝 PCF Report`)
-        .setURL("https://omnilert.odoo.com/")
-        .setColor("White")
-        .addFields([
-          {
-            name: "Session Name",
-            value: display_name,
-          },
-          {
-            name: "Opening PCF Expected",
-            value: "N/A",
-          },
-          {
-            name: "Closing PCF Expected",
-            value: "N/A",
-          },
-          {
-            name: "Closing PCF Counted",
-            value: "N/A",
-          },
-          {
-            name: "Closing PCF Difference",
-            value: "N/A", // closing counted - closing expected
-          },
-        ])
-        .setFooter({
-          text: "Please click the 'Input' button to add details to the PCF report.",
-        });
-
-      const confirm = new ButtonBuilder()
-        .setCustomId("posOrderVerificationConfirm")
-        .setLabel("Confirm")
-        .setDisabled(true)
-        .setStyle(ButtonStyle.Success);
-
-      const inputButton = new ButtonBuilder()
-        .setCustomId("posPcfInput")
-        .setLabel("Input")
-        .setStyle(ButtonStyle.Primary);
-
-      const pcfButtonRow = new ActionRowBuilder().addComponents(
-        confirm,
-        inputButton
+    const denomButtonRows = [];
+    for (let i = 0; i < denominations.length; i += 3) {
+      const row = new ActionRowBuilder();
+      row.addComponents(
+        ...denominations
+          .slice(i, i + 3)
+          .map((denom) =>
+            new ButtonBuilder()
+              .setCustomId(`cashBreakdown_${denom.id}`)
+              .setLabel(denom.label)
+              .setStyle(ButtonStyle.Primary)
+          )
       );
-
-      await verificationChannel.send({
-        content: `<@&${department.role}>`,
-        embeds: [pcfEmbed],
-        components: [pcfButtonRow],
-      });
+      denomButtonRows.push(row);
     }
+
+    const confirm = new ButtonBuilder()
+      .setCustomId("posOrderVerificationConfirm")
+      .setLabel("Confirm")
+      .setStyle(ButtonStyle.Success);
+
+    const reset = new ButtonBuilder()
+      .setCustomId("cashBreakdownReset")
+      .setLabel("Reset")
+      .setStyle(ButtonStyle.Danger);
+
+    const pcfButtonRow = new ActionRowBuilder().addComponents(confirm, reset);
+
+    const pcfMessage = await verificationChannel.send({
+      content: `<@&${department.role}>`,
+      embeds: [pcfEmbed],
+      components: [...denomButtonRows, pcfButtonRow],
+    });
+
+    const pcfThread = await pcfMessage.startThread({
+      name: `PCF Report Proof - ${pcfMessage.id}`,
+      type: ChannelType.PublicThread,
+    });
+
+    await pcfThread.send({
+      content: `📸 **<@&${department.role}>, please upload the picture of the closing PCF here.**`,
+    });
 
     return res.status(200).json({ ok: true, message: "Webhook received" });
   } catch (error) {
