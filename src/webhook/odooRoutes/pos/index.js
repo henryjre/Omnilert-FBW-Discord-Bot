@@ -31,7 +31,7 @@ pos.post("/token_pay_order", tokenPayOrder);
 // /odoo/pos/ispe_order
 pos.post("/ispe_order", ispeOrder);
 
-// /odoo/pos/cash_out
-pos.post("/cash_out", posCashOutCashIn);
+// /odoo/pos/cash_out_cash_in
+pos.post("/cash_out_cash_in", posCashOutCashIn);
 
 module.exports = pos;
