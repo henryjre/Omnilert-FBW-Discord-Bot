@@ -97,6 +97,17 @@ module.exports = {
             .setDescription("Add some optional attachment.")
             .setRequired(false)
         )
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName("signatories")
+        .setDescription("Request a signatories from the management.")
+        .addAttachmentOption((option) =>
+          option
+            .setName("attachment")
+            .setDescription("Add the attachment for the request.")
+            .setRequired(true)
+        )
     ),
   async execute(interaction, client) {
     if (interaction.channel.id !== commandsChannel) {
@@ -117,6 +128,10 @@ module.exports = {
 
       case "cash":
         await runCashRequestsCommand(interaction, client);
+        break;
+
+      case "signatories":
+        await runSignatoriesCommand(interaction, client);
         break;
 
       default:
@@ -155,4 +170,12 @@ async function runCashRequestsCommand(interaction, client) {
       .get("cash_request")
       .execute(interaction, client, attachment);
   }
+}
+
+async function runSignatoriesCommand(interaction, client) {
+  const attachment = interaction.options.getAttachment("attachment");
+
+  return await client.commands
+    .get("signatories_request")
+    .execute(interaction, client, attachment);
 }
