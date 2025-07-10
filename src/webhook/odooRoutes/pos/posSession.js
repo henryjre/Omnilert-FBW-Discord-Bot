@@ -29,7 +29,7 @@ const sessionOpen = async (req, res) => {
     opening_notes,
     x_company_name,
     company_id,
-    x_closing_pcf,
+    x_closing_pcf = 0,
   } = req.body;
 
   const department = departments.find((d) => d.id === company_id);
@@ -239,8 +239,8 @@ const sessionClose = async (req, res) => {
       x_refund_orders,
       x_statement_lines,
       closing_notes,
-      x_ispe_total,
-      x_opening_pcf,
+      x_ispe_total = 0,
+      x_opening_pcf = 0,
     } = req.body;
 
     const department = departments.find((d) => d.id === company_id);
