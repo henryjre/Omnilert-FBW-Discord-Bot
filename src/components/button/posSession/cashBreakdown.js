@@ -44,11 +44,11 @@ module.exports = {
     let staticHeader;
     if (embedDescription.includes("Opening PCF")) {
       staticHeader = "## 💰 Opening PCF Breakdown";
-    } else if (embedDescription.includes("Opening Cash")) {
+    } else if (embedDescription.includes("Opening Change Fund")) {
       staticHeader = "## 📝 Opening Change Fund Breakdown";
     } else if (embedDescription.includes("Closing PCF")) {
       staticHeader = "## 💰 Closing PCF Breakdown";
-    } else if (embedDescription.includes("Closing Cash")) {
+    } else if (embedDescription.includes("Closing Change Fund")) {
       staticHeader = "## 📝 Closing Change Fund Breakdown";
     } else if (embedDescription.includes("PCF Report")) {
       staticHeader = "## 📝 PCF Report";
@@ -174,12 +174,18 @@ module.exports = {
             f.name.includes("Closing PCF Counted")
         );
 
-        const cashExpectedField = embed.data.fields.find(
-          (f) =>
-            f.name.includes("Opening Cash Expected") ||
-            f.name.includes("Opening PCF Expected") ||
+        let cashExpectedField;
+        if (embedDescription.includes("PCF Report")) {
+          cashExpectedField = embed.data.fields.find((f) =>
             f.name.includes("Closing PCF Expected")
-        );
+          );
+        } else {
+          cashExpectedField = embed.data.fields.find(
+            (f) =>
+              f.name.includes("Opening Cash Expected") ||
+              f.name.includes("Opening PCF Expected")
+          );
+        }
 
         const differenceField = embed.data.fields.find(
           (f) =>
