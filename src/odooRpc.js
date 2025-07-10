@@ -154,9 +154,7 @@ async function updateClosingPcfBalance(balance, company_id, session_id, type) {
     type: type,
   };
 
-  // const url = webhookUrl + process.env.ODOO_CLOSING_PCF_SECRET;
-  const url =
-    "https://omnilert-testing.odoo.com/web/hook/9483caae-0655-4e6f-bf8a-be59fa1cb584";
+  const url = webhookUrl + process.env.ODOO_CLOSING_PCF_SECRET;
 
   try {
     const response = await axios.post(url, payload, {
