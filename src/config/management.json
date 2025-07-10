@@ -1,0 +1,32 @@
+[
+  {
+    "id": 1,
+    "name": "Human Resources Department",
+    "role": "1314815153421680640",
+    "officeChannelId": "1372557527715156049"
+  },
+  {
+    "id": 2,
+    "name": "Operations Department",
+    "role": "1314815278126731285",
+    "officeChannelId": "1372557073618829362"
+  },
+  {
+    "id": 3,
+    "name": "Technology and Development Department",
+    "role": "1314815091908022373",
+    "officeChannelId": "1372557914019074129"
+  },
+  {
+    "id": 4,
+    "name": "Accounting and Finance Department",
+    "role": "1314815202679590984",
+    "officeChannelId": "1372557255966330981"
+  },
+  {
+    "id": 5,
+    "name": "Executive Head",
+    "role": "1314414836926386257",
+    "officeChannelId": "1372556586089844876"
+  }
+]
