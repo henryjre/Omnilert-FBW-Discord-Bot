@@ -24,11 +24,11 @@ module.exports = {
     let staticHeader;
     if (embedDescription.includes("Opening PCF")) {
       staticHeader = "## 💰 Opening PCF Breakdown";
-    } else if (embedDescription.includes("Opening Cash")) {
+    } else if (embedDescription.includes("Opening Change Fund")) {
       staticHeader = "## 📝 Opening Change Fund Breakdown";
     } else if (embedDescription.includes("Closing PCF")) {
       staticHeader = "## 💰 Closing PCF Breakdown";
-    } else if (embedDescription.includes("Closing Cash")) {
+    } else if (embedDescription.includes("Closing Change Fund")) {
       staticHeader = "## 📝 Closing Change Fund Breakdown";
     } else if (embedDescription.includes("PCF Report")) {
       staticHeader = "## 📝 PCF Report";
