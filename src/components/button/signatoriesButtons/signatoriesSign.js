@@ -59,6 +59,8 @@ module.exports = {
           "1392386510858227884"
         );
 
+        messageEmbed.data.footer.text = `This request has been signed by all parties concerned.`;
+
         await lastChannel.send({
           embeds: [messageEmbed],
           files: files,
@@ -103,6 +105,8 @@ module.exports = {
         const lastChannel = interaction.guild.channels.cache.get(
           "1392386510858227884"
         );
+
+        messageEmbed.data.footer.text = `This request has been signed by all parties concerned.`;
 
         await lastChannel.send({
           embeds: [messageEmbed],
