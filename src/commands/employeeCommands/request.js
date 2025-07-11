@@ -130,9 +130,9 @@ module.exports = {
         await runCashRequestsCommand(interaction, client);
         break;
 
-      case "signatories":
-        await runSignatoriesCommand(interaction, client);
-        break;
+      // case "signatories":
+      //   await runSignatoriesCommand(interaction, client);
+      //   break;
 
       default:
         break;
