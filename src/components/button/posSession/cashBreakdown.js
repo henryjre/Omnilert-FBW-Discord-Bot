@@ -105,7 +105,7 @@ module.exports = {
         }
         return f;
       },
-      time: 300000,
+      time: 120000,
     });
 
     try {
