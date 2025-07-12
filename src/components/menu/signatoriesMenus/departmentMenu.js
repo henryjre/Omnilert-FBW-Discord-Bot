@@ -104,10 +104,14 @@ module.exports = {
       }
     }
 
-    await interaction.message.edit({
-      embeds: allEmbeds,
-      components: messageComponents,
-    });
+    try {
+      await interaction.message.edit({
+        embeds: allEmbeds,
+        components: messageComponents,
+      });
+    } catch (error) {
+      console.error(error);
+    }
 
     replyEmbed
       .setDescription(`✅ Signatories request has been updated.`)
