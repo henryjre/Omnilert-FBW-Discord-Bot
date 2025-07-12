@@ -114,7 +114,7 @@ module.exports = {
       if (error.message.includes("BASE_TYPE_MAX_LENGTH")) {
         replyEmbed
           .setDescription(
-            `🔴 ERROR: The maximum number of signing parties that can be added is **25**.`
+            `🔴 ERROR: The maximum number of signing parties that can be added is **24**.`
           )
           .setColor("Red");
 
