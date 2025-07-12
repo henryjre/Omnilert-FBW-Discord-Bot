@@ -21,6 +21,12 @@ module.exports = {
       f.value.includes("⌛")
     );
 
+    const preparedByField = messageEmbed.data.fields.find(
+      (f) => f.name === "Prepared By"
+    );
+
+    const preparedBy = preparedByField.value.replace(/\n\u200b/g, "");
+
     if (signingUser.value.includes("To be signed")) {
       const departmentName = signingUser.name;
 
@@ -55,6 +61,7 @@ module.exports = {
         messageEmbed.data.footer.text = `This request has been signed by all parties concerned.`;
 
         await lastChannel.send({
+          content: `${preparedBy}`,
           embeds: allEmbeds,
           files: files,
         });
@@ -102,6 +109,7 @@ module.exports = {
         messageEmbed.data.footer.text = `This request has been signed by all parties concerned.`;
 
         await lastChannel.send({
+          content: `${preparedBy}`,
           embeds: allEmbeds,
           files: files,
         });
