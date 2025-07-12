@@ -40,7 +40,7 @@ module.exports = {
         employeeDiscord.user.username;
 
       const employeeField = messageEmbed.data.fields.find(
-        (f) => f.name === employeeName
+        (f) => f.value === employeeName
       );
 
       if (!employeeField) {
