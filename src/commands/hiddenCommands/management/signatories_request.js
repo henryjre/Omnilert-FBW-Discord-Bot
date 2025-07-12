@@ -7,6 +7,7 @@ const {
   StringSelectMenuOptionBuilder,
   ButtonBuilder,
   ButtonStyle,
+  ChannelType,
 } = require("discord.js");
 
 const managementRoleId = "1314413671245676685";
@@ -16,7 +17,7 @@ const management = require("../../../config/management.json");
 module.exports = {
   data: new SlashCommandBuilder().setName("signatories_request"),
   pushToArray: false,
-  async execute(interaction, client, attachmentFile) {
+  async execute(interaction, client) {
     await interaction.deferReply({
       flags: MessageFlags.Ephemeral,
     });
@@ -36,6 +37,7 @@ module.exports = {
 
     const embed = new EmbedBuilder()
       .setTitle("✒️ SIGNATORIES REQUEST")
+      .setURL(`https://omnilert.odoo.com/`)
       .addFields({
         name: "Prepared By",
         value: `<@${interaction.user.id}>\n\u200b`,
@@ -49,21 +51,42 @@ module.exports = {
       "1314413960274907238"
     );
 
-    const membersWithRoles = await serviceCrewRole.members.map((m) => {
+    const membersWithServiceCrewRoles = await serviceCrewRole.members.map(
+      (m) => {
+        const name = m.nickname.replace(/^[🔴🟢]\s*/, "") || m.user.username;
+        return new StringSelectMenuOptionBuilder()
+          .setLabel(name)
+          .setValue(m.user.id);
+      }
+    );
+
+    const membersWithManagementRoles = await managementRole.members.map((m) => {
       const name = m.nickname.replace(/^[🔴🟢]\s*/, "") || m.user.username;
       return new StringSelectMenuOptionBuilder()
         .setLabel(name)
         .setValue(m.user.id);
     });
 
-    const userMenu = new StringSelectMenuBuilder()
-      .setCustomId("signatoriesEmployeeMenu")
-      .setOptions(membersWithRoles)
+    const serviceCrewMenu = new StringSelectMenuBuilder()
+      .setCustomId("signatoriesServiceCrewMenu")
+      .setOptions(membersWithServiceCrewRoles)
       .setMinValues(0)
-      .setMaxValues(membersWithRoles.length)
+      .setMaxValues(membersWithServiceCrewRoles.length)
       .setPlaceholder("Select target service employee/s.");
 
-    const userMenuRow = new ActionRowBuilder().addComponents(userMenu);
+    const managementMenu = new StringSelectMenuBuilder()
+      .setCustomId("signatoriesManagementMenu")
+      .setOptions(membersWithManagementRoles)
+      .setMinValues(0)
+      .setMaxValues(membersWithManagementRoles.length)
+      .setPlaceholder("Select target management employee/s.");
+
+    const serviceCrewMenuRow = new ActionRowBuilder().addComponents(
+      serviceCrewMenu
+    );
+    const managementMenuRow = new ActionRowBuilder().addComponents(
+      managementMenu
+    );
 
     const departmentMenuOptions = management.map((dept) =>
       new StringSelectMenuOptionBuilder()
@@ -104,10 +127,23 @@ module.exports = {
       cancel
     );
 
-    await interaction.channel.send({
+    const message = await interaction.channel.send({
       embeds: [embed],
-      files: [attachmentFile.url],
-      components: [departmentMenuRow, userMenuRow, buttonRow],
+      components: [
+        departmentMenuRow,
+        serviceCrewMenuRow,
+        managementMenuRow,
+        buttonRow,
+      ],
+    });
+
+    const messageThread = await message.startThread({
+      name: `Signatories Request - ${message.id}`,
+      type: ChannelType.PublicThread, // Set to 'GuildPrivateThread' if only the user should see it
+    });
+
+    await messageThread.send({
+      content: `📸 ${interaction.user.toString()}, upload the attachment that needs to be signed here. Attachments can either be **1 PDF** or **multiple/single image/s** or both if needed.`,
     });
 
     const successEmbed = new EmbedBuilder()
