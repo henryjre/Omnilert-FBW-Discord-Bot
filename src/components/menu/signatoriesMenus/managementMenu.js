@@ -40,25 +40,39 @@ module.exports = {
         employeeDiscord.user.username;
 
       const employeeField = messageEmbed.data.fields.find(
-        (f) => f.name === employeeName
+        (f) => f.value === employeeName
       );
 
       if (!employeeField) {
+        // Find the positions of both fields
         const preparedByIndex = messageEmbed.data.fields.findIndex(
           (f) => f.name === "Prepared By"
         );
+        const serviceEmployeeIndex = messageEmbed.data.fields.findIndex(
+          (f) => f.name === "Service Employee"
+        );
 
-        if (preparedByIndex !== -1) {
-          messageEmbed.data.fields.splice(preparedByIndex + 1, 0, {
-            name: "Management Employee",
-            value: `${employeeDiscord.user.toString()} ⌛`,
-          });
+        let insertIndex;
+
+        if (preparedByIndex !== -1 && serviceEmployeeIndex !== -1) {
+          // Both fields exist - insert after the one that comes later
+          insertIndex = Math.max(preparedByIndex, serviceEmployeeIndex) + 1;
+        } else if (preparedByIndex !== -1) {
+          // Only "Prepared By" exists
+          insertIndex = preparedByIndex + 1;
+        } else if (serviceEmployeeIndex !== -1) {
+          // Only "Service Employee" exists
+          insertIndex = serviceEmployeeIndex + 1;
         } else {
-          messageEmbed.data.fields.unshift({
-            name: "Management Employee",
-            value: `${employeeDiscord.user.toString()} ⌛`,
-          });
+          // Neither field exists - insert at the beginning
+          insertIndex = 0;
         }
+
+        // Insert the new field
+        messageEmbed.data.fields.splice(insertIndex, 0, {
+          name: "Management Employee",
+          value: `${employeeDiscord.user.toString()} ⌛`,
+        });
       }
     }
 
