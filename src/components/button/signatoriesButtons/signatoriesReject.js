@@ -16,7 +16,9 @@ module.exports = {
   async execute(interaction, client) {
     const replyEmbed = new EmbedBuilder();
 
-    let messageEmbed = interaction.message.embeds[0];
+    let allEmbeds = interaction.message.embeds;
+    const messageEmbed = allEmbeds[0];
+
     const files = interaction.message.attachments.map((a) => a.url);
 
     const mentionable = messageEmbed.data.fields.find((f) =>
@@ -106,7 +108,7 @@ module.exports = {
           .get(signatoriesChannel)
           .send({
             content: mentionable.value.replace(/(\n|\u200b)/g, ""),
-            embeds: [messageEmbed],
+            embeds: allEmbeds,
             files: files,
           })
           .then((msg) => {
