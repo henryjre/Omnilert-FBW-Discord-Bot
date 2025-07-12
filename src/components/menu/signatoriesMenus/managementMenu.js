@@ -114,7 +114,7 @@ module.exports = {
       if (error.message.includes("BASE_TYPE_MAX_LENGTH")) {
         replyEmbed
           .setDescription(
-            `🔴 ERROR: Cannot add more management employees. This signatory has reached the maximum signing parties that can be added.`
+            `🔴 ERROR: The maximum number of signing parties that can be added is **25**.`
           )
           .setColor("Red");
 
