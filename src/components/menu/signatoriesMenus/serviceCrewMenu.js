@@ -35,12 +35,9 @@ module.exports = {
 
     for (const employee of selectedEmployees) {
       const employeeDiscord = interaction.guild.members.cache.get(employee);
-      const employeeName =
-        employeeDiscord.nickname.replace(/^[🔴🟢]\s*/, "") ||
-        employeeDiscord.user.username;
 
-      const employeeField = messageEmbed.data.fields.find(
-        (f) => f.value === employeeName
+      const employeeField = messageEmbed.data.fields.find((f) =>
+        f.value.includes(employee)
       );
 
       if (!employeeField) {
