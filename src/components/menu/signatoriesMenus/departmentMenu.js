@@ -21,6 +21,17 @@ module.exports = {
     let allEmbeds = interaction.message.embeds;
     const messageEmbed = allEmbeds[0];
 
+    // Check field limit before insertion
+    if (messageEmbed.data.fields.length >= 25) {
+      replyEmbed
+        .setDescription(
+          `🔴 ERROR: Cannot add more departments. This signatory has reached the maximum signing parties that can be added.`
+        )
+        .setColor("Red");
+
+      return await interaction.editReply({ embeds: [replyEmbed] });
+    }
+
     if (
       !messageEmbed.data.fields
         .find((f) => f.name === "Prepared By")
