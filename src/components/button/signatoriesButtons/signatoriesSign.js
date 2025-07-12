@@ -1,15 +1,6 @@
-const {
-  ActionRowBuilder,
-  EmbedBuilder,
-  ModalBuilder,
-  TextInputBuilder,
-  TextInputStyle,
-  StringSelectMenuBuilder,
-  StringSelectMenuOptionBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  MessageFlags,
-} = require("discord.js");
+const { EmbedBuilder, MessageFlags } = require("discord.js");
+
+const management = require("../../../config/management.json");
 
 module.exports = {
   data: {
@@ -31,10 +22,10 @@ module.exports = {
     );
 
     if (signingUser.value.includes("To be signed")) {
-      const fieldValue = signingUser.value.split(" - ");
+      const departmentName = signingUser.name;
 
-      const roleMention = fieldValue[1];
-      const roleId = roleMention.replace(/[<@&>]/g, "");
+      const department = management.find((d) => d.name === departmentName);
+      const roleId = department.role;
 
       if (
         !interaction.guild.members.cache
@@ -156,9 +147,11 @@ function findNextUser(messageEmbed) {
   }
 
   if (nextUserField.value.includes("To be signed")) {
-    const fieldValue = nextUserField.value.split(" - ");
-    const channelId = fieldValue[0].trim();
-    const roleId = fieldValue[1].trim();
+    const departmentName = nextUserField.name;
+    const department = management.find((d) => d.name === departmentName);
+    const roleId = department.role;
+
+    const channelId = department.officeChannelId;
 
     return { channelId: channelId, mention: roleId };
   } else {
