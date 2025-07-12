@@ -48,21 +48,22 @@ module.exports = {
         const preparedByIndex = messageEmbed.data.fields.findIndex(
           (f) => f.name === "Prepared By"
         );
-        const serviceEmployeeIndex = messageEmbed.data.fields.findIndex(
+        const lastServiceEmployeeIndex = messageEmbed.data.fields.findLastIndex(
           (f) => f.name === "Service Employee"
         );
 
+        // Determine where to insert the new field
         let insertIndex;
 
-        if (preparedByIndex !== -1 && serviceEmployeeIndex !== -1) {
+        if (preparedByIndex !== -1 && lastServiceEmployeeIndex !== -1) {
           // Both fields exist - insert after the one that comes later
-          insertIndex = Math.max(preparedByIndex, serviceEmployeeIndex) + 1;
+          insertIndex = Math.max(preparedByIndex, lastServiceEmployeeIndex) + 1;
         } else if (preparedByIndex !== -1) {
           // Only "Prepared By" exists
           insertIndex = preparedByIndex + 1;
-        } else if (serviceEmployeeIndex !== -1) {
+        } else if (lastServiceEmployeeIndex !== -1) {
           // Only "Service Employee" exists
-          insertIndex = serviceEmployeeIndex + 1;
+          insertIndex = lastServiceEmployeeIndex + 1;
         } else {
           // Neither field exists - insert at the beginning
           insertIndex = 0;
