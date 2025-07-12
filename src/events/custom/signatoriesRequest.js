@@ -18,7 +18,16 @@ module.exports = {
 
     if (mediaAttachments.size <= 0 && pdfAttachments.size <= 0) return;
 
+    const interactedUser = message.author;
+
     const originalMessage = await thread.fetchStarterMessage();
+
+    const messageEmbed = originalMessage.embeds[0];
+    const authorField = messageEmbed.data.fields.find(
+      (field) => field.name === "Prepared By"
+    );
+
+    if (!authorField.value.includes(interactedUser.id)) return;
 
     // Image Attachment Handling
     if (mediaAttachments.size > 0) {
