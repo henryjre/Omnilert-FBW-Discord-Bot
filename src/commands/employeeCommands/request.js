@@ -102,12 +102,6 @@ module.exports = {
       subcommand
         .setName("signatories")
         .setDescription("Request a signatories from the management.")
-        .addAttachmentOption((option) =>
-          option
-            .setName("attachment")
-            .setDescription("Add the attachment for the request.")
-            .setRequired(true)
-        )
     ),
   async execute(interaction, client) {
     if (interaction.channel.id !== commandsChannel) {
@@ -130,9 +124,9 @@ module.exports = {
         await runCashRequestsCommand(interaction, client);
         break;
 
-      // case "signatories":
-      //   await runSignatoriesCommand(interaction, client);
-      //   break;
+      case "signatories":
+        await runSignatoriesCommand(interaction, client);
+        break;
 
       default:
         break;
@@ -173,9 +167,7 @@ async function runCashRequestsCommand(interaction, client) {
 }
 
 async function runSignatoriesCommand(interaction, client) {
-  const attachment = interaction.options.getAttachment("attachment");
-
   return await client.commands
     .get("signatories_request")
-    .execute(interaction, client, attachment);
+    .execute(interaction, client);
 }
