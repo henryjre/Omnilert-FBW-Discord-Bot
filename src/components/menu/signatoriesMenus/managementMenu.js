@@ -36,8 +36,8 @@ module.exports = {
     for (const employee of selectedEmployees) {
       const employeeDiscord = interaction.guild.members.cache.get(employee);
 
-      const employeeField = messageEmbed.data.fields.find((f) =>
-        f.value.includes(employee)
+      const employeeField = messageEmbed.data.fields.find(
+        (f) => f.value.includes(employee) && f.name === "Management Employee"
       );
 
       if (!employeeField) {
