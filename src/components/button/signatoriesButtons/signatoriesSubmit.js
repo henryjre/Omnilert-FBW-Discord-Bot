@@ -17,7 +17,8 @@ module.exports = {
   async execute(interaction, client) {
     const replyEmbed = new EmbedBuilder();
 
-    let messageEmbed = interaction.message.embeds[0];
+    let allEmbeds = interaction.message.embeds;
+    const messageEmbed = allEmbeds[0];
     const files = interaction.message.attachments.map((a) => a.url);
 
     if (
@@ -58,7 +59,7 @@ module.exports = {
 
       await channel.send({
         content: `${role}`,
-        embeds: [messageEmbed],
+        embeds: allEmbeds,
         components: [buttonRow],
         files: files,
       });
@@ -70,7 +71,7 @@ module.exports = {
 
       await channel.send({
         content: `${employee}`,
-        embeds: [messageEmbed],
+        embeds: allEmbeds,
         components: [buttonRow],
         files: files,
       });
