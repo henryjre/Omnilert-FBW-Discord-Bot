@@ -1,11 +1,4 @@
-const {
-  EmbedBuilder,
-  MessageFlags,
-  ButtonBuilder,
-  ActionRowBuilder,
-  ButtonStyle,
-  StringSelectMenuBuilder,
-} = require("discord.js");
+const { EmbedBuilder, MessageFlags } = require("discord.js");
 
 const management = require("../../../config/management.json");
 
@@ -51,8 +44,6 @@ module.exports = {
         (dept) => dept.officeChannelId === department
       );
       const departmentName = dept.name;
-      const departmentRole = dept.role;
-      const departmentOfficeChannelId = dept.officeChannelId;
 
       const departmentField = messageEmbed.data.fields.find(
         (f) => f.name === departmentName
@@ -62,7 +53,7 @@ module.exports = {
         if (departmentName === "Executive Head") {
           messageEmbed.data.fields.push({
             name: departmentName,
-            value: `${departmentOfficeChannelId} - <@&${departmentRole}> - To be signed ⌛`,
+            value: `To be signed ⌛`,
           });
         } else {
           const executiveHeadIndex = messageEmbed.data.fields.findIndex(
@@ -72,12 +63,12 @@ module.exports = {
           if (executiveHeadIndex !== -1) {
             messageEmbed.data.fields.splice(executiveHeadIndex, 0, {
               name: departmentName,
-              value: `${departmentOfficeChannelId} - <@&${departmentRole}> - To be signed ⌛`,
+              value: `To be signed ⌛`,
             });
           } else {
             messageEmbed.data.fields.push({
               name: departmentName,
-              value: `${departmentOfficeChannelId} - <@&${departmentRole}> - To be signed ⌛`,
+              value: `To be signed ⌛`,
             });
           }
         }
