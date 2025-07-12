@@ -111,7 +111,7 @@ module.exports = {
         components: messageComponents,
       });
     } catch (error) {
-      console.error(error);
+      console.error(error.message);
     }
 
     replyEmbed
