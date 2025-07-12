@@ -20,7 +20,9 @@ module.exports = {
 
     const replyEmbed = new EmbedBuilder();
 
-    let messageEmbed = interaction.message.embeds[0];
+    let allEmbeds = interaction.message.embeds;
+    const messageEmbed = allEmbeds[0];
+
     const messageComponents = interaction.message.components;
     const files = interaction.message.attachments.map((a) => a.url);
 
@@ -62,7 +64,7 @@ module.exports = {
         messageEmbed.data.footer.text = `This request has been signed by all parties concerned.`;
 
         await lastChannel.send({
-          embeds: [messageEmbed],
+          embeds: allEmbeds,
           files: files,
         });
 
@@ -81,7 +83,7 @@ module.exports = {
 
       await channel.send({
         content: `${next.mention}`,
-        embeds: [messageEmbed],
+        embeds: allEmbeds,
         components: messageComponents,
         files: files,
       });
@@ -109,7 +111,7 @@ module.exports = {
         messageEmbed.data.footer.text = `This request has been signed by all parties concerned.`;
 
         await lastChannel.send({
-          embeds: [messageEmbed],
+          embeds: allEmbeds,
           files: files,
         });
 
@@ -128,7 +130,7 @@ module.exports = {
 
       await channel.send({
         content: `${next.mention}`,
-        embeds: [messageEmbed],
+        embeds: allEmbeds,
         components: messageComponents,
         files: files,
       });

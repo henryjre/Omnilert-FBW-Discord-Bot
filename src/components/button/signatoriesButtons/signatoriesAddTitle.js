@@ -17,7 +17,8 @@ module.exports = {
   async execute(interaction, client) {
     const replyEmbed = new EmbedBuilder();
 
-    let messageEmbed = interaction.message.embeds[0];
+    let allEmbeds = interaction.message.embeds;
+    const messageEmbed = allEmbeds[0];
 
     if (
       !messageEmbed.data.fields
@@ -93,7 +94,7 @@ module.exports = {
         }
 
         await interaction.message.edit({
-          embeds: [messageEmbed],
+          embeds: allEmbeds,
           components: messageComponents,
         });
       }
