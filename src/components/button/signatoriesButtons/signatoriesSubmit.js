@@ -78,5 +78,10 @@ module.exports = {
     }
 
     await interaction.message.delete();
+
+    if (interaction.message.hasThread) {
+      const thread = interaction.message.thread;
+      await thread.delete();
+    }
   },
 };
