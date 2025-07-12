@@ -42,7 +42,7 @@ module.exports = {
         name: "Prepared By",
         value: `<@${interaction.user.id}>\n\u200b`,
       })
-      .setColor(managementRole.color)
+      .setColor("Blurple")
       .setFooter({
         text: `Please select the departments and/or employees that will sign the request.`,
       });
