@@ -149,7 +149,7 @@ function findNextUser(messageEmbed) {
   if (nextUserField.value.includes("To be signed")) {
     const departmentName = nextUserField.name;
     const department = management.find((d) => d.name === departmentName);
-    const roleId = department.role;
+    const roleId = `<@&${department.role}>`;
 
     const channelId = department.officeChannelId;
 
