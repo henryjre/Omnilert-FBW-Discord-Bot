@@ -130,9 +130,9 @@ module.exports = {
     const message = await interaction.channel.send({
       embeds: [embed],
       components: [
-        departmentMenuRow,
         serviceCrewMenuRow,
         managementMenuRow,
+        departmentMenuRow,
         buttonRow,
       ],
     });
