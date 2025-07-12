@@ -8,6 +8,7 @@ const {
   StringSelectMenuOptionBuilder,
   ButtonBuilder,
   ButtonStyle,
+  MessageFlags,
 } = require("discord.js");
 
 module.exports = {
@@ -15,6 +16,8 @@ module.exports = {
     name: `signatoriesSubmit`,
   },
   async execute(interaction, client) {
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
     const replyEmbed = new EmbedBuilder();
 
     let allEmbeds = interaction.message.embeds;
@@ -76,6 +79,12 @@ module.exports = {
         files: files,
       });
     }
+
+    replyEmbed
+      .setDescription(`✅ Request submitted successfully.`)
+      .setColor("Green");
+
+    await interaction.editReply({ embeds: [replyEmbed] });
 
     await interaction.message.delete();
 
