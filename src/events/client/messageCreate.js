@@ -52,6 +52,12 @@ module.exports = {
           .get("ispeOrderProof")
           .execute(message, thread, client);
       }
+
+      if (thread.name.includes("Signatories Request")) {
+        return await client.events
+          .get("signatoriesRequestAttachment")
+          .execute(message, thread, client);
+      }
     }
   },
 };
