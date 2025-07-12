@@ -111,7 +111,17 @@ module.exports = {
         components: messageComponents,
       });
     } catch (error) {
-      console.error(error.message);
+      if (error.message.includes("BASE_TYPE_MAX_LENGTH")) {
+        replyEmbed
+          .setDescription(
+            `🔴 ERROR: Cannot add more management employees. This signatory has reached the maximum signing parties that can be added.`
+          )
+          .setColor("Red");
+
+        return await interaction.editReply({ embeds: [replyEmbed] });
+      }
+
+      console.error(error);
     }
 
     replyEmbed

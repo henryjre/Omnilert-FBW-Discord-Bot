@@ -110,6 +110,16 @@ module.exports = {
         components: messageComponents,
       });
     } catch (error) {
+      if (error.message.includes("BASE_TYPE_MAX_LENGTH")) {
+        replyEmbed
+          .setDescription(
+            `🔴 ERROR: Cannot add more departments. This signatory has reached the maximum signing parties that can be added.`
+          )
+          .setColor("Red");
+
+        return await interaction.editReply({ embeds: [replyEmbed] });
+      }
+
       console.error(error);
     }
 
