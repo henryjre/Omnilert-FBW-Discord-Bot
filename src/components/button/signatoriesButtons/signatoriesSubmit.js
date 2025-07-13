@@ -11,6 +11,8 @@ const {
   MessageFlags,
 } = require("discord.js");
 
+const management = require("../../../config/management.json");
+
 module.exports = {
   data: {
     name: `signatoriesSubmit`,
@@ -55,13 +57,14 @@ module.exports = {
     const firstField = embedFields[1];
 
     if (firstField.value.includes("To be signed ⌛")) {
-      const department = firstField.value.split(" - ");
-      const channelId = department[0];
-      const role = department[1];
+      const departmentName = firstField.name;
+      const department = management.find((d) => d.name === departmentName);
+      const channelId = department.officeChannelId;
+      const role = department.role;
       const channel = interaction.guild.channels.cache.get(channelId);
 
       await channel.send({
-        content: `${role}`,
+        content: `<@&${role}>`,
         embeds: allEmbeds,
         components: [buttonRow],
         files: files,
