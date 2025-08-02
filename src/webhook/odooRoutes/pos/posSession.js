@@ -635,7 +635,7 @@ const discountOrder = async (req, res) => {
   //creating an embed for the session
   const fields = [
     { name: "Session Name", value: x_session_name },
-    { name: "Order Reference", value: pos_reference },
+    { name: "Order Reference", value: name },
     { name: "Branch", value: x_company_name },
     { name: "Order Date", value: orderDate },
     {
