@@ -9,7 +9,7 @@ module.exports = {
     let messageEmbed = interaction.message.embeds[0];
 
     const ownerField = messageEmbed.data.fields.find(
-      (f) => f.name === "Penalized Employee"
+      (f) => f.name === "Penalized Employee" || f.name === "Customer"
     );
 
     const replyEmbed = new EmbedBuilder();
