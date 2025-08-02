@@ -585,7 +585,7 @@ const discountOrder = async (req, res) => {
     cashier,
     amount_total,
     date_order,
-    name,
+    pos_reference: name,
     x_company_name,
     x_discord_id,
     x_order_lines,
@@ -635,7 +635,7 @@ const discountOrder = async (req, res) => {
   //creating an embed for the session
   const fields = [
     { name: "Session Name", value: x_session_name },
-    { name: "Order Reference", value: name },
+    { name: "Order Reference", value: pos_reference },
     { name: "Branch", value: x_company_name },
     { name: "Order Date", value: orderDate },
     {
@@ -699,7 +699,7 @@ const nonCashOrder = async (req, res) => {
     cashier,
     amount_total,
     date_order,
-    name,
+    pos_reference: name,
     x_company_name,
     x_discord_id,
     x_order_lines,
@@ -707,8 +707,6 @@ const nonCashOrder = async (req, res) => {
     company_id,
     x_payments,
   } = req.body;
-
-  console.log(req.body);
 
   const payments = x_payments.filter((p) => p.name !== "Cash");
   if (payments.length === 0) {
@@ -822,7 +820,7 @@ const refundOrder = async (req, res) => {
     cashier,
     amount_total,
     date_order,
-    name,
+    pos_reference: name,
     x_company_name,
     x_discord_id,
     x_order_lines,
@@ -913,7 +911,7 @@ const tokenPayOrder = async (req, res) => {
     cashier,
     amount_total,
     date_order,
-    name,
+    pos_reference: name,
     x_company_name,
     x_discord_id,
     x_customer_discord_id,
