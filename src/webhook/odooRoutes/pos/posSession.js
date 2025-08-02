@@ -1215,14 +1215,13 @@ function getCurrentFormattedDate(timezone = "Asia/Manila") {
   return moment().tz(timezone).format("MMMM DD, YYYY [at] h:mm A");
 }
 
-function formatDateTime(datetime, timezone = "Asia/Manila") {
+function formatDateTime(datetime) {
   if (!datetime) {
     return null;
   }
 
-  return moment
-    .tz(datetime, "YYYY-MM-DD HH:mm:ss", timezone)
-    .format("MMMM DD, YYYY [at] h:mm A");
+  // Parse the datetime and add 8 hours to adjust for Manila time (UTC+8)
+  return moment(datetime).add(8, "hours").format("MMMM DD, YYYY [at] h:mm A");
 }
 
 function groupCashInOutByType(data) {
