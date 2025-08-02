@@ -708,6 +708,8 @@ const nonCashOrder = async (req, res) => {
     x_payments,
   } = req.body;
 
+  console.log(req.body);
+
   const payments = x_payments.filter((p) => p.name !== "Cash");
   if (payments.length === 0) {
     return res.status(200).json({ ok: true, message: "Webhook received" });
