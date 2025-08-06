@@ -111,7 +111,6 @@ const sessionOpen = async (req, res) => {
   ];
 
   const openingcashEmbed = new EmbedBuilder()
-    .setURL("https://omnilert.odoo.com/")
     .setDescription(`## 📝 Opening Change Fund Breakdown`)
     .setColor("Green")
     .setFooter({
@@ -120,7 +119,6 @@ const sessionOpen = async (req, res) => {
     .addFields(openingCashFields);
 
   const openingPcfEmbed = new EmbedBuilder()
-    .setURL("https://omnilert.odoo.com/")
     .setDescription(`## 💰 Opening PCF Breakdown`)
     .setColor("DarkGreen")
     .setFooter({
