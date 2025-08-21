@@ -8,7 +8,7 @@ const departments = [
   { id: 1, name: "DHVSU Bacolor", role: "1336992007910068225" },
   { id: 4, name: "Primark Center Guagua", role: "1336992011525558312" },
   { id: 5, name: "Robinsons Starmills CSFP", role: "1336992014545190933" },
-  { id: 6, name: "Main Omnilert", role: null },
+  { id: 13, name: "Main Omnilert", role: null },
   { id: 7, name: "JASA Hiway Guagua", role: "1336991998791385129" },
 ];
 
