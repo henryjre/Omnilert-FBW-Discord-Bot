@@ -259,7 +259,7 @@ const check_in = async (req, res) => {
           { name: "Employee", value: `🪪 | ${employeeName}` },
           { name: "Branch", value: `🛒 | ${department?.name || "Omnilert"}` },
           {
-            name: "Cumulative Working Hours",
+            name: "Total Working Time",
             value: `🕒 | ${cumulative_minutes || 0}`,
           }
         )
@@ -304,12 +304,9 @@ const check_in = async (req, res) => {
         components: [buttonRow],
       });
 
-      console.log(x_punctuality);
-      console.log(x_punctuality && x_punctuality === "late");
-
       if (x_punctuality && x_punctuality === "late") {
         const thread = await logMessage.startThread({
-          name: `Tardiness Attendance - ${logMessage.id}`,
+          name: `Attendance Log - ${logMessage.id}`,
           type: ChannelType.PublicThread, // Set to 'GuildPrivateThread' if only the user should see it
           autoArchiveDuration: 1440,
         });
@@ -393,6 +390,7 @@ const check_out = async (req, res) => {
   try {
     const {
       x_discord_id,
+      department_id,
       check_in,
       check_out,
       worked_hours,
@@ -405,12 +403,18 @@ const check_out = async (req, res) => {
       x_prev_attendance_id,
       x_shift_end,
       x_shift_start,
+      x_employee_contact_name,
     } = req.body;
 
     const check_out_time = formatTime(check_out);
+    const shift_start_time = formatTime(x_shift_start);
     const shift_end_time = formatTime(x_shift_end);
     const minutes_vs_end = formatShiftDelta(x_minutes_vs_end);
     const cumulative_minutes = formatMinutes(x_cumulative_minutes);
+
+    const department = departments.find((d) => d.id === department_id);
+    const employeeName =
+      x_employee_contact_name?.split("-")[1]?.trim() || "Unknown";
 
     const attendanceLogChannel = client.channels.cache.get(
       "1343462713363271780"
@@ -451,6 +455,11 @@ const check_out = async (req, res) => {
 
     let messageEmbed = attendanceMessage.embeds[0];
 
+    const totalWorkingTime = messageEmbed.data.fields?.find(
+      (f) => f.name === "Total Working Time"
+    );
+    if (totalWorkingTime) totalWorkingTime.value = `⏳ | ${cumulative_minutes}`;
+
     messageEmbed.data.fields.push({
       name: "Check-Out",
       value: `⏱️ | ${check_out_time}`,
@@ -459,6 +468,69 @@ const check_out = async (req, res) => {
     messageEmbed.data.color = 9807270;
 
     await attendanceMessage.edit({ embeds: [messageEmbed] });
+
+    let messageThread = attendanceMessage.thread;
+
+    if (x_checkout_status === "on_time")
+      return res
+        .status(200)
+        .json({ ok: true, message: "Attendance updated successfully" });
+
+    if (!messageThread) {
+      messageThread = await attendanceMessage.startThread({
+        name: `Attendance Log - ${attendanceMessage.id}`,
+        type: ChannelType.PublicThread, // Set to 'GuildPrivateThread' if only the user should see it
+        autoArchiveDuration: 1440,
+      });
+    }
+
+    if (x_checkout_status === "overtime" || x_checkout_status === "undertime") {
+      const isOvertime = x_checkout_status === "overtime";
+
+      const title = isOvertime
+        ? "OVERTIME AUTHORIZATION REQUEST"
+        : "UNDERTIME AUTHORIZATION REQUEST";
+
+      const color = isOvertime ? "#ff00aa" : "#a600ff";
+
+      const fieldName = isOvertime ? "Overtime" : "Undertime";
+
+      const embed = new EmbedBuilder()
+        .setDescription(`## ⏳ ${title}`)
+        .addFields(
+          {
+            name: "Date",
+            value: `📆 | ${moment(new Date()).format("MMMM DD, YYYY")}`,
+          },
+          { name: "Employee", value: `🪪 | ${employeeName}` },
+          { name: "Branch", value: `🛒 | ${department?.name || "Omnilert"}` },
+          { name: "Shift Start Date", value: `📅 | ${shift_start_time}` },
+          { name: "Shift End Date", value: `📅 | ${shift_end_time}` },
+          { name: fieldName, value: `⏳ | ${minutes_vs_end}` }
+        )
+        .setColor(color);
+
+      const submit = new ButtonBuilder()
+        .setCustomId("tardinessSubmit")
+        .setLabel("Submit")
+        .setDisabled(true)
+        .setStyle(ButtonStyle.Success);
+
+      const addReason = new ButtonBuilder()
+        .setCustomId("tardinessAddReason")
+        .setLabel("Add Reason")
+        .setStyle(ButtonStyle.Primary);
+
+      const buttonRow = new ActionRowBuilder().addComponents(submit, addReason);
+
+      await messageThread.send({
+        content: `${
+          x_discord_id ? `<@${x_discord_id}>` : `<@&${department.role}>`
+        }, please submit add reason and submit this ${fieldName.toLowerCase()} request.`,
+        embeds: [embed],
+        components: [buttonRow],
+      });
+    }
 
     return res
       .status(200)
