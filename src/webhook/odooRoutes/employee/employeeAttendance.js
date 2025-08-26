@@ -257,6 +257,10 @@ const check_in = async (req, res) => {
         .setTitle("🗓️ Attendance Log")
         .addFields(
           { name: "Employee", value: `🪪 | ${employeeName}` },
+          {
+            name: "Discord User",
+            value: `👤 | ${x_discord_id ? `<@${x_discord_id}>` : "N/A"}`,
+          },
           { name: "Branch", value: `🛒 | ${department?.name || "Omnilert"}` },
           {
             name: "Total Working Time",
@@ -294,7 +298,7 @@ const check_in = async (req, res) => {
       const closeThread = new ButtonBuilder()
         .setCustomId("attendanceEndShift")
         .setLabel("End Shift")
-        .setStyle(ButtonStyle.Secondary);
+        .setStyle(ButtonStyle.Primary);
 
       const buttonRow = new ActionRowBuilder().addComponents(closeThread);
 
@@ -466,78 +470,6 @@ const check_out = async (req, res) => {
     messageEmbed.data.color = 9807270;
 
     await attendanceMessage.edit({ embeds: [messageEmbed] });
-
-    return res
-      .status(200)
-      .json({ ok: true, message: "Attendance updated successfully" });
-
-    let messageThread = attendanceMessage.thread;
-
-    if (!x_is_final_checkout)
-      return res
-        .status(200)
-        .json({ ok: true, message: "Attendance updated successfully" });
-
-    if (x_checkout_status === "on_time")
-      return res
-        .status(200)
-        .json({ ok: true, message: "Attendance updated successfully" });
-
-    if (!messageThread) {
-      messageThread = await attendanceMessage.startThread({
-        name: `Attendance Log - ${attendanceMessage.id}`,
-        type: ChannelType.PublicThread, // Set to 'GuildPrivateThread' if only the user should see it
-        autoArchiveDuration: 1440,
-      });
-    }
-
-    if (x_checkout_status === "overtime" || x_checkout_status === "undertime") {
-      const isOvertime = x_checkout_status === "overtime";
-
-      const title = isOvertime
-        ? "OVERTIME AUTHORIZATION REQUEST"
-        : "UNDERTIME AUTHORIZATION REQUEST";
-
-      const color = isOvertime ? "#ff00aa" : "#a600ff";
-
-      const fieldName = isOvertime ? "Overtime" : "Undertime";
-
-      const embed = new EmbedBuilder()
-        .setDescription(`## ⏳ ${title}`)
-        .addFields(
-          {
-            name: "Date",
-            value: `📆 | ${moment(new Date()).format("MMMM DD, YYYY")}`,
-          },
-          { name: "Employee", value: `🪪 | ${employeeName}` },
-          { name: "Branch", value: `🛒 | ${department?.name || "Omnilert"}` },
-          { name: "Shift Start Date", value: `📅 | ${shift_start_time}` },
-          { name: "Shift End Date", value: `📅 | ${shift_end_time}` },
-          { name: fieldName, value: `⏳ | ${minutes_vs_end}` }
-        )
-        .setColor(color);
-
-      const submit = new ButtonBuilder()
-        .setCustomId("tardinessSubmit")
-        .setLabel("Submit")
-        .setDisabled(true)
-        .setStyle(ButtonStyle.Success);
-
-      const addReason = new ButtonBuilder()
-        .setCustomId("tardinessAddReason")
-        .setLabel("Add Reason")
-        .setStyle(ButtonStyle.Primary);
-
-      const buttonRow = new ActionRowBuilder().addComponents(submit, addReason);
-
-      await messageThread.send({
-        content: `${
-          x_discord_id ? `<@${x_discord_id}>` : `<@&${department.role}>`
-        }, please submit add reason and submit this ${fieldName.toLowerCase()} request.`,
-        embeds: [embed],
-        components: [buttonRow],
-      });
-    }
 
     return res
       .status(200)
