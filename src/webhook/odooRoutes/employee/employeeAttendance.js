@@ -471,6 +471,11 @@ const check_out = async (req, res) => {
 
     let messageThread = attendanceMessage.thread;
 
+    if (!x_is_final_checkout)
+      return res
+        .status(200)
+        .json({ ok: true, message: "Attendance updated successfully" });
+
     if (x_checkout_status === "on_time")
       return res
         .status(200)
