@@ -397,10 +397,7 @@ const check_out = async (req, res) => {
       check_out,
       worked_hours,
       id: attendanceId,
-      x_checkout_status,
       x_cumulative_minutes,
-      x_is_final_checkout,
-      x_minutes_vs_end,
       x_planning_slot_id,
       x_prev_attendance_id,
       x_shift_end,
@@ -411,7 +408,6 @@ const check_out = async (req, res) => {
     const check_out_time = formatTime(check_out);
     const shift_start_time = formatTime(x_shift_start);
     const shift_end_time = formatTime(x_shift_end);
-    const minutes_vs_end = formatShiftDelta(x_minutes_vs_end);
     const cumulative_minutes = formatMinutes(x_cumulative_minutes);
 
     const department = departments.find((d) => d.id === department_id);
@@ -470,6 +466,10 @@ const check_out = async (req, res) => {
     messageEmbed.data.color = 9807270;
 
     await attendanceMessage.edit({ embeds: [messageEmbed] });
+
+    return res
+      .status(200)
+      .json({ ok: true, message: "Attendance updated successfully" });
 
     let messageThread = attendanceMessage.thread;
 
