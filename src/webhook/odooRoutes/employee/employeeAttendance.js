@@ -371,6 +371,8 @@ const check_in = async (req, res) => {
           value: `⏱️ | ${check_in_time}`,
         });
 
+        messageEmbed.data.color = 5763719;
+
         await attendanceMessage.edit({
           content: `Attendance ID: ${attendanceId}`,
           embeds: [messageEmbed],
