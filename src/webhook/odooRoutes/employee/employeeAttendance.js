@@ -294,7 +294,7 @@ const check_in = async (req, res) => {
       const closeThread = new ButtonBuilder()
         .setCustomId("attendanceEndShift")
         .setLabel("End Shift")
-        .setStyle(ButtonStyle.Danger);
+        .setStyle(ButtonStyle.Secondary);
 
       const buttonRow = new ActionRowBuilder().addComponents(closeThread);
 
