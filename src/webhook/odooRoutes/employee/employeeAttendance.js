@@ -218,8 +218,6 @@ const check_in = async (req, res) => {
       x_prev_attendance_id,
     } = req.body;
 
-    console.log(req.body);
-
     const check_in_time = formatTime(check_in);
     const shift_start_time = x_shift_start ? formatTime(x_shift_start) : "N/A";
     const shift_end_time = x_shift_end ? formatTime(x_shift_end) : "N/A";
@@ -304,6 +302,9 @@ const check_in = async (req, res) => {
         embeds: [embed],
         components: [buttonRow],
       });
+
+      console.log(x_punctuality);
+      console.log(x_punctuality && x_punctuality === "late");
 
       if (x_punctuality && x_punctuality === "late") {
         const thread = await logMessage.startThread({
