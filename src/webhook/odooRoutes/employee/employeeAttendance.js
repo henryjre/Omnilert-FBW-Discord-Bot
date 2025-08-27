@@ -325,7 +325,7 @@ const check_in = async (req, res) => {
           .addFields(
             {
               name: "Date",
-              value: `📆 | ${moment(new Date()).format("MMMM DD, YYYY")}`,
+              value: `📆 | ${moment().format("MMMM DD, YYYY")}`,
             },
             { name: "Employee", value: `🪪 | ${employeeName}` },
             { name: "Branch", value: `🛒 | ${department?.name || "Omnilert"}` },
@@ -366,6 +366,113 @@ const check_in = async (req, res) => {
         });
       }
     } else if (!x_planning_slot_id) {
+      const embed = new EmbedBuilder()
+        .setTitle("🗓️ Attendance Log")
+        .addFields(
+          { name: "Employee", value: `🪪 | ${employeeName}` },
+          {
+            name: "Discord User",
+            value: `👤 | ${x_discord_id ? `<@${x_discord_id}>` : "N/A"}`,
+          },
+          { name: "Branch", value: `🛒 | ${department?.name || "Omnilert"}` },
+          {
+            name: "Total Working Time",
+            value: `🕒 | ${cumulative_minutes || 0}`,
+          }
+        )
+        .setColor("Green");
+
+      if (department) {
+        embed.addFields(
+          {
+            name: "Shift ID",
+            value: `🆔 | ${x_planning_slot_id || "N/A"}`,
+          },
+          {
+            name: "Shift Start",
+            value: `⏰ | ${shift_start_time}`,
+          },
+          {
+            name: "Shift End",
+            value: `⏰ | ${shift_end_time}`,
+          }
+        );
+      }
+
+      embed.addFields({
+        name: "Check-In",
+        value: `⏱️ | ${check_in_time}`,
+      });
+
+      if (x_employee_avatar) {
+        embed.setThumbnail(x_employee_avatar);
+      }
+
+      const closeThread = new ButtonBuilder()
+        .setCustomId("attendanceEndShift")
+        .setLabel("End Shift")
+        .setStyle(ButtonStyle.Primary);
+
+      const buttonRow = new ActionRowBuilder().addComponents(closeThread);
+
+      const messagePayload = {
+        content: `Attendance ID: ${attendanceId}`,
+        embeds: [embed],
+      };
+
+      const logMessage = await attendanceLogChannel.send(messagePayload);
+
+      if (department) {
+        const thread = await logMessage.startThread({
+          name: `Attendance Log - ${logMessage.id}`,
+          type: ChannelType.PublicThread, // Set to 'GuildPrivateThread' if only the user should see it
+          autoArchiveDuration: 1440,
+        });
+
+        const interimEmbed = new EmbedBuilder()
+          .setDescription("## ⌛ INTERIM DUTY FORM")
+          .addFields(
+            {
+              name: "Date",
+              value: `📆 | ${moment().format("MMMM DD, YYYY")}`,
+            },
+            { name: "Employee", value: `🪪 | ${employeeName}` },
+            { name: "Branch", value: `🛒 | ${department?.name || "Omnilert"}` },
+            {
+              name: "Shift Start Date",
+              value: `📅 | ${shift_start_time}`,
+            },
+            {
+              name: "Shift End Date",
+              value: `📅 | ${shift_end_time}`,
+            }
+          )
+          .setColor("#00fffd");
+
+        const submit = new ButtonBuilder()
+          .setCustomId("tardinessSubmit")
+          .setLabel("Submit")
+          .setDisabled(true)
+          .setStyle(ButtonStyle.Success);
+
+        const addReason = new ButtonBuilder()
+          .setCustomId("interimAddAssigned")
+          .setLabel("Add Assigned By")
+          .setStyle(ButtonStyle.Primary);
+
+        const buttonRow = new ActionRowBuilder().addComponents(
+          submit,
+          addReason
+        );
+
+        await thread.send({
+          content: `${
+            x_discord_id ? `<@${x_discord_id}>` : `<@&${department.role}>`
+          }, please add the employee who assigned this interim duty and submit.`,
+          embeds: [interimEmbed],
+          components: [buttonRow],
+        });
+      }
     } else {
       const channelMessages = await attendanceLogChannel.messages.fetch({
         limit: 100,
