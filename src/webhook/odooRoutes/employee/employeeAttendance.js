@@ -269,7 +269,7 @@ const check_in = async (req, res) => {
         )
         .setColor("Green");
 
-      if (department) {
+      if (department && x_planning_slot_id) {
         embed.addFields(
           {
             name: "Shift ID",
@@ -302,13 +302,18 @@ const check_in = async (req, res) => {
 
       const buttonRow = new ActionRowBuilder().addComponents(closeThread);
 
-      const logMessage = await attendanceLogChannel.send({
+      const messagePayload = {
         content: `Attendance ID: ${attendanceId}`,
         embeds: [embed],
-        components: [buttonRow],
-      });
+      };
 
-      if (x_punctuality && x_punctuality === "late") {
+      if (department && x_planning_slot_id) {
+        messagePayload.components = [buttonRow];
+      }
+
+      const logMessage = await attendanceLogChannel.send(messagePayload);
+
+      if (x_planning_slot_id && x_punctuality && x_punctuality === "late") {
         const thread = await logMessage.startThread({
           name: `Attendance Log - ${logMessage.id}`,
           type: ChannelType.PublicThread, // Set to 'GuildPrivateThread' if only the user should see it
@@ -360,6 +365,7 @@ const check_in = async (req, res) => {
           components: [buttonRow],
         });
       }
+    } else if (!x_planning_slot_id) {
     } else {
       const channelMessages = await attendanceLogChannel.messages.fetch({
         limit: 100,
