@@ -420,6 +420,10 @@ const check_in = async (req, res) => {
         embeds: [embed],
       };
 
+      if (department) {
+        messagePayload.components = [buttonRow];
+      }
+
       const logMessage = await attendanceLogChannel.send(messagePayload);
 
       if (department) {
