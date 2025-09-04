@@ -4,13 +4,15 @@ const {
   ButtonBuilder,
   ButtonStyle,
   ChannelType,
+  EmbedBuilder,
 } = require("discord.js");
+const e = require("express");
 
 const moment = require("moment-timezone");
 
 module.exports = {
   data: {
-    name: `sample`,
+    name: `attendanceEndShift`,
   },
   async execute(interaction, client) {
     // const permissionRole = "1314413671245676685";
@@ -37,20 +39,26 @@ module.exports = {
       });
     }
 
+    const employeeField = embedFields.find((f) => f.name === "Employee");
+    const branchField = embedFields.find((f) => f.name === "Branch");
+    const shiftStartField = embedFields.find((f) => f.name === "Shift Start");
     const shiftEndField = embedFields.find((f) => f.name === "Shift End");
     const discordUserField = embedFields.find((f) => f.name === "Discord User");
 
-    const shiftEndValue = shiftEndField?.value;
+    const shiftStartTime = shiftStartField?.value.split("|")[1];
+    const shiftEndTime = shiftEndField?.value.split("|")[1];
+
     const lastFieldValue = lastField?.value; //field should be check-out
     const discordUserValue = discordUserField?.value.split("|")[1];
 
     const { status, difference } = getTimeDifference(
-      shiftEndValue,
+      shiftEndTime,
       lastFieldValue
     );
 
+    let thread = interaction.message.thread;
+
     if (status !== "on_time") {
-      let thread = interaction.message.thread;
       if (!thread) {
         thread = await interaction.message.startThread({
           name: `Attendance Log - ${interaction.message.id}`,
@@ -74,11 +82,14 @@ module.exports = {
             name: "Date",
             value: `📆 | ${moment(new Date()).format("MMMM DD, YYYY")}`,
           },
-          { name: "Employee", value: `🪪 | ${employeeName}` },
-          { name: "Branch", value: `🛒 | ${department?.name || "Omnilert"}` },
-          { name: "Shift Start Date", value: `📅 | ${shift_start_time}` },
-          { name: "Shift End Date", value: `📅 | ${shift_end_time}` },
-          { name: fieldName, value: `⏳ | ${minutes_vs_end}` }
+          {
+            name: "Employee",
+            value: employeeField.value,
+          },
+          { name: "Branch", value: branchField.value },
+          { name: "Shift Start Date", value: `📅 | ${shiftStartTime}` },
+          { name: "Shift End Date", value: `📅 | ${shiftEndTime}` },
+          { name: fieldName, value: `⏳ | ${difference}` }
         )
         .setColor(color);
 
@@ -114,7 +125,7 @@ module.exports = {
       embeds: [messageEmbed],
     };
 
-    if (interaction.message.thread) {
+    if (thread) {
       const closeThread = new ButtonBuilder()
         .setCustomId("attendanceCloseThread")
         .setLabel("Close Thread")
@@ -126,6 +137,10 @@ module.exports = {
     }
 
     await interaction.message.edit(messagePayload);
+
+    await interaction.editReply({
+      content: `✅ Successfully ended this shift.`,
+    });
   },
 };
 
