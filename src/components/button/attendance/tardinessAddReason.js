@@ -38,7 +38,7 @@ module.exports = {
 
     const messageEmbed = interaction.message.embeds[0];
     const tardinessReasonField = messageEmbed.fields.find(
-      (field) => field.name === "Tardiness Reason"
+      (field) => field.name === "Reason"
     );
 
     let tardinessReasonInput = "";
@@ -49,14 +49,14 @@ module.exports = {
 
     const modal = new ModalBuilder()
       .setCustomId("attendanceTardinessModal")
-      .setTitle(`TARDINESS REASON`);
+      .setTitle(`Reason`);
 
     const firstInput = new TextInputBuilder()
       .setCustomId(`tardinessReasonInput`)
-      .setLabel(`❓ Tardiness Reason`)
+      .setLabel(`❓ Reason`)
       .setStyle(TextInputStyle.Paragraph)
       .setMaxLength(1000)
-      .setPlaceholder("Enter the reason for tardiness.")
+      .setPlaceholder("Enter the reason.")
       .setValue(tardinessReasonInput)
       .setRequired(true);
 
