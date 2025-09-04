@@ -121,6 +121,8 @@ module.exports = {
       text: `Shift Ended By: ${interactedMember}`,
     };
 
+    messageEmbed.color = 15548997;
+
     const messagePayload = {
       embeds: [messageEmbed],
     };
