@@ -23,41 +23,33 @@ module.exports = {
     //   return;
     // }
 
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
     const messageEmbed = interaction.message.embeds[0];
     const embedFields = messageEmbed.data.fields;
-    const checkOutFields = embedFields.filter((f) => f.name === "Check-Out");
+
+    const lastField = embedFields[embedFields.length - 1];
+
+    if (lastField.name === "Check-In") {
+      return await interaction.editReply({
+        content: `🔴 ERROR: This employee is currently on shift.`,
+        flags: MessageFlags.Ephemeral,
+      });
+    }
 
     const shiftEndField = embedFields.find((f) => f.name === "Shift End");
-    const lastCheckoutField =
-      checkOutFields.length > 0
-        ? checkOutFields[checkOutFields.length - 1]
-        : null;
     const discordUserField = embedFields.find((f) => f.name === "Discord User");
 
     const shiftEndValue = shiftEndField?.value;
-    const lastCheckoutValue = lastCheckoutField?.value;
+    const lastFieldValue = lastField?.value; //field should be check-out
     const discordUserValue = discordUserField?.value.split("|")[1];
 
     const { status, difference } = getTimeDifference(
       shiftEndValue,
-      lastCheckoutValue
+      lastFieldValue
     );
 
-    if (status === "on_time") {
-      if (interaction.message.thread) {
-        const closeThread = new ButtonBuilder()
-          .setCustomId("attendanceCloseThread")
-          .setLabel("Close Thread")
-          .setStyle(ButtonStyle.Danger);
-
-        const buttonRow = new ActionRowBuilder().addComponents(closeThread);
-
-        await interaction.message.edit({
-          embeds: [messageEmbed],
-          components: [buttonRow],
-        });
-      }
-    } else {
+    if (status !== "on_time") {
       let thread = interaction.message.thread;
       if (!thread) {
         thread = await interaction.message.startThread({
@@ -91,7 +83,7 @@ module.exports = {
         .setColor(color);
 
       const submit = new ButtonBuilder()
-        .setCustomId("tardinessSubmit")
+        .setCustomId("attendanceLogSubmit")
         .setLabel("Submit")
         .setDisabled(true)
         .setStyle(ButtonStyle.Success);
@@ -106,6 +98,28 @@ module.exports = {
       await thread.send({
         content: `${discordUserValue}, please add the reason and submit this ${fieldName.toLowerCase()} request.`,
         embeds: [embed],
+        components: [buttonRow],
+      });
+    }
+
+    const interactedMember =
+      interaction.member?.nickname.replace(/^[🔴🟢]\s*/, "") ||
+      interaction.user.globalName;
+
+    messageEmbed.data.footer = {
+      text: `Shift Ended By: ${interactedMember}`,
+    };
+
+    if (interaction.message.thread) {
+      const closeThread = new ButtonBuilder()
+        .setCustomId("attendanceCloseThread")
+        .setLabel("Close Thread")
+        .setStyle(ButtonStyle.Danger);
+
+      const buttonRow = new ActionRowBuilder().addComponents(closeThread);
+
+      await interaction.message.edit({
+        embeds: [messageEmbed],
         components: [buttonRow],
       });
     }
