@@ -46,12 +46,12 @@ module.exports = {
     const originalEmbed = originalMessage.embeds[0];
 
     const tardinessReasonField = originalEmbed.fields.find(
-      (field) => field.name === "Tardiness Reason"
+      (field) => field.name === "Reason"
     );
 
     if (!tardinessReasonField) {
       originalEmbed.fields.push({
-        name: "Tardiness Reason",
+        name: "Reason",
         value: `❓ | ${tardinessReasonInput}`,
       });
     } else {
@@ -74,9 +74,7 @@ module.exports = {
       addReason
     );
 
-    replyEmbed
-      .setDescription("✅ Successfully updated the tardiness reason.")
-      .setColor("Green");
+    replyEmbed.setDescription("✅ Successfully updated.").setColor("Green");
 
     await originalMessage.edit({
       embeds: [originalEmbed],
