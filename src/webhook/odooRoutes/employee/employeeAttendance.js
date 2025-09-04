@@ -623,27 +623,13 @@ const check_out = async (req, res) => {
   try {
     const {
       x_discord_id,
-      department_id,
-      check_in,
       check_out,
-      worked_hours,
       id: attendanceId,
       x_cumulative_minutes,
-      x_planning_slot_id,
-      x_prev_attendance_id,
-      x_shift_end,
-      x_shift_start,
-      x_employee_contact_name,
     } = req.body;
 
     const check_out_time = formatTime(check_out);
-    const shift_start_time = formatTime(x_shift_start);
-    const shift_end_time = formatTime(x_shift_end);
     const cumulative_minutes = formatMinutes(x_cumulative_minutes);
-
-    const department = departments.find((d) => d.id === department_id);
-    const employeeName =
-      x_employee_contact_name?.split("-")[1]?.trim() || "Unknown";
 
     const attendanceLogChannel = client.channels.cache.get(
       "1343462713363271780"
