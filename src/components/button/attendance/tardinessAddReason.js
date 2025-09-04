@@ -49,7 +49,7 @@ module.exports = {
 
     const modal = new ModalBuilder()
       .setCustomId("attendanceTardinessModal")
-      .setTitle(`Reason`);
+      .setTitle(`Add Reason`);
 
     const firstInput = new TextInputBuilder()
       .setCustomId(`tardinessReasonInput`)
