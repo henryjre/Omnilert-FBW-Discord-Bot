@@ -265,7 +265,11 @@ const check_in = async (req, res) => {
           { name: "Branch", value: `🛒 | ${department?.name || "Omnilert"}` },
           {
             name: "Total Working Time",
-            value: `🕒 | ${cumulative_minutes || 0}`,
+            value: `🕒 | ${
+              cumulative_minutes === "0 minutes"
+                ? "Currently Working"
+                : cumulative_minutes + " as of last check-out"
+            }`,
           }
         )
         .setColor("Green");
