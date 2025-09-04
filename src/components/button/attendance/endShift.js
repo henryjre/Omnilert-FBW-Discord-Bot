@@ -10,7 +10,7 @@ const moment = require("moment-timezone");
 
 module.exports = {
   data: {
-    name: `attendanceEndShift`,
+    name: `sample`,
   },
   async execute(interaction, client) {
     // const permissionRole = "1314413671245676685";
