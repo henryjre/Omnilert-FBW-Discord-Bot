@@ -34,7 +34,7 @@ module.exports = {
     if (!originalMessage) {
       replyEmbed
         .setDescription(
-          "🔴 Error: Could not find the original message. Please try again."
+          "🔴 Error: Could not find the original message. Please do not change the Message ID field."
         )
         .setColor("Red");
 
