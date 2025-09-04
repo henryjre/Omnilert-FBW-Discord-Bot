@@ -110,6 +110,10 @@ module.exports = {
       text: `Shift Ended By: ${interactedMember}`,
     };
 
+    const messagePayload = {
+      embeds: [messageEmbed],
+    };
+
     if (interaction.message.thread) {
       const closeThread = new ButtonBuilder()
         .setCustomId("attendanceCloseThread")
@@ -118,11 +122,10 @@ module.exports = {
 
       const buttonRow = new ActionRowBuilder().addComponents(closeThread);
 
-      await interaction.message.edit({
-        embeds: [messageEmbed],
-        components: [buttonRow],
-      });
+      messagePayload.components = [buttonRow];
     }
+
+    await interaction.message.edit(messagePayload);
   },
 };
 
