@@ -57,12 +57,10 @@ module.exports = {
       });
     }
 
-    let logsChannel;
+    let logsChannel = hrLogsChannel;
 
     if (interaction.member.roles.cache.has(financeRole)) {
       logsChannel = financeLogsChannel;
-    } else if (interaction.member.roles.cache.has(hrRole)) {
-      logsChannel = hrLogsChannel;
     }
 
     const modal = new ModalBuilder()
