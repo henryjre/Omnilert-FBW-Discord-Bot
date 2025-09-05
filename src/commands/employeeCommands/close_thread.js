@@ -119,6 +119,9 @@ async function closeThreadCommand(interaction, client) {
   }
 
   try {
+    //  lock the thread
+    await interaction.channel.setLocked(true);
+
     // Create success embed
     const successEmbed = new EmbedBuilder()
       .setDescription("✅ Thread has been successfully closed and locked.")
@@ -155,7 +158,6 @@ async function closeThreadCommand(interaction, client) {
       embeds: [closedEmbed],
     });
 
-    // Close and lock the thread
     await interaction.channel.setArchived(true);
   } catch (error) {
     // Create error embed for any issues during thread closing
