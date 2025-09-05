@@ -181,10 +181,14 @@ module.exports = {
 };
 
 async function insertToGoogleSheet(messageEmbed, client) {
-  const { type, date, branch, shift, employeeName } = await filterData(
-    messageEmbed,
-    client
-  );
+  const filteredData = await filterData(messageEmbed, client);
+
+  if (!filteredData) {
+    console.log("No data to insert");
+    return;
+  }
+
+  const { type, date, branch, shift, employeeName } = filteredData;
 
   console.log(type, date, branch, shift, employeeName);
 
