@@ -57,7 +57,7 @@ module.exports = {
       });
     }
 
-    let logsChannel = hrLogsChannel;
+    let logsChannel = hrLogsChannel; //default is the authorization logs channel
 
     if (interaction.member.roles.cache.has(financeRole)) {
       logsChannel = financeLogsChannel;
