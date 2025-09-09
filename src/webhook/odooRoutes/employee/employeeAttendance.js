@@ -61,22 +61,24 @@ const employeeCheckIn = async (req, res) => {
     if (x_discord_id) {
       const guild = client.guilds.cache.get("1314413189613490248");
       const discordMember = guild?.members.cache.get(x_discord_id);
-      console.log(discordMember);
-      let currentNickname =
-        discordMember.nickname || discordMember.user.username;
 
-      if (currentNickname.includes("🔴")) {
-        currentNickname = currentNickname.replace("🔴", "🟢");
-      } else if (!currentNickname.startsWith("🟢")) {
-        currentNickname = "🟢 " + currentNickname;
+      if (discordMember) {
+        let currentNickname =
+          discordMember.nickname || discordMember.user.username;
+
+        if (currentNickname.includes("🔴")) {
+          currentNickname = currentNickname.replace("🔴", "🟢");
+        } else if (!currentNickname.startsWith("🟢")) {
+          currentNickname = "🟢 " + currentNickname;
+        }
+
+        if (department?.role) {
+          await discordMember.roles.remove(rolesToRemove);
+          await discordMember.roles.add(department.role);
+        }
+
+        await discordMember.setNickname(currentNickname);
       }
-
-      if (department?.role) {
-        await discordMember.roles.remove(rolesToRemove);
-        await discordMember.roles.add(department.role);
-      }
-
-      await discordMember.setNickname(currentNickname);
     }
 
     // ✅ Create and send new attendance log
