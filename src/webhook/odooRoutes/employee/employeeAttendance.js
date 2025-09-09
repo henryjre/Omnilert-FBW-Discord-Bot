@@ -61,6 +61,7 @@ const employeeCheckIn = async (req, res) => {
     if (x_discord_id) {
       const guild = client.guilds.cache.get("1314413189613490248");
       const discordMember = guild?.members.cache.get(x_discord_id);
+      console.log(discordMember);
       let currentNickname =
         discordMember.nickname || discordMember.user.username;
 
@@ -334,6 +335,10 @@ const check_in = async (req, res) => {
             },
             { name: "Employee", value: `🪪 | ${employeeName}` },
             {
+              name: "Discord User",
+              value: `👤 | ${x_discord_id ? `<@${x_discord_id}>` : "N/A"}`,
+            },
+            {
               name: "Branch",
               value: `🛒 | ${department?.name || "Omnilert"}`,
             },
@@ -397,7 +402,9 @@ const check_in = async (req, res) => {
             { name: "Employee", value: `🪪 | ${employeeName}` },
             {
               name: "Discord User",
-              value: `👤 | ${x_discord_id ? `<@${x_discord_id}>` : "N/A"}`,
+              value: `${
+                x_discord_id ? `<@${x_discord_id}>` : department?.role
+              }`,
             },
             { name: "Branch", value: `🛒 | ${department?.name || "Omnilert"}` },
             {
@@ -448,6 +455,12 @@ const check_in = async (req, res) => {
               value: `📆 | ${moment().format("MMMM DD, YYYY")}`,
             },
             { name: "Employee", value: `🪪 | ${employeeName}` },
+            {
+              name: "Discord User",
+              value: `${
+                x_discord_id ? `<@${x_discord_id}>` : department?.role
+              }`,
+            },
             {
               name: "Branch",
               value: `🛒 | ${department?.name || "Omnilert"}`,
@@ -574,6 +587,12 @@ const check_in = async (req, res) => {
               value: `📆 | ${moment().format("MMMM DD, YYYY")}`,
             },
             { name: "Employee", value: `🪪 | ${employeeName}` },
+            {
+              name: "Discord User",
+              value: `${
+                x_discord_id ? `<@${x_discord_id}>` : department?.role
+              }`,
+            },
             {
               name: "Branch",
               value: `🛒 | ${department?.name || "Omnilert"}`,
