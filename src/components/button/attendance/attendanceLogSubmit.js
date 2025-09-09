@@ -37,7 +37,7 @@ module.exports = {
       }
     }
 
-    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+    await interaction.deferUpdate();
 
     const messageEmbed = interaction.message.embeds[0];
 
@@ -60,13 +60,5 @@ module.exports = {
     });
 
     await interaction.message.delete();
-
-    const replyEmbed = new EmbedBuilder()
-      .setDescription("✅ Form submitted successfully.")
-      .setColor("Green");
-
-    await interaction.editReply({
-      embeds: [replyEmbed],
-    });
   },
 };
