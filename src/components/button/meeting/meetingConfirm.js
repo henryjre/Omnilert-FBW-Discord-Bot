@@ -151,16 +151,10 @@ module.exports = {
       entityType: GuildScheduledEventEntityType.Voice,
     });
 
-    const submit = new ButtonBuilder()
+    const startMeeting = new ButtonBuilder()
       .setCustomId("meetingStart")
       .setLabel("Start")
       .setStyle(ButtonStyle.Success);
-
-    const cancel = new ButtonBuilder()
-      .setCustomId("meetingEnd")
-      .setDisabled(true)
-      .setLabel("End")
-      .setStyle(ButtonStyle.Danger);
 
     // Add Meeting ID field at the first position of the fields array
     messageEmbed.data.fields.unshift({
@@ -168,7 +162,7 @@ module.exports = {
       value: event.id,
     });
 
-    const buttonRow = new ActionRowBuilder().addComponents(submit, cancel);
+    const buttonRow = new ActionRowBuilder().addComponents(startMeeting);
 
     const meetingMessage = await client.channels.cache
       .get("1414611033816825856") // meeting logs channel
