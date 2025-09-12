@@ -162,6 +162,12 @@ module.exports = {
       .setLabel("End")
       .setStyle(ButtonStyle.Danger);
 
+    // Add Meeting ID field at the first position of the fields array
+    messageEmbed.data.fields.unshift({
+      name: "Meeting ID",
+      value: event.id,
+    });
+
     const buttonRow = new ActionRowBuilder().addComponents(submit, cancel);
 
     const meetingMessage = await client.channels.cache
