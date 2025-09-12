@@ -142,8 +142,10 @@ module.exports = {
       value: meetingChannel.toString(),
     });
 
+    let event;
+
     try {
-      const event = await interaction.guild.scheduledEvents.create({
+      event = await interaction.guild.scheduledEvents.create({
         name: `Meeting: ${channelName} ${channelCount}`,
         description: agendaField.value,
         scheduledStartTime: channelDate, // a JS Date in the future
@@ -152,17 +154,27 @@ module.exports = {
         entityType: GuildScheduledEventEntityType.Voice,
       });
     } catch (error) {
-      // Optional: log the raw validation details
       console.error("Create event failed:", error.rawError ?? error);
 
-      // Detect “past start time” specifically
       const msg = JSON.stringify(error.rawError?.errors ?? {});
       if (msg.includes("GUILD_SCHEDULED_EVENT_SCHEDULE_PAST")) {
+        if (meetingChannel) {
+          await meetingChannel.delete(
+            "Event creation failed - past start time"
+          );
+          console.error("Deleted voice channel after event creation failure");
+        }
+
         replyEmbed
           .setDescription(`🔴 ERROR: The start time must be in the future.`)
           .setColor("Red");
 
         return await interaction.editReply({ embeds: [replyEmbed] });
+      }
+
+      if (meetingChannel) {
+        await meetingChannel.delete("Event creation failed - general error");
+        console.error("Deleted voice channel after event creation failure");
       }
 
       replyEmbed
