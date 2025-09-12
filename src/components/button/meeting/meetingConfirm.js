@@ -142,14 +142,37 @@ module.exports = {
       value: meetingChannel.toString(),
     });
 
-    const event = await interaction.guild.scheduledEvents.create({
-      name: `Meeting: ${channelName} ${channelCount}`,
-      description: agendaField.value,
-      scheduledStartTime: channelDate, // Date object
-      privacyLevel: GuildScheduledEventPrivacyLevel.GuildOnly,
-      channel: meetingChannel.id, // must be a valid voice/stage channel ID
-      entityType: GuildScheduledEventEntityType.Voice,
-    });
+    try {
+      const event = await interaction.guild.scheduledEvents.create({
+        name: `Meeting: ${channelName} ${channelCount}`,
+        description: agendaField.value,
+        scheduledStartTime: channelDate, // a JS Date in the future
+        privacyLevel: GuildScheduledEventPrivacyLevel.GuildOnly,
+        channel: meetingChannel.id,
+        entityType: GuildScheduledEventEntityType.Voice,
+      });
+    } catch (error) {
+      // Optional: log the raw validation details
+      console.error("Create event failed:", error.rawError ?? error);
+
+      // Detect “past start time” specifically
+      const msg = JSON.stringify(error.rawError?.errors ?? {});
+      if (msg.includes("GUILD_SCHEDULED_EVENT_SCHEDULE_PAST")) {
+        replyEmbed
+          .setDescription(`🔴 ERROR: The start time must be in the future.`)
+          .setColor("Red");
+
+        return await interaction.editReply({ embeds: [replyEmbed] });
+      }
+
+      replyEmbed
+        .setDescription(
+          `🔴 ERROR: Failed to create the event. Please double-check the date/time.`
+        )
+        .setColor("Red");
+
+      return await interaction.editReply({ embeds: [replyEmbed] });
+    }
 
     const startMeeting = new ButtonBuilder()
       .setCustomId("meetingStart")
@@ -172,10 +195,11 @@ module.exports = {
         components: [buttonRow],
       });
 
-    await interaction.editReply({
-      content: `✅ Meeting event created successfully.`,
-      flags: MessageFlags.Ephemeral,
-    });
+    replyEmbed
+      .setDescription(`✅ Meeting event created successfully.`)
+      .setColor("Green");
+
+    await interaction.editReply({ embeds: [replyEmbed] });
 
     await interaction.message.delete();
   },
