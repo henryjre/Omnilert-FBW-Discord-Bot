@@ -43,7 +43,6 @@ module.exports = {
       if (isActive) {
         const endMeeting = new ButtonBuilder()
           .setCustomId("meetingEnd")
-          .setDisabled(true)
           .setLabel("End")
           .setStyle(ButtonStyle.Danger);
 
