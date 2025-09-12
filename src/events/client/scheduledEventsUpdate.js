@@ -1,66 +1,77 @@
-const { ButtonBuilder, ButtonStyle, ActionRowBuilder } = require("discord.js");
+const {
+  ButtonBuilder,
+  ButtonStyle,
+  ActionRowBuilder,
+  GuildScheduledEventStatus,
+  ChannelType,
+  EmbedBuilder,
+} = require("discord.js");
 
 const meetingLogsChannelId = "1414611033816825856";
 
 module.exports = {
   name: "guildScheduledEventUpdate",
   async execute(oldEvent, newEvent) {
-    const meetingLogsChannel = await newEvent.guild.channels.cache.get(
-      meetingLogsChannelId
-    );
+    const meetingLogsChannel =
+      newEvent.guild.channels.cache.get(meetingLogsChannelId);
+    if (!meetingLogsChannel?.isTextBased()) return;
 
     try {
       const messages = await meetingLogsChannel.messages.fetch({ limit: 100 });
 
       const targetMessage = messages.find(
-        (message) => message.content && message.content.includes(newEvent.id)
+        (m) => m.content && m.content.includes(newEvent.id)
       );
-
       if (!targetMessage) return;
 
-      const isActive = newEvent.isActive();
+      const isActive = newEvent.status === GuildScheduledEventStatus.Active;
+      const hasEnded =
+        newEvent.status === GuildScheduledEventStatus.Completed ||
+        newEvent.status === GuildScheduledEventStatus.Canceled;
 
-      let targetMessageEmbed = targetMessage.embeds[0];
+      // Build a fresh embed (don’t mutate APIEmbed)
+      const base = targetMessage.embeds[0] ?? {};
+      const embed = EmbedBuilder.from(base)
+        .setColor(isActive ? "Green" : "Red")
+        .setFooter({
+          text: isActive
+            ? "This meeting is now ongoing."
+            : "This meeting has ended.",
+        });
 
-      let buttonRow = [];
-
+      const components = [];
       if (isActive) {
-        targetMessageEmbed.data.color = 5763719;
-        targetMessageEmbed.data.footer.text = `This meeting is now ongoing.`;
-
         const endMeeting = new ButtonBuilder()
           .setCustomId("meetingEnd")
           .setDisabled(true)
           .setLabel("End")
           .setStyle(ButtonStyle.Danger);
 
-        buttonRow.push(endMeeting);
-      } else {
-        targetMessageEmbed.data.color = 15548997;
-        targetMessageEmbed.data.footer.text = `This meeting has ended.`;
-
-        if (newEvent.channelId) {
-          const voiceChannel = await newEvent.guild.channels.fetch(
-            newEvent.channelId
-          );
-          if (voiceChannel) {
-            await voiceChannel.delete(
-              "Meeting has ended, cleaning up voice channel"
-            );
-            console.log(
-              `Successfully deleted voice channel ${voiceChannel.name} (${newEvent.channelId})`
-            );
-          }
-        }
+        const row = new ActionRowBuilder().addComponents(endMeeting);
+        components.push(row);
       }
 
       await targetMessage.edit({
-        embeds: [targetMessageEmbed],
-        components: [buttonRow],
+        embeds: [embed],
+        components, // [] if not active (no empty row)
       });
+
+      // Clean up voice channel if ended
+      if (hasEnded && newEvent.channelId) {
+        const voiceChannel = await newEvent.guild.channels
+          .fetch(newEvent.channelId)
+          .catch(() => null);
+        if (voiceChannel?.type === ChannelType.GuildVoice) {
+          await voiceChannel.delete(
+            "Meeting has ended, cleaning up voice channel"
+          );
+          console.log(
+            `Deleted voice channel ${voiceChannel.name} (${voiceChannel.id})`
+          );
+        }
+      }
     } catch (error) {
       console.error("Error while searching for event message:", error);
-      return null;
     }
   },
 };
