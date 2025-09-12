@@ -39,6 +39,16 @@ module.exports = {
             : "This meeting has ended.",
         });
 
+      if (hasEnded) {
+        const existingFields = targetMessage.embeds[0]?.fields ?? [];
+        if (existingFields.length) {
+          const filtered = existingFields.filter(
+            (f) => (f.name ?? "").trim().toLowerCase() !== "location"
+          );
+          embed.setFields(filtered);
+        }
+      }
+
       const components = [];
       if (isActive) {
         const endMeeting = new ButtonBuilder()
