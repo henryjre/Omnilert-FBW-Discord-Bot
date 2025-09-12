@@ -25,8 +25,8 @@ module.exports = {
       if (!targetMessage) return;
 
       const isActive = newEvent.status === GuildScheduledEventStatus.Active;
-      const hasEnded =
-        newEvent.status === GuildScheduledEventStatus.Completed ||
+      const hasEnded = newEvent.status === GuildScheduledEventStatus.Completed;
+      const hasCanceled =
         newEvent.status === GuildScheduledEventStatus.Canceled;
 
       // Build a fresh embed (don’t mutate APIEmbed)
@@ -36,10 +36,14 @@ module.exports = {
         .setFooter({
           text: isActive
             ? "This meeting is now ongoing."
-            : "This meeting has ended.",
+            : hasEnded
+            ? "This meeting has ended."
+            : hasCanceled
+            ? "This meeting has been cancelled."
+            : "This meeting is ongoing.",
         });
 
-      if (hasEnded) {
+      if (hasEnded || hasCanceled) {
         const existingFields = targetMessage.embeds[0]?.fields ?? [];
         if (existingFields.length) {
           const filtered = existingFields.filter(
@@ -66,7 +70,7 @@ module.exports = {
       });
 
       // Clean up voice channel if ended
-      if (hasEnded && newEvent.channelId) {
+      if (hasEnded || (hasCanceled && newEvent.channelId)) {
         const voiceChannel = await newEvent.guild.channels
           .fetch(newEvent.channelId)
           .catch(() => null);
