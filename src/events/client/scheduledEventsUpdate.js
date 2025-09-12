@@ -1,3 +1,5 @@
+const { ButtonBuilder, ButtonStyle, ActionRowBuilder } = require("discord.js");
+
 const meetingLogsChannelId = "1414611033816825856";
 
 module.exports = {
@@ -20,9 +22,19 @@ module.exports = {
 
       let targetMessageEmbed = targetMessage.embeds[0];
 
+      let buttonRow = [];
+
       if (isActive) {
         targetMessageEmbed.data.color = 5763719;
         targetMessageEmbed.data.footer.text = `This meeting is now ongoing.`;
+
+        const endMeeting = new ButtonBuilder()
+          .setCustomId("meetingEnd")
+          .setDisabled(true)
+          .setLabel("End")
+          .setStyle(ButtonStyle.Danger);
+
+        buttonRow.push(endMeeting);
       } else {
         targetMessageEmbed.data.color = 15548997;
         targetMessageEmbed.data.footer.text = `This meeting has ended.`;
@@ -42,7 +54,10 @@ module.exports = {
         }
       }
 
-      await targetMessage.edit({ embeds: [targetMessageEmbed] });
+      await targetMessage.edit({
+        embeds: [targetMessageEmbed],
+        components: [buttonRow],
+      });
     } catch (error) {
       console.error("Error while searching for event message:", error);
       return null;
