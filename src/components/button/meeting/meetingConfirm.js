@@ -93,16 +93,20 @@ module.exports = {
           allow: [PermissionFlagsBits.Connect, PermissionFlagsBits.ViewChannel],
         });
 
-        mentionableParticipants = `<@&1314413960274907238>`;
+        mentionableParticipants = `${interaction.user.toString()} <@&1314413960274907238>`;
       }
     } else if (messageEmbed.data.description.includes("General")) {
       channelPermissions.push({
         id: interaction.guild.roles.everyone, // allow everyone
         allow: [PermissionFlagsBits.Connect, PermissionFlagsBits.ViewChannel],
       });
+
+      mentionableParticipants = `@everyone`;
     }
 
     if (!participantsField.value.includes("All")) {
+      mentionableParticipants += `${interaction.user.toString()} `;
+
       for (const participant of participantsField.value.split("\n")) {
         const match = participant.match(/<@!?(\d+)>/); // extract ID
         if (!match) continue; // skip if line doesn’t match
@@ -113,7 +117,7 @@ module.exports = {
           allow: [PermissionFlagsBits.Connect, PermissionFlagsBits.ViewChannel],
         });
 
-        mentionableParticipants += `<@${userId}>`;
+        mentionableParticipants += `<@${userId}> `;
       }
     }
 
@@ -133,6 +137,11 @@ module.exports = {
       permissionOverwrites: channelPermissions,
     });
 
+    messageEmbed.data.fields.push({
+      name: "Location",
+      value: meetingChannel.toString(),
+    });
+
     const event = await interaction.guild.scheduledEvents.create({
       name: `Meeting: ${channelName} ${channelCount}`,
       description: agendaField.value,
@@ -142,11 +151,25 @@ module.exports = {
       entityType: GuildScheduledEventEntityType.Voice,
     });
 
+    const submit = new ButtonBuilder()
+      .setCustomId("meetingStart")
+      .setLabel("Start")
+      .setStyle(ButtonStyle.Success);
+
+    const cancel = new ButtonBuilder()
+      .setCustomId("meetingEnd")
+      .setDisabled(true)
+      .setLabel("End")
+      .setStyle(ButtonStyle.Danger);
+
+    const buttonRow = new ActionRowBuilder().addComponents(submit, cancel);
+
     const meetingMessage = await client.channels.cache
       .get("1414611033816825856") // meeting logs channel
       .send({
         content: `Meeting ID: ${event.id}\n\n${mentionableParticipants}`,
         embeds: allEmbeds,
+        components: [buttonRow],
       });
 
     await interaction.editReply({
