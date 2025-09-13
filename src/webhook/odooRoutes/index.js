@@ -2,6 +2,7 @@ const odooRoutes = require("express").Router();
 const employee = require("./employee");
 const inventory = require("./inventory");
 const pos = require("./pos");
+const attendance = require("./attendance");
 
 // /odoo/employee
 odooRoutes.use("/employee", employee);
@@ -11,6 +12,9 @@ odooRoutes.use("/inventory", inventory);
 
 // /odoo/pos
 odooRoutes.use("/pos", pos);
+
+// /odoo/attendance
+odooRoutes.use("/attendance", attendance);
 
 // /odoo/
 odooRoutes.get("/", (req, res) => {
