@@ -16,7 +16,7 @@ const moment = require("moment-timezone");
 
 module.exports = {
   data: {
-    name: `meetingConfirm`,
+    name: `meetingConfirmed`,
   },
   async execute(interaction, client) {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
