@@ -206,7 +206,7 @@ module.exports = {
     const meetingMessage = await client.channels.cache
       .get("1414611033816825856") // meeting logs channel
       .send({
-        content: `Meeting ID: ${event.id}\n\n${mentionableParticipants}`,
+        content: `Meeting ID: ${event.id}\n\n${mentionableParticipants}\n\n${event.url}`,
         embeds: allEmbeds,
         components: [buttonRow],
       });
