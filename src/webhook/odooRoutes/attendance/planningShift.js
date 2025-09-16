@@ -16,6 +16,8 @@ const publishedShift = async (req, res) => {
       x_employee_contact_name,
       name,
       allocated_hours,
+      x_role_color,
+      x_role_name,
     } = req.body;
 
     const department = departments.find((d) => d.id === company_id);
@@ -37,9 +39,6 @@ const publishedShift = async (req, res) => {
     if (!scheduleChannel) throw new Error("Schedule channel not found");
     if (!x_discord_id) throw new Error("Discord ID not found");
 
-    const guild = client.guilds.cache.get("1314413189613490248");
-    const discordMember = guild?.members.cache.get(x_discord_id);
-
     const planningEmbed = new EmbedBuilder()
       .setTitle("🗓️ Shift Schedule")
       .addFields([
@@ -50,10 +49,20 @@ const publishedShift = async (req, res) => {
           value: `👤 | ${x_discord_id ? `<@${x_discord_id}>` : "N/A"}`,
         },
         { name: "Branch", value: `🛒 | ${department.name}` },
+        {
+          name: "Duty Type",
+          value: x_role_name ? `🎯 | ${x_role_name}` : "Unspecified",
+        },
         { name: "Shift Start", value: `⏰ | ${startDateTime}` },
         { name: "Shift End", value: `⏰ | ${endDateTime}` },
         { name: "Allocated Hours", value: `⌛ | ${allocated_hours} hours` },
       ]);
+
+    if (x_role_color) {
+      planningEmbed.setColor(x_role_color);
+    } else {
+      planningEmbed.setColor("Blurple");
+    }
 
     if (name) {
       planningEmbed.setDescription(`ADDITIONAL NOTE:\n>>> *${name}*`);
