@@ -76,6 +76,8 @@ const attendanceCheckOut = async (req, res) => {
       }
     }
 
+    console.log(x_discord_id);
+
     if (department.id === 1) {
       return await managementCheckOut(req, res);
     }
