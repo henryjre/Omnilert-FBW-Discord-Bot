@@ -50,29 +50,36 @@ const attendanceCheckOut = async (req, res) => {
       x_company_id,
     } = req.body;
 
+    console.log(x_discord_id);
+
     const department = departments.find((d) => d.id === x_company_id);
 
     if (!department) throw new Error("Department not found");
 
     if (x_discord_id) {
-      const activeAttendance = await searchActiveAttendance(
-        x_discord_id,
-        attendanceId
-      );
+      try {
+        const activeAttendance = await searchActiveAttendance(
+          x_discord_id,
+          attendanceId
+        );
 
-      if (activeAttendance.length <= 0) {
-        const guild = client.guilds.cache.get("1314413189613490248");
-        const discordMember = guild?.members.cache.get(x_discord_id);
-        let currentNickname =
-          discordMember.nickname || discordMember.user.username;
+        if (activeAttendance.length <= 0) {
+          const guild = client.guilds.cache.get("1314413189613490248");
+          const discordMember = guild?.members.cache.get(x_discord_id);
+          let currentNickname =
+            discordMember.nickname || discordMember.user.username;
 
-        if (currentNickname.includes("🟢")) {
-          currentNickname = currentNickname.replace("🟢", "🔴");
-        } else if (!currentNickname.startsWith("🔴")) {
-          currentNickname = "🔴 " + currentNickname;
+          if (currentNickname.includes("🟢")) {
+            currentNickname = currentNickname.replace("🟢", "🔴");
+          } else if (!currentNickname.startsWith("🔴")) {
+            currentNickname = "🔴 " + currentNickname;
+          }
+
+          await discordMember.setNickname(currentNickname);
         }
-
-        await discordMember.setNickname(currentNickname);
+      } catch (error) {
+        console.error("Error updating user nickname:", error);
+        // Continue execution even if nickname update fails
       }
     }
 
