@@ -15,6 +15,7 @@ const publishedShift = async (req, res) => {
       x_employee_avatar,
       x_employee_contact_name,
       name,
+      allocated_hours,
     } = req.body;
 
     const department = departments.find((d) => d.id === company_id);
@@ -51,6 +52,7 @@ const publishedShift = async (req, res) => {
         { name: "Branch", value: `🛒 | ${department.name}` },
         { name: "Shift Start", value: `⏰ | ${startDateTime}` },
         { name: "Shift End", value: `⏰ | ${endDateTime}` },
+        { name: "Allocated Hours", value: `⌛ | ${allocated_hours} hours` },
       ]);
 
     if (name) {
