@@ -42,6 +42,7 @@ const attendanceCheckIn = async (req, res) => {
 const attendanceCheckOut = async (req, res) => {
   try {
     const {
+      x_planning_slot_id,
       x_discord_id,
       check_out,
       id: attendanceId,
