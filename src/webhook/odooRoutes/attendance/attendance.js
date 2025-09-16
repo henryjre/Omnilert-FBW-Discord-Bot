@@ -28,6 +28,33 @@ const attendanceCheckIn = async (req, res) => {
 
     if (!department) throw new Error("Department not found");
 
+    if (x_discord_id) {
+      try {
+        const guild = client.guilds.cache.get("1314413189613490248");
+        const discordMember = guild?.members.cache.get(x_discord_id);
+        let currentNickname =
+          discordMember.nickname || discordMember.user.username;
+
+        if (currentNickname.includes("🔴")) {
+          currentNickname = currentNickname.replace("🔴", "🟢");
+        } else if (!currentNickname.startsWith("🟢")) {
+          currentNickname = "🟢 " + currentNickname;
+        }
+
+        if (department?.role) {
+          const rolesToRemove = departments.map((d) => d.role).filter(Boolean);
+
+          await discordMember.roles.remove(rolesToRemove);
+          await discordMember.roles.add(department.role);
+        }
+
+        await discordMember.setNickname(currentNickname);
+      } catch (error) {
+        console.error("Error updating Discord member status:", error);
+        // Continue execution even if Discord operations fail
+      }
+    }
+
     if (department.id === 1) {
       return await managementCheckIn(req, res);
     }
@@ -49,8 +76,6 @@ const attendanceCheckOut = async (req, res) => {
       x_cumulative_minutes,
       x_company_id,
     } = req.body;
-
-    console.log(x_discord_id);
 
     const department = departments.find((d) => d.id === x_company_id);
 
@@ -82,8 +107,6 @@ const attendanceCheckOut = async (req, res) => {
         // Continue execution even if nickname update fails
       }
     }
-
-    console.log(x_discord_id);
 
     if (department.id === 1) {
       return await managementCheckOut(req, res);
@@ -129,28 +152,6 @@ const managementCheckIn = async (req, res) => {
     const attendanceLogChannel = client.channels.cache.get(
       managementAttendanceLogChannelId
     );
-
-    if (x_discord_id) {
-      const guild = client.guilds.cache.get("1314413189613490248");
-      const discordMember = guild?.members.cache.get(x_discord_id);
-      let currentNickname =
-        discordMember.nickname || discordMember.user.username;
-
-      if (currentNickname.includes("🔴")) {
-        currentNickname = currentNickname.replace("🔴", "🟢");
-      } else if (!currentNickname.startsWith("🟢")) {
-        currentNickname = "🟢 " + currentNickname;
-      }
-
-      if (department?.role) {
-        const rolesToRemove = departments.map((d) => d.role).filter(Boolean);
-
-        await discordMember.roles.remove(rolesToRemove);
-        await discordMember.roles.add(department.role);
-      }
-
-      await discordMember.setNickname(currentNickname);
-    }
 
     if (!x_prev_attendance_id) {
       const embed = new EmbedBuilder()
@@ -205,7 +206,10 @@ const managementCheckIn = async (req, res) => {
           .addFields({ name: "Check-In", value: `⏱️ | ${checkInTime}` })
           .setColor("Green");
 
-        await attendanceMessage.edit({ embeds: [newMessageEmbed] });
+        await attendanceMessage.edit({
+          content: `Attendance ID: ${id}`,
+          embeds: [newMessageEmbed],
+        });
       }
     }
 
