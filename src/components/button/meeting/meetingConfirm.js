@@ -16,7 +16,7 @@ const moment = require("moment-timezone");
 
 module.exports = {
   data: {
-    name: `meetingConfirmed`,
+    name: `meetingConfirm`,
   },
   async execute(interaction, client) {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
@@ -70,14 +70,14 @@ module.exports = {
     ];
     let mentionableParticipants = "";
 
-    if (!messageEmbed.data.description.includes("General")) {
+    if (!messageEmbed.data.description.toLowerCase().includes("general")) {
       channelPermissions.push({
         id: interaction.guild.roles.everyone, // deny everyone
         deny: [PermissionFlagsBits.Connect, PermissionFlagsBits.ViewChannel],
       });
     }
 
-    if (messageEmbed.data.description.includes("Management")) {
+    if (messageEmbed.data.description.toLowerCase().includes("management")) {
       if (participantsField.value === "All management members.") {
         channelPermissions.push({
           id: "1314413671245676685", // management role
@@ -86,7 +86,9 @@ module.exports = {
 
         mentionableParticipants = `<@&1314413671245676685>`;
       }
-    } else if (messageEmbed.data.description.includes("Service Crew")) {
+    } else if (
+      messageEmbed.data.description.toLowerCase().includes("service crew")
+    ) {
       if (participantsField.value === "All service crew members.") {
         channelPermissions.push({
           id: "1314413960274907238", // service crew role
@@ -95,7 +97,9 @@ module.exports = {
 
         mentionableParticipants = `${interaction.user.toString()} <@&1314413960274907238>`;
       }
-    } else if (messageEmbed.data.description.includes("General")) {
+    } else if (
+      messageEmbed.data.description.toLowerCase().includes("general")
+    ) {
       channelPermissions.push({
         id: interaction.guild.roles.everyone, // allow everyone
         allow: [PermissionFlagsBits.Connect, PermissionFlagsBits.ViewChannel],
@@ -104,7 +108,7 @@ module.exports = {
       mentionableParticipants = `@everyone`;
     }
 
-    if (!participantsField.value.includes("All")) {
+    if (!participantsField.value.toLowerCase().includes("all")) {
       mentionableParticipants += `${interaction.user.toString()} `;
 
       for (const participant of participantsField.value.split("\n")) {
