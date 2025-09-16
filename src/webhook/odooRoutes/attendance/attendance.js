@@ -3,6 +3,9 @@ const moment = require("moment-timezone");
 
 const departments = require("../../../config/departments.json");
 const client = require("../../../index");
+const { searchActiveAttendance } = require("../../../odooRpc");
+
+const managementAttendanceLogChannelId = "1314413190074994690";
 
 const attendanceCheckIn = async (req, res) => {
   try {
@@ -36,7 +39,55 @@ const attendanceCheckIn = async (req, res) => {
   }
 };
 
-module.exports = { attendanceCheckIn };
+const attendanceCheckOut = async (req, res) => {
+  try {
+    const {
+      x_discord_id,
+      check_out,
+      id: attendanceId,
+      x_cumulative_minutes,
+      x_company_id,
+    } = req.body;
+
+    const department = departments.find((d) => d.id === x_company_id);
+
+    if (!department) throw new Error("Department not found");
+
+    if (x_discord_id) {
+      const activeAttendance = await searchActiveAttendance(
+        x_discord_id,
+        attendanceId
+      );
+
+      if (activeAttendance.length <= 0) {
+        const guild = client.guilds.cache.get("1314413189613490248");
+        const discordMember = guild?.members.cache.get(x_discord_id);
+        let currentNickname =
+          discordMember.nickname || discordMember.user.username;
+
+        if (currentNickname.includes("🟢")) {
+          currentNickname = currentNickname.replace("🟢", "🔴");
+        } else if (!currentNickname.startsWith("🔴")) {
+          currentNickname = "🔴 " + currentNickname;
+        }
+
+        await discordMember.setNickname(currentNickname);
+      }
+    }
+
+    if (department.id === 1) {
+      return await managementCheckOut(req, res);
+    }
+
+    const check_out_time = formatTime(check_out);
+    const cumulative_minutes = formatMinutes(x_cumulative_minutes);
+  } catch (error) {
+    console.error("Attendance Check-Out Error:", error);
+    return res.status(500).json({ ok: false, message: error.message });
+  }
+};
+
+module.exports = { attendanceCheckIn, attendanceCheckOut };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////// MANAGEMENT CHECK-IN /////////////////////////////////////////
@@ -66,7 +117,7 @@ const managementCheckIn = async (req, res) => {
     const employeeName =
       x_employee_contact_name?.split("-")[1]?.trim() || "Unknown";
     const attendanceLogChannel = client.channels.cache.get(
-      "1314413190074994690"
+      managementAttendanceLogChannelId
     );
 
     if (x_discord_id) {
@@ -151,6 +202,64 @@ const managementCheckIn = async (req, res) => {
     return res.status(200).json({ ok: true, message: "Attendance logged" });
   } catch (error) {
     console.error("Management Check-In Error:", error);
+    return res.status(500).json({ ok: false, message: error.message });
+  }
+};
+
+const managementCheckOut = async (req, res) => {
+  try {
+    const {
+      x_discord_id,
+      check_out,
+      id: attendanceId,
+      x_cumulative_minutes,
+      x_company_id,
+    } = req.body;
+
+    const department = departments.find((d) => d.id === x_company_id);
+
+    if (!department) throw new Error("Department not found");
+
+    const check_out_time = formatTime(check_out);
+    const cumulative_minutes = formatMinutes(x_cumulative_minutes);
+
+    const attendanceLogChannel = client.channels.cache.get(
+      managementAttendanceLogChannelId
+    );
+
+    const channelMessages = await attendanceLogChannel.messages.fetch({
+      limit: 100,
+    });
+
+    const attendanceMessage = channelMessages.find((msg) =>
+      msg.content.includes(attendanceId)
+    );
+
+    if (!attendanceMessage) {
+      return res.status(200).json({ ok: true, message: "No message found" });
+    }
+
+    let messageEmbed = attendanceMessage.embeds[0];
+
+    const totalWorkingTime = messageEmbed.data.fields?.find(
+      (f) => f.name === "Total Working Time"
+    );
+    if (totalWorkingTime) totalWorkingTime.value = `⏳ | ${cumulative_minutes}`;
+
+    messageEmbed.data.fields.push({
+      name: "Check-Out",
+      value: `⏱️ | ${check_out_time}`,
+    });
+
+    messageEmbed.data.color = 9807270;
+
+    await attendanceMessage.edit({ embeds: [messageEmbed] });
+
+    return res
+      .status(200)
+      .json({ ok: true, message: "Attendance updated successfully" });
+  } catch (error) {
+    console.error("Management Check-Out Error:", error);
     return res.status(500).json({ ok: false, message: error.message });
   }
 };
