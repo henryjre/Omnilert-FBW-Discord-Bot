@@ -300,7 +300,7 @@ const sessionClose = async (req, res) => {
     const xopb = findDiscount(totalDiscountOrders, 1033);
     const gc100 = findDiscount(totalDiscountOrders, 1034);
     const tokenPay = findDiscount(totalDiscountOrders, 1153);
-    const freeChocoCoupon = findDiscount(totalDiscountOrders, 1389);
+    const freeChocoCoupon = findDiscount(totalDiscountOrders, 1353);
 
     const otherPayments = x_payment_methods
       ? x_payment_methods.filter((item) => item.payment_method_name !== "Cash")
@@ -598,7 +598,7 @@ const discountOrder = async (req, res) => {
     company_id,
   } = req.body;
 
-  const targetProductIds = [1032, 1033, 1034, 1389];
+  const targetProductIds = [1032, 1033, 1034, 1353];
   const orderVerif = x_order_lines.find((o) =>
     targetProductIds.includes(o.product_id)
   );
