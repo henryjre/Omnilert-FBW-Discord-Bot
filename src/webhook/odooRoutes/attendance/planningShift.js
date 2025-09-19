@@ -58,11 +58,22 @@ const publishedShift = async (req, res) => {
         { name: "Allocated Hours", value: `⌛ | ${allocated_hours} hours` },
       ]);
 
-    if (x_role_color) {
-      planningEmbed.setColor(x_role_color);
-    } else {
-      planningEmbed.setColor("Blurple");
-    }
+    const roleColors = {
+      0: "#FFFFFF",
+      1: "#FF9C9C",
+      2: "#F7C698",
+      3: "#FDE388",
+      4: "#BBD7F8",
+      5: "#D9A8CC",
+      6: "#F8D6C8",
+      7: "#89E1DB",
+      8: "#97A6F9",
+      9: "#FF9ECC",
+      10: "#B7EDBE",
+      11: "#E6DBFC",
+    };
+
+    planningEmbed.setColor(roleColors[x_role_color] || "Blurple");
 
     if (name) {
       planningEmbed.setDescription(`ADDITIONAL NOTE:\n>>> *${name}*`);
