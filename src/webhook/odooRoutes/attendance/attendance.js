@@ -342,10 +342,6 @@ const employeeCheckIn = async (req, res) => {
       .addFields({ name: "Timestamp", value: `⏱️ | ${checkInTime}` })
       .setColor("Green");
 
-    if (x_employee_avatar) {
-      attendanceLogEmbed.setThumbnail(x_employee_avatar);
-    }
-
     await thread.send({ embeds: [attendanceLogEmbed] });
 
     if (punctuality.status === "on_time" || x_prev_attendance_id)
@@ -512,10 +508,6 @@ const employeeCheckOut = async (req, res) => {
         }
       )
       .setColor("Red");
-
-    if (x_employee_avatar) {
-      attendanceLogEmbed.setThumbnail(x_employee_avatar);
-    }
 
     const addReason = new ButtonBuilder()
       .setCustomId("checkoutAddReason")
