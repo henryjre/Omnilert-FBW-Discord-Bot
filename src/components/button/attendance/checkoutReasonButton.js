@@ -44,7 +44,11 @@ module.exports = {
     let checkoutReasonInput = "";
 
     if (checkoutReasonField) {
-      checkoutReasonInput = checkoutReasonField.value.split("|")[1].trim();
+      if (checkoutReasonField.value.includes("|")) {
+        checkoutReasonInput = checkoutReasonField.value.split("|")[1].trim();
+      } else {
+        checkoutReasonInput = checkoutReasonField.value;
+      }
     }
 
     const modal = new ModalBuilder()
