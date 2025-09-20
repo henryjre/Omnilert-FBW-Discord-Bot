@@ -325,15 +325,20 @@ const employeeCheckIn = async (req, res) => {
     if (!attendanceMessage) throw new Error("Attendance message not found");
 
     let messageEmbed = attendanceMessage.embeds[0];
-    messageEmbed.data.fields.push({
-      name: "Total Worked Time",
-      value: `⏱️ | Currently Working`,
-    });
+    const hasTotalWorkedTime = messageEmbed.data.fields?.find(
+      (f) => f.name === "Total Worked Time"
+    );
+    if (!hasTotalWorkedTime) {
+      messageEmbed.data.fields.push({
+        name: "Total Worked Time",
+        value: `⏱️ | Currently Working`,
+      });
+    }
 
     await attendanceMessage.edit({ embeds: [messageEmbed] });
 
     let thread;
-    if (attendanceMessage.hasThread()) {
+    if (attendanceMessage.hasThread) {
       thread = await attendanceMessage.thread;
     } else {
       thread = await attendanceMessage.startThread({
