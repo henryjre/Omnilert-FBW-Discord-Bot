@@ -355,7 +355,7 @@ const employeeCheckIn = async (req, res) => {
 
     await thread.send({ embeds: [attendanceLogEmbed] });
 
-    if (punctuality.status === "on_time")
+    if (punctuality.status === "on_time" || x_prev_attendance_id)
       return res.status(200).json({ ok: true, message: "Attendance logged" });
 
     const title =
