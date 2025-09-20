@@ -8,7 +8,7 @@ const {
 
 module.exports = {
   data: {
-    name: `tardinessAddReason`,
+    name: `checkoutAddReason`,
   },
   async execute(interaction, client) {
     const mentionedUser = interaction.message.mentions?.users?.first() || null;
