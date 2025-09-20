@@ -107,7 +107,7 @@ const processPublishedShift = async (payload) => {
     });
 
     const thread = await scheduleMessage.startThread({
-      name: `Attendance Thread | ${id}`,
+      name: `Attendance | ${x_employee_contact_name} | ${id}`,
       type: ChannelType.PublicThread,
       autoArchiveDuration: 1440,
     });
