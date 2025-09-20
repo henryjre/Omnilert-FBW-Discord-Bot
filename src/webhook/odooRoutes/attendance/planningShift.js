@@ -4,7 +4,25 @@ const moment = require("moment-timezone");
 const departments = require("../../../config/departments.json");
 const client = require("../../../index");
 
+const buffers = new Map();
+
 const publishedShift = async (req, res) => {
+  const { id, start_datetime } = req.body;
+  const key = windowKey(req);
+
+  if (!buffers.has(key)) buffers.set(key, []);
+  buffers
+    .get(key)
+    .push({ id, start_datetime, payload: req.body, received_at: Date.now() });
+
+  if (!buffers.get(key)._timer) {
+    buffers.get(key)._timer = setTimeout(() => flushWindow(key), 3000);
+  }
+
+  res.sendStatus(202);
+};
+
+const processPublishedShift = async (payload) => {
   try {
     const {
       id,
@@ -18,7 +36,7 @@ const publishedShift = async (req, res) => {
       allocated_hours,
       x_role_color,
       x_role_name,
-    } = req.body;
+    } = payload;
 
     const department = departments.find((d) => d.id === company_id);
 
@@ -94,10 +112,10 @@ const publishedShift = async (req, res) => {
       autoArchiveDuration: 1440,
     });
 
-    return res.status(200).json({ ok: true, message: "Schedule logged" });
+    return { ok: true, message: "Schedule logged" };
   } catch (error) {
     console.error("Schedule Error:", error);
-    return res.status(500).json({ ok: false, message: error.message });
+    return { ok: false, message: error.message };
   }
 };
 
@@ -111,4 +129,27 @@ function formatTime(rawTime) {
     .tz(rawTime, "YYYY-MM-DD HH:mm:ss", "UTC")
     .tz("Asia/Manila")
     .format("MMMM D, YYYY [at] h:mm A");
+}
+
+function windowKey(req) {
+  const user = req.headers["x-odoo-user"] || "unknown";
+  const minute = new Date().toISOString().slice(0, 16); // YYYY-MM-DDTHH:MM
+  return `${user}:${minute}`;
+}
+
+async function flushWindow(key) {
+  const bucket = buffers.get(key);
+  if (!bucket) return;
+
+  clearTimeout(bucket._timer);
+  delete bucket._timer;
+
+  const events = bucket.sort(
+    (a, b) => new Date(a.start_datetime) - new Date(b.start_datetime)
+  );
+
+  for (const evt of events) {
+    await processPublishedShift(evt.payload);
+  }
+  buffers.delete(key);
 }
