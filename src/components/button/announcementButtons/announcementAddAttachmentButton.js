@@ -1,6 +1,7 @@
 const { EmbedBuilder, MessageFlags, ChannelType } = require("discord.js");
 
 const cdnChannel = "1384688917155938354";
+const MAX_EMBEDS = 10; // Discord's limit for embeds per message
 
 module.exports = {
   data: {
@@ -40,8 +41,16 @@ module.exports = {
       );
       const embedsToSend = [];
       const filesToSend = [];
+      let embedLimitExceeded = false;
 
       if (attachments.media.length > 0) {
+        // Check if we have more than MAX_EMBEDS media attachments
+        if (attachments.media.length > MAX_EMBEDS) {
+          embedLimitExceeded = true;
+          // Only use the first MAX_EMBEDS attachments
+          attachments.media = attachments.media.slice(0, MAX_EMBEDS);
+        }
+
         attachments.media.forEach((attachment) =>
           embedsToSend.push(
             new EmbedBuilder(messageEmbed.data)
@@ -59,6 +68,14 @@ module.exports = {
         embeds: embedsToSend,
         files: filesToSend,
       });
+
+      // Send a follow-up message if the embed limit was exceeded
+      if (embedLimitExceeded) {
+        await interaction.followUp({
+          content: `⚠️ **Warning:** Only the first ${MAX_EMBEDS} attachments were included due to Discord's embed limit.`,
+          ephemeral: true,
+        });
+      }
 
       return;
     }
