@@ -242,10 +242,7 @@ const managementCheckOut = async (req, res) => {
     const attendanceMessage = channelMessages.find((msg) =>
       msg.content.includes(attendanceId)
     );
-
-    if (!attendanceMessage) {
-      return res.status(200).json({ ok: true, message: "No message found" });
-    }
+    if (!attendanceMessage) throw new Error("Attendance message not found");
 
     let messageEmbed = attendanceMessage.embeds[0];
 
@@ -350,8 +347,12 @@ const employeeCheckIn = async (req, res) => {
 
     const attendanceLogEmbed = new EmbedBuilder()
       .setDescription("## 🟢 CHECK-IN")
-      .addFields({ name: "Check-In", value: `⏱️ | ${checkInTime}` })
+      .addFields({ name: "Timestamp", value: `⏱️ | ${checkInTime}` })
       .setColor("Green");
+
+    if (x_employee_avatar) {
+      attendanceLogEmbed.setThumbnail(x_employee_avatar);
+    }
 
     await thread.send({ embeds: [attendanceLogEmbed] });
 
@@ -443,6 +444,107 @@ const employeeCheckIn = async (req, res) => {
     return res.status(200).json({ ok: true, message: "Attendance logged" });
   } catch (error) {
     console.error("Employee Check-In Error:", error.message);
+    return res.status(500).json({ ok: false, message: error.message });
+  }
+};
+
+const employeeCheckOut = async (req, res) => {
+  try {
+    const {
+      x_planning_slot_id,
+      x_discord_id,
+      check_out,
+      id: attendanceId,
+      x_cumulative_minutes,
+      x_company_id,
+      x_employee_avatar,
+      x_employee_contact_name,
+    } = req.body;
+
+    if (!x_planning_slot_id)
+      throw new Error(
+        "Planning slot not found for employee: " + x_employee_contact_name
+      );
+
+    const department = departments.find((d) => d.id === x_company_id);
+    if (!department) throw new Error("Department not found");
+
+    const check_out_time = formatTime(check_out);
+    const cumulative_minutes = formatMinutes(x_cumulative_minutes);
+
+    const attendanceLogChannel = client.channels.cache.get(
+      department.scheduleChannel
+    );
+    if (!attendanceLogChannel) throw new Error("Attendance channel not found");
+
+    const channelMessages = await attendanceLogChannel.messages.fetch({
+      limit: 100,
+    });
+
+    const attendanceMessage = channelMessages.find((msg) =>
+      msg.content.includes(x_planning_slot_id)
+    );
+    if (!attendanceMessage) throw new Error("Attendance message not found");
+
+    let messageEmbed = attendanceMessage.embeds[0];
+    const hasTotalWorkedTime = messageEmbed.data.fields?.find(
+      (f) => f.name === "Total Worked Time"
+    );
+    if (!hasTotalWorkedTime) {
+      messageEmbed.data.fields.push({
+        name: "Total Worked Time",
+        value: `⏱️ | ${cumulative_minutes}`,
+      });
+    }
+
+    await attendanceMessage.edit({ embeds: [messageEmbed] });
+
+    let thread;
+    if (attendanceMessage.hasThread) {
+      thread = await attendanceMessage.thread;
+    } else {
+      thread = await attendanceMessage.startThread({
+        name: `Attendance Thread - ${x_planning_slot_id}`,
+        type: ChannelType.PublicThread,
+        autoArchiveDuration: 1440,
+      });
+    }
+
+    const attendanceLogEmbed = new EmbedBuilder()
+      .setDescription("## 🔴 CHECK-OUT")
+      .addFields(
+        { name: "Timestamp", value: `⏱️ | ${check_out_time}` },
+        {
+          name: "Reason for Checkout",
+          value: `Add your reason through the button below.`,
+        }
+      )
+      .setColor("Red");
+
+    if (x_employee_avatar) {
+      attendanceLogEmbed.setThumbnail(x_employee_avatar);
+    }
+
+    const addReason = new ButtonBuilder()
+      .setCustomId("checkoutAddReason")
+      .setLabel("Add Reason")
+      .setStyle(ButtonStyle.Primary);
+
+    const endShift = new ButtonBuilder()
+      .setCustomId("attendanceEndShift")
+      .setLabel("End Shift")
+      .setStyle(ButtonStyle.Danger);
+
+    const buttonRow = new ActionRowBuilder().addComponents(addReason, endShift);
+
+    await thread.send({
+      embeds: [attendanceLogEmbed],
+      components: [buttonRow],
+    });
+
+    return res.status(200).json({ ok: true, message: "Checkout logged" });
+  } catch (error) {
+    console.error("Employee Check-Out Error:", error.message);
     return res.status(500).json({ ok: false, message: error.message });
   }
 };
