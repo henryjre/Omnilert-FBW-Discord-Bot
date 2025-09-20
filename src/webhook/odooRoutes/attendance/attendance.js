@@ -62,14 +62,7 @@ const attendanceCheckIn = async (req, res) => {
 
 const attendanceCheckOut = async (req, res) => {
   try {
-    const {
-      x_planning_slot_id,
-      x_discord_id,
-      check_out,
-      id: attendanceId,
-      x_cumulative_minutes,
-      x_company_id,
-    } = req.body;
+    const { x_discord_id, id: attendanceId, x_company_id } = req.body;
 
     const department = departments.find((d) => d.id === x_company_id);
 
@@ -104,10 +97,9 @@ const attendanceCheckOut = async (req, res) => {
 
     if (department.id === 1) {
       return await managementCheckOut(req, res);
+    } else {
+      return await employeeCheckOut(req, res);
     }
-
-    const check_out_time = formatTime(check_out);
-    const cumulative_minutes = formatMinutes(x_cumulative_minutes);
   } catch (error) {
     console.error("Attendance Check-Out Error:", error);
     return res.status(500).json({ ok: false, message: error.message });
@@ -538,6 +530,7 @@ const employeeCheckOut = async (req, res) => {
     const buttonRow = new ActionRowBuilder().addComponents(addReason, endShift);
 
     await thread.send({
+      content: `${x_discord_id ? `<@${x_discord_id}>` : department?.role}`,
       embeds: [attendanceLogEmbed],
       components: [buttonRow],
     });
