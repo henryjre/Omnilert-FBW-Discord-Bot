@@ -1,4 +1,10 @@
-const { EmbedBuilder, ChannelType } = require("discord.js");
+const {
+  EmbedBuilder,
+  ChannelType,
+  ButtonBuilder,
+  ButtonStyle,
+  ActionRowBuilder,
+} = require("discord.js");
 const moment = require("moment-timezone");
 
 const departments = require("../../../config/departments.json");
@@ -6,23 +12,11 @@ const client = require("../../../index");
 const { searchActiveAttendance } = require("../../../odooRpc");
 
 const managementAttendanceLogChannelId = "1314413190074994690";
+const hrRoleId = "1314815153421680640";
 
 const attendanceCheckIn = async (req, res) => {
   try {
-    const {
-      id,
-      x_company_id,
-      check_in,
-      x_cumulative_minutes,
-      x_discord_id,
-      x_employee_avatar,
-      x_employee_contact_name,
-      x_planning_slot_id,
-      x_shift_start,
-      x_shift_end,
-      x_minutes_delta,
-      x_prev_attendance_id,
-    } = req.body;
+    const { x_company_id, x_discord_id } = req.body;
 
     const department = departments.find((d) => d.id === x_company_id);
 
@@ -57,9 +51,9 @@ const attendanceCheckIn = async (req, res) => {
 
     if (department.id === 1) {
       return await managementCheckIn(req, res);
+    } else {
+      return await employeeCheckIn(req, res);
     }
-
-    return res.status(200).json({ ok: true, message: "Schedule logged" });
   } catch (error) {
     console.error("Schedule Error:", error);
     return res.status(500).json({ ok: false, message: error.message });
@@ -285,14 +279,165 @@ const managementCheckOut = async (req, res) => {
 const employeeCheckIn = async (req, res) => {
   try {
     const {
-      x_discord_id,
-      check_in,
-      id: attendanceId,
-      x_cumulative_minutes,
+      id,
       x_company_id,
+      check_in,
+      x_cumulative_minutes,
+      x_discord_id,
+      x_employee_avatar,
+      x_employee_contact_name,
+      x_planning_slot_id,
+      x_shift_start,
+      x_shift_end,
+      x_minutes_delta,
+      x_prev_attendance_id,
     } = req.body;
+
+    if (!x_planning_slot_id)
+      throw new Error(
+        "Planning slot not found for employee: " + x_employee_contact_name
+      );
+
+    const department = departments.find((d) => d.id === x_company_id);
+
+    if (!department) throw new Error("Department not found");
+
+    const checkInTime = formatTime(check_in);
+    const shift_start_time = formatTime(x_shift_start);
+    const shift_end_time = formatTime(x_shift_end);
+    const punctuality = evaluatePunctuality(check_in, x_shift_start);
+
+    const employeeName =
+      x_employee_contact_name?.split("-")[1]?.trim() || "Unknown";
+    const attendanceLogChannel = client.channels.cache.get(
+      department.scheduleChannel
+    );
+
+    if (!attendanceLogChannel) throw new Error("Attendance channel not found");
+
+    const channelMessages = await attendanceLogChannel.messages.fetch({
+      limit: 100,
+    });
+    const attendanceMessage = channelMessages.find((msg) =>
+      msg.content.includes(x_planning_slot_id)
+    );
+
+    if (!attendanceMessage) throw new Error("Attendance message not found");
+
+    let messageEmbed = attendanceMessage.embeds[0];
+    messageEmbed.data.fields.push({
+      name: "Total Worked Time",
+      value: `⏱️ | Currently Working`,
+    });
+
+    await attendanceMessage.edit({ embeds: [messageEmbed] });
+
+    let thread;
+    if (attendanceMessage.hasThread()) {
+      thread = await attendanceMessage.thread;
+    } else {
+      thread = await attendanceMessage.startThread({
+        name: `Attendance Thread - ${x_planning_slot_id}`,
+        type: ChannelType.PublicThread,
+        autoArchiveDuration: 1440,
+      });
+    }
+
+    const attendanceLogEmbed = new EmbedBuilder()
+      .setDescription("## 🟢 CHECK-IN")
+      .addFields({ name: "Check-In", value: `⏱️ | ${checkInTime}` })
+      .setColor("Green");
+
+    await thread.send({ embeds: [attendanceLogEmbed] });
+
+    if (punctuality.status === "on_time")
+      return res.status(200).json({ ok: true, message: "Attendance logged" });
+
+    const title =
+      punctuality.status === "late"
+        ? "TARDINESS AUTHORIZATION REQUEST"
+        : "EARLY ATTENDANCE APPROVAL";
+    const color = punctuality.status === "late" ? "#ff00aa" : "#a600ff";
+    const fieldName =
+      punctuality.status === "late" ? "Tardiness" : "Early Attendance";
+
+    const embed = new EmbedBuilder()
+      .setDescription(`## ⏰ ${title}`)
+      .addFields(
+        {
+          name: "Date",
+          value: `📆 | ${moment().format("MMMM DD, YYYY")}`,
+        },
+        { name: "Employee", value: `🪪 | ${employeeName}` },
+        {
+          name: "Discord User",
+          value: `👤 | ${x_discord_id ? `<@${x_discord_id}>` : "N/A"}`,
+        },
+        {
+          name: "Branch",
+          value: `🛒 | ${department?.name || "Omnilert"}`,
+        },
+        {
+          name: "Shift Start Date",
+          value: `📅 | ${shift_start_time}`,
+        },
+        {
+          name: "Shift End Date",
+          value: `📅 | ${shift_end_time}`,
+        },
+        { name: fieldName, value: `⏱️ | ${punctuality.readable}` }
+      )
+      .setColor(color);
+
+    const messagePayload = {
+      embeds: [embed],
+    };
+
+    const submit = new ButtonBuilder()
+      .setCustomId("attendanceLogSubmit")
+      .setLabel("Submit")
+      .setDisabled(true)
+      .setStyle(ButtonStyle.Success);
+
+    const addReason = new ButtonBuilder()
+      .setCustomId("tardinessAddReason")
+      .setLabel("Add Reason")
+      .setStyle(ButtonStyle.Primary);
+
+    const approve = new ButtonBuilder()
+      .setCustomId("attendanceLogApprove")
+      .setLabel("Approve")
+      .setStyle(ButtonStyle.Success);
+
+    const reject = new ButtonBuilder()
+      .setCustomId("attendanceLogReject")
+      .setLabel("Reject")
+      .setStyle(ButtonStyle.Danger);
+
+    const tardinessRow = new ActionRowBuilder().addComponents(
+      submit,
+      addReason
+    );
+    const earlyAttendanceRow = new ActionRowBuilder().addComponents(
+      approve,
+      reject
+    );
+
+    if (punctuality.status === "late") {
+      messagePayload.components = [tardinessRow];
+      messagePayload.content = `${
+        x_discord_id ? `<@${x_discord_id}>` : department?.role
+      }`;
+    } else {
+      messagePayload.components = [earlyAttendanceRow];
+      // messagePayload.content = `<@&${hrRoleId}>`;
+    }
+
+    await thread.send(messagePayload);
+
+    return res.status(200).json({ ok: true, message: "Attendance logged" });
   } catch (error) {
-    console.error("Employee Check-In Error:", error);
+    console.error("Employee Check-In Error:", error.message);
     return res.status(500).json({ ok: false, message: error.message });
   }
 };
@@ -340,4 +485,52 @@ function formatMinutesDelta(x_minutes_delta) {
   }
 
   return parts.join(" and ") + (isLate ? " late" : " early");
+}
+
+export function evaluatePunctuality(checkIn, shiftStart, tz = "Asia/Manila") {
+  const fmt = "YYYY-MM-DD HH:mm:ss";
+
+  const asMoment = (val) => {
+    if (typeof val === "string") {
+      // Has explicit zone? parseZone preserves it; otherwise read in tz
+      const hasZone = /[zZ]|[+\-]\d{2}:?\d{2}$/.test(val);
+      return hasZone ? moment.parseZone(val).tz(tz) : moment.tz(val, fmt, tz);
+    }
+    // Date object
+    return moment(val).tz(tz);
+  };
+
+  const mIn = asMoment(checkIn);
+  const mStart = asMoment(shiftStart);
+
+  if (!mIn.isValid() || !mStart.isValid()) {
+    throw new Error(
+      "Invalid datetime: ensure values match 'YYYY-MM-DD HH:mm:ss' or include an offset."
+    );
+  }
+
+  // Positive = late, Negative = early
+  const diffMs = mIn.diff(mStart);
+  const secondsDelta = Math.round(diffMs / 1000);
+  const minutesDelta = Math.round(diffMs / (1000 * 60));
+
+  let status = "on_time";
+  if (secondsDelta > 0) status = "late";
+  else if (secondsDelta < 0) status = "early";
+
+  const readable =
+    status === "on_time"
+      ? "on time"
+      : `${Math.abs(minutesDelta)} minute${
+          Math.abs(minutesDelta) === 1 ? "" : "s"
+        } ${status}`;
+
+  return {
+    status,
+    minutesDelta,
+    secondsDelta,
+    readable,
+    checkInLocal: mIn.format(fmt),
+    shiftStartLocal: mStart.format(fmt),
+  };
 }
