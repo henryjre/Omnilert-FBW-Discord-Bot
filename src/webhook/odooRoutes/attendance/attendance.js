@@ -331,7 +331,7 @@ const employeeCheckIn = async (req, res) => {
       thread = await attendanceMessage.thread;
     } else {
       thread = await attendanceMessage.startThread({
-        name: `Attendance Thread - ${x_planning_slot_id}`,
+        name: `Attendance | ${x_employee_contact_name} | ${x_planning_slot_id}`,
         type: ChannelType.PublicThread,
         autoArchiveDuration: 1440,
       });
@@ -494,7 +494,7 @@ const employeeCheckOut = async (req, res) => {
       thread = await attendanceMessage.thread;
     } else {
       thread = await attendanceMessage.startThread({
-        name: `Attendance Thread - ${x_planning_slot_id}`,
+        name: `Attendance | ${x_employee_contact_name} | ${x_planning_slot_id}`,
         type: ChannelType.PublicThread,
         autoArchiveDuration: 1440,
       });
