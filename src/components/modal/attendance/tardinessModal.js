@@ -45,12 +45,12 @@ module.exports = {
     // Extract date and branch information from the original message embed
     const originalEmbed = originalMessage.embeds[0];
 
-    const tardinessReasonField = originalEmbed.fields.find(
+    const tardinessReasonField = originalEmbed.data.fields.find(
       (field) => field.name === "Reason"
     );
 
     if (!tardinessReasonField) {
-      originalEmbed.fields.push({
+      originalEmbed.data.fields.push({
         name: "Reason",
         value: `❓ | ${tardinessReasonInput}`,
       });
@@ -74,7 +74,9 @@ module.exports = {
       addReason
     );
 
-    replyEmbed.setDescription("✅ Successfully updated.").setColor("Green");
+    replyEmbed
+      .setDescription("✅ Successfully added reason.")
+      .setColor("Green");
 
     await originalMessage.edit({
       embeds: [originalEmbed],
