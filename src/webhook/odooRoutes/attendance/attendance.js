@@ -487,7 +487,7 @@ function formatMinutesDelta(x_minutes_delta) {
   return parts.join(" and ") + (isLate ? " late" : " early");
 }
 
-export function evaluatePunctuality(checkIn, shiftStart, tz = "Asia/Manila") {
+function evaluatePunctuality(checkIn, shiftStart, tz = "Asia/Manila") {
   const fmt = "YYYY-MM-DD HH:mm:ss";
 
   const asMoment = (val) => {
