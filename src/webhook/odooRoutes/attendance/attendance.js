@@ -483,6 +483,8 @@ const employeeCheckOut = async (req, res) => {
         name: "Total Worked Time",
         value: `⏱️ | ${cumulative_minutes}`,
       });
+    } else {
+      hasTotalWorkedTime.value = `⏱️ | ${cumulative_minutes}`;
     }
 
     await attendanceMessage.edit({ embeds: [messageEmbed] });
