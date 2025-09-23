@@ -170,10 +170,30 @@ async function updateClosingPcfBalance(balance, company_id, session_id, type) {
   }
 }
 
+async function editAttendance(payload) {
+  const url =
+    "https://omnilert-test-1.odoo.com/web/hook/" +
+    process.env.ODOO_EDIT_ATTENDANCE_SECRET;
+
+  try {
+    const response = await axios.post(url, payload, {
+      headers: { "Content-Type": "application/json" },
+    });
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error calling Odoo webhook:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+}
+
 module.exports = {
   jsonRpc,
   odooLogin,
   callOdooAttendanceWebhook,
   searchActiveAttendance,
   updateClosingPcfBalance,
+  editAttendance,
 };
