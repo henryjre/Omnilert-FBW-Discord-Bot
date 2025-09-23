@@ -119,6 +119,10 @@ module.exports = {
       const newCheckoutEmbed = EmbedBuilder.from(checkoutMessageEmbed.data);
       newCheckoutEmbed.setDescription(`## 🔴 LATE CHECKOUT`).setFields(
         {
+          name: "Attendance ID",
+          value: attendanceIdField.value,
+        },
+        {
           name: "Check-Out Time",
           value: checkoutTimestamp,
         },
