@@ -77,6 +77,9 @@ module.exports = {
     const shiftEndField = planningMessageEmbed.data.fields.find(
       (field) => field.name === "Shift End"
     );
+    const attendanceIdField = checkoutMessageEmbed.data.fields.find(
+      (field) => field.name === "Attendance ID"
+    );
 
     const checkoutTimestamp = checkoutTimestampField.value;
     const planningStartShift = planningStartShiftEndField.value;
@@ -137,6 +140,10 @@ module.exports = {
       const embed = new EmbedBuilder()
         .setDescription(`## ⏰ LATE CHECKOUT APPROVAL`)
         .addFields(
+          {
+            name: "Attendance ID",
+            value: attendanceIdField.value,
+          },
           {
             name: "Date",
             value: `📆 | ${moment().format("MMMM DD, YYYY")}`,
