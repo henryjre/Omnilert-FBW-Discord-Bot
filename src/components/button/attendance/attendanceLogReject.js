@@ -15,7 +15,7 @@ const hrLogsChannel = "1343869449455009833";
 
 module.exports = {
   data: {
-    name: `attendanceLogRejectx`,
+    name: `attendanceLogReject`,
   },
   async execute(interaction, client) {
     // if (!interaction.member.roles.cache.has(hrRoleId)) {
@@ -89,7 +89,7 @@ module.exports = {
 
         const messagePayload = {
           embeds: [messageEmbed],
-          //   components: [],
+          components: [],
         };
 
         const replyEmbed = new EmbedBuilder().setColor("Red");
