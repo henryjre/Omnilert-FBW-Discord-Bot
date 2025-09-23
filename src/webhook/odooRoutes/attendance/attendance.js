@@ -339,7 +339,10 @@ const employeeCheckIn = async (req, res) => {
 
     const attendanceLogEmbed = new EmbedBuilder()
       .setDescription("## 🟢 CHECK-IN")
-      .addFields({ name: "Timestamp", value: `⏱️ | ${checkInTime}` })
+      .addFields(
+        { name: "Attendance ID", value: `🆔 | ${id}` },
+        { name: "Timestamp", value: `⏱️ | ${checkInTime}` }
+      )
       .setColor("Green");
 
     await thread.send({ embeds: [attendanceLogEmbed] });
@@ -358,6 +361,7 @@ const employeeCheckIn = async (req, res) => {
     const embed = new EmbedBuilder()
       .setDescription(`## ⏰ ${title}`)
       .addFields(
+        { name: "Attendance ID", value: `🆔 | ${id}` },
         {
           name: "Date",
           value: `📆 | ${moment().format("MMMM DD, YYYY")}`,
@@ -503,11 +507,8 @@ const employeeCheckOut = async (req, res) => {
     const attendanceLogEmbed = new EmbedBuilder()
       .setDescription("## 🔴 CHECK-OUT")
       .addFields(
-        { name: "Timestamp", value: `⏱️ | ${check_out_time}` },
-        {
-          name: "Reason for Checkout",
-          value: `Add your reason through the button below.`,
-        }
+        { name: "Attendance ID", value: `🆔 | ${attendanceId}` },
+        { name: "Timestamp", value: `⏱️ | ${check_out_time}` }
       )
       .setColor("Red");
 
