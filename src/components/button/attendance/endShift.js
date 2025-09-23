@@ -6,177 +6,260 @@ const {
   ChannelType,
   EmbedBuilder,
 } = require("discord.js");
-const e = require("express");
 
 const moment = require("moment-timezone");
+
+const managementRoleId = "1314413671245676685";
 
 module.exports = {
   data: {
     name: `attendanceEndShift`,
   },
   async execute(interaction, client) {
-    // const permissionRole = "1314413671245676685";
+    if (!interaction.member.roles.cache.has(managementRoleId)) {
+      const mentionedUser =
+        interaction.message.mentions?.users?.first() || null;
+      const mentionedRole =
+        interaction.message.mentions?.roles?.first() || null;
 
-    // if (!interaction.member.roles.cache.has(permissionRole)) {
-    //   await interaction.reply({
-    //     content: `🔴 ERROR: You cannot use this button.`,
-    //     flags: MessageFlags.Ephemeral,
-    //   });
-    //   return;
-    // }
+      if (mentionedUser) {
+        const isNotMentionedUser = interaction.user.id !== mentionedUser.id;
+        if (isNotMentionedUser) {
+          return await interaction.reply({
+            content: `🔴 ERROR: You cannot use this button.`,
+            flags: MessageFlags.Ephemeral,
+          });
+        }
+      }
+
+      if (mentionedRole) {
+        const doesNotHaveRole = !interaction.member.roles.cache.has(
+          mentionedRole.id
+        );
+        if (doesNotHaveRole) {
+          return await interaction.reply({
+            content: `🔴 ERROR: You cannot use this button.`,
+            flags: MessageFlags.Ephemeral,
+          });
+        }
+      }
+    }
 
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
-    const messageEmbed = interaction.message.embeds[0];
-    const embedFields = messageEmbed.data.fields;
+    const threadChannel = interaction.channel;
+    const originalMessage = await threadChannel.fetchStarterMessage();
 
-    const lastField = embedFields[embedFields.length - 1];
+    const checkoutMessageEmbed = interaction.message.embeds[0];
+    const planningMessageEmbed = originalMessage.embeds[0];
 
-    if (lastField.name === "Check-In") {
-      return await interaction.editReply({
-        content: `🔴 ERROR: This employee is currently on shift.`,
-        flags: MessageFlags.Ephemeral,
-      });
-    }
-
-    const employeeField = embedFields.find((f) => f.name === "Employee");
-    const branchField = embedFields.find((f) => f.name === "Branch");
-    const shiftStartField = embedFields.find((f) => f.name === "Shift Start");
-    const shiftEndField = embedFields.find((f) => f.name === "Shift End");
-    const discordUserField = embedFields.find((f) => f.name === "Discord User");
-
-    const shiftStartTime = shiftStartField?.value.split("|")[1];
-    const shiftEndTime = shiftEndField?.value.split("|")[1];
-
-    const lastFieldValue = lastField?.value; //field should be check-out
-    const discordUserValue = discordUserField?.value.split("|")[1];
-
-    const { status, difference } = getTimeDifference(
-      shiftEndTime,
-      lastFieldValue
+    const checkoutTimestampField = checkoutMessageEmbed.data.fields.find(
+      (field) => field.name === "Timestamp"
+    );
+    const planningStartShiftEndField = planningMessageEmbed.data.fields.find(
+      (field) => field.name === "Shift Start"
+    );
+    const planningEndShiftField = planningMessageEmbed.data.fields.find(
+      (field) => field.name === "Shift End"
+    );
+    const employeeNameField = planningMessageEmbed.data.fields.find(
+      (field) => field.name === "Employee"
+    );
+    const discordUserField = planningMessageEmbed.data.fields.find(
+      (field) => field.name === "Discord User"
+    );
+    const departmentField = planningMessageEmbed.data.fields.find(
+      (field) => field.name === "Branch"
+    );
+    const shiftStartField = planningMessageEmbed.data.fields.find(
+      (field) => field.name === "Shift Start"
+    );
+    const shiftEndField = planningMessageEmbed.data.fields.find(
+      (field) => field.name === "Shift End"
     );
 
-    let thread = interaction.message.thread;
+    const checkoutTimestamp = checkoutTimestampField.value;
+    const planningStartShift = planningStartShiftEndField.value;
+    const planningEndShift = planningEndShiftField.value;
 
-    if (status !== "on_time") {
-      if (!thread) {
-        thread = await interaction.message.startThread({
-          name: `Attendance Log - ${interaction.message.id}`,
-          type: ChannelType.PublicThread,
-          autoArchiveDuration: 1440,
-        });
-      }
+    const checkoutStatus = getCheckoutStatus(
+      checkoutTimestamp,
+      planningStartShift,
+      planningEndShift
+    );
 
-      const isOvertime = status === "overtime";
+    let messagePayload = {};
+    if (checkoutStatus.status === 1) {
+      // early checkout
+      const newCheckoutEmbed = EmbedBuilder.from(checkoutMessageEmbed.data);
+      newCheckoutEmbed.setDescription(`## 🔴 EARLY CHECKOUT`).setFields(
+        {
+          name: "Check-Out Time",
+          value: checkoutTimestamp,
+        },
+        {
+          name: "Planning Shift End",
+          value: planningEndShift,
+        },
+        {
+          name: "Checkout Time Difference",
+          value: `⌛ | ${checkoutStatus.diff_pretty} early`,
+        }
+      );
 
-      const title = isOvertime
-        ? "OVERTIME AUTHORIZATION REQUEST"
-        : "UNDERTIME AUTHORIZATION REQUEST";
-      const color = isOvertime ? "#ff00aa" : "#a600ff";
-      const fieldName = isOvertime ? "Overtime" : "Undertime";
+      messagePayload.embeds = [newCheckoutEmbed];
+      messagePayload.components = [];
+
+      await interaction.message.edit(messagePayload);
+    } else if (checkoutStatus.status === 2) {
+      // late checkout
+      const newCheckoutEmbed = EmbedBuilder.from(checkoutMessageEmbed.data);
+      newCheckoutEmbed.setDescription(`## 🔴 LATE CHECKOUT`).setFields(
+        {
+          name: "Check-Out Time",
+          value: checkoutTimestamp,
+        },
+        {
+          name: "Planning Shift End",
+          value: planningEndShift,
+        },
+        {
+          name: "Checkout Time Difference",
+          value: `⌛ | ${checkoutStatus.diff_pretty} late`,
+        }
+      );
+
+      messagePayload.embeds = [newCheckoutEmbed];
+      messagePayload.components = [];
+
+      await interaction.message.edit(messagePayload);
 
       const embed = new EmbedBuilder()
-        .setDescription(`## ⏳ ${title}`)
+        .setDescription(`## ⏰ LATE CHECKOUT APPROVAL`)
         .addFields(
           {
             name: "Date",
-            value: `📆 | ${moment(new Date()).format("MMMM DD, YYYY")}`,
+            value: `📆 | ${moment().format("MMMM DD, YYYY")}`,
+          },
+          { name: "Employee", value: employeeNameField.value },
+          {
+            name: "Discord User",
+            value: discordUserField.value,
           },
           {
-            name: "Employee",
-            value: employeeField.value,
+            name: "Branch",
+            value: departmentField.value,
           },
-          { name: "Branch", value: branchField.value },
-          { name: "Shift Start Date", value: `📅 | ${shiftStartTime}` },
-          { name: "Shift End Date", value: `📅 | ${shiftEndTime}` },
-          { name: fieldName, value: `⏳ | ${difference}` }
+          {
+            name: "Shift Start Date",
+            value: shiftStartField.value,
+          },
+          {
+            name: "Shift End Date",
+            value: shiftEndField.value,
+          },
+          {
+            name: "Checkout Status",
+            value: `⏱️ | ${checkoutStatus.diff_pretty} late`,
+          }
         )
-        .setColor(color);
+        .setColor("Red");
 
-      const submit = new ButtonBuilder()
-        .setCustomId("attendanceLogSubmit")
-        .setLabel("Submit")
-        .setDisabled(true)
+      const approve = new ButtonBuilder()
+        .setCustomId("attendanceLogApprove")
+        .setLabel("Approve")
         .setStyle(ButtonStyle.Success);
+      const reject = new ButtonBuilder()
+        .setCustomId("attendanceLogReject")
+        .setLabel("Reject")
+        .setStyle(ButtonStyle.Danger);
 
-      const addReason = new ButtonBuilder()
-        .setCustomId("tardinessAddReason")
-        .setLabel("Add Reason")
-        .setStyle(ButtonStyle.Primary);
+      const buttonRow = new ActionRowBuilder().addComponents(approve, reject);
 
-      const buttonRow = new ActionRowBuilder().addComponents(submit, addReason);
-
-      await thread.send({
-        content: `${discordUserValue}, please add the reason and submit this ${fieldName.toLowerCase()} request.`,
+      await threadChannel.send({
         embeds: [embed],
         components: [buttonRow],
       });
     }
 
-    const interactedMember =
-      interaction.member?.nickname.replace(/^[🔴🟢]\s*/, "") ||
-      interaction.user.globalName;
-
-    messageEmbed.data.footer = {
-      text: `Shift Ended By: ${interactedMember}`,
-    };
-
-    messageEmbed.color = 15548997;
-
-    const messagePayload = {
-      embeds: [messageEmbed],
-    };
-
-    if (thread) {
-      const closeThread = new ButtonBuilder()
-        .setCustomId("attendanceCloseThread")
-        .setLabel("Close Thread")
-        .setStyle(ButtonStyle.Danger);
-
-      const buttonRow = new ActionRowBuilder().addComponents(closeThread);
-
-      messagePayload.components = [buttonRow];
-    }
-
-    await interaction.message.edit(messagePayload);
-
-    await interaction.editReply({
-      content: `✅ Successfully ended this shift.`,
-    });
+    await interaction.editReply({ content: `Checkout status updated.` });
   },
 };
 
-function getTimeDifference(first, second, timezone = "Asia/Manila") {
-  // Clean inputs (remove emoji + pipe)
-  const cleanFirst = first.replace(/^[^\|]+\|\s*/, "");
-  const cleanSecond = second.replace(/^[^\|]+\|\s*/, "");
+// Requires moment-timezone
+function getCheckoutStatus(
+  checkoutStr,
+  startStr,
+  endStr,
+  timezone = "Asia/Manila"
+) {
+  const FORMAT = "MMMM DD, YYYY [at] h:mm A";
 
-  // Parse with moment-timezone
-  const start = moment.tz(cleanFirst, "MMMM DD, YYYY [at] h:mm A", timezone);
-  const end = moment.tz(cleanSecond, "MMMM DD, YYYY [at] h:mm A", timezone);
+  // Optional cleaner (handles leading emoji + pipe like "⏱️ | ")
+  const clean = (s) => s.replace(/^[^\|]+\|\s*/, "");
 
-  // Difference in minutes
-  let diffMinutes = end.diff(start, "minutes");
+  const checkout = moment.tz(clean(checkoutStr), FORMAT, timezone);
+  const start = moment.tz(clean(startStr), FORMAT, timezone);
+  const end = moment.tz(clean(endStr), FORMAT, timezone);
 
-  // Determine undertime / overtime
-  let status = "on_time";
-  if (diffMinutes < 0) {
-    status = "undertime";
-    diffMinutes = Math.abs(diffMinutes);
-  } else if (diffMinutes > 0) {
-    status = "overtime";
+  if (!checkout.isValid() || !start.isValid() || !end.isValid()) {
+    throw new Error(
+      "Invalid date(s). Ensure format: 'MMMM DD, YYYY at h:mm A'."
+    );
+  }
+  if (end.isBefore(start)) {
+    throw new Error("planning end must be after planning start.");
   }
 
-  // Convert to hours + minutes with dynamic plural
+  // Status logic
+  let status; // 0, 1, 2 as requested
+  let boundary; // "start" | "end"
+  let diffMinutes = 0; // positive minutes difference from the relevant boundary
+
+  if (checkout.isBefore(start)) {
+    status = 0; // before planning start
+    boundary = "start";
+    diffMinutes = start.diff(checkout, "minutes");
+  } else if (checkout.isSameOrBefore(end)) {
+    status = 1; // between start and end (early vs end → undertime)
+    boundary = "end";
+    diffMinutes = end.diff(checkout, "minutes");
+  } else {
+    status = 2; // after end (past shift end → overtime)
+    boundary = "end";
+    diffMinutes = checkout.diff(end, "minutes");
+  }
+
+  // Pretty duration with dynamic plurals
   const hours = Math.floor(diffMinutes / 60);
   const minutes = diffMinutes % 60;
+  const pluralize = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
+  const pretty =
+    diffMinutes === 0
+      ? "0 minutes"
+      : [
+          hours > 0 ? pluralize(hours, "hour") : null,
+          minutes > 0 ? pluralize(minutes, "minute") : null,
+        ]
+          .filter(Boolean)
+          .join(" ");
 
-  const pluralize = (num, word) => `${num} ${word}${num === 1 ? "" : "s"}`;
+  // Helpful human label
+  const status_label =
+    status === 0
+      ? "before planning start"
+      : status === 1
+      ? "before planning end (undertime)"
+      : "after planning end (overtime)";
 
-  let difference = [];
-  if (hours > 0) difference.push(pluralize(hours, "hour"));
-  if (minutes > 0) difference.push(pluralize(minutes, "minute"));
-  if (difference.length === 0) difference.push("0 minutes");
-
-  return { status, difference: difference.join(" ") };
+  return {
+    status, // 0 | 1 | 2
+    status_label, // human-readable
+    boundary, // "start" or "end" the comparison is relative to
+    diff_minutes: diffMinutes,
+    diff_pretty: pretty, // e.g., "1 hour 15 minutes"
+    checkout_iso: checkout.toISOString(),
+    start_iso: start.toISOString(),
+    end_iso: end.toISOString(),
+  };
 }
