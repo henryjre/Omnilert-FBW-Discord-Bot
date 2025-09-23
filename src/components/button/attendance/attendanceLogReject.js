@@ -15,7 +15,7 @@ const hrLogsChannel = "1343869449455009833";
 
 module.exports = {
   data: {
-    name: `attendanceLogRejectxx`,
+    name: `attendanceLogRejectx`,
   },
   async execute(interaction, client) {
     // if (!interaction.member.roles.cache.has(hrRoleId)) {
@@ -89,6 +89,7 @@ module.exports = {
 
         const messagePayload = {
           embeds: [messageEmbed],
+          //   components: [],
         };
 
         const replyEmbed = new EmbedBuilder().setColor("Red");
@@ -114,6 +115,15 @@ module.exports = {
           if (!response.ok) {
             throw new Error(response.message);
           }
+
+          const originalMessage =
+            await interaction.channel.fetchStarterMessage();
+          const originalEmbed = originalMessage.embeds[0];
+          const totalWorkedTimeField = originalEmbed.data.fields.find(
+            (field) => field.name === "Total Worked Time"
+          );
+          totalWorkedTimeField.value = `⏱️ | ${response.timestamp}`;
+
           replyEmbed.setDescription(
             `### Your late checkout has been rejected. Your check out time has been updated.`
           );
