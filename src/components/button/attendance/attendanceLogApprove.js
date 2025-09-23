@@ -1,12 +1,9 @@
-const {
-  ActionRowBuilder,
-  ModalBuilder,
-  TextInputBuilder,
-  TextInputStyle,
-  EmbedBuilder,
-} = require("discord.js");
+const { EmbedBuilder, MessageFlags } = require("discord.js");
 
 const { google } = require("googleapis");
+const moment = require("moment-timezone");
+
+const { editAttendance } = require("../../../odooRpc.js");
 
 const credentials = JSON.parse(
   Buffer.from(process.env.googleServiceAccountKey, "base64").toString("utf8")
@@ -17,7 +14,7 @@ const hrLogsChannel = "1343869449455009833";
 
 module.exports = {
   data: {
-    name: `attendanceLogApprovedd`,
+    name: `attendanceLogApprovex`,
   },
   async execute(interaction, client) {
     // if (!interaction.member.roles.cache.has(hrRoleId)) {
@@ -53,6 +50,7 @@ module.exports = {
 
       const messagePayload = {
         embeds: [messageEmbed],
+        components: [],
       };
 
       const replyEmbed = new EmbedBuilder().setColor("Green");
