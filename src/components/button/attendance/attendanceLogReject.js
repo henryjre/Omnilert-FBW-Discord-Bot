@@ -4,6 +4,7 @@ const {
   TextInputBuilder,
   TextInputStyle,
   EmbedBuilder,
+  MessageFlags,
 } = require("discord.js");
 const moment = require("moment-timezone");
 
@@ -14,7 +15,7 @@ const hrLogsChannel = "1343869449455009833";
 
 module.exports = {
   data: {
-    name: `attendanceLogRejectxxx`,
+    name: `attendanceLogRejectxx`,
   },
   async execute(interaction, client) {
     // if (!interaction.member.roles.cache.has(hrRoleId)) {
@@ -90,10 +91,7 @@ module.exports = {
           embeds: [messageEmbed],
         };
 
-        const replyPayload = {
-          description: ``,
-          timestamp: ``,
-        };
+        const replyEmbed = new EmbedBuilder().setColor("Red");
 
         if (
           messageEmbed.data.description.includes("EARLY ATTENDANCE APPROVAL")
@@ -102,8 +100,13 @@ module.exports = {
           if (!response.ok) {
             throw new Error(response.message);
           }
-          replyPayload.description = `Your early check in has been rejected. Your check in time has been updated.`;
-          replyPayload.timestamp = response.timestamp;
+          replyEmbed.setDescription(
+            `### Your early check in has been rejected. Your check in time has been updated.`
+          );
+          replyEmbed.addFields({
+            name: "New Check-In Time",
+            value: `⏱️ | ${response.timestamp}`,
+          });
         } else if (
           messageEmbed.data.description.includes("LATE CHECKOUT APPROVAL")
         ) {
@@ -111,19 +114,24 @@ module.exports = {
           if (!response.ok) {
             throw new Error(response.message);
           }
-          replyPayload.description = `Your late checkout has been rejected. Your check out time has been updated.`;
-          replyPayload.timestamp = response.timestamp;
+          replyEmbed.setDescription(
+            `### Your late checkout has been rejected. Your check out time has been updated.`
+          );
+          replyEmbed.addFields({
+            name: "New Check-Out Time",
+            value: `⏱️ | ${response.timestamp}`,
+          });
+        } else if (
+          messageEmbed.data.description.includes(
+            "TARDINESS AUTHORIZATION REQUEST"
+          )
+        ) {
+          replyEmbed.setDescription(
+            `### Your tardiness request has been rejected. No changes have been made to your attendance.`
+          );
         }
 
         await interaction.message.edit(messagePayload);
-
-        const replyEmbed = new EmbedBuilder()
-          .setDescription(replyPayload.description)
-          .addFields({
-            name: "Timestamp",
-            value: `⏱️ | ${replyPayload.timestamp}`,
-          })
-          .setColor("Red");
 
         await interaction.channel.send({
           content: discordUser,
@@ -170,7 +178,7 @@ async function rejectEarlyCheckIn(interaction, client) {
     return {
       ok: true,
       message: "Attendance updated successfully",
-      timestamp: parsedStartDate,
+      timestamp: startDate,
     };
   } catch (error) {
     console.error(error);
@@ -208,7 +216,7 @@ async function rejectLateCheckOut(interaction, client) {
     return {
       ok: true,
       message: "Attendance updated successfully",
-      timestamp: parsedEndDate,
+      timestamp: endDate,
     };
   } catch (error) {
     console.error(error);
