@@ -494,7 +494,7 @@ const employeeCheckOut = async (req, res) => {
 
     await attendanceMessage.edit({ embeds: [messageEmbed] });
 
-    if (!x_checkout_notified)
+    if (x_checkout_notified)
       return res.status(200).json({ ok: true, message: "Checkout logged" });
 
     let thread;
