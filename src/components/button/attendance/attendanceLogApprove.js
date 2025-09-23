@@ -3,6 +3,7 @@ const {
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
+  EmbedBuilder,
 } = require("discord.js");
 
 const { google } = require("googleapis");
@@ -16,7 +17,7 @@ const hrLogsChannel = "1343869449455009833";
 
 module.exports = {
   data: {
-    name: `attendanceLogApprove`,
+    name: `attendanceLogApprovedd`,
   },
   async execute(interaction, client) {
     // if (!interaction.member.roles.cache.has(hrRoleId)) {
@@ -27,85 +28,71 @@ module.exports = {
     //   return;
     // }
 
-    const ownerFieldNames = ["Discord User"];
-
-    const mentionableMembers = messageEmbed.data.fields
-      .filter((f) => ownerFieldNames.includes(f.name))
-      .map((f) => f.value)
-      .join("\n");
+    await interaction.deferUpdate();
 
     const messageEmbed = interaction.message.embeds[0];
 
-    const modal = new ModalBuilder()
-      .setCustomId(`approveRequest_${interaction.id}`)
-      .setTitle(`Additional Details`);
-
-    const details = new TextInputBuilder()
-      .setCustomId(`additionalNotes`)
-      .setLabel(`Notes (OPTIONAL)`)
-      .setPlaceholder(
-        `Add some additional details/notes for the employees assigned.`
-      )
-      .setStyle(TextInputStyle.Paragraph)
-      .setRequired(false);
-
-    const firstRow = new ActionRowBuilder().addComponents(details);
-    modal.addComponents(firstRow);
-    await interaction.showModal(modal);
-
-    const modalResponse = await interaction.awaitModalSubmit({
-      filter: async (i) => {
-        const f =
-          i.customId === `approveRequest_${interaction.id}` &&
-          i.user.id === interaction.user.id;
-
-        if (f) {
-          await i.deferUpdate();
-        }
-        return f;
-      },
-      time: 120000,
-    });
-
     try {
-      if (modalResponse.isModalSubmit()) {
-        const details =
-          modalResponse.fields.getTextInputValue("additionalNotes");
+      const approvedBy = interaction.member.nickname.replace(/^[🔴🟢]\s*/, "");
 
-        if (details) {
-          messageEmbed.data.description += `\n\u200b\nAdditional notes from **${interaction.member.nickname.replace(
-            /^[🔴🟢]\s*/,
-            ""
-          )}**:\n>>> *${details}*`;
+      const discordUserField = messageEmbed.data.fields.find(
+        (f) => f.name === "Discord User"
+      );
+      const discordUser = cleanFieldValue(discordUserField.value);
+
+      messageEmbed.data.fields.push({
+        name: "Status",
+        value: "🟢 | Approved",
+      });
+
+      messageEmbed.data.footer = {
+        text: `Approved By: ${approvedBy}`,
+      };
+
+      messageEmbed.data.color = 5763719;
+
+      const messagePayload = {
+        embeds: [messageEmbed],
+      };
+
+      const replyEmbed = new EmbedBuilder().setColor("Green");
+
+      if (messageEmbed.data.description.includes("EARLY ATTENDANCE APPROVAL")) {
+        replyEmbed.setDescription(
+          `### Your early check in has been approved. No changes have been made to your attendance.`
+        );
+      } else if (
+        messageEmbed.data.description.includes("LATE CHECKOUT APPROVAL")
+      ) {
+        replyEmbed.setDescription(
+          `### Your late checkout has been approved. No changes have been made to your attendance.`
+        );
+      } else if (
+        messageEmbed.data.description.includes(
+          "TARDINESS AUTHORIZATION REQUEST"
+        )
+      ) {
+        const response = await approveTardiness(interaction, client);
+        if (!response.ok) {
+          throw new Error(response.message);
         }
-
-        messageEmbed.data.footer = {
-          text: `Approved By: ${interaction.member.nickname.replace(
-            /^[🔴🟢]\s*/,
-            ""
-          )}`,
-        };
-
-        messageEmbed.data.color = 5763719;
-
-        const messagePayload = {
-          content: mentionableMembers,
-          embeds: [messageEmbed],
-        };
-
-        if (attachments.length > 0) {
-          messagePayload.files = attachments;
-        }
-
-        await client.channels.cache
-          .get(hrLogsChannel)
-          .send(messagePayload)
-          .then((msg) => {
-            interaction.message.delete();
-          });
-
-        await insertToGoogleSheet(messageEmbed, client);
+        replyEmbed.setDescription(
+          `### Your tardiness request has been approved. Your check in time has been updated.`
+        );
+        replyEmbed.addFields({
+          name: "New Check-In Time",
+          value: `⏱️ | ${response.timestamp}`,
+        });
       }
+
+      await interaction.message.edit(messagePayload);
+
+      await interaction.channel.send({
+        content: discordUser,
+        embeds: [replyEmbed],
+      });
+
+      // await insertToGoogleSheet(messageEmbed, client);
     } catch (error) {
       console.log(error);
       // await modalResponse.followUp({
@@ -135,8 +122,8 @@ async function insertToGoogleSheet(messageEmbed, client) {
 
   const sheets = google.sheets({ version: "v4", auth });
 
-  const spreadsheetId = process.env.sheetId; // Replace with actual ID
-  const sheetName = "Authorization Requests";
+  const spreadsheetId = process.env.sheetId;
+  const sheetName = "Authorization Requests V2";
 
   const values = [[type, date, branch, shift, employeeName]];
 
@@ -256,4 +243,67 @@ async function filterData(embed, client) {
   }
 
   return data;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////// APPROVE TARDINESS ///////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+async function approveTardiness(interaction, client) {
+  const messageEmbed = interaction.message.embeds[0];
+
+  const attendanceIdField = messageEmbed.data.fields.find(
+    (field) => field.name === "Attendance ID"
+  );
+  const startDateField = messageEmbed.data.fields.find(
+    (field) => field.name === "Shift Start Date"
+  );
+
+  const attendanceId = cleanFieldValue(attendanceIdField.value);
+  const startDate = cleanFieldValue(startDateField.value);
+  const parsedStartDate = formatDateToISOString(startDate);
+
+  const payload = {
+    attendanceId: attendanceId,
+    field: "check_in",
+    timestamp: parsedStartDate,
+  };
+
+  try {
+    const response = await editAttendance(payload);
+    console.log(response);
+    return {
+      ok: true,
+      message: "Attendance updated successfully",
+      timestamp: startDate,
+    };
+  } catch (error) {
+    console.error(error);
+    return { ok: false, message: "Error updating attendance" };
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////// HELPER FUNCTIONS ///////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+function cleanFieldValue(s) {
+  return s.replace(/^[^|]*\|\s*/, "").trim();
+}
+
+function formatDateToISOString(dateString, timezone = "Asia/Manila") {
+  // Parse the date string using moment
+  const parsedDate = moment.tz(
+    dateString,
+    "MMMM D, YYYY [at] h:mm A",
+    timezone
+  );
+
+  // Check if the date is valid
+  if (!parsedDate.isValid()) {
+    throw new Error(`Invalid date format: ${dateString}`);
+  }
+
+  // Format as ISO 8601 string with timezone offset
+  return parsedDate.format("YYYY-MM-DDTHH:mm:ssZ");
 }
