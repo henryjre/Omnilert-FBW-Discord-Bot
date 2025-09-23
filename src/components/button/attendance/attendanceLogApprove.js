@@ -14,7 +14,7 @@ const hrLogsChannel = "1343869449455009833";
 
 module.exports = {
   data: {
-    name: `attendanceLogApprovex`,
+    name: `attendanceLogApprove`,
   },
   async execute(interaction, client) {
     // if (!interaction.member.roles.cache.has(hrRoleId)) {
