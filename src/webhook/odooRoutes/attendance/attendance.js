@@ -451,6 +451,7 @@ const employeeCheckOut = async (req, res) => {
       x_company_id,
       x_employee_avatar,
       x_employee_contact_name,
+      x_checkout_notified,
     } = req.body;
 
     if (!x_planning_slot_id)
@@ -492,6 +493,9 @@ const employeeCheckOut = async (req, res) => {
     }
 
     await attendanceMessage.edit({ embeds: [messageEmbed] });
+
+    if (!x_checkout_notified)
+      return res.status(200).json({ ok: true, message: "Checkout logged" });
 
     let thread;
     if (attendanceMessage.hasThread) {
