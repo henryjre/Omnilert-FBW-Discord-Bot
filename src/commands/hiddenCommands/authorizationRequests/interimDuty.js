@@ -4,12 +4,19 @@ const {
   ActionRowBuilder,
   TextInputBuilder,
   TextInputStyle,
+  MessageFlags,
 } = require("discord.js");
 
 module.exports = {
   data: new SlashCommandBuilder().setName("new_interim"),
   pushToArray: false,
   async execute(interaction, client) {
+    if (interaction.user.id !== "748568303219245117") {
+      return interaction.reply({
+        content: "You are not authorized to use this command.",
+        flags: MessageFlags.Ephemeral,
+      });
+    }
     const branch = interaction.options.getString("branch");
 
     const modal = new ModalBuilder()
