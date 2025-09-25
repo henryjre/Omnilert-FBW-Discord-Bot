@@ -20,6 +20,7 @@ module.exports = {
       "Notification By",
       "Reported By",
       "Requested By",
+      "Submitted By",
     ];
 
     const ownerField = messageEmbed.data.fields.find((f) =>
