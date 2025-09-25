@@ -520,7 +520,7 @@ const employeeCheckOut = async (req, res) => {
     if (!isWorkValid(check_in, check_out, x_shift_start, x_shift_end)) {
       const attendanceErrorEmbed = new EmbedBuilder()
         .setDescription(
-          "## ⚠️ INVALID ATTENDANCE\n\u200b\n**This attendance is outside the shift schedule. Please contact the management for assistance.**"
+          "## ⚠️ INVALID ATTENDANCE\n\u200b\n**This attendance is outside the shift schedule and has been deleted. Please contact the management for assistance.**"
         )
         .addFields(
           { name: "Attendance ID", value: `🆔 | ${attendanceId}` },
@@ -549,9 +549,9 @@ const employeeCheckOut = async (req, res) => {
             }
 
             const fieldValue = attendanceIdField.value;
-            const extractedId = fieldValue.replace(/^🆔 \| /, "").trim();
+            const extractedId = fieldValue.split("|")[1].trim();
 
-            return extractedId === attendanceId;
+            return extractedId == attendanceId;
           });
         });
 
@@ -574,7 +574,10 @@ const employeeCheckOut = async (req, res) => {
         console.error("Error deleting attendance:", error);
       }
 
-      await thread.send({ embeds: [attendanceErrorEmbed] });
+      await thread.send({
+        content: `${x_discord_id ? `<@${x_discord_id}>` : department?.role}`,
+        embeds: [attendanceErrorEmbed],
+      });
       return res.status(200).json({ ok: true, message: "Invalid attendance" });
     }
 
