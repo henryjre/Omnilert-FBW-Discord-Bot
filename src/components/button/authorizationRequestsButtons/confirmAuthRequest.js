@@ -104,6 +104,7 @@ module.exports = {
     };
 
     if (messageEmbed.data.description.includes("INTERIM DUTY FORM TEST")) {
+      messagePayload.content = ``;
       messagePayload.components = [interimButtonRow];
     }
 
