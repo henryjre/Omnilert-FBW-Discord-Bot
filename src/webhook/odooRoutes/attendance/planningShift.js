@@ -43,6 +43,7 @@ const processPublishedShift = async (payload) => {
     if (!department) throw new Error("Department not found");
 
     const startDateTime = formatTime(start_datetime);
+    const startDate = formatDate(start_datetime);
     const endDateTime = formatTime(end_datetime);
     const employeeName =
       x_employee_contact_name?.split("-")[1]?.trim() || "Unknown";
@@ -107,7 +108,7 @@ const processPublishedShift = async (payload) => {
     });
 
     const thread = await scheduleMessage.startThread({
-      name: `Attendance | ${x_employee_contact_name} | ${id}`,
+      name: `${startDate} | ${employeeName} | ${id}`,
       type: ChannelType.PublicThread,
       autoArchiveDuration: 1440,
     });
@@ -129,6 +130,13 @@ function formatTime(rawTime) {
     .tz(rawTime, "YYYY-MM-DD HH:mm:ss", "UTC")
     .tz("Asia/Manila")
     .format("MMMM D, YYYY [at] h:mm A");
+}
+
+function formatDate(rawTime) {
+  return moment
+    .tz(rawTime, "YYYY-MM-DD HH:mm:ss", "UTC")
+    .tz("Asia/Manila")
+    .format("MMM DD, YYYY");
 }
 
 function windowKey(req) {
