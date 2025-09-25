@@ -84,7 +84,7 @@ module.exports = {
 
     const confirmInterim = new ButtonBuilder()
       .setCustomId("approveInterimDuty")
-      .setLabel("Confirm")
+      .setLabel("Approve")
       .setStyle(ButtonStyle.Success);
 
     const rejectInterim = new ButtonBuilder()
