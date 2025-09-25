@@ -12,6 +12,8 @@ module.exports = {
   async execute(interaction, client) {
     await interaction.deferReply();
 
+    const replyEmbed = new EmbedBuilder();
+
     const dateInput = interaction.fields.getTextInputValue("dateInput");
     const branchInput = interaction.fields.getTextInputValue("branchInput");
     const shiftCoverageInput =
@@ -23,6 +25,31 @@ module.exports = {
     const interactionMember =
       interaction.member?.toString() || interaction.user.toString();
 
+    let branchName = branchInput;
+    try {
+      const category = await interaction.guild.channels.fetch(branchInput);
+
+      if (category && category.type === 4) {
+        branchName = category.name;
+      } else {
+        throw new Error(
+          `Category with ID ${branchInput} not found or is not a category`
+        );
+      }
+    } catch (error) {
+      console.error(`Error fetching category: ${error.message}`);
+      replyEmbed
+        .setDescription(
+          `🔴 ERROR: Please do not change the branch field unless specified.`
+        )
+        .setColor("Red");
+      return await interaction.editReply({ embeds: [replyEmbed] }).then((msg) =>
+        setTimeout(() => {
+          msg.delete();
+        }, 10000)
+      );
+    }
+
     const authRequestEmbed = new EmbedBuilder()
       .setDescription(`## ⌛ INTERIM DUTY FORM`)
       .addFields([
@@ -32,7 +59,7 @@ module.exports = {
         },
         {
           name: "Branch",
-          value: `🛒 | ${branchInput}`,
+          value: `🛒 | ${branchName}`,
         },
         {
           name: "Shift Coverage",

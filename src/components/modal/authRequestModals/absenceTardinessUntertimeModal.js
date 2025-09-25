@@ -30,14 +30,41 @@ module.exports = {
   async execute(interaction, client) {
     await interaction.deferReply();
 
+    const replyEmbed = new EmbedBuilder();
+
     const dateInput = interaction.fields.getTextInputValue("dateInput");
     const branchInput = interaction.fields.getTextInputValue("branchInput");
     const shiftInput = interaction.fields.getTextInputValue("shiftInput");
     const reasonInput = interaction.fields.getTextInputValue("reasonInput");
     const type = interaction.fields.getTextInputValue("type");
 
+    let branchName = branchInput;
+    try {
+      const category = await interaction.guild.channels.fetch(branchInput);
+
+      if (category && category.type === 4) {
+        branchName = category.name;
+      } else {
+        throw new Error(
+          `Category with ID ${branchInput} not found or is not a category`
+        );
+      }
+    } catch (error) {
+      console.error(`Error fetching category: ${error.message}`);
+      replyEmbed
+        .setDescription(
+          `🔴 ERROR: Please do not change the branch field unless specified.`
+        )
+        .setColor("Red");
+      return await interaction.editReply({ embeds: [replyEmbed] }).then((msg) =>
+        setTimeout(() => {
+          msg.delete();
+        }, 10000)
+      );
+    }
+
     if (!["absence", "tardiness", "undertime"].includes(type)) {
-      const replyEmbed = new EmbedBuilder()
+      replyEmbed
         .setDescription(
           `🔴 ERROR: Please do not change the type field when submitting the form.`
         )
@@ -62,7 +89,7 @@ module.exports = {
         },
         {
           name: "Branch",
-          value: `🛒 | ${branchInput}`,
+          value: `🛒 | ${branchName}`,
         },
         {
           name: "Shift",
