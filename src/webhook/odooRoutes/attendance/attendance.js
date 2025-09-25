@@ -9,7 +9,10 @@ const moment = require("moment-timezone");
 
 const departments = require("../../../config/departments.json");
 const client = require("../../../index");
-const { searchActiveAttendance } = require("../../../odooRpc");
+const {
+  searchActiveAttendance,
+  editAttendance,
+} = require("../../../odooRpc.js");
 
 const managementAttendanceLogChannelId = "1314413190074994690";
 const hrRoleId = "1314815153421680640";
@@ -293,6 +296,7 @@ const employeeCheckIn = async (req, res) => {
 
     const checkInTime = formatTime(check_in);
     const shift_start_time = formatTime(x_shift_start);
+    const shift_start_date = formatDate(x_shift_start);
     const shift_end_time = formatTime(x_shift_end);
     const punctuality = evaluatePunctuality(check_in, x_shift_start);
 
@@ -331,7 +335,7 @@ const employeeCheckIn = async (req, res) => {
       thread = await attendanceMessage.thread;
     } else {
       thread = await attendanceMessage.startThread({
-        name: `Attendance | ${x_employee_contact_name} | ${x_planning_slot_id}`,
+        name: `${shift_start_date} | ${employeeName} | ${x_planning_slot_id}`,
         type: ChannelType.PublicThread,
         autoArchiveDuration: 1440,
       });
@@ -446,12 +450,15 @@ const employeeCheckOut = async (req, res) => {
       x_planning_slot_id,
       x_discord_id,
       check_out,
+      check_in,
       id: attendanceId,
       x_cumulative_minutes,
       x_company_id,
       x_employee_avatar,
       x_employee_contact_name,
       x_checkout_notified,
+      x_shift_start,
+      x_shift_end,
     } = req.body;
 
     if (!x_planning_slot_id)
@@ -462,7 +469,14 @@ const employeeCheckOut = async (req, res) => {
     const department = departments.find((d) => d.id === x_company_id);
     if (!department) throw new Error("Department not found");
 
+    const employeeName =
+      x_employee_contact_name?.split("-")[1]?.trim() || "Unknown";
+
     const check_out_time = formatTime(check_out);
+    const check_in_time = formatTime(check_in);
+    const shift_start_time = formatTime(x_shift_start);
+    const shift_start_date = formatDate(x_shift_start);
+    const shift_end_time = formatTime(x_shift_end);
     const cumulative_minutes = formatMinutes(x_cumulative_minutes);
 
     const attendanceLogChannel = client.channels.cache.get(
@@ -492,21 +506,82 @@ const employeeCheckOut = async (req, res) => {
       hasTotalWorkedTime.value = `⏱️ | ${cumulative_minutes}`;
     }
 
-    await attendanceMessage.edit({ embeds: [messageEmbed] });
-
-    if (x_checkout_notified)
-      return res.status(200).json({ ok: true, message: "Checkout logged" });
-
     let thread;
     if (attendanceMessage.hasThread) {
       thread = await attendanceMessage.thread;
     } else {
       thread = await attendanceMessage.startThread({
-        name: `Attendance | ${x_employee_contact_name} | ${x_planning_slot_id}`,
+        name: `${shift_start_date} | ${employeeName} | ${x_planning_slot_id}`,
         type: ChannelType.PublicThread,
         autoArchiveDuration: 1440,
       });
     }
+
+    if (!isWorkValid(check_in, check_out, x_shift_start, x_shift_end)) {
+      const attendanceErrorEmbed = new EmbedBuilder()
+        .setDescription(
+          "## ⚠️ INVALID ATTENDANCE\n\u200b\n**This attendance is outside the shift schedule. Please contact the management for assistance.**"
+        )
+        .addFields(
+          { name: "Attendance ID", value: `🆔 | ${attendanceId}` },
+          { name: "Check-In", value: `⏱️ | ${check_in_time}` },
+          { name: "Check-Out", value: `⏱️ | ${check_out_time}` },
+          { name: "Shift Start", value: `⏰ | ${shift_start_time}` },
+          { name: "Shift End", value: `⏰ | ${shift_end_time}` }
+        )
+        .setColor("Yellow");
+
+      try {
+        const threadMessages = await thread.messages.fetch({ limit: 100 });
+
+        const messagesToDelete = threadMessages.filter((message) => {
+          if (!message.embeds || message.embeds.length === 0) {
+            return false;
+          }
+
+          return message.embeds.some((embed) => {
+            const attendanceIdField = embed.fields?.find(
+              (field) => field.name === "Attendance ID"
+            );
+
+            if (!attendanceIdField) {
+              return false;
+            }
+
+            const fieldValue = attendanceIdField.value;
+            const extractedId = fieldValue.replace(/^🆔 \| /, "").trim();
+
+            return extractedId === attendanceId;
+          });
+        });
+
+        for (const message of messagesToDelete.values()) {
+          await message.delete();
+        }
+      } catch (deleteError) {
+        console.error(
+          "Error deleting previous attendance messages:",
+          deleteError
+        );
+      }
+
+      try {
+        await editAttendance({
+          attendanceId: attendanceId,
+          field: "delete",
+        });
+      } catch (error) {
+        console.error("Error deleting attendance:", error);
+      }
+
+      await thread.send({ embeds: [attendanceErrorEmbed] });
+      return res.status(200).json({ ok: true, message: "Invalid attendance" });
+    }
+
+    await attendanceMessage.edit({ embeds: [messageEmbed] });
+
+    if (x_checkout_notified)
+      return res.status(200).json({ ok: true, message: "Checkout logged" });
 
     const attendanceLogEmbed = new EmbedBuilder()
       .setDescription("## 🔴 CHECK-OUT")
@@ -549,6 +624,13 @@ function formatTime(rawTime) {
     .tz(rawTime, "YYYY-MM-DD HH:mm:ss", "UTC")
     .tz("Asia/Manila")
     .format("MMMM D, YYYY [at] h:mm A");
+}
+
+function formatDate(rawTime) {
+  return moment
+    .tz(rawTime, "YYYY-MM-DD HH:mm:ss", "UTC")
+    .tz("Asia/Manila")
+    .format("MMM DD, YYYY");
 }
 
 function formatMinutes(minutes) {
@@ -632,4 +714,52 @@ function evaluatePunctuality(checkIn, shiftStart, tz = "Asia/Manila") {
     checkInLocal: mIn.format(fmt),
     shiftStartLocal: mStart.format(fmt),
   };
+}
+
+function isWorkValid(
+  checkIn,
+  checkOut,
+  shiftStart,
+  shiftEnd,
+  tz = "Asia/Manila"
+) {
+  const fmt = "YYYY-MM-DD HH:mm:ss";
+
+  const asMoment = (val) => {
+    if (typeof val === "string") {
+      const hasZone = /[zZ]|[+\-]\d{2}:?\d{2}$/.test(val);
+      return hasZone ? moment.parseZone(val).tz(tz) : moment.tz(val, fmt, tz);
+    }
+    return moment(val).tz(tz);
+  };
+
+  const mIn = asMoment(checkIn);
+  const mOut = asMoment(checkOut);
+  const mStart = asMoment(shiftStart);
+  const mEnd = asMoment(shiftEnd);
+
+  if (
+    !mIn.isValid() ||
+    !mOut.isValid() ||
+    !mStart.isValid() ||
+    !mEnd.isValid()
+  ) {
+    throw new Error(
+      "Invalid datetime: ensure values match 'YYYY-MM-DD HH:mm:ss' or include an offset."
+    );
+  }
+
+  // Normalize potential overnight windows (end on/before start => next day)
+  const sStart = mStart.clone();
+  const sEnd = mEnd.clone();
+  if (sEnd.isSameOrBefore(sStart)) sEnd.add(1, "day");
+
+  const wIn = mIn.clone();
+  const wOut = mOut.clone();
+  if (wOut.isSameOrBefore(wIn)) wOut.add(1, "day");
+
+  // Overlap exists if max(starts) < min(ends) — strictly less (positive duration)
+  const latestStart = moment.max(sStart, wIn);
+  const earliestEnd = moment.min(sEnd, wOut);
+  return latestStart.isBefore(earliestEnd);
 }
