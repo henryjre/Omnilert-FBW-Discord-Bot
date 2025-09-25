@@ -10,6 +10,8 @@ module.exports = {
   data: new SlashCommandBuilder().setName("overtime"),
   pushToArray: false,
   async execute(interaction, client) {
+    const branch = interaction.options.getString("branch");
+
     const modal = new ModalBuilder()
       .setCustomId("overtimeClaimModal")
       .setTitle(`OVERTIME CLAIM`);
@@ -24,11 +26,11 @@ module.exports = {
 
     const secondInput = new TextInputBuilder()
       .setCustomId(`branchInput`)
-      .setLabel(`🛒 Branch`)
+      .setLabel(`🛒 Branch (DO NOT CHANGE)`)
       .setStyle(TextInputStyle.Short)
       .setMaxLength(100)
-      .setPlaceholder("Enter the branch.")
-      .setRequired(true);
+      .setRequired(true)
+      .setValue(branch);
 
     const thirdInput = new TextInputBuilder()
       .setCustomId(`overtimePeriodInput`)

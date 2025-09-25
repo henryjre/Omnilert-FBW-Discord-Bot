@@ -13,6 +13,8 @@ module.exports = {
   pushToArray: false,
   async execute(interaction, client, formType) {
     // formType: absence / tardiness / undertime
+    const branch = interaction.options.getString("branch");
+
     const modal = new ModalBuilder()
       .setCustomId("authRequestModal")
       .setTitle(`${formType.toUpperCase()} AUTHORIZATION REQUEST`);
@@ -27,11 +29,11 @@ module.exports = {
 
     const secondInput = new TextInputBuilder()
       .setCustomId(`branchInput`)
-      .setLabel(`🛒 Branch`)
+      .setLabel(`🛒 Branch (DO NOT CHANGE)`)
       .setStyle(TextInputStyle.Short)
       .setMaxLength(100)
-      .setPlaceholder("Enter the branch.")
-      .setRequired(true);
+      .setRequired(true)
+      .setValue(branch);
 
     const thirdInput = new TextInputBuilder()
       .setCustomId(`shiftInput`)
