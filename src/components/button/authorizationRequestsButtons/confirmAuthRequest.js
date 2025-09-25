@@ -31,6 +31,7 @@ module.exports = {
       "Notification By",
       "Reported By",
       "Requested By",
+      "Submitted By",
     ];
 
     const ownerField = messageEmbed.data.fields.find((f) =>
@@ -81,11 +82,30 @@ module.exports = {
       rejectButton
     );
 
+    const confirmInterim = new ButtonBuilder()
+      .setCustomId("approveInterimDuty")
+      .setLabel("Confirm")
+      .setStyle(ButtonStyle.Success);
+
+    const rejectInterim = new ButtonBuilder()
+      .setCustomId("rejectInterimDuty")
+      .setLabel("Reject")
+      .setStyle(ButtonStyle.Danger);
+
+    const interimButtonRow = new ActionRowBuilder().addComponents(
+      confirmInterim,
+      rejectInterim
+    );
+
     const messagePayload = {
       content: `<@&${role}>`,
       embeds: [messageEmbed],
       components: [buttonRow],
     };
+
+    if (messageEmbed.data.description.includes("INTERIM DUTY FORM TEST")) {
+      messagePayload.components = [interimButtonRow];
+    }
 
     if (attachments.length > 0) {
       messagePayload.files = attachments;
