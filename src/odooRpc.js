@@ -143,8 +143,11 @@ async function getAttendanceById(attendanceId) {
             "employee_id",
             "check_in",
             "check_out",
-            "in_mode",
             "x_discord_id",
+            "x_cumulative_minutes",
+            "x_shift_start",
+            "x_shift_end",
+            "x_employee_contact_name",
           ],
           limit: 1, // Only one record should match an ID
         },
