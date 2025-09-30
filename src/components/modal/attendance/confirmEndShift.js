@@ -108,6 +108,7 @@ module.exports = {
 
       messagePayload.embeds = [newCheckoutEmbed];
       messagePayload.components = [];
+      messagePayload.content = "";
 
       await interaction.message.edit(messagePayload);
     } else if (checkoutStatus.status === 2) {
@@ -134,6 +135,7 @@ module.exports = {
 
       messagePayload.embeds = [newCheckoutEmbed];
       messagePayload.components = [];
+      messagePayload.content = "";
 
       await interaction.message.edit(messagePayload);
 
