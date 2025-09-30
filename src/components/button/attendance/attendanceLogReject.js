@@ -139,6 +139,14 @@ module.exports = {
           replyEmbed.setDescription(
             `### Your tardiness request has been rejected. No changes have been made to your attendance.`
           );
+        } else if (
+          messageEmbed.data.description.includes(
+            "OVERTIME PREMIUM AUTHORIZATION"
+          )
+        ) {
+          replyEmbed.setDescription(
+            `### Your overtime premium request has been rejected. No overtime premium has been added to your payroll.`
+          );
         }
 
         await interaction.message.edit(messagePayload);
