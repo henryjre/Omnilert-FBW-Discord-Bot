@@ -158,6 +158,19 @@ async function closeThreadCommand(interaction, client) {
       embeds: [closedEmbed],
     });
 
+    // Rename the thread by adding a lock emoji at the beginning
+    try {
+      const currentName = interaction.channel.name;
+      // Check if the thread name already has the lock emoji
+      if (!currentName.startsWith("🔒")) {
+        const newName = `🔒 ${currentName}`;
+        await interaction.channel.setName(newName);
+      }
+    } catch (renameError) {
+      console.error("Error renaming thread:", renameError);
+      // Continue with archiving even if renaming fails
+    }
+
     await interaction.channel.setArchived(true);
   } catch (error) {
     // Create error embed for any issues during thread closing
