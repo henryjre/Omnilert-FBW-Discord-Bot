@@ -9,6 +9,9 @@ const {
 
 const moment = require("moment-timezone");
 
+const { getAttendanceById } = require("../../../odooRpc.js");
+const workEntryTypes = require("../../../config/work_entry_types.json");
+
 const managementRoleId = "1314413671245676685";
 
 module.exports = {
@@ -81,6 +84,8 @@ module.exports = {
       (field) => field.name === "Attendance ID"
     );
 
+    const attendanceId = attendanceIdField.value.split("|")[1].trim();
+
     const checkoutTimestamp = checkoutTimestampField.value;
     const planningStartShift = planningStartShiftEndField.value;
     const planningEndShift = planningEndShiftField.value;
@@ -90,6 +95,17 @@ module.exports = {
       planningStartShift,
       planningEndShift
     );
+
+    const approve = new ButtonBuilder()
+      .setCustomId("attendanceLogApprove")
+      .setLabel("Approve")
+      .setStyle(ButtonStyle.Success);
+    const reject = new ButtonBuilder()
+      .setCustomId("attendanceLogReject")
+      .setLabel("Reject")
+      .setStyle(ButtonStyle.Danger);
+
+    const buttonRow = new ActionRowBuilder().addComponents(approve, reject);
 
     let messagePayload = {};
     if (checkoutStatus.status === 1) {
@@ -176,22 +192,86 @@ module.exports = {
         )
         .setColor("Red");
 
-      const approve = new ButtonBuilder()
-        .setCustomId("attendanceLogApprove")
-        .setLabel("Approve")
-        .setStyle(ButtonStyle.Success);
-      const reject = new ButtonBuilder()
-        .setCustomId("attendanceLogReject")
-        .setLabel("Reject")
-        .setStyle(ButtonStyle.Danger);
-
-      const buttonRow = new ActionRowBuilder().addComponents(approve, reject);
-
       await threadChannel.send({
         embeds: [embed],
         components: [buttonRow],
       });
     }
+
+    const attendance = await getAttendanceById(attendanceId);
+
+    const checkOut = attendance.check_out;
+    const x_cumulative_minutes = attendance.x_cumulative_minutes;
+    const x_shift_start = attendance.x_shift_start;
+    const x_shift_end = attendance.x_shift_end;
+
+    const overtime = calculateOvertime(
+      x_shift_start,
+      x_shift_end,
+      checkOut,
+      x_cumulative_minutes
+    );
+
+    if (!overtime) {
+      await interaction.editReply({ content: `Checkout status updated.` });
+    }
+
+    const jsonPayload = {
+      employee_id: attendance.employee_id[0],
+      work_entry_type_id: 118,
+      name: `Overtime Premium: ${attendance.x_employee_contact_name}`,
+      date_start: overtime.startTime,
+      date_stop: overtime.endTime,
+    };
+
+    const otPremiumEmbed = new EmbedBuilder()
+      .setDescription(`## 🕙 OVERTIME PREMIUM AUTHORIZATION`)
+      .addFields(
+        {
+          name: "Attendance ID",
+          value: attendanceId,
+        },
+        {
+          name: "Date",
+          value: `📆 | ${moment().format("MMMM DD, YYYY")}`,
+        },
+        {
+          name: "Employee",
+          value: employeeNameField.value,
+        },
+        {
+          name: "Discord User",
+          value: discordUserField.value,
+        },
+        {
+          name: "Branch",
+          value: departmentField.value,
+        },
+        {
+          name: "Prescribed Duration",
+          value: `⏱️ | ${minutesToHoursFormatted(
+            overtime.prescribed_duration
+          )}`,
+        },
+        {
+          name: "Total Worked Time",
+          value: `⏱️ | ${minutesToHoursFormatted(x_cumulative_minutes)}`,
+        },
+        {
+          name: "OT Premium Duration",
+          value: `⌛ | ${minutesToHoursFormatted(overtime.duration)}`,
+        },
+        {
+          name: "JSON Details",
+          value: `\`\`\`${JSON.stringify(jsonPayload)}\`\`\``,
+        }
+      )
+      .setColor(workEntryTypes.find((type) => type.id === 118).color_hex);
+
+    await threadChannel.send({
+      embeds: [otPremiumEmbed],
+      components: [buttonRow],
+    });
 
     await interaction.editReply({ content: `Checkout status updated.` });
   },
@@ -273,4 +353,94 @@ function getCheckoutStatus(
     start_iso: start.toISOString(),
     end_iso: end.toISOString(),
   };
+}
+
+function calculateOvertime(
+  x_shift_start,
+  x_shift_end,
+  check_out,
+  x_cumulative_minutes,
+  tz = "Asia/Manila"
+) {
+  const fmt = "YYYY-MM-DD HH:mm:ss";
+
+  // Parse as zoned moments
+  const shiftStart = moment.tz(x_shift_start, fmt, tz);
+  let shiftEnd = moment.tz(x_shift_end, fmt, tz);
+  const checkOut = moment.tz(check_out, fmt, tz);
+
+  if (!shiftStart.isValid() || !shiftEnd.isValid() || !checkOut.isValid()) {
+    throw new Error("Invalid datetime format. Use 'YYYY-MM-DD HH:mm:ss'.");
+  }
+
+  // Handle overnight shifts: if end <= start, move end to next day
+  if (!shiftEnd.isAfter(shiftStart)) {
+    shiftEnd.add(1, "day");
+  }
+
+  // 1) prescribed_duration = (shiftEnd - shiftStart - 1 hour) in minutes
+  let prescribed_duration = shiftEnd.diff(shiftStart, "minutes") - 60;
+  if (prescribed_duration < 0) prescribed_duration = 0; // safety guard
+
+  // 2) If cumulative > prescribed, overtime = difference; else, no OT
+  if (x_cumulative_minutes <= prescribed_duration) {
+    return null; // no overtime
+  }
+  const duration = x_cumulative_minutes - prescribed_duration; // minutes
+
+  // 3) startTime = check_out + 1 minute (still in same tz)
+  const startTime = checkOut.clone().add(1, "minute");
+
+  // 4) endTime = startTime + duration minutes
+  const endTime = startTime.clone().add(duration, "minutes");
+
+  // 5) return formatted values
+  return {
+    prescribed_duration,
+    startTime: startTime.format(fmt),
+    endTime: endTime.format(fmt),
+    duration, // minutes
+  };
+}
+
+/**
+ * Converts minutes to a formatted hours and minutes string using moment.js
+ *
+ * @param {number} minutes - The total minutes to convert
+ * @returns {string} Formatted string in "X hour(s) Y minute(s)" format with dynamic pluralization
+ * @throws {Error} If minutes is not a valid number
+ */
+function minutesToHoursFormatted(minutes) {
+  // Validate input
+  if (typeof minutes !== "number" || isNaN(minutes)) {
+    throw new Error("Minutes must be a valid number");
+  }
+
+  // Create a moment duration object from minutes
+  const duration = moment.duration(minutes, "minutes");
+
+  // Extract hours and minutes from the duration
+  const hours = Math.floor(duration.asHours());
+  const remainingMinutes = duration.minutes();
+
+  // Build the formatted string with dynamic pluralization
+  let result = "";
+
+  if (hours > 0) {
+    result += `${hours} hour${hours !== 1 ? "s" : ""}`;
+  }
+
+  if (remainingMinutes > 0) {
+    if (result) {
+      result += " and ";
+    }
+    result += `${remainingMinutes} minute${remainingMinutes !== 1 ? "s" : ""}`;
+  }
+
+  // Handle edge case of zero minutes
+  if (result === "") {
+    result = "0 minutes";
+  }
+
+  return result;
 }
