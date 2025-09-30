@@ -4,6 +4,21 @@ const moment = require("moment-timezone");
 const departments = require("../../../config/departments.json");
 const client = require("../../../index");
 
+const roleColors = {
+  0: "#FFFFFF",
+  1: "#FF9C9C",
+  2: "#F7C698",
+  3: "#FDE388",
+  4: "#BBD7F8",
+  5: "#D9A8CC",
+  6: "#F8D6C8",
+  7: "#89E1DB",
+  8: "#97A6F9",
+  9: "#FF9ECC",
+  10: "#B7EDBE",
+  11: "#E6DBFC",
+};
+
 const buffers = new Map();
 
 const publishedShift = async (req, res) => {
@@ -20,6 +35,43 @@ const publishedShift = async (req, res) => {
   }
 
   res.sendStatus(202);
+};
+
+const deletedPlanningShift = async (req, res) => {
+  try {
+    const { id, company_id } = req.body;
+
+    const department = departments.find((d) => d.id === company_id);
+    if (!department) throw new Error("Department not found");
+    if (!department.scheduleChannel)
+      throw new Error("Schedule channel not found");
+
+    const scheduleChannel = client.channels.cache.get(
+      department.scheduleChannel
+    );
+    if (!scheduleChannel) throw new Error("Schedule channel not found");
+
+    const channelMessages = await scheduleChannel.messages.fetch({
+      limit: 100,
+    });
+    const planningMessage = channelMessages.find((msg) =>
+      msg.content.includes(id)
+    );
+
+    if (planningMessage) {
+      await planningMessage.delete();
+      if (planningMessage.hasThread) {
+        await planningMessage.thread.delete();
+      }
+    }
+
+    return res
+      .status(200)
+      .json({ ok: true, message: "Planning shift deleted" });
+  } catch (error) {
+    console.error("Deleted Planning Shift Error:", error);
+    return res.status(500).json({ ok: false, message: error.message });
+  }
 };
 
 const processPublishedShift = async (payload) => {
@@ -58,6 +110,18 @@ const processPublishedShift = async (payload) => {
     if (!scheduleChannel) throw new Error("Schedule channel not found");
     if (!x_discord_id) throw new Error("Discord ID not found");
 
+    const channelMessages = await scheduleChannel.messages.fetch({
+      limit: 100,
+    });
+    const planningMessage = channelMessages.find((msg) =>
+      msg.content.includes(id)
+    );
+
+    if (planningMessage) {
+      await updatePlanningShift(payload, planningMessage);
+      return { ok: true, message: "Schedule updated" };
+    }
+
     const planningEmbed = new EmbedBuilder()
       .setTitle("🗓️ Shift Schedule")
       .addFields([
@@ -76,21 +140,6 @@ const processPublishedShift = async (payload) => {
         { name: "Shift End", value: `⏰ | ${endDateTime}` },
         { name: "Allocated Hours", value: `⌛ | ${allocated_hours} hours` },
       ]);
-
-    const roleColors = {
-      0: "#FFFFFF",
-      1: "#FF9C9C",
-      2: "#F7C698",
-      3: "#FDE388",
-      4: "#BBD7F8",
-      5: "#D9A8CC",
-      6: "#F8D6C8",
-      7: "#89E1DB",
-      8: "#97A6F9",
-      9: "#FF9ECC",
-      10: "#B7EDBE",
-      11: "#E6DBFC",
-    };
 
     planningEmbed.setColor(roleColors[x_role_color] || "Blurple");
 
@@ -120,10 +169,78 @@ const processPublishedShift = async (payload) => {
   }
 };
 
-module.exports = { publishedShift };
+module.exports = { publishedShift, deletedPlanningShift };
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////// UPDATE PLANNING SHIFT ///////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+const updatePlanningShift = async (payload, planningMessage) => {
+  const {
+    id,
+    company_id,
+    end_datetime,
+    start_datetime,
+    x_discord_id,
+    x_employee_avatar,
+    x_employee_contact_name,
+    name,
+    allocated_hours,
+    x_role_color,
+    x_role_name,
+  } = payload;
+
+  const department = departments.find((d) => d.id === company_id);
+
+  if (!department) throw new Error("Department not found");
+
+  const startDateTime = formatTime(start_datetime);
+  const startDate = formatDate(start_datetime);
+  const endDateTime = formatTime(end_datetime);
+  const employeeName =
+    x_employee_contact_name?.split("-")[1]?.trim() || "Unknown";
+
+  const newFields = [
+    { name: "ID", value: `🆔 | ${id}` },
+    { name: "Employee", value: `🪪 | ${employeeName}` },
+    {
+      name: "Discord User",
+      value: `👤 | ${x_discord_id ? `<@${x_discord_id}>` : "N/A"}`,
+    },
+    { name: "Branch", value: `🛒 | ${department.name}` },
+    {
+      name: "Duty Type",
+      value: x_role_name ? `🎯 | ${x_role_name}` : "Unspecified",
+    },
+    { name: "Shift Start", value: `⏰ | ${startDateTime}` },
+    { name: "Shift End", value: `⏰ | ${endDateTime}` },
+    { name: "Allocated Hours", value: `⌛ | ${allocated_hours} hours` },
+  ];
+
+  const messageEmbed = planningMessage.embeds[0];
+
+  const newPlanningEmbed = EmbedBuilder.from(messageEmbed.data);
+  newPlanningEmbed
+    .setFields(newFields)
+    .setColor(roleColors[x_role_color] || "Blurple");
+
+  if (name) {
+    newPlanningEmbed.setDescription(`ADDITIONAL NOTE:\n>>> *${name}*`);
+  }
+
+  if (x_employee_avatar) {
+    newPlanningEmbed.setThumbnail(x_employee_avatar);
+  }
+
+  await planningMessage.edit({
+    content: `# ${startDate} | ${id}\n<@${x_discord_id}>`,
+    embeds: [newPlanningEmbed],
+  });
+};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////// HELPER FUNCTIONS ///////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 function formatTime(rawTime) {
   return moment
