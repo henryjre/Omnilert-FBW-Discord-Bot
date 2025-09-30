@@ -131,7 +131,7 @@ async function getAttendanceById(attendanceId) {
       service: "object",
       method: "execute_kw",
       args: [
-        process.env.odoo_db,
+        "omnilert-test-2",
         2,
         process.env.odoo_password,
         "hr.attendance",
