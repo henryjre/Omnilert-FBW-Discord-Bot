@@ -111,6 +111,56 @@ async function searchActiveAttendance(discordId, attendanceId) {
 }
 
 /**
+ * Retrieves a specific attendance record by its ID
+ * @param {string|number} attendanceId - The attendance ID to search for (parsed to number internally)
+ * @returns {Promise<object|null>} - The attendance record if found, otherwise null
+ * @throws {Error} - If the attendanceId is invalid or if the RPC call fails
+ */
+async function getAttendanceById(attendanceId) {
+  // Validate & parse attendanceId
+  const parsedId = Number(attendanceId);
+  if (isNaN(parsedId) || parsedId <= 0) {
+    throw new Error("Invalid attendance ID format");
+  }
+
+  try {
+    const domain = [["id", "=", parsedId]];
+
+    // Search for the attendance record
+    const attendance = await jsonRpc("call", {
+      service: "object",
+      method: "execute_kw",
+      args: [
+        process.env.odoo_db,
+        2,
+        process.env.odoo_password,
+        "hr.attendance",
+        "search_read",
+        [domain],
+        {
+          fields: [
+            "id",
+            "employee_id",
+            "check_in",
+            "check_out",
+            "in_mode",
+            "x_discord_id",
+          ],
+          limit: 1, // Only one record should match an ID
+        },
+      ],
+    });
+
+    return attendance.result && attendance.result.length > 0
+      ? attendance.result[0]
+      : null; // null if no record found
+  } catch (error) {
+    console.error("Error fetching attendance by ID:", error);
+    throw error;
+  }
+}
+
+/**
  * Calls the Odoo webhook for check-in or check-out with the current datetime.
  * @param {'checkin'|'checkout'} action - The action to perform.
  * @param {string} url - The Odoo webhook URL.
@@ -172,8 +222,27 @@ async function updateClosingPcfBalance(balance, company_id, session_id, type) {
 
 async function editAttendance(payload) {
   const url =
-    "https://omnilert-test-1.odoo.com/web/hook/" +
+    "https://omnilert-test-2.odoo.com/web/hook/" +
     process.env.ODOO_EDIT_ATTENDANCE_SECRET;
+
+  try {
+    const response = await axios.post(url, payload, {
+      headers: { "Content-Type": "application/json" },
+    });
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error calling Odoo webhook:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+}
+
+async function createWorkEntry(payload) {
+  const url =
+    "https://omnilert-test-2.odoo.com/web/hook/" +
+    process.env.ODOO_WORK_ENTRY_sECRET;
 
   try {
     const response = await axios.post(url, payload, {
@@ -196,4 +265,6 @@ module.exports = {
   searchActiveAttendance,
   updateClosingPcfBalance,
   editAttendance,
+  getAttendanceById,
+  createWorkEntry,
 };
