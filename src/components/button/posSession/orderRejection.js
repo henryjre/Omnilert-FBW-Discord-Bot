@@ -7,6 +7,8 @@ const {
   TextInputStyle,
   ButtonBuilder,
   ButtonStyle,
+  StringSelectMenuBuilder,
+  StringSelectMenuOptionBuilder,
 } = require("discord.js");
 
 const departments = require("../../../config/departments.json");
@@ -130,17 +132,39 @@ module.exports = {
           )}`,
         };
 
-        const submit = new ButtonBuilder()
-          .setCustomId("posOrderAudit")
-          .setLabel("Audit")
-          .setStyle(ButtonStyle.Primary);
+        const auditRatingMenu = new StringSelectMenuBuilder()
+          .setCustomId("posAuditRatingMenu")
+          .setOptions([
+            new StringSelectMenuOptionBuilder().setLabel("⭐").setValue("⭐"),
+            new StringSelectMenuOptionBuilder()
+              .setLabel("⭐⭐")
+              .setValue("⭐⭐"),
+            new StringSelectMenuOptionBuilder()
+              .setLabel("⭐⭐⭐")
+              .setValue("⭐⭐⭐"),
+            new StringSelectMenuOptionBuilder()
+              .setLabel("⭐⭐⭐⭐")
+              .setValue("⭐⭐⭐⭐"),
+            new StringSelectMenuOptionBuilder()
+              .setLabel("⭐⭐⭐⭐⭐")
+              .setValue("⭐⭐⭐⭐⭐"),
+          ])
+          .setMinValues(1)
+          .setMaxValues(1)
+          .setPlaceholder("Select audit rating.");
 
-        const buttonRow = new ActionRowBuilder().addComponents(submit);
+        // const submit = new ButtonBuilder()
+        //   .setCustomId("posOrderAudit")
+        //   .setLabel("Audit")
+        //   .setStyle(ButtonStyle.Primary);
+
+        const menuRow = new ActionRowBuilder().addComponents(auditRatingMenu);
+        // const buttonRow = new ActionRowBuilder().addComponents(submit);
 
         await posThread.send({
           content: `<@&${managementRole}>`,
           embeds: allEmbeds,
-          components: [buttonRow],
+          components: [menuRow],
         });
 
         try {
