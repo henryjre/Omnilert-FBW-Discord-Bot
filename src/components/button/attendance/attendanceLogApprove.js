@@ -3,7 +3,7 @@ const { EmbedBuilder, MessageFlags } = require("discord.js");
 const { google } = require("googleapis");
 const moment = require("moment-timezone");
 
-const { editAttendance } = require("../../../odooRpc.js");
+const { editAttendance, createWorkEntry } = require("../../../odooRpc.js");
 
 const credentials = JSON.parse(
   Buffer.from(process.env.googleServiceAccountKey, "base64").toString("utf8")
@@ -81,6 +81,22 @@ module.exports = {
           name: "New Check-In Time",
           value: `⏱️ | ${response.timestamp}`,
         });
+      } else if (
+        messageEmbed.data.description.includes("OVERTIME PREMIUM AUTHORIZATION")
+      ) {
+        const otDurationField = messageEmbed.data.fields.find(
+          (field) => field.name === "OT Premium Duration"
+        );
+        const otDuration = cleanFieldValue(otDurationField.value);
+
+        const response = await approveOvertimePremium(interaction, client);
+        if (!response.ok) {
+          throw new Error(response.message);
+        }
+
+        replyEmbed.setDescription(
+          `### Your overtime premium request has been approved. ${otDuration} of overtime premium has been added to your payroll.`
+        );
       }
 
       await interaction.message.edit(messagePayload);
@@ -244,7 +260,7 @@ async function filterData(embed, client) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////// APPROVE TARDINESS ///////////////////////////////////////////
+/////////////////////////////////////////// APPROVE FUNCTIONS ///////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 async function approveTardiness(interaction, client) {
@@ -278,6 +294,25 @@ async function approveTardiness(interaction, client) {
   } catch (error) {
     console.error(error);
     return { ok: false, message: "Error updating attendance" };
+  }
+}
+
+async function approveOvertimePremium(interaction, client) {
+  const messageEmbed = interaction.message.embeds[0];
+
+  const jsonDetailsField = messageEmbed.data.fields.find(
+    (field) => field.name === "JSON Details"
+  );
+  const jsonString = jsonDetailsField.value.replace(/```/g, "");
+  const payload = JSON.parse(jsonString);
+
+  try {
+    const response = await createWorkEntry(payload);
+    console.log(response);
+    return { ok: true, message: "Work entry created successfully" };
+  } catch (error) {
+    console.error(error);
+    return { ok: false, message: "Error creating work entry" };
   }
 }
 
