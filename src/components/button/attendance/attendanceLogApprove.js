@@ -49,6 +49,7 @@ module.exports = {
       messageEmbed.data.color = 5763719;
 
       const messagePayload = {
+        content: "",
         embeds: [messageEmbed],
         components: [],
       };
@@ -97,6 +98,12 @@ module.exports = {
         replyEmbed.setDescription(
           `### Your overtime premium request has been approved. ${otDuration} of overtime premium has been added to your payroll.`
         );
+
+        messageEmbed.data.fields = messageEmbed.data.fields.filter(
+          (field) => field.name !== "JSON Details"
+        );
+
+        messagePayload.embeds = [messageEmbed];
       }
 
       await interaction.message.edit(messagePayload);
