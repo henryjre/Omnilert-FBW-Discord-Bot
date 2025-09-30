@@ -3,6 +3,7 @@ const {
   MessageFlags,
   ModalBuilder,
   TextInputBuilder,
+  TextInputStyle,
 } = require("discord.js");
 
 module.exports = {
