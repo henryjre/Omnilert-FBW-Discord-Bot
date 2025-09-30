@@ -183,6 +183,7 @@ module.exports = {
     const x_cumulative_minutes = attendance.x_cumulative_minutes;
     const x_shift_start = attendance.x_shift_start;
     const x_shift_end = attendance.x_shift_end;
+    console.log(attendance);
 
     const overtime = calculateOvertime(
       x_shift_start,
