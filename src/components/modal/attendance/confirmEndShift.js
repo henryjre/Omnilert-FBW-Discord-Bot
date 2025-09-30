@@ -177,9 +177,7 @@ module.exports = {
         components: [buttonRow],
       });
     }
-    console.log(attendanceId);
     const attendance = await getAttendanceById(attendanceId);
-    console.log(attendance);
 
     const checkOut = attendance.check_out;
     const x_cumulative_minutes = attendance.x_cumulative_minutes;
