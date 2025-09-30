@@ -1,0 +1,124 @@
+[
+  {
+    "id": 1,
+    "name": "Attendance",
+    "payroll_code": "WORK100",
+    "color_hex": "#8FD19E"
+  },
+  {
+    "id": 2,
+    "name": "Overtime",
+    "payroll_code": "OVERTIME",
+    "color_hex": "#9BB9F5"
+  },
+  {
+    "id": 3,
+    "name": "Generic Time Off",
+    "payroll_code": "LEAVE100",
+    "color_hex": "#F5A3A3"
+  },
+  {
+    "id": 4,
+    "name": "Compensatory Time Off",
+    "payroll_code": "LEAVE105",
+    "color_hex": "#F5A3A3"
+  },
+  {
+    "id": 5,
+    "name": "Home Working",
+    "payroll_code": "WORK110",
+    "color_hex": "#F5A3A3"
+  },
+  {
+    "id": 6,
+    "name": "Unpaid",
+    "payroll_code": "LEAVE90",
+    "color_hex": "#F5A3A3"
+  },
+  {
+    "id": 7,
+    "name": "Sick Time Off",
+    "payroll_code": "LEAVE110",
+    "color_hex": "#F5A3A3"
+  },
+  {
+    "id": 8,
+    "name": "Paid Time Off",
+    "payroll_code": "LEAVE120",
+    "color_hex": "#F5A3A3"
+  },
+  {
+    "id": 9,
+    "name": "Out of Contract",
+    "payroll_code": "OUT",
+    "color_hex": "#FFFFFF"
+  },
+
+  {
+    "id": 11,
+    "name": "Attendance - Regular Holiday",
+    "payroll_code": "RHA",
+    "color_hex": "#F2C185"
+  },
+  {
+    "id": 12,
+    "name": "Attendance - Special Holiday",
+    "payroll_code": "SHA",
+    "color_hex": "#F2C185"
+  },
+  {
+    "id": 13,
+    "name": "Attendance - Rest Day",
+    "payroll_code": "RSDA",
+    "color_hex": "#F2C185"
+  },
+  {
+    "id": 14,
+    "name": "Attendance - Regular Holiday and Rest Day",
+    "payroll_code": "RHRDA",
+    "color_hex": "#F2C185"
+  },
+  {
+    "id": 15,
+    "name": "Attendance - Special Holiday and Rest Day",
+    "payroll_code": "SHRDA",
+    "color_hex": "#F2C185"
+  },
+
+  {
+    "id": 16,
+    "name": "Overtime - Regular Holiday",
+    "payroll_code": "RHOT",
+    "color_hex": "#8ED6D4"
+  },
+  {
+    "id": 17,
+    "name": "Overtime - Special Holiday",
+    "payroll_code": "SHOT",
+    "color_hex": "#8ED6D4"
+  },
+  {
+    "id": 18,
+    "name": "Overtime - Rest Day",
+    "payroll_code": "RDOT",
+    "color_hex": "#8ED6D4"
+  },
+  {
+    "id": 19,
+    "name": "Overtime - Regular Holiday and Rest Day",
+    "payroll_code": "RHRDOT",
+    "color_hex": "#8ED6D4"
+  },
+  {
+    "id": 20,
+    "name": "Overtime - Special Holiday and Rest Day",
+    "payroll_code": "SHRDOT",
+    "color_hex": "#8ED6D4"
+  },
+  {
+    "id": 118,
+    "name": "Overtime Premium",
+    "payroll_code": "POT",
+    "color_hex": "#8ED6D4"
+  }
+]
