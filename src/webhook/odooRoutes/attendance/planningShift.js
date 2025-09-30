@@ -103,7 +103,7 @@ const processPublishedShift = async (payload) => {
     }
 
     const scheduleMessage = await scheduleChannel.send({
-      content: `## ${startDate} | ${id}\n\u200b\n<@${x_discord_id}>`,
+      content: `# ${startDate} | ${id}\n<@${x_discord_id}>`,
       embeds: [planningEmbed],
     });
 
