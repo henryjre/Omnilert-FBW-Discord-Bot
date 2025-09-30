@@ -4,6 +4,8 @@ const {
   ButtonBuilder,
   ButtonStyle,
   ActionRowBuilder,
+  StringSelectMenuBuilder,
+  StringSelectMenuOptionBuilder,
 } = require("discord.js");
 const moment = require("moment-timezone");
 
@@ -472,26 +474,49 @@ const sessionClose = async (req, res) => {
       closingEmbed.setDescription(`>>> *${closing_notes}*`);
     }
 
-    const submit = new ButtonBuilder()
-      .setCustomId("posOrderAudit")
-      .setLabel("Audit")
-      .setStyle(ButtonStyle.Primary);
+    const auditRatingMenu = new StringSelectMenuBuilder()
+      .setCustomId("posAuditRatingMenu")
+      .setOptions([
+        new StringSelectMenuOptionBuilder().setLabel("⭐").setValue("⭐"),
+        new StringSelectMenuOptionBuilder().setLabel("⭐⭐").setValue("⭐⭐"),
+        new StringSelectMenuOptionBuilder()
+          .setLabel("⭐⭐⭐")
+          .setValue("⭐⭐⭐"),
+        new StringSelectMenuOptionBuilder()
+          .setLabel("⭐⭐⭐⭐")
+          .setValue("⭐⭐⭐⭐"),
+        new StringSelectMenuOptionBuilder()
+          .setLabel("⭐⭐⭐⭐⭐")
+          .setValue("⭐⭐⭐⭐⭐"),
+      ])
+      .setMinValues(1)
+      .setMaxValues(1)
+      .setPlaceholder("Select audit rating.");
 
-    const buttonRow = new ActionRowBuilder().addComponents(submit);
+    // const submit = new ButtonBuilder()
+    //   .setCustomId("posOrderAudit")
+    //   .setLabel("Audit")
+    //   .setStyle(ButtonStyle.Primary);
+
+    const menuRow = new ActionRowBuilder().addComponents(auditRatingMenu);
+    // const buttonRow = new ActionRowBuilder().addComponents(submit);
 
     await posThread.send({
       embeds: [salesReportEmbed],
-      components: [buttonRow],
+      components: [menuRow],
     });
     await posThread.send({
       embeds: [nonCashReportEmbed],
-      components: [buttonRow],
+      components: [menuRow],
     });
     await posThread.send({
       embeds: [cashReportEmbed],
-      components: [buttonRow],
+      components: [menuRow],
     });
-    await posThread.send({ embeds: [closingEmbed], components: [buttonRow] });
+    await posThread.send({
+      embeds: [closingEmbed],
+      components: [menuRow],
+    });
 
     const totalPCfTopUp = netPcfTotal(cashInOut);
     const closingPcfExpected = x_opening_pcf + totalPCfTopUp - x_ispe_total;
