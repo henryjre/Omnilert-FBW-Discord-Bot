@@ -17,7 +17,7 @@ module.exports = {
   },
   async execute(interaction, client) {
     const endShiftInput = interaction.fields.getTextInputValue("endShiftInput");
-    if (endShiftInput !== "end") {
+    if (endShiftInput.toLowerCase() !== "end") {
       return await interaction.reply({
         content: `🔴 ERROR: Type 'end' to confirm end of duty.`,
         flags: MessageFlags.Ephemeral,
@@ -175,6 +175,7 @@ module.exports = {
     }
 
     const attendance = await getAttendanceById(attendanceId);
+    console.log(attendance);
 
     const checkOut = attendance.check_out;
     const x_cumulative_minutes = attendance.x_cumulative_minutes;
