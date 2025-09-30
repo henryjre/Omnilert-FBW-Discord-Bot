@@ -379,8 +379,8 @@ function calculateOvertime(
   // 5) return formatted values
   return {
     prescribed_duration,
-    startTime: startTime.format(fmt),
-    endTime: endTime.format(fmt),
+    startTime: startTime.clone().add(8, "hours").format(fmt),
+    endTime: endTime.clone().add(8, "hours").format(fmt),
     duration, // minutes
   };
 }
