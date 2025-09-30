@@ -10,32 +10,28 @@ module.exports = {
     name: `attendanceEndShift`,
   },
   async execute(interaction, client) {
-    if (!interaction.member.roles.cache.has(managementRoleId)) {
-      const mentionedUser =
-        interaction.message.mentions?.users?.first() || null;
-      const mentionedRole =
-        interaction.message.mentions?.roles?.first() || null;
+    const mentionedUser = interaction.message.mentions?.users?.first() || null;
+    const mentionedRole = interaction.message.mentions?.roles?.first() || null;
 
-      if (mentionedUser) {
-        const isNotMentionedUser = interaction.user.id !== mentionedUser.id;
-        if (isNotMentionedUser) {
-          return await interaction.reply({
-            content: `🔴 ERROR: You cannot use this button.`,
-            flags: MessageFlags.Ephemeral,
-          });
-        }
+    if (mentionedUser) {
+      const isNotMentionedUser = interaction.user.id !== mentionedUser.id;
+      if (isNotMentionedUser) {
+        return await interaction.reply({
+          content: `🔴 ERROR: You cannot use this button.`,
+          flags: MessageFlags.Ephemeral,
+        });
       }
+    }
 
-      if (mentionedRole) {
-        const doesNotHaveRole = !interaction.member.roles.cache.has(
-          mentionedRole.id
-        );
-        if (doesNotHaveRole) {
-          return await interaction.reply({
-            content: `🔴 ERROR: You cannot use this button.`,
-            flags: MessageFlags.Ephemeral,
-          });
-        }
+    if (mentionedRole) {
+      const doesNotHaveRole = !interaction.member.roles.cache.has(
+        mentionedRole.id
+      );
+      if (doesNotHaveRole) {
+        return await interaction.reply({
+          content: `🔴 ERROR: You cannot use this button.`,
+          flags: MessageFlags.Ephemeral,
+        });
       }
     }
 
