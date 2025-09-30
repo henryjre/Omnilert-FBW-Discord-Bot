@@ -177,7 +177,7 @@ module.exports = {
         components: [buttonRow],
       });
     }
-
+    console.log(attendanceId);
     const attendance = await getAttendanceById(attendanceId);
     console.log(attendance);
 
