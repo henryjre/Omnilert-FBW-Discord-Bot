@@ -117,12 +117,19 @@ module.exports = {
 function parseToLongDate(input, tz = "Asia/Manila") {
   const DATE_FORMATS = [
     "MMM DD, YYYY",
-    "MM-DD-YY",
+    "MMM DD YYYY",
     "MMM D, YYYY",
+    "MMM D YYYY",
+    "MM-DD-YY",
+    "MM/DD/YY",
     "MM-D-YY",
+    "MM/D/YY",
     "M-D-YY",
+    "M/D/YY",
     "MMMM DD, YYYY",
     "MMMM D, YYYY",
+    "MMMM DD YYYY",
+    "MMMM D YYYY",
   ];
 
   if (typeof input !== "string") return null;
