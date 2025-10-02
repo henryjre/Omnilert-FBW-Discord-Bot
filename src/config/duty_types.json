@@ -1,0 +1,17 @@
+[
+  {
+    "id": 4,
+    "name": "Straight Duty",
+    "code": "sd"
+  },
+  {
+    "id": 2,
+    "name": "Opening",
+    "code": "op"
+  },
+  {
+    "id": 3,
+    "name": "Closing",
+    "code": "cl"
+  }
+]
