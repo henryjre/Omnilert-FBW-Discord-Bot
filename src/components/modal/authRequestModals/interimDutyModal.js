@@ -4,6 +4,7 @@ const {
   ButtonStyle,
   EmbedBuilder,
   StringSelectMenuBuilder,
+  MessageFlags,
 } = require("discord.js");
 
 module.exports = {
@@ -11,8 +12,6 @@ module.exports = {
     name: "interimDutyModal",
   },
   async execute(interaction, client) {
-    await interaction.deferReply();
-
     const replyEmbed = new EmbedBuilder();
 
     const dateInput = interaction.fields.getTextInputValue("dateInput");
@@ -24,20 +23,39 @@ module.exports = {
     const interactionMember =
       interaction.member?.toString() || interaction.user.toString();
 
+    const date = parseToLongDate(dateInput);
+    const startTime = parseToStandardTime(startTimeInput);
+    const endTime = parseToStandardTime(endTimeInput);
+
+    if (!date || !startTime || !endTime) {
+      replyEmbed
+        .setDescription(
+          `🔴 ERROR: Invalid date or time format. Please try again.`
+        )
+        .setColor("Red");
+
+      return await interaction.reply({
+        embeds: [replyEmbed],
+        flags: MessageFlags.Ephemeral,
+      });
+    }
+
+    await interaction.deferReply();
+
     const authRequestEmbed = new EmbedBuilder()
       .setDescription(`## ⌛ INTERIM DUTY FORM TEST`)
       .addFields([
         {
           name: "Interim Duty Date",
-          value: `📆 | ${dateInput}`,
+          value: `📆 | ${date}`,
         },
         {
           name: "Shift Start Time",
-          value: `⏰ | ${startTimeInput}`,
+          value: `⏰ | ${startTime}`,
         },
         {
           name: "Shift End Time",
-          value: `⏰ | ${endTimeInput}`,
+          value: `⏰ | ${endTime}`,
         },
         {
           name: "Shift Coverage",
@@ -93,3 +111,37 @@ module.exports = {
     });
   },
 };
+
+function parseToLongDate(input, tz = "Asia/Manila") {
+  const DATE_FORMATS = [
+    "MMM DD, YYYY",
+    "MM-DD-YY",
+    "MMM D, YYYY",
+    "MM-D-YY",
+    "M-D-YY",
+    "MMMM DD, YYYY",
+    "MMMM D, YYYY",
+  ];
+
+  if (typeof input !== "string") return null;
+
+  const s = input.trim().replace(/\s+/g, " ");
+  const m = moment.tz(s, DATE_FORMATS, true, tz);
+
+  if (!m.isValid()) return null;
+
+  return m.format("MMMM DD, YYYY");
+}
+
+function parseToStandardTime(input, tz = "Asia/Manila") {
+  const TIME_FORMATS = ["h:mm A", "h:mm a", "h A", "h a"];
+
+  if (typeof input !== "string") return null;
+
+  const s = input.trim().replace(/\s+/g, " ");
+  const m = moment.tz(s, TIME_FORMATS, true, tz);
+
+  if (!m.isValid()) return null;
+
+  return m.format("h:mm A");
+}
