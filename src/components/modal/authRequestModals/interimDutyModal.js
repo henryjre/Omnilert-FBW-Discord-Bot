@@ -3,6 +3,7 @@ const {
   ButtonBuilder,
   ButtonStyle,
   EmbedBuilder,
+  StringSelectMenuBuilder,
 } = require("discord.js");
 
 module.exports = {
@@ -15,59 +16,32 @@ module.exports = {
     const replyEmbed = new EmbedBuilder();
 
     const dateInput = interaction.fields.getTextInputValue("dateInput");
-    const branchInput = interaction.fields.getTextInputValue("branchInput");
+    const startTimeInput = interaction.fields.getTextInputValue("startTime");
+    const endTimeInput = interaction.fields.getTextInputValue("endTime");
     const shiftCoverageInput =
       interaction.fields.getTextInputValue("shiftCoverageInput");
-    const startAndEndTimeInput = interaction.fields.getTextInputValue(
-      "startAndEndTimeInput"
-    );
     const reasonInput = interaction.fields.getTextInputValue("reasonInput");
     const interactionMember =
       interaction.member?.toString() || interaction.user.toString();
-
-    let branchName = branchInput;
-    try {
-      const category = await interaction.guild.channels.fetch(branchInput);
-
-      if (category && category.type === 4) {
-        branchName = category.name;
-      } else {
-        throw new Error(
-          `Category with ID ${branchInput} not found or is not a category`
-        );
-      }
-    } catch (error) {
-      console.error(`Error fetching category: ${error.message}`);
-      replyEmbed
-        .setDescription(
-          `🔴 ERROR: Please do not change the branch field unless specified.`
-        )
-        .setColor("Red");
-      return await interaction.editReply({ embeds: [replyEmbed] }).then((msg) =>
-        setTimeout(() => {
-          msg.delete();
-        }, 10000)
-      );
-    }
 
     const authRequestEmbed = new EmbedBuilder()
       .setDescription(`## ⌛ INTERIM DUTY FORM TEST`)
       .addFields([
         {
-          name: "Date",
+          name: "Interim Duty Date",
           value: `📆 | ${dateInput}`,
         },
         {
-          name: "Branch",
-          value: `🛒 | ${branchName}`,
+          name: "Shift Start Time",
+          value: `⏰ | ${startTimeInput}`,
+        },
+        {
+          name: "Shift End Time",
+          value: `⏰ | ${endTimeInput}`,
         },
         {
           name: "Shift Coverage",
           value: `🎯 | ${shiftCoverageInput}`,
-        },
-        {
-          name: "Scope of Work",
-          value: `⏱️ | ${startAndEndTimeInput}`,
         },
         {
           name: "Interim Duty Reason",
@@ -77,21 +51,32 @@ module.exports = {
           name: "Submitted By",
           value: `👤 | ${interactionMember}`,
         },
-        {
-          name: "Branch ID",
-          value: `${branchInput}`,
-        },
       ])
-      // .setFooter({
-      //   iconURL: interaction.user.displayAvatarURL(),
-      //   text: `Submitted by: ${interactionMember}`,
-      // })
       .setColor("#f3ff00"); // f3ff00 when approved
+
+    const branchMenu = new StringSelectMenuBuilder()
+      .setCustomId("branchMenu")
+      .setPlaceholder("Select a branch")
+      .addOptions(
+        { label: "DHVSU Bacolor", value: "DHVSU Bacolor" },
+        { label: "Primark Center Guagua", value: "Primark Center Guagua" },
+        {
+          label: "Robinsons Starmills CSFP",
+          value: "Robinsons Starmills CSFP",
+        },
+        { label: "JASA Hiway Guagua", value: "JASA Hiway Guagua" }
+      )
+      .setMinValues(1)
+      .setMaxValues(1);
+
+    const menuRow = new ActionRowBuilder().addComponents(branchMenu);
 
     const confirmButton = new ButtonBuilder()
       .setCustomId("confirmAuthRequest")
       .setLabel("Confirm")
+      .setDisabled(true)
       .setStyle(ButtonStyle.Success);
+
     const cancelButton = new ButtonBuilder()
       .setCustomId("cancelAuthRequest")
       .setLabel("Cancel")
@@ -104,7 +89,7 @@ module.exports = {
 
     await interaction.editReply({
       embeds: [authRequestEmbed],
-      components: [buttonRow],
+      components: [menuRow, buttonRow],
     });
   },
 };
