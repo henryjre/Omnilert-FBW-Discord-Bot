@@ -27,7 +27,7 @@ module.exports = {
       .setCustomId(`dateInput`)
       .setLabel(`📆 Interim Duty Date (Follow Format)`)
       .setStyle(TextInputStyle.Short)
-      .setPlaceholder("E.G: Oct 1, 2025 | 10-01-25 | October 1, 2025")
+      .setPlaceholder("E.G: Oct 1, 2025 | 10-01-25 | October 1, 2025 | 10/1/25")
       .setRequired(true)
       .setMaxLength(100);
 
@@ -35,7 +35,7 @@ module.exports = {
       .setCustomId(`startTime`)
       .setLabel(`🟢 Shift Start Time (Follow Format)`)
       .setStyle(TextInputStyle.Short)
-      .setPlaceholder("E.G: 12:00 AM | 8:00 AM | 1:00 PM | 10:00 PM")
+      .setPlaceholder("E.G: 12:00 AM | 8:00 AM | 1:00 PM | 10:00 PM | 5 PM")
       .setMaxLength(100)
       .setRequired(true);
 
@@ -43,7 +43,7 @@ module.exports = {
       .setCustomId(`endTime`)
       .setLabel(`🔴 Shift End Time (Follow Format)`)
       .setStyle(TextInputStyle.Short)
-      .setPlaceholder("E.G: 12:00 AM | 2:00 AM | 4:00 PM | 10:00 PM")
+      .setPlaceholder("E.G: 12:00 AM | 2:00 AM | 4:00 PM | 10:00 PM | 11 AM")
       .setMaxLength(100)
       .setRequired(true);
 
@@ -52,7 +52,7 @@ module.exports = {
       .setLabel(`🎯 Duty Coverage`)
       .setStyle(TextInputStyle.Short)
       .setMaxLength(200)
-      .setPlaceholder("SD | CL | OP | etc.")
+      .setPlaceholder("SD | CL | OP")
       .setRequired(true);
 
     const fifthInput = new TextInputBuilder()
