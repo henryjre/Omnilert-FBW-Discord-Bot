@@ -200,6 +200,8 @@ const updatePlanningShift = async (payload, planningMessage) => {
   const employeeName =
     x_employee_contact_name?.split("-")[1]?.trim() || "Unknown";
 
+  const messageEmbed = planningMessage.embeds[0];
+
   const newFields = [
     { name: "ID", value: `🆔 | ${id}` },
     { name: "Employee", value: `🪪 | ${employeeName}` },
@@ -217,7 +219,35 @@ const updatePlanningShift = async (payload, planningMessage) => {
     { name: "Allocated Hours", value: `⌛ | ${allocated_hours} hours` },
   ];
 
-  const messageEmbed = planningMessage.embeds[0];
+  const totalWorkedTimeField = messageEmbed.data.fields.find(
+    (field) => field.name === "Total Worked Time"
+  );
+
+  if (totalWorkedTimeField) {
+    newFields.push({
+      name: "Total Worked Time",
+      value: totalWorkedTimeField.value,
+    });
+  }
+
+  // Compare fields and identify changes
+  const changedFields = [];
+  if (messageEmbed.data.fields && messageEmbed.data.fields.length > 0) {
+    for (let i = 0; i < newFields.length; i++) {
+      const newField = newFields[i];
+      const oldField = messageEmbed.data.fields.find(
+        (field) => field.name === newField.name
+      );
+
+      if (oldField && oldField.value !== newField.value) {
+        changedFields.push({
+          name: newField.name,
+          oldValue: oldField.value,
+          newValue: newField.value,
+        });
+      }
+    }
+  }
 
   const newPlanningEmbed = EmbedBuilder.from(messageEmbed.data);
   newPlanningEmbed
@@ -236,6 +266,22 @@ const updatePlanningShift = async (payload, planningMessage) => {
     content: `# ${startDate} | ${id}\n<@${x_discord_id}>`,
     embeds: [newPlanningEmbed],
   });
+
+  if (changedFields.length > 0) {
+    const replyEmbed = new EmbedBuilder()
+      .setDescription(
+        `### This shift has been updated:\n${changedFields
+          .map(
+            (field) =>
+              `**${field.name}**: \`${field.oldValue}\` → \`${field.newValue}\``
+          )
+          .join("\n")}`
+      )
+      .setColor("Grey");
+    planningMessage.thread.send({
+      embeds: [replyEmbed],
+    });
+  }
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
