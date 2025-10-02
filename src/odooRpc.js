@@ -223,10 +223,27 @@ async function updateClosingPcfBalance(balance, company_id, session_id, type) {
   }
 }
 
-async function editAttendance(payload) {
-  const url =
-    "https://omnilert-test-2.odoo.com/web/hook/" +
-    process.env.ODOO_EDIT_ATTENDANCE_SECRET;
+/**
+ * Makes a request to an Odoo webhook endpoint
+ * @param {string} webhookType - The type of webhook to call (edit_attendance, work_entry, planning_shift)
+ * @param {Object} payload - The data to send to the webhook
+ * @returns {Promise<Object>} - The response from the webhook
+ * @throws {Error} - If there's an error calling the webhook
+ */
+async function callOdooWebhook(webhookType, payload) {
+  // Map webhook types to their corresponding environment variables
+  const secretMap = {
+    edit_attendance: process.env.ODOO_EDIT_ATTENDANCE_SECRET,
+    work_entry: process.env.ODOO_WORK_ENTRY_SECRET, // Fixed typo in original (sECRET)
+    planning_shift: process.env.ODOO_CREATE_PLANNING_SHIFT_SECRET,
+  };
+
+  // Validate webhook type
+  if (!secretMap[webhookType]) {
+    throw new Error(`Invalid webhook type: ${webhookType}`);
+  }
+
+  const url = `https://omnilert-test-2.odoo.com/web/hook/${secretMap[webhookType]}`;
 
   try {
     const response = await axios.post(url, payload, {
@@ -235,30 +252,24 @@ async function editAttendance(payload) {
     return response.data;
   } catch (error) {
     console.error(
-      "Error calling Odoo webhook:",
+      `Error calling Odoo ${webhookType} webhook:`,
       error.response?.data || error.message
     );
     throw error;
   }
 }
 
-async function createWorkEntry(payload) {
-  const url =
-    "https://omnilert-test-2.odoo.com/web/hook/" +
-    process.env.ODOO_WORK_ENTRY_sECRET;
+// Wrapper functions to maintain backward compatibility
+async function editAttendance(payload) {
+  return callOdooWebhook("edit_attendance", payload);
+}
 
-  try {
-    const response = await axios.post(url, payload, {
-      headers: { "Content-Type": "application/json" },
-    });
-    return response.data;
-  } catch (error) {
-    console.error(
-      "Error calling Odoo webhook:",
-      error.response?.data || error.message
-    );
-    throw error;
-  }
+async function createWorkEntry(payload) {
+  return callOdooWebhook("work_entry", payload);
+}
+
+async function createPlanningShift(payload) {
+  return callOdooWebhook("planning_shift", payload);
 }
 
 module.exports = {
@@ -270,4 +281,5 @@ module.exports = {
   editAttendance,
   getAttendanceById,
   createWorkEntry,
+  createPlanningShift,
 };
