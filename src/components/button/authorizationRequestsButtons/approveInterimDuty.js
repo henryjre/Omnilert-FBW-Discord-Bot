@@ -1,13 +1,11 @@
-const {
-  ActionRowBuilder,
-  MessageFlags,
-  EmbedBuilder,
-  ButtonStyle,
-  ButtonBuilder,
-  ModalBuilder,
-  TextInputBuilder,
-  TextInputStyle,
-} = require("discord.js");
+const { MessageFlags, EmbedBuilder } = require("discord.js");
+
+const departments = require("../../../config/departments.json");
+const dutyTypes = require("../../../config/duty_types.json");
+
+const { createPlanningShift } = require("../../../odooRpc.js");
+
+const moment = require("moment-timezone");
 
 const hrRole = "1314815153421680640";
 
@@ -38,144 +36,149 @@ module.exports = {
       });
     }
 
-    const modal = new ModalBuilder()
-      .setCustomId(`approveInterimRequest_${interaction.id}`)
-      .setTitle(`Add Planning Shift`);
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
-    const details = new TextInputBuilder()
-      .setCustomId(`planningShiftId`)
-      .setLabel(`Planning Shift ID`)
-      .setPlaceholder(`Add the planning shift ID.`)
-      .setStyle(TextInputStyle.Short)
-      .setRequired(true);
+    const branchField = messageEmbed.data.fields.find(
+      (f) => f.name === "Branch"
+    );
+    const dateField = messageEmbed.data.fields.find(
+      (f) => f.name === "Interim Duty Date"
+    );
+    const shiftStartTimeField = messageEmbed.data.fields.find(
+      (f) => f.name === "Shift Start Time"
+    );
+    const shiftEndTimeField = messageEmbed.data.fields.find(
+      (f) => f.name === "Shift End Time"
+    );
+    const shiftCoverageField = messageEmbed.data.fields.find(
+      (f) => f.name === "Shift Coverage"
+    );
+    const shiftCoverageValue = cleanFieldValue(shiftCoverageField.value);
+    const shiftCoverage = dutyTypes.find(
+      (d) => d.code === shiftCoverageValue.toLowerCase()
+    );
+    const submittedByField = messageEmbed.data.fields.find(
+      (f) => f.name === "Submitted By"
+    );
 
-    const firstRow = new ActionRowBuilder().addComponents(details);
-    modal.addComponents(firstRow);
-    await interaction.showModal(modal);
+    const interimDutyData = {
+      branch: branchField ? cleanFieldValue(branchField.value) : "",
+      date: dateField ? cleanFieldValue(dateField.value) : "",
+      shiftStartTime: shiftStartTimeField
+        ? cleanFieldValue(shiftStartTimeField.value)
+        : "",
+      shiftEndTime: shiftEndTimeField
+        ? cleanFieldValue(shiftEndTimeField.value)
+        : "",
+      shiftCoverage: shiftCoverage ? shiftCoverage.id : "",
+      discordId: submittedByField ? extractUserId(submittedByField.value) : "",
+      interimFormId: interaction.message.id,
+    };
 
-    const modalResponse = await interaction.awaitModalSubmit({
-      filter: async (i) => {
-        const f =
-          i.customId === `approveInterimRequest_${interaction.id}` &&
-          i.user.id === interaction.user.id;
+    const department = departments.find(
+      (d) => d.name === interimDutyData.branch
+    );
 
-        if (f) {
-          await i.deferUpdate();
-        }
-        return f;
-      },
-      time: 120000,
-    });
-
-    try {
-      if (modalResponse.isModalSubmit()) {
-        const categoryId = messageEmbed.data.fields.find(
-          (f) => f.name === "Branch ID"
-        )?.value;
-        const approvedBy = interaction.member.nickname.replace(
-          /^[🔴🟢]\s*/,
-          ""
-        );
-
-        const category = await interaction.guild.channels.fetch(categoryId);
-
-        let scheduleChannel = null;
-
-        try {
-          if (category && category.type === 4) {
-            const childChannels = category.children.cache;
-
-            scheduleChannel = childChannels.find((channel) =>
-              channel.name.toLowerCase().includes("schedule")
-            );
-
-            if (!scheduleChannel) {
-              throw new Error("No schedule channel found in the category");
-            }
-          } else {
-            throw new Error(
-              `Channel with ID ${categoryId} is not a category or doesn't exist`
-            );
-          }
-        } catch (error) {
-          console.error(`Error finding schedule channel: ${error.message}`);
-          replyEmbed
-            .setDescription(
-              `🔴 ERROR: An error occurred while finding the schedule channel. Please try again.`
-            )
-            .setColor("Red");
-          return await modalResponse.followUp({
-            embeds: [replyEmbed],
-            flags: MessageFlags.Ephemeral,
-          });
-        }
-
-        const planningShiftId =
-          modalResponse.fields.getTextInputValue("planningShiftId");
-
-        const messages = await scheduleChannel.messages.fetch({ limit: 100 });
-        const targetMessage = messages.find(
-          (msg) => msg.content && msg.content.includes(planningShiftId)
-        );
-
-        if (!targetMessage) {
-          replyEmbed
-            .setDescription(
-              `🔴 ERROR: No message found with planning shift ID: ${planningShiftId}`
-            )
-            .setColor("Red");
-          return await modalResponse.followUp({
-            embeds: [replyEmbed],
-            flags: MessageFlags.Ephemeral,
-          });
-        }
-
-        let thread = targetMessage.thread;
-
-        if (!thread) {
-          replyEmbed
-            .setDescription(
-              `🔴 ERROR: No thread found with planning shift ID: ${planningShiftId}`
-            )
-            .setColor("Red");
-          return await modalResponse.followUp({
-            embeds: [replyEmbed],
-            flags: MessageFlags.Ephemeral,
-          });
-        }
-
-        messageEmbed.data.footer = {
-          text: `Approved By: ${approvedBy}`,
-        };
-
-        messageEmbed.data.color = 5763719;
-
-        const messagePayload = {
-          content: mentionableMembers,
-          embeds: [messageEmbed],
-        };
-
-        await thread.send(messagePayload);
-
-        await interaction.message.delete();
-
-        replyEmbed
-          .setDescription(
-            `✅ Success. Request has been moved to the attendance thread.`
-          )
-          .setColor("Green");
-
-        await modalResponse.followUp({
-          embeds: [replyEmbed],
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-    } catch (error) {
-      console.log(error);
-      await modalResponse.followUp({
-        content: `🔴 ERROR: An error occurred while creating your signature request. Please try again.`,
-        flags: MessageFlags.Ephemeral,
+    if (!department) {
+      replyEmbed.setDescription(`🔴 ERROR: Branch not found.`).setColor("Red");
+      return await interaction.reply({
+        embeds: [replyEmbed],
       });
     }
+
+    const payload = createInterimDutyPayload(interimDutyData, department);
+    console.log("Generated payload:", JSON.stringify(payload, null, 2));
+
+    // approve the embed first
+    const approvedBy = interaction.member.nickname.replace(/^[🔴🟢]\s*/, "");
+
+    messageEmbed.data.footer = {
+      text: `Approved By: ${approvedBy}`,
+    };
+    messageEmbed.data.color = 5763719;
+
+    await interaction.message.edit({
+      embeds: [messageEmbed],
+      components: [],
+    });
+
+    replyEmbed
+      .setDescription(
+        `🟢 Successfully approved the interim duty form. A planning shift will be created shortly.`
+      )
+      .setColor("Green");
+
+    await interaction.editReply({
+      embeds: [replyEmbed],
+    });
+
+    await createPlanningShift(payload).then((res) => {
+      console.log("Planning shift created:", res);
+    });
   },
 };
+
+function cleanFieldValue(s) {
+  return s.replace(/^[^|]*\|\s*/, "").trim();
+}
+
+function extractUserId(mention) {
+  return mention.match(/<@!?(\d+)>/)?.[1] ?? null;
+}
+
+function createInterimDutyPayload(interimDutyData, department) {
+  try {
+    const dutyDate = moment(interimDutyData.date, "MMMM DD, YYYY");
+
+    const startTime = moment(interimDutyData.shiftStartTime, "H:MM A");
+    const endTime = moment(interimDutyData.shiftEndTime, "H:MM A");
+
+    const startDateTime = dutyDate
+      .clone()
+      .hour(startTime.hour())
+      .minute(startTime.minute())
+      .second(0)
+      .format("YYYY-MM-DD HH:mm:ss");
+
+    // Check if end time is earlier than start time (crosses to next day)
+    let endDateTime;
+    if (endTime.isBefore(startTime)) {
+      // Add one day to the end date
+      endDateTime = dutyDate
+        .clone()
+        .add(1, "day")
+        .hour(endTime.hour())
+        .minute(endTime.minute())
+        .second(0)
+        .format("YYYY-MM-DD HH:mm:ss");
+    } else {
+      // Same day
+      endDateTime = dutyDate
+        .clone()
+        .hour(endTime.hour())
+        .minute(endTime.minute())
+        .second(0)
+        .format("YYYY-MM-DD HH:mm:ss");
+    }
+
+    const payload = {
+      x_discord_id: interimDutyData.discordId,
+      start_datetime: startDateTime,
+      end_datetime: endDateTime,
+      company_id: department.id,
+    };
+
+    if (interimDutyData.shiftCoverage) {
+      payload.role_id = interimDutyData.shiftCoverage;
+    }
+
+    if (interimDutyData.interimFormId) {
+      payload.x_interim_form_id = interimDutyData.interimFormId;
+    }
+
+    return payload;
+  } catch (error) {
+    console.error("Error creating interim duty payload:", error);
+    throw new Error("Failed to create interim duty payload: " + error.message);
+  }
+}
