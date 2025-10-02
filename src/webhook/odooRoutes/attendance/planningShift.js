@@ -19,6 +19,8 @@ const roleColors = {
   11: "#E6DBFC",
 };
 
+const hrChannelId = "1372557527715156049";
+
 const buffers = new Map();
 
 const publishedShift = async (req, res) => {
@@ -88,6 +90,7 @@ const processPublishedShift = async (payload) => {
       allocated_hours,
       x_role_color,
       x_role_name,
+      x_interim_form_id,
     } = payload;
 
     const department = departments.find((d) => d.id === company_id);
@@ -161,6 +164,42 @@ const processPublishedShift = async (payload) => {
       type: ChannelType.PublicThread,
       autoArchiveDuration: 1440,
     });
+
+    if (x_interim_form_id) {
+      const hrChannel = client.channels.cache.get(hrChannelId);
+      try {
+        if (!hrChannel) {
+          console.error("HR Channel not found with ID:", hrChannelId);
+          return;
+        }
+
+        const interimFormMessage = await hrChannel.messages
+          .fetch(x_interim_form_id)
+          .catch((error) => {
+            console.error("Error fetching interim form message:", error);
+            return null;
+          });
+
+        if (interimFormMessage) {
+          const interimEmbeds = [...interimFormMessage.embeds];
+
+          await thread.send({
+            embeds: interimEmbeds,
+          });
+
+          await interimFormMessage.delete().catch((error) => {
+            console.error("Error deleting interim form message:", error);
+          });
+        } else {
+          console.error(
+            "Interim form message not found with ID:",
+            x_interim_form_id
+          );
+        }
+      } catch (error) {
+        console.error("Error processing interim form:", error);
+      }
+    }
 
     return { ok: true, message: "Schedule logged" };
   } catch (error) {
