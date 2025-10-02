@@ -46,7 +46,7 @@ module.exports = {
         return await interaction.reply({
           content:
             "This command can only be used in the <#1372559141071228998> channel.",
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
       if (interaction.channel.isThread()) {

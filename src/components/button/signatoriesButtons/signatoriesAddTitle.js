@@ -8,6 +8,7 @@ const {
   StringSelectMenuOptionBuilder,
   ButtonBuilder,
   ButtonStyle,
+  MessageFlags,
 } = require("discord.js");
 
 module.exports = {
@@ -102,7 +103,7 @@ module.exports = {
       console.log(error);
       await modalResponse.followUp({
         content: `🔴 ERROR: An error occurred while adding the signatory title. Please try again.`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   },

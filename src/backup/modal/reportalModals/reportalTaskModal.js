@@ -5,6 +5,7 @@ const {
   EmbedBuilder,
   StringSelectMenuOptionBuilder,
   StringSelectMenuBuilder,
+  MessageFlags,
 } = require("discord.js");
 
 const { customAlphabet } = require("nanoid");
@@ -144,7 +145,7 @@ module.exports = {
       console.log(error.stack);
       await interaction.followUp({
         content: `🔴 ERROR: ${error.message}.`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   },

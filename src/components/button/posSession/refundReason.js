@@ -1,12 +1,10 @@
 const {
   ActionRowBuilder,
-  MessageFlags,
   EmbedBuilder,
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
-  ButtonBuilder,
-  ButtonStyle,
+  MessageFlags,
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
 } = require("discord.js");
@@ -118,7 +116,7 @@ module.exports = {
         if (!posThread) {
           return await modalResponse.followUp({
             content: `🔴 ERROR: No thread found.`,
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
           });
         }
 
@@ -173,7 +171,7 @@ module.exports = {
       console.log(error);
       await modalResponse.followUp({
         content: `🔴 ERROR: An error occurred while creating your signature request. Please try again.`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   },

@@ -73,7 +73,7 @@ module.exports = {
       if (embedLimitExceeded) {
         await interaction.followUp({
           content: `⚠️ **Warning:** Only the first ${MAX_EMBEDS} attachments were included due to Discord's embed limit.`,
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
 
