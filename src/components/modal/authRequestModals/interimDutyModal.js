@@ -42,7 +42,7 @@ module.exports = {
       });
     }
 
-    if (["sd", "cl", "op"].includes(shiftCoverageInput.toLowerCase())) {
+    if (!["sd", "cl", "op"].includes(shiftCoverageInput.toLowerCase())) {
       replyEmbed
         .setDescription(`🔴 ERROR: Invalid shift coverage. Please try again.`)
         .setColor("Red");
