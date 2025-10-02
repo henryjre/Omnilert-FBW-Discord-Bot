@@ -27,8 +27,6 @@ const publishedShift = async (req, res) => {
   const { id, start_datetime } = req.body;
   const key = windowKey(req);
 
-  console.log(req.body);
-
   if (!buffers.has(key)) buffers.set(key, []);
   buffers
     .get(key)
@@ -124,6 +122,7 @@ const processPublishedShift = async (payload) => {
 
     if (planningMessage) {
       await updatePlanningShift(payload, planningMessage);
+
       return { ok: true, message: "Schedule updated" };
     }
 
@@ -229,6 +228,7 @@ const updatePlanningShift = async (payload, planningMessage) => {
     allocated_hours,
     x_role_color,
     x_role_name,
+    x_interim_form_id,
   } = payload;
 
   const department = departments.find((d) => d.id === company_id);
@@ -323,6 +323,42 @@ const updatePlanningShift = async (payload, planningMessage) => {
     planningMessage.thread.send({
       embeds: [replyEmbed],
     });
+  }
+
+  if (x_interim_form_id) {
+    const hrChannel = client.channels.cache.get(hrChannelId);
+    try {
+      if (!hrChannel) {
+        console.error("HR Channel not found with ID:", hrChannelId);
+        return;
+      }
+
+      const interimFormMessage = await hrChannel.messages
+        .fetch(x_interim_form_id)
+        .catch((error) => {
+          console.error("Error fetching interim form message:", error);
+          return null;
+        });
+
+      if (interimFormMessage) {
+        const interimEmbeds = [...interimFormMessage.embeds];
+
+        await planningMessage.thread.send({
+          embeds: interimEmbeds,
+        });
+
+        await interimFormMessage.delete().catch((error) => {
+          console.error("Error deleting interim form message:", error);
+        });
+      } else {
+        console.error(
+          "Interim form message not found with ID:",
+          x_interim_form_id
+        );
+      }
+    } catch (error) {
+      console.error("Error processing interim form:", error);
+    }
   }
 };
 
