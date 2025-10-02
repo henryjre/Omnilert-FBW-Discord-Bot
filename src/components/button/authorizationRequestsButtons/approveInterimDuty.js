@@ -75,6 +75,8 @@ module.exports = {
       interimFormId: interaction.message.id,
     };
 
+    console.log(interimDutyData);
+
     const department = departments.find(
       (d) => d.name === interimDutyData.branch
     );
@@ -130,8 +132,8 @@ function createInterimDutyPayload(interimDutyData, department) {
   try {
     const dutyDate = moment(interimDutyData.date, "MMMM DD, YYYY");
 
-    const startTime = moment(interimDutyData.shiftStartTime, "H:MM A");
-    const endTime = moment(interimDutyData.shiftEndTime, "H:MM A");
+    const startTime = moment(interimDutyData.shiftStartTime, "h:mm A");
+    const endTime = moment(interimDutyData.shiftEndTime, "h:mm A");
 
     const startDateTime = dutyDate
       .clone()
