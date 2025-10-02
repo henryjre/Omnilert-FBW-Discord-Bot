@@ -42,6 +42,17 @@ module.exports = {
       });
     }
 
+    if (["sd", "cl", "op"].includes(shiftCoverageInput.toLowerCase())) {
+      replyEmbed
+        .setDescription(`🔴 ERROR: Invalid shift coverage. Please try again.`)
+        .setColor("Red");
+
+      return await interaction.reply({
+        embeds: [replyEmbed],
+        flags: MessageFlags.Ephemeral,
+      });
+    }
+
     await interaction.deferReply();
 
     const authRequestEmbed = new EmbedBuilder()
