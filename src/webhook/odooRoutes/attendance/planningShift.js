@@ -165,6 +165,8 @@ const processPublishedShift = async (payload) => {
       autoArchiveDuration: 1440,
     });
 
+    console.log("x_interim_form_id", x_interim_form_id);
+
     if (x_interim_form_id) {
       const hrChannel = client.channels.cache.get(hrChannelId);
       try {
