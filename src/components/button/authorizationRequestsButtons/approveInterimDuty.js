@@ -75,8 +75,6 @@ module.exports = {
       interimFormId: interaction.message.id,
     };
 
-    console.log(interimDutyData);
-
     const department = departments.find(
       (d) => d.name === interimDutyData.branch
     );
@@ -89,7 +87,6 @@ module.exports = {
     }
 
     const payload = createInterimDutyPayload(interimDutyData, department);
-    console.log("Generated payload:", JSON.stringify(payload, null, 2));
 
     // approve the embed first
     const approvedBy = interaction.member.nickname.replace(/^[🔴🟢]\s*/, "");
