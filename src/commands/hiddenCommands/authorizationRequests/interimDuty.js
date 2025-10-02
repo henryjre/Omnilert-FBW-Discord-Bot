@@ -25,34 +25,34 @@ module.exports = {
 
     const firstInput = new TextInputBuilder()
       .setCustomId(`dateInput`)
-      .setLabel(`📆 Date`)
+      .setLabel(`📆 Interim Duty Date (Follow Format)`)
       .setStyle(TextInputStyle.Short)
-      .setPlaceholder("Enter the date.")
+      .setPlaceholder("E.G: Oct 1, 2025 | 10-01-25 | October 1, 2025")
       .setRequired(true)
       .setMaxLength(100);
 
     const secondInput = new TextInputBuilder()
-      .setCustomId(`branchInput`)
-      .setLabel(`🛒 Branch (DO NOT CHANGE)`)
+      .setCustomId(`startTime`)
+      .setLabel(`🟢 Shift Start Time (Follow Format)`)
       .setStyle(TextInputStyle.Short)
+      .setPlaceholder("E.G: 12:00 AM | 8:00 AM | 1:00 PM | 10:00 PM")
       .setMaxLength(100)
-      .setRequired(true)
-      .setValue(branch);
+      .setRequired(true);
 
     const thirdInput = new TextInputBuilder()
+      .setCustomId(`endTime`)
+      .setLabel(`🔴 Shift End Time (Follow Format)`)
+      .setStyle(TextInputStyle.Short)
+      .setPlaceholder("E.G: 12:00 AM | 2:00 AM | 4:00 PM | 10:00 PM")
+      .setMaxLength(100)
+      .setRequired(true);
+
+    const fourthInput = new TextInputBuilder()
       .setCustomId(`shiftCoverageInput`)
       .setLabel(`🎯 Duty Coverage`)
       .setStyle(TextInputStyle.Short)
       .setMaxLength(200)
-      .setPlaceholder("Enter the duty coverage.")
-      .setRequired(true);
-
-    const fourthInput = new TextInputBuilder()
-      .setCustomId(`startAndEndTimeInput`)
-      .setLabel(`⏱️ Start and End Time`)
-      .setStyle(TextInputStyle.Short)
-      .setMaxLength(200)
-      .setPlaceholder("Enter the shift time coverage.")
+      .setPlaceholder("SD | CL | OP | etc.")
       .setRequired(true);
 
     const fifthInput = new TextInputBuilder()
