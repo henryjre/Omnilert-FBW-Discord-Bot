@@ -44,7 +44,7 @@ module.exports = {
     if (branchField) {
       branchField.value = `🛒 | ${selectedBranch}`;
     } else {
-      messageEmbed.data.fields.push({
+      messageEmbed.data.fields.unshift({
         name: "Branch",
         value: `🛒 | ${selectedBranch}`,
       });
@@ -74,7 +74,7 @@ module.exports = {
     });
 
     replyEmbed
-      .setDescription(`You selected <@${selectedBranch}> as the branch.`)
+      .setDescription(`You selected **${selectedBranch}** as the branch.`)
       .setColor("Grey");
 
     await interaction.editReply({ embeds: [replyEmbed] });
