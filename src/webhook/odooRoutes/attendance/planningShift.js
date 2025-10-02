@@ -242,8 +242,8 @@ const updatePlanningShift = async (payload, planningMessage) => {
       if (oldField && oldField.value !== newField.value) {
         changedFields.push({
           name: newField.name,
-          oldValue: oldField.value,
-          newValue: newField.value,
+          oldValue: cleanFieldValue(oldField.value),
+          newValue: cleanFieldValue(newField.value),
         });
       }
     }
@@ -270,12 +270,13 @@ const updatePlanningShift = async (payload, planningMessage) => {
   if (changedFields.length > 0) {
     const replyEmbed = new EmbedBuilder()
       .setDescription(
-        `### This shift has been updated:\n${changedFields
-          .map(
-            (field) =>
-              `**${field.name}**: \`${field.oldValue}\` → \`${field.newValue}\``
-          )
-          .join("\n")}`
+        "## Shift Updated\n### The following fields have been changed:"
+      )
+      .addFields(
+        changedFields.map((field) => ({
+          name: field.name,
+          value: `\`${field.oldValue}\` ➔ \`${field.newValue}\``,
+        }))
       )
       .setColor("Grey");
     planningMessage.thread.send({
@@ -287,6 +288,10 @@ const updatePlanningShift = async (payload, planningMessage) => {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////// HELPER FUNCTIONS ///////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+function cleanFieldValue(s) {
+  return s.replace(/^[^|]*\|\s*/, "").trim();
+}
 
 function formatTime(rawTime) {
   return moment
