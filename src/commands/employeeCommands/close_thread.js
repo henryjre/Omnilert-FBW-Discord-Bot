@@ -103,11 +103,15 @@ async function closeThreadCommand(interaction, client) {
     return;
   }
 
+  const allowedCategories = ["Management", "Offices"];
+
   // Check if the thread is in an allowed category
-  if (category.name !== "General" && category.name !== "Offices") {
+  if (!allowedCategories.includes(category.name)) {
     const errorEmbed = new EmbedBuilder()
       .setDescription(
-        `🔴 ERROR: This command can only be used in threads within the "General" or "Offices" categories. Current category: "${category.name}".`
+        `🔴 ERROR: This command can only be used in threads within the "${allowedCategories.join(
+          ", "
+        )}" categories. Current category: "${category.name}".`
       )
       .setColor("Red");
 
