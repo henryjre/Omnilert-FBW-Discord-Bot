@@ -27,6 +27,8 @@ const publishedShift = async (req, res) => {
   const { id, start_datetime } = req.body;
   const key = windowKey(req);
 
+  console.log(req.body);
+
   if (!buffers.has(key)) buffers.set(key, []);
   buffers
     .get(key)
@@ -164,8 +166,6 @@ const processPublishedShift = async (payload) => {
       type: ChannelType.PublicThread,
       autoArchiveDuration: 1440,
     });
-
-    console.log("x_interim_form_id", x_interim_form_id);
 
     if (x_interim_form_id) {
       const hrChannel = client.channels.cache.get(hrChannelId);
