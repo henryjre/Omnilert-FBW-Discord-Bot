@@ -110,6 +110,7 @@ module.exports = {
     const menuRow = new ActionRowBuilder().addComponents(roleMenu);
     const buttonRow = new ActionRowBuilder().addComponents(
       submit,
+      edit,
       addAttachment,
       cancel
     );
