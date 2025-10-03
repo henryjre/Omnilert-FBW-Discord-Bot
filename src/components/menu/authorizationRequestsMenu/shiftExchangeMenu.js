@@ -43,29 +43,31 @@ module.exports = {
 
     // const buttonRow = new ActionRowBuilder().addComponents(confirmButton);
 
-    const confirmButton = new ButtonBuilder()
-      .setCustomId("notifyReliever")
-      .setLabel("Notify Reliever")
-      .setStyle(ButtonStyle.Primary);
-    const cancelButton = new ButtonBuilder()
-      .setCustomId("cancelAuthRequest")
-      .setLabel("Cancel")
-      .setStyle(ButtonStyle.Danger);
-
-    const buttonRow = new ActionRowBuilder().addComponents(
-      confirmButton,
-      cancelButton
+    const branchField = messageEmbed.data.fields.find(
+      (f) => f.name === "Branch"
     );
 
-    const userMenu = new StringSelectMenuBuilder(
-      interaction.message.components[1].components[0].data
+    const messageComponents = interaction.message.components;
+
+    const buttonRow = messageComponents.find((row) =>
+      row.components.some(
+        (component) => component.customId === "notifyReliever"
+      )
     );
 
-    const menuRow = new ActionRowBuilder().addComponents(userMenu);
+    if (buttonRow && branchField) {
+      const confirmButtonIndex = buttonRow.components.findIndex(
+        (component) => component.customId === "notifyReliever"
+      );
+
+      if (confirmButtonIndex !== -1) {
+        buttonRow.components[confirmButtonIndex].data.disabled = false;
+      }
+    }
 
     await interaction.message.edit({
       embeds: [messageEmbed],
-      components: [buttonRow, menuRow],
+      components: messageComponents,
     });
 
     replyEmbed
