@@ -17,36 +17,10 @@ module.exports = {
     const replyEmbed = new EmbedBuilder();
 
     const dateInput = interaction.fields.getTextInputValue("dateInput");
-    const branchInput = interaction.fields.getTextInputValue("branchInput");
     const shiftInput = interaction.fields.getTextInputValue("shiftInput");
 
     const interactionMember =
       interaction.member?.toString() || interaction.user.toString();
-
-    let branchName = branchInput;
-    try {
-      const category = await interaction.guild.channels.fetch(branchInput);
-
-      if (category && category.type === 4) {
-        branchName = category.name;
-      } else {
-        throw new Error(
-          `Category with ID ${branchInput} not found or is not a category`
-        );
-      }
-    } catch (error) {
-      console.error(`Error fetching category: ${error.message}`);
-      replyEmbed
-        .setDescription(
-          `🔴 ERROR: Please do not change the branch field unless specified.`
-        )
-        .setColor("Red");
-      return await interaction.editReply({ embeds: [replyEmbed] }).then((msg) =>
-        setTimeout(() => {
-          msg.delete();
-        }, 10000)
-      );
-    }
 
     const authRequestEmbed = new EmbedBuilder()
       .setDescription(`## 🔄 SHIFT EXCHANGE REQUEST`)
@@ -54,10 +28,6 @@ module.exports = {
         {
           name: "Date",
           value: `📆 | ${dateInput}`,
-        },
-        {
-          name: "Branch",
-          value: `🛒 | ${branchName}`,
         },
         {
           name: "Shift Coverage",
@@ -77,6 +47,23 @@ module.exports = {
       //     text: `Submitted by: ${interactionMember}`,
       //   })
       .setColor("#1000ff"); // 1000ff when approved
+
+    const branchMenu = new StringSelectMenuBuilder()
+      .setCustomId("branchMenu")
+      .setPlaceholder("Select a branch")
+      .addOptions(
+        { label: "DHVSU Bacolor", value: "DHVSU Bacolor" },
+        { label: "Primark Center Guagua", value: "Primark Center Guagua" },
+        {
+          label: "Robinsons Starmills CSFP",
+          value: "Robinsons Starmills CSFP",
+        },
+        { label: "JASA Hiway Guagua", value: "JASA Hiway Guagua" }
+      )
+      .setMinValues(1)
+      .setMaxValues(1);
+
+    const branchMenuRow = new ActionRowBuilder().addComponents(branchMenu);
 
     const confirmButton = new ButtonBuilder()
       .setCustomId("notifyReliever")
@@ -113,7 +100,7 @@ module.exports = {
 
     await interaction.editReply({
       embeds: [authRequestEmbed],
-      components: [buttonRow, menuRow],
+      components: [buttonRow, menuRow, branchMenuRow],
     });
   },
 };
