@@ -9,7 +9,7 @@ const {
 
 module.exports = {
   data: {
-    name: `announcementEdittt`,
+    name: `announcementEdit`,
   },
   async execute(interaction, client) {
     const messageEmbed = interaction.message.embeds[0];
@@ -29,22 +29,32 @@ module.exports = {
       });
     }
 
-    const description = messageEmbed.data.description;
+    const raw = messageEmbed.data.description ?? "";
 
-    console.log(description);
+    // 1) Remove zero-width characters: ZWSP, ZWNJ, ZWJ, and BOM
+    const description = raw.replace(/[\u200B-\u200D\uFEFF]/g, "");
 
-    const regex = /## \*(.*?)\*[\s\S]*?\u200b\n(.*?)\n\u200b/;
-    const match = description.match(regex);
+    // 2) Split lines and extract title
+    const lines = description.split("\n");
+    const titleIdx = lines.findIndex((l) => l.startsWith("## *"));
+    const title =
+      titleIdx !== -1
+        ? lines[titleIdx].replace(/^## \*|\*$/g, "").trim()
+        : null;
 
-    console.log(match);
+    // 3) Gather details (everything after the title)
+    let detailsLines = lines.slice(titleIdx + 1);
 
-    let title = "";
-    let details = "";
+    // 4) Remove only leading/trailing blank lines
+    while (detailsLines.length && detailsLines[0].trim() === "")
+      detailsLines.shift();
+    while (
+      detailsLines.length &&
+      detailsLines[detailsLines.length - 1].trim() === ""
+    )
+      detailsLines.pop();
 
-    if (match) {
-      title = match[1];
-      details = match[2];
-    }
+    let details = detailsLines.join("\n");
 
     const modal = new ModalBuilder().setCustomId("announcementEditModal");
 
