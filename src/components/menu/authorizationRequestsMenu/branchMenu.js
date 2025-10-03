@@ -78,7 +78,11 @@ module.exports = {
       (f) => f.name === "Reliever Name"
     );
 
-    if (shiftExchangeButtonRow && relieverField) {
+    if (
+      shiftExchangeButtonRow &&
+      relieverField &&
+      relieverField.value !== "*Please select a reliever from the menu below.*"
+    ) {
       const confirmButtonIndex = shiftExchangeButtonRow.components.findIndex(
         (component) => component.customId === "notifyReliever"
       );
