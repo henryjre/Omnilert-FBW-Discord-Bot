@@ -9,6 +9,7 @@ const {
   ispeOrder,
   posCashOutCashIn,
 } = require("./posSession");
+const { orderAudit } = require("./posOrders");
 
 // /odoo/pos/pos_open
 pos.post("/pos_open", sessionOpen);
@@ -33,5 +34,8 @@ pos.post("/ispe_order", ispeOrder);
 
 // /odoo/pos/cash_out_cash_in
 pos.post("/cash_out_cash_in", posCashOutCashIn);
+
+// /odoo/pos/order_audit
+pos.post("/order_audit", orderAudit);
 
 module.exports = pos;
