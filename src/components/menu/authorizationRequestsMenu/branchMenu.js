@@ -68,6 +68,28 @@ module.exports = {
       }
     }
 
+    const shiftExchangeButtonRow = messageComponents.find((row) =>
+      row.components.some(
+        (component) => component.customId === "notifyReliever"
+      )
+    );
+
+    const relieverField = messageEmbed.data.fields.find(
+      (f) => f.name === "Requested By"
+    );
+
+    if (shiftExchangeButtonRow && relieverField) {
+      const confirmButtonIndex = shiftExchangeButtonRow.components.findIndex(
+        (component) => component.customId === "notifyReliever"
+      );
+
+      if (confirmButtonIndex !== -1) {
+        shiftExchangeButtonRow.components[
+          confirmButtonIndex
+        ].data.disabled = false;
+      }
+    }
+
     await interaction.message.edit({
       embeds: [messageEmbed],
       components: messageComponents,
