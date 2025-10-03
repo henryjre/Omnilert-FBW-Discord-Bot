@@ -10,8 +10,6 @@ module.exports = {
   data: new SlashCommandBuilder().setName("shift_xchange"),
   pushToArray: false,
   async execute(interaction, client) {
-    const branch = interaction.options.getString("branch");
-
     const modal = new ModalBuilder()
       .setCustomId("shiftExchangeRequestModal")
       .setTitle(`SHIFT EXCHANGE REQUEST`);
@@ -24,14 +22,6 @@ module.exports = {
       .setRequired(true)
       .setMaxLength(100);
 
-    const secondInput = new TextInputBuilder()
-      .setCustomId(`branchInput`)
-      .setLabel(`🛒 Branch (DO NOT CHANGE)`)
-      .setStyle(TextInputStyle.Short)
-      .setMaxLength(100)
-      .setRequired(true)
-      .setValue(branch);
-
     const thirdInput = new TextInputBuilder()
       .setCustomId(`shiftInput`)
       .setLabel(`⏱️ Shift`)
@@ -41,10 +31,9 @@ module.exports = {
       .setRequired(true);
 
     const firstActionRow = new ActionRowBuilder().addComponents(firstInput);
-    const secondActionRow = new ActionRowBuilder().addComponents(secondInput);
     const thirdActionRow = new ActionRowBuilder().addComponents(thirdInput);
 
-    modal.addComponents(firstActionRow, secondActionRow, thirdActionRow);
+    modal.addComponents(firstActionRow, thirdActionRow);
     await interaction.showModal(modal);
   },
 };

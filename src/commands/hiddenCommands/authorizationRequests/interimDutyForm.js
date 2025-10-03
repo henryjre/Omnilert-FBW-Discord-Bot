@@ -10,8 +10,6 @@ module.exports = {
   data: new SlashCommandBuilder().setName("interim"),
   pushToArray: false,
   async execute(interaction, client) {
-    const branch = interaction.options.getString("branch");
-
     const modal = new ModalBuilder()
       .setCustomId("interimDutyFormModal")
       .setTitle(`INTERIM DUTY FORM`);
@@ -23,14 +21,6 @@ module.exports = {
       .setPlaceholder("Enter the date.")
       .setRequired(true)
       .setMaxLength(100);
-
-    const secondInput = new TextInputBuilder()
-      .setCustomId(`branchInput`)
-      .setLabel(`🛒 Branch (DO NOT CHANGE)`)
-      .setStyle(TextInputStyle.Short)
-      .setMaxLength(100)
-      .setRequired(true)
-      .setValue(branch);
 
     const thirdInput = new TextInputBuilder()
       .setCustomId(`shiftCoverageInput`)
@@ -57,14 +47,12 @@ module.exports = {
       .setRequired(true);
 
     const firstActionRow = new ActionRowBuilder().addComponents(firstInput);
-    const secondActionRow = new ActionRowBuilder().addComponents(secondInput);
     const thirdActionRow = new ActionRowBuilder().addComponents(thirdInput);
     const fourthActionRow = new ActionRowBuilder().addComponents(fourthInput);
     const fifthActionRow = new ActionRowBuilder().addComponents(fifthInput);
 
     modal.addComponents(
       firstActionRow,
-      secondActionRow,
       thirdActionRow,
       fourthActionRow,
       fifthActionRow
