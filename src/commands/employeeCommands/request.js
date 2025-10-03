@@ -58,30 +58,6 @@ module.exports = {
               },
             ])
         )
-        .addStringOption((option) =>
-          option
-            .setName("branch")
-            .setDescription("Select the branch.")
-            .setRequired(true)
-            .setChoices([
-              {
-                name: "DHVSU Bacolor",
-                value: "1314492758278279182",
-              },
-              {
-                name: "Primark Center Guagua",
-                value: "1314492835487027220",
-              },
-              {
-                name: "Robinsons Starmills CSFP",
-                value: "1314492984728879155",
-              },
-              {
-                name: "JASA Hiway Guagua",
-                value: "1314493220922593370",
-              },
-            ])
-        )
     )
     .addSubcommand((subcommand) =>
       subcommand
