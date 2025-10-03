@@ -12,7 +12,6 @@ module.exports = {
     name: `announcementEdit`,
   },
   async execute(interaction, client) {
-    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     const messageEmbed = interaction.message.embeds[0];
 
     const ownerField = messageEmbed.data.fields.find(
@@ -24,7 +23,8 @@ module.exports = {
         .setDescription(`🔴 ERROR: You cannot use this button.`)
         .setColor("Red");
 
-      return await interaction.editReply({
+      return await interaction.reply({
+        flags: MessageFlags.Ephemeral,
         embeds: [replyEmbed],
       });
     }
