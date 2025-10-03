@@ -29,9 +29,18 @@ module.exports = {
       });
     }
 
-    console.log(messageEmbed.data.description);
+    const description = messageEmbed.data.description;
 
-    return;
+    const regex = /## \*(.*?)\*[\s\S]*?\u200b\n(.*?)\n\u200b/;
+    const match = description.match(regex);
+
+    let title = "";
+    let details = "";
+
+    if (match) {
+      title = match[1];
+      details = match[2];
+    }
 
     const modal = new ModalBuilder().setCustomId("announcementEditModal");
 
@@ -41,6 +50,7 @@ module.exports = {
       .setCustomId(`titleInput`)
       .setLabel(`Title`)
       .setStyle(TextInputStyle.Short)
+      .setValue(title)
       .setPlaceholder("The title of your announcement")
       .setRequired(true);
 
@@ -48,6 +58,7 @@ module.exports = {
       .setCustomId(`announcementInput`)
       .setLabel(`Announcement Details`)
       .setStyle(TextInputStyle.Paragraph)
+      .setValue(details)
       .setPlaceholder("The details of your announcement.")
       .setMaxLength(4000)
       .setRequired(true);
