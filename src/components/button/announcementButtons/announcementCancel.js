@@ -16,7 +16,7 @@ module.exports = {
 
     if (!ownerField.value.includes(interaction.user.id)) {
       const replyEmbed = new EmbedBuilder()
-        .setDescription(`🔴 ERROR: You cannot use this menu.`)
+        .setDescription(`🔴 ERROR: You cannot use this button.`)
         .setColor("Red");
 
       return await interaction.editReply({
