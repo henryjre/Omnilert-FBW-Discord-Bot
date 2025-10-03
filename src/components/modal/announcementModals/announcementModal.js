@@ -92,6 +92,11 @@ module.exports = {
       .setDisabled(true)
       .setStyle(ButtonStyle.Success);
 
+    const edit = new ButtonBuilder()
+      .setCustomId("announcementEdit")
+      .setLabel("Edit Details")
+      .setStyle(ButtonStyle.Secondary);
+
     const addAttachment = new ButtonBuilder()
       .setCustomId("announcementAddAttachment")
       .setLabel("Add Attachments")
