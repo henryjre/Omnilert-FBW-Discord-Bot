@@ -9,7 +9,7 @@ const {
 
 module.exports = {
   data: {
-    name: `announcementEdit`,
+    name: `announcementEdittt`,
   },
   async execute(interaction, client) {
     const messageEmbed = interaction.message.embeds[0];
@@ -31,8 +31,12 @@ module.exports = {
 
     const description = messageEmbed.data.description;
 
+    console.log(description);
+
     const regex = /## \*(.*?)\*[\s\S]*?\u200b\n(.*?)\n\u200b/;
     const match = description.match(regex);
+
+    console.log(match);
 
     let title = "";
     let details = "";
