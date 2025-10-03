@@ -75,7 +75,7 @@ module.exports = {
     );
 
     const relieverField = messageEmbed.data.fields.find(
-      (f) => f.name === "Requested By"
+      (f) => f.name === "Reliever Name"
     );
 
     if (shiftExchangeButtonRow && relieverField) {
