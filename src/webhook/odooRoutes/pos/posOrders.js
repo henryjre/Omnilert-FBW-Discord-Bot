@@ -20,6 +20,7 @@ const auditPercentChance = 0.15;
 const auditQueueChannelId = "1423573262641922149";
 const auditProcessingChannelId = "1423597801643708576";
 
+// SERVICE QA AUDIT
 const orderAudit = async (req, res) => {
   const {
     amount_total,
@@ -89,7 +90,7 @@ const orderAudit = async (req, res) => {
     ];
 
     const orderEmbed = new EmbedBuilder()
-      .setDescription(`## 📑 POS Order Audit`)
+      .setDescription(`## 📑 Service QA Audit`)
       .setColor("Yellow")
       .addFields(fields)
       .setTimestamp(toDiscordTimestamp(date_order));
