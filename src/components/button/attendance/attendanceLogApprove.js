@@ -17,13 +17,13 @@ module.exports = {
     name: `attendanceLogApprove`,
   },
   async execute(interaction, client) {
-    // if (!interaction.member.roles.cache.has(hrRoleId)) {
-    //   await interaction.reply({
-    //     content: `🔴 ERROR: You cannot use this button.`,
-    //     flags: MessageFlags.Ephemeral,
-    //   });
-    //   return;
-    // }
+    if (!interaction.member.roles.cache.has(hrRoleId)) {
+      await interaction.reply({
+        content: `🔴 ERROR: You cannot use this button.`,
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
 
     await interaction.deferUpdate();
 
