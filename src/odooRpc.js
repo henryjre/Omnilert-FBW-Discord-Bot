@@ -131,7 +131,7 @@ async function getAttendanceById(attendanceId) {
       service: "object",
       method: "execute_kw",
       args: [
-        "omnilert-test-2",
+        process.env.odoo_db,
         2,
         process.env.odoo_password,
         "hr.attendance",
@@ -243,7 +243,7 @@ async function callOdooWebhook(webhookType, payload) {
     throw new Error(`Invalid webhook type: ${webhookType}`);
   }
 
-  const url = `https://omnilert-test-2.odoo.com/web/hook/${secretMap[webhookType]}`;
+  const url = `https://omnilert.odoo.com/web/hook/${secretMap[webhookType]}`;
 
   try {
     const response = await axios.post(url, payload, {
