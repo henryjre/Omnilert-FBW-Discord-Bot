@@ -15,10 +15,9 @@ const pesoFormatter = new Intl.NumberFormat("en-PH", {
   minimumFractionDigits: 2,
 });
 
-const auditPercentChance = 0.15;
+const auditPercentChance = 0.1;
 
 const auditQueueChannelId = "1423573262641922149";
-const auditProcessingChannelId = "1423597801643708576";
 
 // SERVICE QA AUDIT
 const orderAudit = async (req, res) => {
