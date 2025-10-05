@@ -54,7 +54,7 @@ module.exports = {
     const buttonRow = new ActionRowBuilder().addComponents(approve, reject);
 
     await interaction.channel.send({
-      //   content: `<@&${hrRoleId}>`,
+      content: `<@&${hrRoleId}>`,
       embeds: [messageEmbed],
       components: [buttonRow],
     });
