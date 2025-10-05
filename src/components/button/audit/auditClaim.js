@@ -15,7 +15,6 @@ const CLAIM_TTL_MS = 3 * 60 * 1000;
 const claimedMessages = new Set(); // messageId strings
 
 const auditProcessingChannelId = "1423597801643708576";
-const discussionChannelId = "1423654173504700496";
 
 module.exports = {
   data: { name: "auditClaim" },
@@ -112,9 +111,6 @@ async function runForWinner(interaction, client) {
   const auditProcessingChannel =
     client.channels.cache.get(auditProcessingChannelId) ??
     (await client.channels.fetch(auditProcessingChannelId));
-  const discussionChannel =
-    client.channels.cache.get(discussionChannelId) ??
-    (await client.channels.fetch(discussionChannelId));
 
   const auditor = interaction.member?.nickname
     ? interaction.member.nickname.replace(/^[🔴🟢]\s*/, "")
@@ -167,18 +163,5 @@ async function runForWinner(interaction, client) {
 
   await auditThread.send({
     content: `${interaction.user.toString()}, please provide the audit details here.`,
-  });
-
-  const discussionMessage = await discussionChannel.send({
-    content: auditTitle,
-  });
-
-  const discussionThread = await discussionMessage.startThread({
-    name: `Audit Discussion`,
-    type: ChannelType.PublicThread,
-  });
-
-  await discussionThread.send({
-    content: `${interaction.user.toString()}, you can discuss the auditing of your current audit transaction here with other members.`,
   });
 }
