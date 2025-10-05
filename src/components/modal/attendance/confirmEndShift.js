@@ -11,6 +11,8 @@ const moment = require("moment-timezone");
 const { getAttendanceById } = require("../../../odooRpc.js");
 const workEntryTypes = require("../../../config/work_entry_types.json");
 
+const hrRoleId = "1314815153421680640";
+
 module.exports = {
   data: {
     name: `endShiftConfirmation`,
@@ -175,6 +177,7 @@ module.exports = {
         .setColor("Red");
 
       await threadChannel.send({
+        content: `<@&${hrRoleId}>`,
         embeds: [embed],
         components: [buttonRow],
       });
@@ -251,6 +254,7 @@ module.exports = {
       .setColor(workEntryTypes.find((type) => type.id === 118).color_hex);
 
     await threadChannel.send({
+      content: `<@&${hrRoleId}>`,
       embeds: [otPremiumEmbed],
       components: [buttonRow],
     });
