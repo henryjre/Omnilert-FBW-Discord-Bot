@@ -18,13 +18,13 @@ module.exports = {
     name: `attendanceLogReject`,
   },
   async execute(interaction, client) {
-    // if (!interaction.member.roles.cache.has(hrRoleId)) {
-    //   await interaction.reply({
-    //     content: `🔴 ERROR: You cannot use this button.`,
-    //     flags: MessageFlags.Ephemeral,
-    //   });
-    //   return;
-    // }
+    if (!interaction.member.roles.cache.has(hrRoleId)) {
+      await interaction.reply({
+        content: `🔴 ERROR: You cannot use this button.`,
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
 
     const messageEmbed = interaction.message.embeds[0];
 
