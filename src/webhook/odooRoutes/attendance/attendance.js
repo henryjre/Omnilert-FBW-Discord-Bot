@@ -433,7 +433,7 @@ const employeeCheckIn = async (req, res) => {
       }`;
     } else {
       messagePayload.components = [earlyAttendanceRow];
-      // messagePayload.content = `<@&${hrRoleId}>`;
+      messagePayload.content = `<@&${hrRoleId}>`;
     }
 
     await thread.send(messagePayload);
