@@ -608,7 +608,9 @@ const employeeCheckOut = async (req, res) => {
     const buttonRow = new ActionRowBuilder().addComponents(addReason, endShift);
 
     await thread.send({
-      content: `${x_discord_id ? `<@${x_discord_id}>` : department?.role}`,
+      content: `${
+        x_discord_id ? `<@${x_discord_id}>` : department?.role
+      }, maglagay ng reason para sa check-out. Kung tapos ka na mag duty, i-click ang **End Shift** button.`,
       embeds: [attendanceLogEmbed],
       components: [buttonRow],
     });
