@@ -21,33 +21,29 @@ module.exports = {
             .setRequired(true)
             .setChoices([
               {
-                name: "⌛ Interim Duty Form (Test)",
-                value: "new_interim",
-              },
-              {
                 name: "⌛ Interim Duty Form",
-                value: "interim",
+                value: "new_interim",
               },
               {
                 name: "🔄 Shift Exchange Request",
                 value: "shift_xchange",
               },
-              {
-                name: "🕙 Overtime Claim",
-                value: "overtime",
-              },
+              // {
+              //   name: "🕙 Overtime Claim",
+              //   value: "overtime",
+              // },
               {
                 name: "🤧 Absence Authorization Request",
                 value: "absence",
               },
-              {
-                name: "⏰ Tardiness Authorization Request",
-                value: "tardiness",
-              },
-              {
-                name: "🕧 Undertime Authorization Request",
-                value: "undertime",
-              },
+              // {
+              //   name: "⏰ Tardiness Authorization Request",
+              //   value: "tardiness",
+              // },
+              // {
+              //   name: "🕧 Undertime Authorization Request",
+              //   value: "undertime",
+              // },
               {
                 name: "💳 Payment",
                 value: "payment",
