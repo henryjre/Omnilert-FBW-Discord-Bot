@@ -4,6 +4,7 @@ const {
   ActionRowBuilder,
   TextInputBuilder,
   TextInputStyle,
+  MessageFlags,
 } = require("discord.js");
 
 module.exports = {
@@ -13,6 +14,13 @@ module.exports = {
   pushToArray: false,
   async execute(interaction, client, formType) {
     // formType: absence / tardiness / undertime
+
+    if (["tardiness", "undertime"].includes(formType)) {
+      return interaction.reply({
+        content: "This command is unavailable.",
+        flags: MessageFlags.Ephemeral,
+      });
+    }
 
     const modal = new ModalBuilder()
       .setCustomId("authRequestModal")
