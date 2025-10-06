@@ -379,7 +379,7 @@ const check_in = async (req, res) => {
               : department?.role
               ? `<@&${department.role}>`
               : ""
-          }, please submit add reason and submit this tardiness request.`,
+          }, maglagay ng reason para sa tardiness request na ito at i-submit.`,
           embeds: [tardinessEmbed],
           components: [tardinessButtons],
         });
