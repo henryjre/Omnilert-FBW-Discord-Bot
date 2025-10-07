@@ -31,4 +31,10 @@ db.exec(`
     );
 `);
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS audit_id_count (
+    id INTEGER PRIMARY KEY AUTOINCREMENT
+  )
+`);
+
 module.exports = db;
