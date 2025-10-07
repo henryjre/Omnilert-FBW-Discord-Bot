@@ -10,6 +10,8 @@ const {
 } = require("discord.js");
 const AsyncLock = require("async-lock");
 
+const db = require("../../../sqliteConnection.js");
+
 const lock = new AsyncLock();
 const CLAIM_TTL_MS = 3 * 60 * 1000;
 const claimedMessages = new Set(); // messageId strings
@@ -17,7 +19,7 @@ const claimedMessages = new Set(); // messageId strings
 const auditProcessingChannelId = "1423597801643708576";
 
 module.exports = {
-  data: { name: "auditClaim" },
+  data: { name: "auditClaimm" },
 
   /**
    * @param {import('discord.js').ButtonInteraction} interaction
@@ -119,10 +121,11 @@ async function runForWinner(interaction, client) {
   const base = interaction.message.embeds?.[0];
   const auditEmbed = base ? EmbedBuilder.from(base) : new EmbedBuilder();
 
-  const auditTitle =
-    (auditEmbed.data?.description || "# Audit").replace(/^#\s*/, "") +
-    " | " +
-    auditor;
+  const auditId = getNextAuditId();
+
+  const auditTitle = `${auditEmbed.data?.description}\nAudit ID: AUD-${auditId}`;
+
+  auditEmbed.setDescription(auditTitle);
 
   auditEmbed.setAuthor({
     name: auditor,
@@ -164,4 +167,10 @@ async function runForWinner(interaction, client) {
   await auditThread.send({
     content: `${interaction.user.toString()}, please provide the audit details here.`,
   });
+}
+
+function getNextAuditId() {
+  const result = db.prepare("INSERT INTO audit_id_count DEFAULT VALUES").run();
+  const id = result.lastInsertRowid;
+  return id.toString().padStart(4, "0");
 }
