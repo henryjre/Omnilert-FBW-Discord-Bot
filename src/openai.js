@@ -1,7 +1,7 @@
 const OpenAI = require("openai");
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-async function analyzeThread(messages) {
+async function analyzeAudit(messages) {
   const transcript = messages
     .map((m) => `${m.author}: ${m.content}`)
     .join("\n");
@@ -25,4 +25,4 @@ ${transcript}
   return text;
 }
 
-module.exports = { analyzeThread };
+module.exports = { analyzeAudit };
