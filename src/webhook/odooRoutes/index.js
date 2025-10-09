@@ -3,6 +3,7 @@ const employee = require("./employee");
 const inventory = require("./inventory");
 const pos = require("./pos");
 const attendance = require("./attendance");
+const external = require("./external");
 
 // /odoo/employee
 odooRoutes.use("/employee", employee);
@@ -15,6 +16,9 @@ odooRoutes.use("/pos", pos);
 
 // /odoo/attendance
 odooRoutes.use("/attendance", attendance);
+
+// /odoo/external
+odooRoutes.use("/external", external);
 
 // /odoo/
 odooRoutes.get("/", (req, res) => {
