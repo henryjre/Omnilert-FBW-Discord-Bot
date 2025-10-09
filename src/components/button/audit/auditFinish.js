@@ -10,7 +10,7 @@ const {
 } = require("discord.js");
 const moment = require("moment-timezone");
 
-const { analyzeThread } = require("../../../openai.js");
+const { analyzeAudit } = require("../../../openai.js");
 
 const auditCompletedChannelId = "1423597979604095046";
 
@@ -92,7 +92,7 @@ module.exports = {
       }));
 
       // Call GPT-4o-mini to produce a confidential summary
-      const summaryText = await analyzeThread(msgsForSummary, "summary");
+      const summaryText = await analyzeAudit(msgsForSummary, "summary");
 
       messageEmbed.data.fields.push({
         name: "Audit Summary",
@@ -118,56 +118,6 @@ module.exports = {
     // await interaction.message.delete();
   },
 };
-
-/**
- * Combine all user messages (with attachments)
- * into one formatted message and send them to another thread.
- *
- * @param {ThreadChannel} sourceThread - thread to read from
- * @param {ThreadChannel} targetThread - thread to post to
- * @param {string} userId - user whose messages to summarize
- */
-async function sendUserMessagesAsLog(sourceThread, targetThread, userId) {
-  const allMessages = await getAllUserMessages(sourceThread, userId);
-  if (allMessages.length === 0) {
-    return targetThread.send(`No messages found from <@${userId}>.`);
-  }
-
-  // Format collected messages
-  const logLines = allMessages.map((msg) => {
-    const timestamp = moment(msg.createdAt)
-      .tz("Asia/Manila")
-      .format("MMM DD, YYYY | hh:mm A");
-
-    const content = msg.content.replace(/\n+/g, " ").trim() || "(no content)";
-
-    // Collect attachments (if any)
-    const attachmentLinks = Array.from(msg.attachments.values()).map(
-      (a) => `📎 Attachment: ${a.url}`
-    );
-    const attachmentText =
-      attachmentLinks.length > 0 ? "\n" + attachmentLinks.join("\n") : "";
-
-    return `\`[${timestamp}]\`・*${content}*${attachmentText}\n`;
-  });
-
-  // Discord’s per-message limit = 2000 characters → split automatically
-  const chunked = chunkArrayByLength(logLines, 2000);
-
-  for (const [i, chunk] of chunked.entries()) {
-    await targetThread.send({
-      content:
-        (i === 0
-          ? `🗒️ **Message Log for Auditor**\n\n`
-          : "📄 (continued)\n\n") + chunk.join("\n"),
-    });
-    await wait(1000); // prevent rate limits
-  }
-
-  console.log(
-    `✅ Sent ${allMessages.length} messages as log for user ${userId}.`
-  );
-}
 
 /**
  * Fetch all non-bot messages from a thread channel.
@@ -206,29 +156,4 @@ async function getAllUserMessages(thread, userId = null) {
 
   // Return in chronological order (oldest → newest)
   return allMessages.reverse();
-}
-
-// Helper: split logs into 2000-character-safe chunks
-function chunkArrayByLength(lines, maxLen) {
-  const chunks = [];
-  let current = [];
-  let length = 0;
-
-  for (const line of lines) {
-    if (length + line.length + 1 > maxLen) {
-      chunks.push(current);
-      current = [];
-      length = 0;
-    }
-    current.push(line);
-    length += line.length + 1;
-  }
-
-  if (current.length) chunks.push(current);
-  return chunks;
-}
-
-// Helper delay
-function wait(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }
