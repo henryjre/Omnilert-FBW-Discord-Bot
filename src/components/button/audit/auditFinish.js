@@ -115,7 +115,7 @@ module.exports = {
     });
 
     await interaction.message.thread.setArchived(true);
-    // await interaction.message.delete();
+    await interaction.message.delete();
   },
 };
 
