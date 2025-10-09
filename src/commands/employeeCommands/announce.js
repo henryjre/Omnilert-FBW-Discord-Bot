@@ -28,6 +28,18 @@ module.exports = {
       return;
     }
 
+    // Check if the command was invoked in a thread
+    if (interaction.channel.isThread()) {
+      const replyEmbed = new EmbedBuilder().setDescription(
+        `🔴 ERROR: This command cannot be used in a thread channel.`
+      );
+      await interaction.reply({
+        ephemeral: true,
+        embeds: [replyEmbed],
+      });
+      return;
+    }
+
     const modal = buildModal();
     await interaction.showModal(modal);
 
