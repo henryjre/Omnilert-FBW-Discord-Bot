@@ -19,7 +19,7 @@ const claimedMessages = new Set(); // messageId strings
 const auditProcessingChannelId = "1423597801643708576";
 
 module.exports = {
-  data: { name: "auditClaimm" },
+  data: { name: "auditClaim" },
 
   /**
    * @param {import('discord.js').ButtonInteraction} interaction
@@ -123,7 +123,7 @@ async function runForWinner(interaction, client) {
 
   const auditId = getNextAuditId();
 
-  const auditTitle = `${auditEmbed.data?.description}\nAudit ID: AUD-${auditId}`;
+  const auditTitle = `${auditEmbed.data?.description} | AUD-${auditId}`;
 
   auditEmbed.setDescription(auditTitle);
 
@@ -152,6 +152,7 @@ async function runForWinner(interaction, client) {
     .setStyle(ButtonStyle.Success);
 
   const auditMessage = await auditProcessingChannel.send({
+    content: interaction.user.toString(),
     embeds: [auditEmbed],
     components: [
       new ActionRowBuilder().addComponents(auditRatingMenu),
@@ -160,7 +161,7 @@ async function runForWinner(interaction, client) {
   });
 
   const auditThread = await auditMessage.startThread({
-    name: `Audit Logs`,
+    name: `Audit Logs | ${auditor} | ${auditId}`,
     type: ChannelType.PublicThread,
   });
 
