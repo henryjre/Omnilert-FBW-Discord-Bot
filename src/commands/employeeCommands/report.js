@@ -28,6 +28,14 @@ module.exports = {
     const permissionRole = "1314413671245676685";
     const subcommand = interaction.options.getSubcommand();
 
+    // Check if the command was invoked in a thread
+    if (interaction.channel.isThread()) {
+      return await interaction.reply({
+        content: `🔴 ERROR: This command cannot be used in a thread channel.`,
+        flags: MessageFlags.Ephemeral,
+      });
+    }
+
     // let channel;
     if (subcommand === "case") {
       if (!interaction.member.roles.cache.has(permissionRole)) {
