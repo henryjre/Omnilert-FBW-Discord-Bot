@@ -79,6 +79,11 @@ module.exports = {
 
     const threadMsgs = await getAllUserMessages(interaction.message.thread);
 
+    messageEmbed.data.fields.push({
+      name: "Audit Logs",
+      value: interaction.message.thread.toString(),
+    });
+
     if (!threadMsgs.length) {
       messageEmbed.data.fields.push({
         name: "Audit Summary",
