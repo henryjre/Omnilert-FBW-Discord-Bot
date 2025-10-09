@@ -14,7 +14,6 @@ module.exports = {
     name: `posAuditRatingMenu`,
   },
   async execute(interaction, client) {
-    console.log(interaction);
     let allEmbeds = interaction.message.embeds;
     const messageEmbed = allEmbeds[0];
 
