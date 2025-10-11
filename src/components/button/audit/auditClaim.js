@@ -151,7 +151,7 @@ async function runForWinner(interaction, client) {
     .setDisabled(true)
     .setStyle(ButtonStyle.Success);
 
-  const auditThread = await auditProcessingChannel.startThread({
+  const auditThread = await auditProcessingChannel.threads.create({
     name: `Audit Logs | ${auditor} | ${auditId}`,
     type: ChannelType.PublicThread,
   });
