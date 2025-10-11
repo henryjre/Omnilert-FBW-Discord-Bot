@@ -151,18 +151,18 @@ async function runForWinner(interaction, client) {
     .setDisabled(true)
     .setStyle(ButtonStyle.Success);
 
-  const auditMessage = await auditProcessingChannel.send({
+  const auditThread = await auditProcessingChannel.startThread({
+    name: `Audit Logs | ${auditor} | ${auditId}`,
+    type: ChannelType.PublicThread,
+  });
+
+  await auditThread.send({
     content: interaction.user.toString(),
     embeds: [auditEmbed],
     components: [
       new ActionRowBuilder().addComponents(auditRatingMenu),
       new ActionRowBuilder().addComponents(auditFinishButton),
     ],
-  });
-
-  const auditThread = await auditMessage.startThread({
-    name: `Audit Logs | ${auditor} | ${auditId}`,
-    type: ChannelType.PublicThread,
   });
 
   await auditThread.send({
