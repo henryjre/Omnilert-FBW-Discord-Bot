@@ -77,11 +77,11 @@ module.exports = {
       auditCompletedChannelId
     );
 
-    const threadMsgs = await getAllUserMessages(interaction.message.thread);
+    const threadMsgs = await getAllUserMessages(interaction.channel);
 
     messageEmbed.data.fields.push({
       name: "Audit Logs",
-      value: interaction.message.thread.toString(),
+      value: interaction.channel.toString(),
     });
 
     if (!threadMsgs.length) {
@@ -119,8 +119,13 @@ module.exports = {
       embeds: [replyEmbed],
     });
 
-    await interaction.message.thread.setArchived(true);
-    await interaction.message.delete();
+    await interaction.channel.setArchived(true);
+    // Delete the thread starter message instead of the interaction message
+    const threadStarterMessage =
+      await interaction.channel.fetchStarterMessage();
+    if (threadStarterMessage) {
+      await threadStarterMessage.delete();
+    }
   },
 };
 
