@@ -4,7 +4,7 @@ const auditCompletedChannelId = "1423597979604095046";
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName("editVnrStatus")
+    .setName("edit_vnr_status")
     .setDescription("Edit the status of the violation notice"),
   pushToArray: false,
   async execute(messageEmbed, status, link, client) {

@@ -10,7 +10,6 @@ const {
 } = require("discord.js");
 
 const vnrRejectChannelId = "1424951606436434032";
-const auditCompletedChannelId = "1423597979604095046";
 
 module.exports = {
   data: {
@@ -110,7 +109,7 @@ module.exports = {
           });
 
         await client.commands
-          .get("editVnrStatus")
+          .get("edit_vnr_status")
           .execute(messageEmbed, "Rejected", vnrRejectMessage.url, client);
 
         await interaction.message.delete();

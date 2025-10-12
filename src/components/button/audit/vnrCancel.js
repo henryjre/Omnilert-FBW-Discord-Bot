@@ -37,7 +37,7 @@ module.exports = {
     }
 
     await client.commands
-      .get("editVnrStatus")
+      .get("edit_vnr_status")
       .execute(messageEmbed, "Cancelled", null, client);
 
     await interaction.channel.delete();

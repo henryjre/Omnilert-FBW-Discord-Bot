@@ -64,7 +64,7 @@ module.exports = {
     });
 
     await client.commands
-      .get("editVnrStatus")
+      .get("edit_vnr_status")
       .execute(messageEmbed, "Queued", vnrQueueMessage.url, client);
 
     const editedEmbed = new EmbedBuilder()
