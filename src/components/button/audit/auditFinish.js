@@ -52,10 +52,6 @@ module.exports = {
     const allEmbeds = interaction.message.embeds;
     const messageEmbed = allEmbeds[0];
 
-    const auditTitle = messageEmbed.data.description;
-    const auditIdMatch = auditTitle.match(/AUD-\d+/);
-    const auditId = auditIdMatch ? auditIdMatch[0] : "0000";
-
     messageEmbed.data.author = null;
 
     const notifyEmployeeButton = new ButtonBuilder()
@@ -105,6 +101,11 @@ module.exports = {
       });
     }
 
+    await interaction.message.edit({
+      embeds: allEmbeds,
+      components: [],
+    });
+
     await auditCompletedChannel.send({
       content: interaction.user.toString(),
       embeds: allEmbeds,
@@ -119,13 +120,14 @@ module.exports = {
       embeds: [replyEmbed],
     });
 
-    await interaction.channel.setArchived(true);
     // Delete the thread starter message instead of the interaction message
     const threadStarterMessage =
       await interaction.channel.fetchStarterMessage();
     if (threadStarterMessage) {
       await threadStarterMessage.delete();
     }
+
+    await interaction.channel.setArchived(true);
   },
 };
 
