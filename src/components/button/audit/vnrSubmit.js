@@ -7,6 +7,8 @@ const {
   StringSelectMenuBuilder,
 } = require("discord.js");
 
+const db = require("../../../sqliteConnection.js");
+
 const vnrQueueChannelId = "1424950819501113466";
 
 module.exports = {
@@ -38,14 +40,17 @@ module.exports = {
 
     const vnrQueueChannel = await client.channels.cache.get(vnrQueueChannelId);
 
+    const vnrId = getNextVnrId();
+    messageEmbed.data.description += ` | VN-${vnrId}`;
+
     const confirmVnrButton = new ButtonBuilder()
       .setCustomId("vnrConfirm")
-      .setLabel("Confirm VNR")
+      .setLabel("Confirm VN")
       .setStyle(ButtonStyle.Success);
 
     const rejectVnrButton = new ButtonBuilder()
       .setCustomId("vnrReject")
-      .setLabel("Reject VNR")
+      .setLabel("Reject VN")
       .setStyle(ButtonStyle.Danger);
 
     const buttonRow = new ActionRowBuilder().addComponents(
@@ -103,28 +108,36 @@ async function editVnrStatus(messageEmbed, status, link, client) {
   const auditMessageEmbed = auditMessage.embeds[0];
 
   const vnrStatusField = auditMessageEmbed.data.fields.find(
-    (f) => f.name === "VNR Status"
+    (f) => f.name === "Violation Notice Status"
   );
   const vnrLinkField = auditMessageEmbed.data.fields.find(
-    (f) => f.name === "VNR Link"
+    (f) => f.name === "Violation Notice Link"
   );
 
-  if (vnrStatusField && vnrLinkField) {
+  if (vnrStatusField) {
     vnrStatusField.value = status;
-    vnrLinkField.value = link;
   } else {
-    auditMessageEmbed.data.fields.push(
-      {
-        name: "Violation Notice Link",
-        value: link,
-      },
-      {
-        name: "Violation Notice Status",
-        value: status,
-      }
-    );
+    auditMessageEmbed.data.fields.push({
+      name: "Violation Notice Status",
+      value: status,
+    });
+  }
+
+  if (vnrLinkField) {
+    vnrLinkField.value = link || "No VN link found.";
+  } else {
+    auditMessageEmbed.data.fields.push({
+      name: "Violation Notice Link",
+      value: link || "No VN link found.",
+    });
   }
 
   await auditMessage.edit({ embeds: [auditMessageEmbed] });
   return;
+}
+
+function getNextVnrId() {
+  const result = db.prepare("INSERT INTO vnr_id_count DEFAULT VALUES").run();
+  const id = result.lastInsertRowid;
+  return id.toString().padStart(4, "0");
 }
