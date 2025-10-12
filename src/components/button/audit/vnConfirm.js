@@ -76,12 +76,12 @@ module.exports = {
     );
 
     const thread = await vnInquiriesAndDiscussionsChannel.threads.create({
-      name: `Violation Notice - ${vnrId} | AUD-${auditId}`,
+      name: `Violation Notice - ${vnrId} | ${auditId}`,
       type: ChannelType.PublicThread,
     });
 
     const newVnEmbed = EmbedBuilder.from(messageEmbed)
-      .setDescription(`## 🚫 VIOLATION NOTICE | VN-${vnrId}`)
+      .setDescription(`## 🚫 VIOLATION NOTICE | ${vnrId}`)
       .setFooter({
         text: `Confirmed By: ${confirmedBy}`,
       });
@@ -106,12 +106,9 @@ module.exports = {
       components: [issueVnrButtonRow],
     });
 
-    await editVnrStatus(
-      messageEmbed,
-      "Confirmed",
-      vnrThreadMessage.url,
-      client
-    );
+    await client.commands
+      .get("editVnrStatus")
+      .execute(messageEmbed, "Confirmed", vnrThreadMessage.url, client);
 
     const replyEmbed = new EmbedBuilder()
       .setDescription(
@@ -124,48 +121,3 @@ module.exports = {
     });
   },
 };
-
-async function editVnrStatus(messageEmbed, status, link, client) {
-  const auditMessageIdField = messageEmbed.data.fields.find(
-    (f) => f.name === "Audit Message ID"
-  );
-  const auditMessageId = auditMessageIdField.value;
-
-  const auditCompletedChannel = client.channels.cache.get(
-    auditCompletedChannelId
-  );
-
-  const auditMessage = await auditCompletedChannel.messages.fetch(
-    auditMessageId
-  );
-
-  const auditMessageEmbed = auditMessage.embeds[0];
-
-  const vnrStatusField = auditMessageEmbed.data.fields.find(
-    (f) => f.name === "Violation Notice Status"
-  );
-  const vnrLinkField = auditMessageEmbed.data.fields.find(
-    (f) => f.name === "Violation Notice Link"
-  );
-
-  if (vnrStatusField) {
-    vnrStatusField.value = status;
-  } else {
-    auditMessageEmbed.data.fields.push({
-      name: "Violation Notice Status",
-      value: status,
-    });
-  }
-
-  if (vnrLinkField) {
-    vnrLinkField.value = link || "No VN link found.";
-  } else {
-    auditMessageEmbed.data.fields.push({
-      name: "Violation Notice Link",
-      value: link || "No VN link found.",
-    });
-  }
-
-  await auditMessage.edit({ embeds: [auditMessageEmbed] });
-  return;
-}

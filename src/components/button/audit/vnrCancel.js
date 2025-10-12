@@ -36,54 +36,10 @@ module.exports = {
       });
     }
 
-    await editVnrStatus(messageEmbed, "Cancelled", client, "");
+    await client.commands
+      .get("editVnrStatus")
+      .execute(messageEmbed, "Cancelled", null, client);
 
     await interaction.channel.delete();
   },
 };
-
-async function editVnrStatus(messageEmbed, status, link, client) {
-  const auditCompletedChannelId = "1423597979604095046";
-  const auditMessageIdField = messageEmbed.data.fields.find(
-    (f) => f.name === "Audit Message ID"
-  );
-  const auditMessageId = auditMessageIdField.value;
-
-  const auditCompletedChannel = client.channels.cache.get(
-    auditCompletedChannelId
-  );
-
-  const auditMessage = await auditCompletedChannel.messages.fetch(
-    auditMessageId
-  );
-
-  const auditMessageEmbed = auditMessage.embeds[0];
-
-  const vnrStatusField = auditMessageEmbed.data.fields.find(
-    (f) => f.name === "Violation Notice Status"
-  );
-  const vnrLinkField = auditMessageEmbed.data.fields.find(
-    (f) => f.name === "Violation Notice Link"
-  );
-
-  if (vnrStatusField) {
-    vnrStatusField.value = status;
-  } else {
-    auditMessageEmbed.data.fields.push({
-      name: "Violation Notice Status",
-      value: status,
-    });
-  }
-
-  if (vnrLinkField) {
-    vnrLinkField.value = link || "No VN link found.";
-  } else {
-    auditMessageEmbed.data.fields.push({
-      name: "Violation Notice Link",
-      value: link || "No VN link found.",
-    });
-  }
-
-  await auditMessage.edit({ embeds: [auditMessageEmbed] });
-  return;
-}
