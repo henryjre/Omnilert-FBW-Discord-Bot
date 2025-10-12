@@ -37,4 +37,10 @@ db.exec(`
   )
 `);
 
+db.exec(`
+    CREATE TABLE IF NOT EXISTS vnr_id_count (
+      id INTEGER PRIMARY KEY AUTOINCREMENT
+    )
+  `);
+
 module.exports = db;
