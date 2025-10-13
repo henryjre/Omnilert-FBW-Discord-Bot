@@ -102,13 +102,14 @@ module.exports = {
     );
 
     const vnrThreadMessage = await thread.send({
+      content: `${interaction.user.toString()}`,
       embeds: [newVnEmbed],
       components: [issueVnrButtonRow],
     });
 
     await client.commands
       .get("edit_vnr_status")
-      .execute(messageEmbed, "Confirmed", vnrThreadMessage.url, client);
+      .execute(messageEmbed, "🟢 Confirmed", vnrThreadMessage.url, client);
 
     const replyEmbed = new EmbedBuilder()
       .setDescription(
