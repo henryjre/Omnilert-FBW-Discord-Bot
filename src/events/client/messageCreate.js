@@ -53,7 +53,12 @@ module.exports = {
           .execute(message, thread, client);
       }
 
-      if (thread.name.includes("Signatories Request")) {
+      const pdfImageProofTypes = [
+        "Signatories Request",
+        "Violation Notice Issuance",
+      ];
+
+      if (pdfImageProofTypes.some((type) => thread.name.includes(type))) {
         return await client.events
           .get("signatoriesRequestAttachment")
           .execute(message, thread, client);
