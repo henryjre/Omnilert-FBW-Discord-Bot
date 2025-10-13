@@ -23,11 +23,29 @@ module.exports = {
     const originalMessage = await thread.fetchStarterMessage();
 
     const messageEmbed = originalMessage.embeds[0];
+
     const authorField = messageEmbed.data.fields.find(
       (field) => field.name === "Prepared By"
     );
 
-    if (!authorField.value.includes(interactedUser.id)) return;
+    if (!authorField) {
+      const mentionedUser = message.mentions?.users?.first() || null;
+      const mentionedRole = message.mentions?.roles?.first() || null;
+
+      if (mentionedUser) {
+        const isNotMentionedUser = message.author.id !== mentionedUser.id;
+        if (isNotMentionedUser) return;
+      }
+
+      if (mentionedRole) {
+        const doesNotHaveRole = !message.member.roles.cache.has(
+          mentionedRole.id
+        );
+        if (doesNotHaveRole) return;
+      }
+    } else {
+      if (!authorField.value.includes(interactedUser.id)) return;
+    }
 
     // Image Attachment Handling
     if (mediaAttachments.size > 0) {
