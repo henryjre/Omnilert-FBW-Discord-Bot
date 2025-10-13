@@ -59,13 +59,14 @@ module.exports = {
     );
 
     const vnrQueueMessage = await vnrQueueChannel.send({
+      // content: `<@&1314815153421680640>`,
       embeds: [messageEmbed],
       components: [buttonRow],
     });
 
     await client.commands
       .get("edit_vnr_status")
-      .execute(messageEmbed, "Queued", vnrQueueMessage.url, client);
+      .execute(messageEmbed, "🟠 Queued", vnrQueueMessage.url, client);
 
     const editedEmbed = new EmbedBuilder()
       .setDescription(
