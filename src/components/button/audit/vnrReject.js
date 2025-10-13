@@ -110,7 +110,7 @@ module.exports = {
 
         await client.commands
           .get("edit_vnr_status")
-          .execute(messageEmbed, "Rejected", vnrRejectMessage.url, client);
+          .execute(messageEmbed, "🔴 Rejected", vnrRejectMessage.url, client);
 
         await interaction.message.delete();
 
