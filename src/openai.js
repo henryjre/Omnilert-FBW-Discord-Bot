@@ -11,7 +11,7 @@ async function analyzeAudit(messages) {
     .join("\n");
 
   const userPrompt = `
-Write an audit report based on the following obervations and comments. Make it as detailed as possible. The summary will serve as the official report to be read by the audited employee, so use plain and easily understandable English that can be understood by high school students. No high fallutin words. Maintain a clear tone and write in the third-person perspective. Do not make the tone neutral—if there are positive or negative comments in the logs, present them as positive or negative accordingly. Do not exceed 1024 characters. Do not include any title.
+Write an audit report based on the following obervations and comments. Make it as detailed as possible. The summary will serve as the official report to be read by the audited employee, so use plain and easily understandable English that can be understood by high school students. No high fallutin words. Maintain a clear tone and write in the third-person perspective. Do not make the tone neutral—if there are positive or negative comments in the logs, present them as positive or negative accordingly. Limit to only 1024 characters. Do not include any title.
 
 Audit logs:
 ${transcript}
