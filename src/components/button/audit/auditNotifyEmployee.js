@@ -11,12 +11,12 @@ const moment = require('moment-timezone');
 const employeeNotificationChannelId = '1347592755706200155';
 const auditingRoleId = '1428232349417607269';
 
-const { createAuditSalaryAttachment } = require('../../../odooRpc.js');
+const { createAuditSalaryAttachment, storeAuditRating } = require('../../../odooRpc.js');
 const auditRates = require('../../../config/audit_rates.json');
 
 module.exports = {
   data: {
-    name: `auditNotifyEmployee`
+    name: `auditNotifyEmployeee`
   },
   async execute(interaction, client) {
     const mentionedUser = interaction.message.mentions?.users?.first() || null;
@@ -101,19 +101,20 @@ module.exports = {
 
     const notifyEmployeeButtonRow = new ActionRowBuilder().addComponents(vnrButton);
 
-    await employeeNotificationChannel.send({
-      content: mentionableEmployee,
-      embeds: allEmbeds,
-      components: [buttonRow]
-    });
+    // await employeeNotificationChannel.send({
+    //   content: mentionableEmployee,
+    //   embeds: allEmbeds,
+    //   components: [buttonRow]
+    // });
 
-    await interaction.message.edit({ content: '', components: [notifyEmployeeButtonRow] });
+    // await interaction.message.edit({ content: '', components: [notifyEmployeeButtonRow] });
 
     if (interaction.member.roles.cache.has(auditingRoleId)) {
       await interaction.member.roles.remove(auditingRoleId);
     }
 
-    await createSQAASalaryAttachment(interaction);
+    // await createSQAASalaryAttachment(interaction);
+    await odooStoreAuditRating(interaction);
 
     const replyEmbed = new EmbedBuilder()
       .setDescription(`Employee has been notified successfully.`)
@@ -159,4 +160,50 @@ function getRandomRate(orderAmount, auditType = 'SQAA') {
   }
 
   throw new Error(`No rate found for order amount: ${orderAmount}`);
+}
+
+async function odooStoreAuditRating(interaction) {
+  const messageEmbed = interaction.message.embeds[0];
+
+  const ratingField = messageEmbed.fields.find((f) => f.name === 'Audit Rating');
+  const rating = ratingField.value;
+  const ratingInteger = starsToNumber(rating);
+
+  const text = messageEmbed.data.description;
+  const parts = text.trim().split(' ');
+  const cleanedDescription = parts.slice(2).join(' ');
+
+  const auditedDiscord = messageEmbed.fields.find((f) => f.name === 'Cashier Discord User');
+  const auditedDiscordId = extractUserId(auditedDiscord.value);
+
+  if (!auditedDiscordId) {
+    throw new Error('Audited Discord ID not found');
+  }
+
+  const auditDate = moment().tz('Asia/Manila').format('MM-DD-YYYY h:mm A');
+
+  const payload = {
+    description: cleanedDescription,
+    rating: ratingInteger,
+    audit_date: auditDate,
+    discord_id: auditedDiscordId
+  };
+
+  console.log(payload);
+
+  await storeAuditRating(payload);
+
+  function starsToNumber(input) {
+    if (!input || typeof input !== 'string') return 0;
+
+    // Match both standard and variant star emojis
+    const starRegex = /[\u2B50\uFE0F\u2605\u2728\uD83C\uDF1F]/g;
+
+    const matches = input.match(starRegex);
+    return matches ? matches.length : 0;
+  }
+
+  function extractUserId(mention) {
+    return mention.match(/<@!?(\d+)>/)?.[1] ?? null;
+  }
 }
