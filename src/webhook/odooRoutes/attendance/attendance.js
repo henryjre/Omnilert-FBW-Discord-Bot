@@ -429,8 +429,6 @@ const employeeCheckOut = async (req, res) => {
       x_shift_end
     } = req.body;
 
-    console.log(req.body);
-
     if (!x_planning_slot_id)
       throw new Error('Planning slot not found for employee: ' + x_employee_contact_name);
 
@@ -446,6 +444,8 @@ const employeeCheckOut = async (req, res) => {
     const shift_end_time = formatTime(x_shift_end);
     const cumulative_minutes = formatMinutes(x_cumulative_minutes);
 
+    const messageContent = `${shift_start_date} | ${x_planning_slot_id}`;
+
     const attendanceLogChannel = client.channels.cache.get(department.scheduleChannel);
     if (!attendanceLogChannel) throw new Error('Attendance channel not found');
 
@@ -453,9 +453,7 @@ const employeeCheckOut = async (req, res) => {
       limit: 100
     });
 
-    const attendanceMessage = channelMessages.find((msg) =>
-      msg.content.includes(x_planning_slot_id)
-    );
+    const attendanceMessage = channelMessages.find((msg) => msg.content.includes(messageContent));
     if (!attendanceMessage) throw new Error('Attendance message not found');
 
     let messageEmbed = attendanceMessage.embeds[0];
