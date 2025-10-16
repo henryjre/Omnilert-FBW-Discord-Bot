@@ -1,41 +1,39 @@
-const axios = require("axios");
+const axios = require('axios');
 
-const rpcUrl = "https://omnilert.odoo.com/jsonrpc";
-const webhookUrl = "https://omnilert.odoo.com/web/hook/";
+const rpcUrl = 'https://omnilert.odoo.com/jsonrpc';
+const webhookUrl = 'https://omnilert.odoo.com/web/hook/';
 
 async function jsonRpc(method, params) {
   const data = {
-    jsonrpc: "2.0",
+    jsonrpc: '2.0',
     method: method,
     params: params,
-    id: Math.floor(Math.random() * 1000000000),
+    id: Math.floor(Math.random() * 1000000000)
   };
 
   try {
     const response = await axios.post(rpcUrl, data, {
       headers: {
-        "Content-Type": "application/json",
-      },
+        'Content-Type': 'application/json'
+      }
     });
 
     if (response.data.error) {
       // Log the full error response
-      console.error("Odoo Error Details:", {
+      console.error('Odoo Error Details:', {
         message: response.data.error.message,
         code: response.data.error.code,
-        data: response.data.error.data,
+        data: response.data.error.data
       });
-      throw new Error(
-        `Odoo Server Error: ${JSON.stringify(response.data.error)}`
-      );
+      throw new Error(`Odoo Server Error: ${JSON.stringify(response.data.error)}`);
     }
 
     return response.data;
   } catch (error) {
-    console.error("Error in jsonRpc:", error);
+    console.error('Error in jsonRpc:', error);
     // If it's an axios error, log the response data if available
     if (error.response) {
-      console.error("Response data:", error.response.data);
+      console.error('Response data:', error.response.data);
     }
     throw error;
   }
@@ -44,21 +42,17 @@ async function jsonRpc(method, params) {
 async function odooLogin() {
   try {
     // Log in to the given database
-    const uid = await jsonRpc("call", {
-      service: "common",
-      method: "login",
-      args: [
-        process.env.odoo_db,
-        process.env.odoo_username,
-        process.env.odoo_password,
-      ],
+    const uid = await jsonRpc('call', {
+      service: 'common',
+      method: 'login',
+      args: [process.env.odoo_db, process.env.odoo_username, process.env.odoo_password]
     });
 
-    console.log("Logged in as UID:", uid.result);
+    console.log('Logged in as UID:', uid.result);
 
     return uid.result;
   } catch (error) {
-    console.error("Login Error:", error);
+    console.error('Login Error:', error);
     return null;
   }
 }
@@ -71,41 +65,41 @@ async function odooLogin() {
  */
 async function searchActiveAttendance(discordId, attendanceId) {
   // Validate input
-  if (!discordId || typeof discordId !== "string") {
-    throw new Error("Invalid Discord ID format");
+  if (!discordId || typeof discordId !== 'string') {
+    throw new Error('Invalid Discord ID format');
   }
 
   try {
     // Build domain with optional attendance ID exclusion
     const domain = [
-      ["x_discord_id", "=", discordId],
-      ["check_out", "=", false],
+      ['x_discord_id', '=', discordId],
+      ['check_out', '=', false]
     ];
 
     if (attendanceId) {
-      domain.push(["id", "!=", attendanceId]);
+      domain.push(['id', '!=', attendanceId]);
     }
 
     // Search for active attendance directly using x_discord_id
-    const activeAttendance = await jsonRpc("call", {
-      service: "object",
-      method: "execute_kw",
+    const activeAttendance = await jsonRpc('call', {
+      service: 'object',
+      method: 'execute_kw',
       args: [
         process.env.odoo_db,
         2,
         process.env.odoo_password,
-        "hr.attendance",
-        "search_read",
+        'hr.attendance',
+        'search_read',
         [domain],
         {
-          fields: ["id", "employee_id", "check_in", "in_mode", "x_discord_id"],
-        },
-      ],
+          fields: ['id', 'employee_id', 'check_in', 'in_mode', 'x_discord_id']
+        }
+      ]
     });
 
     return activeAttendance.result;
   } catch (error) {
-    console.error("Error searching active attendance:", error);
+    console.error('Error searching active attendance:', error);
     throw error;
   }
 }
@@ -120,45 +114,43 @@ async function getAttendanceById(attendanceId) {
   // Validate & parse attendanceId
   const parsedId = Number(attendanceId);
   if (isNaN(parsedId) || parsedId <= 0) {
-    throw new Error("Invalid attendance ID format");
+    throw new Error('Invalid attendance ID format');
   }
 
   try {
-    const domain = [["id", "=", parsedId]];
+    const domain = [['id', '=', parsedId]];
 
     // Search for the attendance record
-    const attendance = await jsonRpc("call", {
-      service: "object",
-      method: "execute_kw",
+    const attendance = await jsonRpc('call', {
+      service: 'object',
+      method: 'execute_kw',
       args: [
         process.env.odoo_db,
         2,
         process.env.odoo_password,
-        "hr.attendance",
-        "search_read",
+        'hr.attendance',
+        'search_read',
         [domain],
         {
           fields: [
-            "id",
-            "employee_id",
-            "check_in",
-            "check_out",
-            "x_discord_id",
-            "x_cumulative_minutes",
-            "x_shift_start",
-            "x_shift_end",
-            "x_employee_contact_name",
+            'id',
+            'employee_id',
+            'check_in',
+            'check_out',
+            'x_discord_id',
+            'x_cumulative_minutes',
+            'x_shift_start',
+            'x_shift_end',
+            'x_employee_contact_name'
           ],
-          limit: 1, // Only one record should match an ID
-        },
-      ],
+          limit: 1 // Only one record should match an ID
+        }
+      ]
     });
 
-    return attendance.result && attendance.result.length > 0
-      ? attendance.result[0]
-      : null; // null if no record found
+    return attendance.result && attendance.result.length > 0 ? attendance.result[0] : null; // null if no record found
   } catch (error) {
-    console.error("Error fetching attendance by ID:", error);
+    console.error('Error fetching attendance by ID:', error);
     throw error;
   }
 }
@@ -173,13 +165,13 @@ async function getAttendanceById(attendanceId) {
 async function callOdooAttendanceWebhook(action, url, discordId) {
   // Format current date/time as 'YYYY-MM-DD HH:MM:SS'
   const now = new Date();
-  const formattedDate = now.toISOString().replace("T", " ").split(".")[0];
+  const formattedDate = now.toISOString().replace('T', ' ').split('.')[0];
 
   // Build payload based on action
   let payload = { x_discord_id: discordId };
-  if (action === "checkin") {
+  if (action === 'checkin') {
     payload.check_in = formattedDate;
-  } else if (action === "checkout") {
+  } else if (action === 'checkout') {
     payload.check_out = formattedDate;
   } else {
     throw new Error('Invalid action. Use "checkin" or "checkout".');
@@ -187,14 +179,11 @@ async function callOdooAttendanceWebhook(action, url, discordId) {
 
   try {
     const response = await axios.post(url, payload, {
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' }
     });
     return response.data;
   } catch (error) {
-    console.error(
-      "Error calling Odoo webhook:",
-      error.response?.data || error.message
-    );
+    console.error('Error calling Odoo webhook:', error.response?.data || error.message);
     throw error;
   }
 }
@@ -204,21 +193,18 @@ async function updateClosingPcfBalance(balance, company_id, session_id, type) {
     amount: balance,
     session_id: session_id,
     company_id: company_id,
-    type: type,
+    type: type
   };
 
   const url = webhookUrl + process.env.ODOO_CLOSING_PCF_SECRET;
 
   try {
     const response = await axios.post(url, payload, {
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' }
     });
     return response.data;
   } catch (error) {
-    console.error(
-      "Error calling Odoo webhook:",
-      error.response?.data || error.message
-    );
+    console.error('Error calling Odoo webhook:', error.response?.data || error.message);
     throw error;
   }
 }
@@ -236,6 +222,7 @@ async function callOdooWebhook(webhookType, payload) {
     edit_attendance: process.env.ODOO_EDIT_ATTENDANCE_SECRET,
     work_entry: process.env.ODOO_WORK_ENTRY_SECRET, // Fixed typo in original (sECRET)
     planning_shift: process.env.ODOO_CREATE_PLANNING_SHIFT_SECRET,
+    audit_salary_attachment: process.env.ODOO_CREATE_AUDIT_SALARY_ATTACHMENT_SECRET
   };
 
   // Validate webhook type
@@ -247,7 +234,7 @@ async function callOdooWebhook(webhookType, payload) {
 
   try {
     const response = await axios.post(url, payload, {
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' }
     });
     return response.data;
   } catch (error) {
@@ -261,15 +248,19 @@ async function callOdooWebhook(webhookType, payload) {
 
 // Wrapper functions to maintain backward compatibility
 async function editAttendance(payload) {
-  return callOdooWebhook("edit_attendance", payload);
+  return callOdooWebhook('edit_attendance', payload);
 }
 
 async function createWorkEntry(payload) {
-  return callOdooWebhook("work_entry", payload);
+  return callOdooWebhook('work_entry', payload);
 }
 
 async function createPlanningShift(payload) {
-  return callOdooWebhook("planning_shift", payload);
+  return callOdooWebhook('planning_shift', payload);
+}
+
+async function createAuditSalaryAttachment(payload) {
+  return callOdooWebhook('audit_salary_attachment', payload);
 }
 
 module.exports = {
@@ -282,4 +273,5 @@ module.exports = {
   getAttendanceById,
   createWorkEntry,
   createPlanningShift,
+  createAuditSalaryAttachment
 };
