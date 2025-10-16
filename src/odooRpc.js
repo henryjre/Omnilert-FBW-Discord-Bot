@@ -222,7 +222,8 @@ async function callOdooWebhook(webhookType, payload) {
     edit_attendance: process.env.ODOO_EDIT_ATTENDANCE_SECRET,
     work_entry: process.env.ODOO_WORK_ENTRY_SECRET, // Fixed typo in original (sECRET)
     planning_shift: process.env.ODOO_CREATE_PLANNING_SHIFT_SECRET,
-    audit_salary_attachment: process.env.ODOO_CREATE_AUDIT_SALARY_ATTACHMENT_SECRET
+    audit_salary_attachment: process.env.ODOO_CREATE_AUDIT_SALARY_ATTACHMENT_SECRET,
+    store_audit_rating: process.env.ODOO_STORE_AUDIT_RATING_SECRET
   };
 
   // Validate webhook type
@@ -263,6 +264,10 @@ async function createAuditSalaryAttachment(payload) {
   return callOdooWebhook('audit_salary_attachment', payload);
 }
 
+async function storeAuditRating(payload) {
+  return callOdooWebhook('store_audit_rating', payload);
+}
+
 module.exports = {
   jsonRpc,
   odooLogin,
@@ -273,5 +278,6 @@ module.exports = {
   getAttendanceById,
   createWorkEntry,
   createPlanningShift,
-  createAuditSalaryAttachment
+  createAuditSalaryAttachment,
+  storeAuditRating
 };
