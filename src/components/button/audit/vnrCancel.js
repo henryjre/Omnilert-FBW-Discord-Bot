@@ -4,14 +4,14 @@ const {
   ButtonBuilder,
   ActionRowBuilder,
   ButtonStyle,
-  StringSelectMenuBuilder,
-} = require("discord.js");
+  StringSelectMenuBuilder
+} = require('discord.js');
 
-const vnrQueueChannelId = "1424950819501113466";
+const vnrQueueChannelId = '1424950819501113466';
 
 module.exports = {
   data: {
-    name: `cancelVnr`,
+    name: `cancelVnr`
   },
   async execute(interaction, client) {
     await interaction.deferUpdate();
@@ -23,23 +23,37 @@ module.exports = {
 
     if (
       !messageEmbed.data.fields
-        .find((f) => f.name === "Requested By")
+        .find((f) => f.name === 'Requested By')
         .value.includes(interaction.user.id)
     ) {
-      replyEmbed
-        .setDescription(`🔴 ERROR: You cannot use this button.`)
-        .setColor("Red");
+      replyEmbed.setDescription(`🔴 ERROR: You cannot use this button.`).setColor('Red');
 
       return await interaction.followUp({
         embeds: [replyEmbed],
-        flags: MessageFlags.Ephemeral,
+        flags: MessageFlags.Ephemeral
       });
     }
 
-    await client.commands
-      .get("edit_vnr_status")
-      .execute(messageEmbed, "🔴 Cancelled", null, client);
+    const messageComponents = interaction.message.components;
+
+    const submitButtonRow = messageComponents.find((row) =>
+      row.components.some((component) => component.customId === 'auditVnr')
+    );
+
+    if (submitButtonRow) {
+      const submitButtonIndex = submitButtonRow.components.findIndex(
+        (component) => component.customId === 'auditVnr'
+      );
+
+      if (submitButtonIndex !== -1) {
+        submitButtonRow.components[submitButtonIndex].data.disabled = false;
+      }
+    }
+
+    await interaction.message.edit({
+      components: messageComponents
+    });
 
     await interaction.channel.delete();
-  },
+  }
 };
