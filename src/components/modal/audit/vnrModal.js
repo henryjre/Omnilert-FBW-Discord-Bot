@@ -7,16 +7,16 @@ const {
   ChannelType,
   StringSelectMenuBuilder,
   MessageFlags,
-  StringSelectMenuOptionBuilder,
-} = require("discord.js");
-const moment = require("moment-timezone");
+  StringSelectMenuOptionBuilder
+} = require('discord.js');
+const moment = require('moment-timezone');
 
-const { analyzeAudit } = require("../../../openai.js");
+const { analyzeAudit } = require('../../../openai.js');
 
-const vnrQueueChannelId = "1424950819501113466";
+const vnrQueueChannelId = '1424950819501113466';
 
 module.exports = {
-  data: { name: "vnrModal" },
+  data: { name: 'vnrModal' },
 
   /**
    * @param {import('discord.js').ButtonInteraction} interaction
@@ -31,29 +31,25 @@ module.exports = {
       if (isNotMentionedUser) {
         return await interaction.reply({
           content: `🔴 ERROR: You cannot use this button.`,
-          flags: MessageFlags.Ephemeral,
+          flags: MessageFlags.Ephemeral
         });
       }
     }
 
     if (mentionedRole) {
-      const doesNotHaveRole = !interaction.member.roles.cache.has(
-        mentionedRole.id
-      );
+      const doesNotHaveRole = !interaction.member.roles.cache.has(mentionedRole.id);
       if (doesNotHaveRole) {
         return await interaction.reply({
           content: `🔴 ERROR: You cannot use this button.`,
-          flags: MessageFlags.Ephemeral,
+          flags: MessageFlags.Ephemeral
         });
       }
     }
 
     await interaction.deferUpdate();
 
-    const messageId = interaction.fields.getTextInputValue("messageIdInput");
-    const vnrDescription = interaction.fields.getTextInputValue(
-      "vnrDescriptionInput"
-    );
+    const messageId = interaction.fields.getTextInputValue('messageIdInput');
+    const vnrDescription = interaction.fields.getTextInputValue('vnrDescriptionInput');
 
     // Get the original message using the messageId from the current channel
     let originalMessage;
@@ -62,7 +58,7 @@ module.exports = {
     } catch (error) {
       return await interaction.editReply({
         content: `🔴 ERROR: Could not find the original message with ID: ${messageId}. Please try again.`,
-        flags: MessageFlags.Ephemeral,
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -71,93 +67,80 @@ module.exports = {
 
     const auditTitle = messageEmbed.data.description;
     const auditIdMatch = auditTitle.match(/AUD-\d+/);
-    const auditId = auditIdMatch ? auditIdMatch[0] : "0000";
+    const auditId = auditIdMatch ? auditIdMatch[0] : '0000';
 
-    const serviceCrewRole = await interaction.guild.roles.cache.get(
-      "1314413960274907238"
-    );
+    const serviceCrewRole = await interaction.guild.roles.cache.get('1314413960274907238');
 
-    const membersWithServiceCrewRoles = await serviceCrewRole.members.map(
-      (m) => {
-        const name = m.nickname.replace(/^[🔴🟢]\s*/, "") || m.user.username;
-        return new StringSelectMenuOptionBuilder()
-          .setLabel(name)
-          .setValue(m.user.id);
-      }
-    );
+    const membersWithServiceCrewRoles = await serviceCrewRole.members.map((m) => {
+      const name = m.nickname.replace(/^[🔴🟢]\s*/, '') || m.user.username;
+      return new StringSelectMenuOptionBuilder().setLabel(name).setValue(m.user.id);
+    });
 
     const serviceCrewMenu = new StringSelectMenuBuilder()
-      .setCustomId("vnrServiceCrewMenu")
+      .setCustomId('vnrServiceCrewMenu')
       .setOptions(membersWithServiceCrewRoles)
       .setMinValues(1)
       .setMaxValues(membersWithServiceCrewRoles.length)
-      .setPlaceholder("Select employees involved in this VNR.");
+      .setPlaceholder('Select employees involved in this VNR.');
 
     const submitVnrButton = new ButtonBuilder()
-      .setCustomId("submitVnr")
-      .setLabel("Submit")
+      .setCustomId('submitVnr')
+      .setLabel('Submit')
       .setDisabled(true)
       .setStyle(ButtonStyle.Success);
 
     const cancelVnrButton = new ButtonBuilder()
-      .setCustomId("cancelVnr")
-      .setLabel("Cancel")
+      .setCustomId('cancelVnr')
+      .setLabel('Cancel')
       .setStyle(ButtonStyle.Danger);
 
-    const vnrButtonRow = new ActionRowBuilder().addComponents(
-      submitVnrButton,
-      cancelVnrButton
-    );
+    const vnrButtonRow = new ActionRowBuilder().addComponents(submitVnrButton, cancelVnrButton);
 
-    const serviceCrewMenuRow = new ActionRowBuilder().addComponents(
-      serviceCrewMenu
-    );
+    const serviceCrewMenuRow = new ActionRowBuilder().addComponents(serviceCrewMenu);
 
     const messageComponents = interaction.message.components;
 
-    if (messageEmbed.data.description) {
-      const submitButtonRow = messageComponents.find((row) =>
-        row.components.some((component) => component.customId === "auditVnr")
+    const submitButtonRow = messageComponents.find((row) =>
+      row.components.some((component) => component.customId === 'auditVnr')
+    );
+
+    if (submitButtonRow) {
+      const submitButtonIndex = submitButtonRow.components.findIndex(
+        (component) => component.customId === 'auditVnr'
       );
 
-      if (submitButtonRow) {
-        const submitButtonIndex = submitButtonRow.components.findIndex(
-          (component) => component.customId === "auditVnr"
-        );
-
-        if (submitButtonIndex !== -1) {
-          submitButtonRow.components[submitButtonIndex].data.disabled = true;
-        }
+      if (submitButtonIndex !== -1) {
+        submitButtonRow.components[submitButtonIndex].data.disabled = true;
       }
     }
 
     await interaction.message.edit({
-      components: messageComponents,
+      components: messageComponents
     });
 
     const vnrEmbed = new EmbedBuilder()
-      .setDescription("## ⌛ VIOLATION NOTICE REQUEST")
-      .setColor("DarkRed")
+      .setDescription('## ⌛ VIOLATION NOTICE REQUEST')
+      .setColor('DarkRed')
       .addFields(
         {
-          name: "Requested By",
-          value: interaction.user.toString(),
+          name: 'Requested By',
+          value: interaction.user.toString()
         },
         {
-          name: "Employees Involved",
-          value: "Select employees involved on the menu below",
+          name: 'Employees Involved',
+          value: 'Select employees involved on the menu below'
         },
         {
-          name: "Audit Link",
-          value: originalMessage.url,
+          name: 'Audit Link',
+          value: originalMessage.url
         },
         {
-          name: "Audit Message ID",
-          value: interaction.message.id,
+          name: 'Audit Message ID',
+          value: interaction.message.id
         },
         {
-          name: "Description",
-          value: vnrDescription,
+          name: 'Description',
+          value: vnrDescription
         }
       )
       .setTimestamp(Date.now());
@@ -165,14 +148,12 @@ module.exports = {
     const vnrThread = await interaction.message.startThread({
       name: `VN Request - ${auditId}`,
       type: ChannelType.PublicThread,
-      autoArchiveDuration: 60,
+      autoArchiveDuration: 60
     });
 
-    const threadCreatedMessages = await interaction.channel.messages
-      .fetch()
-      .then((messages) => {
-        return messages.filter((m) => m.author.bot && m.type === 18);
-      });
+    const threadCreatedMessages = await interaction.channel.messages.fetch().then((messages) => {
+      return messages.filter((m) => m.author.bot && m.type === 18);
+    });
 
     const lastThreadCreated = await threadCreatedMessages.find(
       (t) => t.reference.channelId === vnrThread.id
@@ -185,9 +166,9 @@ module.exports = {
     await vnrThread.send({
       content: `${interaction.user.toString()}, select employees or submit this VN Request.`,
       embeds: [vnrEmbed],
-      components: [serviceCrewMenuRow, vnrButtonRow],
+      components: [serviceCrewMenuRow, vnrButtonRow]
     });
-  },
+  }
 };
 
 /**
