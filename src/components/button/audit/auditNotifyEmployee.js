@@ -7,10 +7,13 @@ const {
 } = require('discord.js');
 
 const employeeNotificationChannelId = '1347592755706200155';
+const auditingRoleId = '1428232349417607269';
+
+const { createAuditSalaryAttachment } = require('../../../odooRpc.js');
 
 module.exports = {
   data: {
-    name: `auditNotifyEmployee`
+    name: `auditNotifyEmployeee`
   },
   async execute(interaction, client) {
     const mentionedUser = interaction.message.mentions?.users?.first() || null;
@@ -95,13 +98,19 @@ module.exports = {
 
     const notifyEmployeeButtonRow = new ActionRowBuilder().addComponents(vnrButton);
 
-    await employeeNotificationChannel.send({
-      content: mentionableEmployee,
-      embeds: allEmbeds,
-      components: [buttonRow]
-    });
+    // await employeeNotificationChannel.send({
+    //   content: mentionableEmployee,
+    //   embeds: allEmbeds,
+    //   components: [buttonRow]
+    // });
 
-    await interaction.message.edit({ content: '', components: [notifyEmployeeButtonRow] });
+    // await interaction.message.edit({ content: '', components: [notifyEmployeeButtonRow] });
+
+    if (interaction.member.roles.cache.has(auditingRoleId)) {
+      await interaction.member.roles.remove(auditingRoleId);
+    }
+
+    await createSQAASalaryAttachment(interaction);
 
     const replyEmbed = new EmbedBuilder()
       .setDescription(`Employee has been notified successfully.`)
@@ -109,3 +118,39 @@ module.exports = {
     await interaction.editReply({ embeds: [replyEmbed] });
   }
 };
+
+async function createSQAASalaryAttachment(interaction) {
+  const messageEmbed = interaction.message.embeds[0];
+
+  const orderAmountText = messageEmbed.data.fields.find((f) => f.name === 'Order Total').value;
+  const orderAmount = parseFloat(orderAmountText.replace(/[^\d.]/g, ''));
+
+  const startDate = moment().tz('Asia/Manila').format('YYYY-MM-DD');
+
+  const rate = getRandomRate(orderAmount, 'SQAA');
+
+  const salaryAttachmentPayload = {
+    discord_id: interaction.user.id,
+    description: messageEmbed.data.description.replace(/^[\p{Emoji}]?\s*/u, ''),
+    type_id: 19, // Other Income
+    type_code: 'OTHERINC',
+    start_date: startDate,
+    amount: rate
+  };
+  console.log(salaryAttachmentPayload);
+
+  await createAuditSalaryAttachment(salaryAttachmentPayload);
+}
+
+function getRandomRate(orderAmount, auditType = 'SQAA') {
+  const auditConfig = auditRates.find((audit) => audit.code === auditType);
+
+  for (const rate of auditConfig.rates) {
+    if (orderAmount >= rate.order_amount_min && orderAmount <= rate.order_amount_max) {
+      const randomRate = Math.random() * (rate.rate_max - rate.rate_min) + rate.rate_min;
+      return Math.round(randomRate * 100) / 100; // Round to 2 decimal places
+    }
+  }
+
+  throw new Error(`No rate found for order amount: ${orderAmount}`);
+}
