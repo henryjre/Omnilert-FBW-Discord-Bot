@@ -52,7 +52,7 @@ module.exports = {
 
       const errorEmbed = new EmbedBuilder();
 
-      if (!hasAuditorRole || !hasManagementRole) {
+      if (!hasAuditorRole && !hasManagementRole) {
         errorEmbed.setDescription(`🔴 ERROR: You cannot use this button.`);
         if (interaction.deferred && !interaction.replied) {
           await interaction.editReply({ embeds: [errorEmbed] });
