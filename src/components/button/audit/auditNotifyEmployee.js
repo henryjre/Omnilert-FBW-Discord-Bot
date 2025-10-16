@@ -16,7 +16,7 @@ const auditRates = require('../../../config/audit_rates.json');
 
 module.exports = {
   data: {
-    name: `auditNotifyEmployeee`
+    name: `auditNotifyEmployee`
   },
   async execute(interaction, client) {
     const mentionedUser = interaction.message.mentions?.users?.first() || null;
@@ -113,7 +113,7 @@ module.exports = {
       await interaction.member.roles.remove(auditingRoleId);
     }
 
-    // await createSQAASalaryAttachment(interaction);
+    await createSQAASalaryAttachment(interaction);
     await odooStoreAuditRating(interaction);
 
     const replyEmbed = new EmbedBuilder()
@@ -180,7 +180,7 @@ async function odooStoreAuditRating(interaction) {
     throw new Error('Audited Discord ID not found');
   }
 
-  const auditDate = moment().tz('Asia/Manila').format('MM-DD-YYYY h:mm A');
+  const auditDate = moment().tz('Asia/Manila').utc().format('YYYY-MM-DD HH:mm:ss');
 
   const payload = {
     description: cleanedDescription,
@@ -188,8 +188,6 @@ async function odooStoreAuditRating(interaction) {
     audit_date: auditDate,
     discord_id: auditedDiscordId
   };
-
-  console.log(payload);
 
   await storeAuditRating(payload);
 
