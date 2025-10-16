@@ -6,14 +6,17 @@ const {
   EmbedBuilder
 } = require('discord.js');
 
+const moment = require('moment-timezone');
+
 const employeeNotificationChannelId = '1347592755706200155';
 const auditingRoleId = '1428232349417607269';
 
 const { createAuditSalaryAttachment } = require('../../../odooRpc.js');
+const auditRates = require('../../../config/audit_rates.json');
 
 module.exports = {
   data: {
-    name: `auditNotifyEmployeee`
+    name: `auditNotifyEmployee`
   },
   async execute(interaction, client) {
     const mentionedUser = interaction.message.mentions?.users?.first() || null;
@@ -98,13 +101,13 @@ module.exports = {
 
     const notifyEmployeeButtonRow = new ActionRowBuilder().addComponents(vnrButton);
 
-    // await employeeNotificationChannel.send({
-    //   content: mentionableEmployee,
-    //   embeds: allEmbeds,
-    //   components: [buttonRow]
-    // });
+    await employeeNotificationChannel.send({
+      content: mentionableEmployee,
+      embeds: allEmbeds,
+      components: [buttonRow]
+    });
 
-    // await interaction.message.edit({ content: '', components: [notifyEmployeeButtonRow] });
+    await interaction.message.edit({ content: '', components: [notifyEmployeeButtonRow] });
 
     if (interaction.member.roles.cache.has(auditingRoleId)) {
       await interaction.member.roles.remove(auditingRoleId);
@@ -129,15 +132,18 @@ async function createSQAASalaryAttachment(interaction) {
 
   const rate = getRandomRate(orderAmount, 'SQAA');
 
+  const text = messageEmbed.data.description;
+  const parts = text.trim().split(' ');
+  const cleanedDescription = parts.slice(2).join(' ');
+
   const salaryAttachmentPayload = {
     discord_id: interaction.user.id,
-    description: messageEmbed.data.description.replace(/^[\p{Emoji}]?\s*/u, ''),
+    description: cleanedDescription,
     type_id: 19, // Other Income
     type_code: 'OTHERINC',
     start_date: startDate,
     amount: rate
   };
-  console.log(salaryAttachmentPayload);
 
   await createAuditSalaryAttachment(salaryAttachmentPayload);
 }
