@@ -1,27 +1,25 @@
-const { MessageFlags, EmbedBuilder } = require("discord.js");
+const { MessageFlags, EmbedBuilder } = require('discord.js');
 
 module.exports = {
   data: {
-    name: `acknowledgePenalty`,
+    name: `acknowledgePenalty`
   },
   async execute(interaction, client) {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     let messageEmbed = interaction.message.embeds[0];
 
-    const ownerField = messageEmbed.data.fields.find(
-      (f) => f.name === "Penalized Employee" || f.name === "Customer"
-    );
+    const ownerFieldNames = ['Penalized Employee', 'Customer', 'Cashier Discord User'];
+
+    const ownerField = messageEmbed.data.fields.find((f) => ownerFieldNames.includes(f.name));
 
     const replyEmbed = new EmbedBuilder();
 
     if (!ownerField.value.includes(interaction.user.id)) {
-      replyEmbed
-        .setDescription(`🔴 ERROR: You cannot use this button.`)
-        .setColor("Red");
+      replyEmbed.setDescription(`🔴 ERROR: You cannot use this button.`).setColor('Red');
 
       return await interaction.editReply({
         embeds: [replyEmbed],
-        flags: MessageFlags.Ephemeral,
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -29,7 +27,7 @@ module.exports = {
       messageEmbed.data.footer.text += `\n\u200b\nNOTIFICATION ACKNOWLEDGED`;
     } else {
       messageEmbed.data.footer = {
-        text: `NOTIFICATION ACKNOWLEDGED`,
+        text: `NOTIFICATION ACKNOWLEDGED`
       };
     }
 
@@ -37,10 +35,8 @@ module.exports = {
 
     await interaction.message.edit({ embeds: [messageEmbed], components: [] });
 
-    replyEmbed
-      .setDescription(`You have acknowledged this request`)
-      .setColor("Green");
+    replyEmbed.setDescription(`You have acknowledged this request`).setColor('Green');
 
     await interaction.editReply({ embeds: [replyEmbed] });
-  },
+  }
 };
