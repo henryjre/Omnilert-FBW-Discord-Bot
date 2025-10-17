@@ -205,6 +205,7 @@ async function runForWinner(interaction, client) {
     const department = departments.find((d) => d.name === branch);
 
     const departmentRole = await interaction.guild.roles.cache.get(department.role);
+
     const membersWithDepartmentRoles = await departmentRole.members.map((m) => {
       const name = m.nickname.replace(/^[🔴🟢]\s*/, '') || m.user.username;
       return new StringSelectMenuOptionBuilder().setLabel(name).setValue(m.user.id);
