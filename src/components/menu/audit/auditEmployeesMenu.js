@@ -55,24 +55,46 @@ module.exports = {
       });
     }
 
+    const auditRatingMenu = new StringSelectMenuBuilder()
+      .setCustomId('auditRatingMenu')
+      .setOptions([
+        { label: '⭐', value: '⭐' },
+        { label: '⭐⭐', value: '⭐⭐' },
+        { label: '⭐⭐⭐', value: '⭐⭐⭐' },
+        { label: '⭐⭐⭐⭐', value: '⭐⭐⭐⭐' },
+        { label: '⭐⭐⭐⭐⭐', value: '⭐⭐⭐⭐⭐' }
+      ])
+      .setMinValues(1)
+      .setMaxValues(1)
+      .setPlaceholder('Select audit rating.');
+
+    const auditRatingMenuRow = new ActionRowBuilder().addComponents(auditRatingMenu);
+
+    const auditFinishButton = new ButtonBuilder()
+      .setCustomId('auditFinish')
+      .setLabel('Submit')
+      .setDisabled(true)
+      .setStyle(ButtonStyle.Success);
+
+    const auditFinishButtonRow = new ActionRowBuilder().addComponents(auditFinishButton);
+
     const messageComponents = interaction.message.components;
+    // Check if the messageComponents already has the rating menu and finish button
+    const hasRatingMenu = messageComponents.some((row) =>
+      row.components.some((component) => component.customId === 'auditRatingMenu')
+    );
 
-    const auditRatingField = messageEmbed.data.fields.find((f) => f.name === 'Audit Rating');
+    const hasFinishButton = messageComponents.some((row) =>
+      row.components.some((component) => component.customId === 'auditFinish')
+    );
 
-    if (auditRatingField) {
-      const submitButtonRow = messageComponents.find((row) =>
-        row.components.some((component) => component.customId === 'auditFinish')
-      );
+    // If the components don't exist yet, add them
+    if (!hasRatingMenu) {
+      messageComponents.push(auditRatingMenuRow);
+    }
 
-      if (submitButtonRow) {
-        const submitButtonIndex = submitButtonRow.components.findIndex(
-          (component) => component.customId === 'auditFinish'
-        );
-
-        if (submitButtonIndex !== -1) {
-          submitButtonRow.components[submitButtonIndex].data.disabled = false;
-        }
-      }
+    if (!hasFinishButton) {
+      messageComponents.push(auditFinishButtonRow);
     }
 
     try {
