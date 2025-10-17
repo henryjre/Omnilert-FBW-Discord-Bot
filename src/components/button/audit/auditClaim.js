@@ -6,6 +6,7 @@ const {
   ActionRowBuilder,
   ChannelType,
   StringSelectMenuBuilder,
+  StringSelectMenuOptionBuilder,
   MessageFlags
 } = require('discord.js');
 const AsyncLock = require('async-lock');
@@ -13,6 +14,7 @@ const AsyncLock = require('async-lock');
 const { getNextAuditId } = require('../../../sqliteFunctions.js');
 const { cleanAuditDescription } = require('../../../functions/code/repeatFunctions.js');
 
+const departments = require('../../../config/departments.json');
 const auditTypes = require('../../../config/audit_types.json');
 
 const lock = new AsyncLock();
@@ -196,6 +198,28 @@ async function runForWinner(interaction, client) {
     .setMaxValues(1)
     .setPlaceholder('Select audit rating.');
 
+  let departmentMenuRow;
+  if (messageEmbed.data.description.includes('Store CCTV Spot Audit')) {
+    const branchField = auditEmbed.data.fields.find((f) => f.name === 'Branch');
+    const branch = branchField.value;
+    const department = departments.find((d) => d.name === branch);
+
+    const departmentRole = await interaction.guild.roles.cache.get(department.role);
+    const membersWithDepartmentRoles = await departmentRole.members.map((m) => {
+      const name = m.nickname.replace(/^[🔴🟢]\s*/, '') || m.user.username;
+      return new StringSelectMenuOptionBuilder().setLabel(name).setValue(m.user.id);
+    });
+
+    const departmentMenu = new StringSelectMenuBuilder()
+      .setCustomId('vnrServiceCrewMenu')
+      .setOptions(membersWithDepartmentRoles)
+      .setMinValues(1)
+      .setMaxValues(membersWithDepartmentRoles.length)
+      .setPlaceholder('Select employees involved in this Spot Audit.');
+
+    departmentMenuRow = new ActionRowBuilder().addComponents(departmentMenu);
+  }
+
   const auditFinishButton = new ButtonBuilder()
     .setCustomId('auditFinish')
     .setLabel('Submit')
@@ -207,14 +231,20 @@ async function runForWinner(interaction, client) {
     type: ChannelType.PublicThread
   });
 
-  await auditThread.send({
+  const auditThreadPayload = {
     content: interaction.user.toString(),
     embeds: [auditEmbed],
     components: [
       new ActionRowBuilder().addComponents(auditRatingMenu),
       new ActionRowBuilder().addComponents(auditFinishButton)
     ]
-  });
+  };
+
+  if (departmentMenuRow) {
+    auditThreadPayload.components.push(departmentMenuRow);
+  }
+
+  await auditThread.send(auditThreadPayload);
 
   await auditThread.send({
     content: `${interaction.user.toString()}, please provide the audit details here.`
