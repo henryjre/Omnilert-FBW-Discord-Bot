@@ -13,7 +13,6 @@ const auditingRoleId = '1428232349417607269';
 
 const { createAuditSalaryAttachment, storeAuditRating } = require('../../../odooRpc.js');
 const { cleanAuditDescription } = require('../../../functions/code/repeatFunctions.js');
-const auditRates = require('../../../config/audit_rates.json');
 const auditTypes = require('../../../config/audit_types.json');
 
 module.exports = {
@@ -150,7 +149,12 @@ async function createSalaryAttachment(interaction) {
       const orderAmountText = messageEmbed.data.fields.find((f) => f.name === 'Order Total').value;
       const orderAmount = parseFloat(orderAmountText.replace(/[^\d.]/g, ''));
 
-      const rate = getRandomRate(orderAmount, 'SQAA');
+      const ratePayload = {
+        auditType: auditType,
+        orderAmount: orderAmount
+      };
+
+      const rate = getRandomRate(ratePayload);
       payload.amount = rate;
       break;
     case 'SCSA':
@@ -166,17 +170,29 @@ async function createSalaryAttachment(interaction) {
   await createAuditSalaryAttachment(payload);
 }
 
-function getRandomRate(orderAmount, auditType = 'SQAA') {
-  const auditConfig = auditRates.find((audit) => audit.code === auditType);
-
-  for (const rate of auditConfig.rates) {
-    if (orderAmount >= rate.order_amount_min && orderAmount <= rate.order_amount_max) {
-      const randomRate = Math.random() * (rate.rate_max - rate.rate_min) + rate.rate_min;
-      return Math.round(randomRate * 100) / 100; // Round to 2 decimal places
-    }
+function getRandomRate(payload) {
+  const auditType = payload.auditType;
+  switch (auditType.code) {
+    case 'SQAA':
+      for (const rate of auditType.rates) {
+        if (
+          payload.orderAmount >= rate.order_amount_min &&
+          payload.orderAmount <= rate.order_amount_max
+        ) {
+          const randomRate = Math.random() * (rate.rate_max - rate.rate_min) + rate.rate_min;
+          return Math.round(randomRate * 100) / 100; // Round to 2 decimal places
+        }
+      }
+      break;
+    case 'SCSA':
+      break;
+    case 'PSA':
+      break;
+    case 'DTA':
+      break;
+    default:
+      throw new Error('Audit type not found');
   }
-
-  throw new Error(`No rate found for order amount: ${orderAmount}`);
 }
 
 async function odooStoreAuditRating(interaction) {
