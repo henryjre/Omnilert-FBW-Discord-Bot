@@ -203,7 +203,7 @@ async function runForWinner(interaction, client) {
     .setStyle(ButtonStyle.Success);
 
   const auditThread = await auditProcessingChannel.threads.create({
-    name: `Audit Logs | ${auditor} | ${auditId}`,
+    name: `Audit Logs | ${auditor} | ${auditType.code}-${auditId}`,
     type: ChannelType.PublicThread
   });
 
