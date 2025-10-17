@@ -198,6 +198,8 @@ async function runForWinner(interaction, client) {
     .setMaxValues(1)
     .setPlaceholder('Select audit rating.');
 
+  const auditRatingMenuRow = new ActionRowBuilder().addComponents(auditRatingMenu);
+
   let departmentMenuRow;
   if (auditEmbed.data.description.includes('Store CCTV Spot Audit')) {
     const branchField = auditEmbed.data.fields.find((f) => f.name === 'Branch');
@@ -212,11 +214,11 @@ async function runForWinner(interaction, client) {
     });
 
     const departmentMenu = new StringSelectMenuBuilder()
-      .setCustomId('vnrServiceCrewMenu')
+      .setCustomId('auditEmployeesMenu')
       .setOptions(membersWithDepartmentRoles)
       .setMinValues(1)
       .setMaxValues(membersWithDepartmentRoles.length)
-      .setPlaceholder('Select employees involved in this Spot Audit.');
+      .setPlaceholder('Select employees on duty in this Spot Audit.');
 
     departmentMenuRow = new ActionRowBuilder().addComponents(departmentMenu);
   }
@@ -227,6 +229,8 @@ async function runForWinner(interaction, client) {
     .setDisabled(true)
     .setStyle(ButtonStyle.Success);
 
+  const auditFinishButtonRow = new ActionRowBuilder().addComponents(auditFinishButton);
+
   const auditThread = await auditProcessingChannel.threads.create({
     name: `Audit Logs | ${auditor} | ${auditType.code}-${auditId}`,
     type: ChannelType.PublicThread
@@ -235,15 +239,14 @@ async function runForWinner(interaction, client) {
   const auditThreadPayload = {
     content: interaction.user.toString(),
     embeds: [auditEmbed],
-    components: [
-      new ActionRowBuilder().addComponents(auditRatingMenu),
-      new ActionRowBuilder().addComponents(auditFinishButton)
-    ]
+    components: []
   };
 
   if (departmentMenuRow) {
     auditThreadPayload.components.push(departmentMenuRow);
   }
+
+  auditThreadPayload.components.push(auditFinishButtonRow, auditRatingMenuRow);
 
   await auditThread.send(auditThreadPayload);
 
