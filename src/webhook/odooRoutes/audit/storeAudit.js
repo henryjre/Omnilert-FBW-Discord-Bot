@@ -14,16 +14,6 @@ const storeCCTVSpotAudit = async (req, res) => {
   }
 
   try {
-    const departmentRole = await client.guilds.cache
-      .get(process.env.prodGuildId)
-      .roles.cache.get(department.role);
-
-    const membersWithDepartmentRoles = departmentRole.members
-      .map((m) => {
-        return m.user.toString();
-      })
-      .join('\n');
-
     const storeAuditEmbed = new EmbedBuilder()
       .setDescription(`## 📺 Store CCTV Spot Audit`)
       .setTimestamp(new Date())
@@ -36,10 +26,6 @@ const storeCCTVSpotAudit = async (req, res) => {
         {
           name: 'Branch',
           value: department.name
-        },
-        {
-          name: 'Employees on Duty',
-          value: membersWithDepartmentRoles || 'No employees on duty'
         }
       );
 
