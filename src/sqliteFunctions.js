@@ -8,10 +8,6 @@ const getNextAuditId = db.transaction((code) => {
         RETURNING last_id;
       `);
 
-  const insertAudit = db.prepare(`
-        INSERT INTO audits(code, audit_id) VALUES (?, ?);
-      `);
-
   const row = upsertCounter.get(code);
   return row.last_id;
 });
