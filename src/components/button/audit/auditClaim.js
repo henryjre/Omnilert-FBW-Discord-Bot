@@ -199,7 +199,7 @@ async function runForWinner(interaction, client) {
     .setPlaceholder('Select audit rating.');
 
   let departmentMenuRow;
-  if (messageEmbed.data.description.includes('Store CCTV Spot Audit')) {
+  if (auditEmbed.data.description.includes('Store CCTV Spot Audit')) {
     const branchField = auditEmbed.data.fields.find((f) => f.name === 'Branch');
     const branch = branchField.value;
     const department = departments.find((d) => d.name === branch);
