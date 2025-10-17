@@ -244,9 +244,9 @@ async function runForWinner(interaction, client) {
 
   if (departmentMenuRow) {
     auditThreadPayload.components.push(departmentMenuRow);
+  } else {
+    auditThreadPayload.components.push(auditRatingMenuRow, auditFinishButtonRow);
   }
-
-  auditThreadPayload.components.push(auditFinishButtonRow, auditRatingMenuRow);
 
   await auditThread.send(auditThreadPayload);
 
