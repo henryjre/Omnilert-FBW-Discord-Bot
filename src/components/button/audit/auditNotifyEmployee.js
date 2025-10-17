@@ -18,7 +18,7 @@ const auditTypes = require('../../../config/audit_types.json');
 
 module.exports = {
   data: {
-    name: `auditNotifyEmployee`
+    name: `auditNotifyEmployeee`
   },
   async execute(interaction, client) {
     const mentionedUser = interaction.message.mentions?.users?.first() || null;
