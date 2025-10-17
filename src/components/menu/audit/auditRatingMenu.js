@@ -69,23 +69,17 @@ module.exports = {
 
       const messageComponents = interaction.message.components;
 
-      const employeesOnDutyField = messageEmbed.data.fields.find(
-        (field) => field.name === 'Employees On Duty'
+      const submitButtonRow = messageComponents.find((row) =>
+        row.components.some((component) => component.customId === 'auditFinish')
       );
 
-      if (employeesOnDutyField) {
-        const submitButtonRow = messageComponents.find((row) =>
-          row.components.some((component) => component.customId === 'auditFinish')
+      if (submitButtonRow) {
+        const submitButtonIndex = submitButtonRow.components.findIndex(
+          (component) => component.customId === 'auditFinish'
         );
 
-        if (submitButtonRow) {
-          const submitButtonIndex = submitButtonRow.components.findIndex(
-            (component) => component.customId === 'auditFinish'
-          );
-
-          if (submitButtonIndex !== -1) {
-            submitButtonRow.components[submitButtonIndex].data.disabled = false;
-          }
+        if (submitButtonIndex !== -1) {
+          submitButtonRow.components[submitButtonIndex].data.disabled = false;
         }
       }
 
