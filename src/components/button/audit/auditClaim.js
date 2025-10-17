@@ -171,7 +171,8 @@ async function runForWinner(interaction, client) {
     throw new Error('Audit type not found');
   }
 
-  const auditId = getNextAuditId(auditType.code);
+  const auditIdRaw = getNextAuditId(auditType.code);
+  const auditId = auditIdRaw.toString().padStart(4, '0');
 
   const auditTitle = `${auditEmbed.data?.description} | ${auditType.code}-${auditId}`;
 
