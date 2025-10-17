@@ -13,7 +13,7 @@ const AsyncLock = require('async-lock');
 const { getNextAuditId } = require('../../../sqliteFunctions.js');
 const { cleanAuditDescription } = require('../../../functions/code/repeatFunctions.js');
 
-const auditTypes = require('../../../config/audit_type.json');
+const auditTypes = require('../../../config/audit_types.json');
 
 const lock = new AsyncLock();
 const CLAIM_TTL_MS = 3 * 60 * 1000;
