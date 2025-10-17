@@ -2,21 +2,53 @@
   {
     "id": 1,
     "name": "Service QA Audit",
-    "code": "SQAA"
+    "code": "SQAA",
+    "rates": [
+      {
+        "order_amount_min": 0,
+        "order_amount_max": 149.99,
+        "rate_min": 7,
+        "rate_max": 10
+      },
+      {
+        "order_amount_min": 150,
+        "order_amount_max": 399.99,
+        "rate_min": 10,
+        "rate_max": 15
+      },
+      {
+        "order_amount_min": 400,
+        "order_amount_max": 799.99,
+        "rate_min": 15,
+        "rate_max": 25
+      },
+      {
+        "order_amount_min": 800,
+        "order_amount_max": 999999,
+        "rate_min": 25,
+        "rate_max": 30
+      }
+    ]
   },
   {
     "id": 2,
     "name": "Store CCTV Spot Audit",
-    "code": "SCSA"
+    "code": "SCSA",
+    "rates": {
+      "rate_min": 15,
+      "rate_max": 30
+    }
   },
   {
     "id": 3,
     "name": "POS Session Audits",
-    "code": "PSA"
+    "code": "PSA",
+    "rates": null
   },
   {
     "id": 4,
     "name": "Daily Task Audit",
-    "code": "DTA"
+    "code": "DTA",
+    "rates": null
   }
 ]
