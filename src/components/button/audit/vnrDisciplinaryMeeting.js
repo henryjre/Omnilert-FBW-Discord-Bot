@@ -10,7 +10,10 @@ const {
 const vnrDisciplinaryMeetingChannelId = '1424951422746759199';
 const auditCompletedChannelId = '1423597979604095046';
 
-const { editVnrStatus } = require('../../../functions/code/repeatFunctions.js');
+const {
+  editVnrStatus,
+  cleanAuditDescription
+} = require('../../../functions/code/repeatFunctions.js');
 
 module.exports = {
   data: {
@@ -64,12 +67,11 @@ module.exports = {
     const auditMessageEmbed = auditMessage.embeds[0];
 
     const auditTitle = auditMessageEmbed.data.description;
-    const auditIdMatch = auditTitle.match(/AUD-\d+/);
+    const { audit_id } = cleanAuditDescription(auditTitle);
 
     const vnrTitle = messageEmbed.data.description;
     const vnrIdMatch = vnrTitle.match(/VN-\d+/);
 
-    const auditId = auditIdMatch ? auditIdMatch[0] : '0000';
     const vnrId = vnrIdMatch ? vnrIdMatch[0] : '0000';
 
     const vnrDisciplinaryMeetingChannel = await client.channels.cache.get(
@@ -77,7 +79,7 @@ module.exports = {
     );
 
     const thread = await vnrDisciplinaryMeetingChannel.threads.create({
-      name: `Disciplinary Meeting - ${vnrId} | ${auditId}`,
+      name: `Disciplinary Meeting - ${vnrId} | ${audit_id}`,
       type: ChannelType.PublicThread
     });
 

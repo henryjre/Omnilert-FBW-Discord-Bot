@@ -9,9 +9,8 @@ const {
   MessageFlags,
   StringSelectMenuOptionBuilder
 } = require('discord.js');
-const moment = require('moment-timezone');
 
-const { analyzeAudit } = require('../../../openai.js');
+const { cleanAuditDescription } = require('../../../functions/code/repeatFunctions.js');
 
 const vnrQueueChannelId = '1424950819501113466';
 
@@ -66,8 +65,7 @@ module.exports = {
     const messageEmbed = allEmbeds[0];
 
     const auditTitle = messageEmbed.data.description;
-    const auditIdMatch = auditTitle.match(/AUD-\d+/);
-    const auditId = auditIdMatch ? auditIdMatch[0] : '0000';
+    const { audit_id } = cleanAuditDescription(auditTitle);
 
     const serviceCrewRole = await interaction.guild.roles.cache.get('1314413960274907238');
 
@@ -146,7 +144,7 @@ module.exports = {
       .setTimestamp(Date.now());
 
     const vnrThread = await interaction.message.startThread({
-      name: `VN Request - ${auditId}`,
+      name: `VN Request - ${audit_id}`,
       type: ChannelType.PublicThread,
       autoArchiveDuration: 60
     });

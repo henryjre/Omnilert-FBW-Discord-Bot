@@ -10,7 +10,10 @@ const {
 const vnrIssuanceChannelId = '1424951192517214228';
 const auditCompletedChannelId = '1423597979604095046';
 
-const { editVnrStatus } = require('../../../functions/code/repeatFunctions.js');
+const {
+  editVnrStatus,
+  cleanAuditDescription
+} = require('../../../functions/code/repeatFunctions.js');
 
 module.exports = {
   data: {
@@ -56,12 +59,11 @@ module.exports = {
     const auditMessageEmbed = auditMessage.embeds[0];
 
     const auditTitle = auditMessageEmbed.data.description;
-    const auditIdMatch = auditTitle.match(/AUD-\d+/);
+    const { audit_id } = cleanAuditDescription(auditTitle);
 
     const vnrTitle = messageEmbed.data.description;
     const vnrIdMatch = vnrTitle.match(/VN-\d+/);
 
-    const auditId = auditIdMatch ? auditIdMatch[0] : '0000';
     const vnrId = vnrIdMatch ? vnrIdMatch[0] : '0000';
 
     const vnrIssuanceChannel = await client.channels.cache.get(vnrIssuanceChannelId);
@@ -86,7 +88,7 @@ module.exports = {
     });
 
     const thread = await vnrThreadMessage.startThread({
-      name: `Violation Notice Issuance - ${vnrId} | ${auditId}`,
+      name: `Violation Notice Issuance - ${vnrId} | ${audit_id}`,
       type: ChannelType.PublicThread
     });
 
