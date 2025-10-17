@@ -1,5 +1,5 @@
-const Database = require("better-sqlite3");
-const db = new Database("./src/sqlite.db");
+const Database = require('better-sqlite3');
+const db = new Database('./src/sqlite.db');
 
 db.exec(`
     CREATE TABLE IF NOT EXISTS CASE_REPORTS (
@@ -33,8 +33,9 @@ db.exec(`
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS audit_id_count (
-    id INTEGER PRIMARY KEY AUTOINCREMENT
-  )
+    code TEXT PRIMARY KEY,
+    last_id INTEGER NOT NULL
+  );
 `);
 
 db.exec(`
