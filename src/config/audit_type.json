@@ -3,5 +3,20 @@
     "id": 1,
     "name": "Service QA Audit",
     "code": "SQAA"
+  },
+  {
+    "id": 2,
+    "name": "Store CCTV Spot Audit",
+    "code": "SCSA"
+  },
+  {
+    "id": 3,
+    "name": "POS Session Audits",
+    "code": "PSA"
+  },
+  {
+    "id": 4,
+    "name": "Daily Task Audit",
+    "code": "DTA"
   }
 ]
