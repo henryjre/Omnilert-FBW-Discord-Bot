@@ -4,14 +4,14 @@ const {
   EmbedBuilder,
   ModalBuilder,
   TextInputBuilder,
-  TextInputStyle,
-} = require("discord.js");
+  TextInputStyle
+} = require('discord.js');
 
-const managementRole = "1314413671245676685";
+const managementRole = '1314413671245676685';
 
 module.exports = {
   data: {
-    name: `posAuditRatingMenu`,
+    name: `posAuditRatingMenu`
   },
   async execute(interaction, client) {
     let allEmbeds = interaction.message.embeds;
@@ -20,13 +20,11 @@ module.exports = {
     const replyEmbed = new EmbedBuilder();
 
     if (!interaction.member.roles.cache.has(managementRole)) {
-      replyEmbed
-        .setDescription(`🔴 ERROR: You cannot use this button.`)
-        .setColor("Red");
+      replyEmbed.setDescription(`🔴 ERROR: You cannot use this button.`).setColor('Red');
 
       return await interaction.reply({
         embeds: [replyEmbed],
-        flags: MessageFlags.Ephemeral,
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -52,30 +50,34 @@ module.exports = {
     const modalResponse = await interaction.awaitModalSubmit({
       filter: async (i) => {
         const f =
-          i.customId === `posAuditRating_${interaction.id}` &&
-          i.user.id === interaction.user.id;
+          i.customId === `posAuditRating_${interaction.id}` && i.user.id === interaction.user.id;
 
         if (f) {
           await i.deferUpdate();
         }
         return f;
       },
-      time: 300000,
+      time: 300000
     });
 
     try {
       if (modalResponse.isModalSubmit()) {
-        const details = modalResponse.fields.getTextInputValue("ratingReason");
+        const details = modalResponse.fields.getTextInputValue('ratingReason');
 
-        const auditor = interaction.member.nickname.replace(/^[🔴🟢]\s*/, "");
+        const auditor = interaction.member.nickname.replace(/^[🔴🟢]\s*/, '');
+
+        messageEmbed.data.fields.push({
+          name: 'Audit Rating',
+          value: rating
+        });
 
         if (messageEmbed.data.footer) {
           messageEmbed.data.footer = {
-            text: `${messageEmbed.data.footer.text}\n\u200b\nAudited By: ${auditor}\nRating: ${rating}\nRating Reason: ${details}`,
+            text: `${messageEmbed.data.footer.text}\n\u200b\nAudited By: ${auditor}\nRating Reason: ${details}`
           };
         } else {
           messageEmbed.data.footer = {
-            text: `Audited By: ${auditor}\nRating: ${rating}\nRating Reason: ${details}`,
+            text: `Audited By: ${auditor}\nRating Reason: ${details}`
           };
         }
 
@@ -83,30 +85,30 @@ module.exports = {
 
         await interaction.message.edit({
           embeds: allEmbeds,
-          components: [],
+          components: []
         });
       }
     } catch (error) {
       console.log(error);
       await modalResponse.followUp({
         content: `🔴 ERROR: An error occurred while creating your signature request. Please try again.`,
-        flags: MessageFlags.Ephemeral,
+        flags: MessageFlags.Ephemeral
       });
     }
-  },
+  }
 };
 
 function getColor(rating) {
   switch (rating) {
-    case "⭐":
+    case '⭐':
       return 0x1a1f73;
-    case "⭐⭐":
+    case '⭐⭐':
       return 0x2e38a3;
-    case "⭐⭐⭐":
+    case '⭐⭐⭐':
       return 0x434ecf;
-    case "⭐⭐⭐⭐":
+    case '⭐⭐⭐⭐':
       return 0x4e5be8;
-    case "⭐⭐⭐⭐⭐":
+    case '⭐⭐⭐⭐⭐':
       return 0x5865f2;
     default:
       return 0x5865f2;
