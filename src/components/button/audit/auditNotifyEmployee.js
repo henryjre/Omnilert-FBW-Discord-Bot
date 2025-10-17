@@ -137,7 +137,7 @@ async function createSalaryAttachment(interaction) {
 
   let payload = {
     discord_id: interaction.user.id,
-    description: audit_type,
+    description: `${audit_type} | ${audit_id}`,
     type_id: 19, // Other Income
     type_code: 'OTHERINC',
     start_date: startDate,
