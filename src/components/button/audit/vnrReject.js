@@ -6,14 +6,16 @@ const {
   ButtonBuilder,
   ModalBuilder,
   TextInputBuilder,
-  TextInputStyle,
-} = require("discord.js");
+  TextInputStyle
+} = require('discord.js');
 
-const vnrRejectChannelId = "1424951606436434032";
+const vnrRejectChannelId = '1424951606436434032';
+
+const { editVnrStatus } = require('../../../functions/code/repeatFunctions.js');
 
 module.exports = {
   data: {
-    name: `vnrReject`,
+    name: `vnrReject`
   },
   async execute(interaction, client) {
     const mentionedUser = interaction.message.mentions?.users?.first() || null;
@@ -24,19 +26,17 @@ module.exports = {
       if (isNotMentionedUser) {
         return await interaction.reply({
           content: `🔴 ERROR: You cannot use this button.`,
-          flags: MessageFlags.Ephemeral,
+          flags: MessageFlags.Ephemeral
         });
       }
     }
 
     if (mentionedRole) {
-      const doesNotHaveRole = !interaction.member.roles.cache.has(
-        mentionedRole.id
-      );
+      const doesNotHaveRole = !interaction.member.roles.cache.has(mentionedRole.id);
       if (doesNotHaveRole) {
         return await interaction.reply({
           content: `🔴 ERROR: You cannot use this button.`,
-          flags: MessageFlags.Ephemeral,
+          flags: MessageFlags.Ephemeral
         });
       }
     }
@@ -45,7 +45,7 @@ module.exports = {
     const messageEmbed = allEmbeds[0];
 
     const mentionableMembers = messageEmbed.data.fields.find((f) =>
-      f.name.includes("Requested By")
+      f.name.includes('Requested By')
     );
 
     const modal = new ModalBuilder()
@@ -66,26 +66,20 @@ module.exports = {
 
     const modalResponse = await interaction.awaitModalSubmit({
       filter: async (i) => {
-        const f =
-          i.customId === `rejectVn_${interaction.id}` &&
-          i.user.id === interaction.user.id;
+        const f = i.customId === `rejectVn_${interaction.id}` && i.user.id === interaction.user.id;
 
         if (f) {
           await i.deferUpdate();
         }
         return f;
       },
-      time: 120000,
+      time: 120000
     });
 
     try {
       if (modalResponse.isModalSubmit()) {
-        const details =
-          modalResponse.fields.getTextInputValue("rejectVnReason");
-        const rejectedBy = interaction.member.nickname.replace(
-          /^[🔴🟢]\s*/,
-          ""
-        );
+        const details = modalResponse.fields.getTextInputValue('rejectVnReason');
+        const rejectedBy = interaction.member.nickname.replace(/^[🔴🟢]\s*/, '');
 
         if (details) {
           messageEmbed.data.description += `\n\u200b\nReason for Rejection:\n> *"${details}"*\n\u200b`;
@@ -95,22 +89,18 @@ module.exports = {
           messageEmbed.data.footer.text += `\nRejected By: ${rejectedBy}`;
         } else {
           messageEmbed.data.footer = {
-            text: `Rejected By: ${rejectedBy}`,
+            text: `Rejected By: ${rejectedBy}`
           };
         }
 
         messageEmbed.data.color = 15548997;
 
-        const vnrRejectMessage = await client.channels.cache
-          .get(vnrRejectChannelId)
-          .send({
-            content: mentionableMembers.value,
-            embeds: [messageEmbed],
-          });
+        const vnrRejectMessage = await client.channels.cache.get(vnrRejectChannelId).send({
+          content: mentionableMembers.value,
+          embeds: [messageEmbed]
+        });
 
-        await client.commands
-          .get("edit_vnr_status")
-          .execute(messageEmbed, "🔴 Rejected", vnrRejectMessage.url, client);
+        await editVnrStatus(messageEmbed, '🔴 Rejected', vnrRejectMessage.url, client);
 
         await interaction.message.delete();
 
@@ -118,8 +108,7 @@ module.exports = {
         if (interaction.channel.isThread()) {
           try {
             // Delete the starter message first
-            const starterMessage =
-              await interaction.channel.fetchStarterMessage();
+            const starterMessage = await interaction.channel.fetchStarterMessage();
             if (starterMessage) {
               await starterMessage.delete();
             }
@@ -127,10 +116,7 @@ module.exports = {
             // Then delete the thread itself
             await interaction.channel.delete();
           } catch (threadError) {
-            console.log(
-              "Error deleting thread or starter message:",
-              threadError
-            );
+            console.log('Error deleting thread or starter message:', threadError);
           }
         }
       }
@@ -138,8 +124,8 @@ module.exports = {
       console.log(error);
       await modalResponse.followUp({
         content: `🔴 ERROR: An error occurred while rejecting the violation notice. Please try again.`,
-        flags: MessageFlags.Ephemeral,
+        flags: MessageFlags.Ephemeral
       });
     }
-  },
+  }
 };

@@ -12,7 +12,9 @@ const employeeNotificationChannelId = '1347592755706200155';
 const auditingRoleId = '1428232349417607269';
 
 const { createAuditSalaryAttachment, storeAuditRating } = require('../../../odooRpc.js');
+const { cleanAuditDescription } = require('../../../functions/code/repeatFunctions.js');
 const auditRates = require('../../../config/audit_rates.json');
+const auditTypes = require('../../../config/audit_types.json');
 
 module.exports = {
   data: {
@@ -113,7 +115,7 @@ module.exports = {
       await interaction.member.roles.remove(auditingRoleId);
     }
 
-    await createSQAASalaryAttachment(interaction);
+    await createSalaryAttachment(interaction);
     await odooStoreAuditRating(interaction);
 
     const replyEmbed = new EmbedBuilder()
@@ -123,30 +125,45 @@ module.exports = {
   }
 };
 
-async function createSQAASalaryAttachment(interaction) {
+async function createSalaryAttachment(interaction) {
   const messageEmbed = interaction.message.embeds[0];
+  const { audit_type, audit_id } = cleanAuditDescription(messageEmbed.data.description);
+  const auditType = auditTypes.find((type) => type.name === audit_type);
 
-  const orderAmountText = messageEmbed.data.fields.find((f) => f.name === 'Order Total').value;
-  const orderAmount = parseFloat(orderAmountText.replace(/[^\d.]/g, ''));
+  if (!auditType) {
+    throw new Error('Audit type not found');
+  }
 
   const startDate = moment().tz('Asia/Manila').format('YYYY-MM-DD');
 
-  const rate = getRandomRate(orderAmount, 'SQAA');
-
-  const text = messageEmbed.data.description;
-  const parts = text.trim().split(' ');
-  const cleanedDescription = parts.slice(2).join(' ');
-
-  const salaryAttachmentPayload = {
+  let payload = {
     discord_id: interaction.user.id,
-    description: cleanedDescription,
+    description: audit_type,
     type_id: 19, // Other Income
     type_code: 'OTHERINC',
     start_date: startDate,
-    amount: rate
+    amount: 1
   };
 
-  await createAuditSalaryAttachment(salaryAttachmentPayload);
+  switch (auditType.code) {
+    case 'SQAA':
+      const orderAmountText = messageEmbed.data.fields.find((f) => f.name === 'Order Total').value;
+      const orderAmount = parseFloat(orderAmountText.replace(/[^\d.]/g, ''));
+
+      const rate = getRandomRate(orderAmount, 'SQAA');
+      payload.amount = rate;
+      break;
+    case 'SCSA':
+      break;
+    case 'PSA':
+      break;
+    case 'DTA':
+      break;
+    default:
+      throw new Error('Audit type not found');
+  }
+
+  await createAuditSalaryAttachment(payload);
 }
 
 function getRandomRate(orderAmount, auditType = 'SQAA') {
@@ -169,9 +186,11 @@ async function odooStoreAuditRating(interaction) {
   const rating = ratingField.value;
   const ratingInteger = starsToNumber(rating);
 
-  const text = messageEmbed.data.description;
-  const parts = text.trim().split(' ');
-  const cleanedDescription = parts.slice(2).join(' ');
+  const { audit_type, audit_id } = cleanAuditDescription(messageEmbed.data.description);
+  const auditType = auditTypes.find((type) => type.name === audit_type);
+  if (!auditType) {
+    throw new Error('Audit type not found');
+  }
 
   const auditedDiscord = messageEmbed.fields.find((f) => f.name === 'Cashier Discord User');
   const auditedDiscordId = extractUserId(auditedDiscord.value);
@@ -183,7 +202,9 @@ async function odooStoreAuditRating(interaction) {
   const auditDate = moment().tz('Asia/Manila').utc().format('YYYY-MM-DD HH:mm:ss');
 
   const payload = {
-    description: cleanedDescription,
+    description: audit_type,
+    audit_code: auditType.code,
+    audit_id: audit_id,
     rating: ratingInteger,
     audit_date: auditDate,
     discord_id: auditedDiscordId

@@ -4,14 +4,16 @@ const {
   ChannelType,
   ButtonBuilder,
   ButtonStyle,
-  EmbedBuilder,
-} = require("discord.js");
+  EmbedBuilder
+} = require('discord.js');
 
-const vnrCompletedChannelId = "1424951554204635237";
+const vnrCompletedChannelId = '1424951554204635237';
+
+const { editVnrStatus } = require('../../../functions/code/repeatFunctions.js');
 
 module.exports = {
   data: {
-    name: `vnrCompleted`,
+    name: `vnrCompleted`
   },
   async execute(interaction, client) {
     const mentionedUser = interaction.message.mentions?.users?.first() || null;
@@ -22,19 +24,17 @@ module.exports = {
       if (isNotMentionedUser) {
         return await interaction.reply({
           content: `🔴 ERROR: You cannot use this button.`,
-          flags: MessageFlags.Ephemeral,
+          flags: MessageFlags.Ephemeral
         });
       }
     }
 
     if (mentionedRole) {
-      const doesNotHaveRole = !interaction.member.roles.cache.has(
-        mentionedRole.id
-      );
+      const doesNotHaveRole = !interaction.member.roles.cache.has(mentionedRole.id);
       if (doesNotHaveRole) {
         return await interaction.reply({
           content: `🔴 ERROR: You cannot use this button.`,
-          flags: MessageFlags.Ephemeral,
+          flags: MessageFlags.Ephemeral
         });
       }
     }
@@ -42,46 +42,39 @@ module.exports = {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     const confirmedBy =
-      interaction.member.nickname.replace(/^[🔴🟢]\s*/, "") ||
-      interaction.user.username;
+      interaction.member.nickname.replace(/^[🔴🟢]\s*/, '') || interaction.user.username;
 
     const allEmbeds = interaction.message.embeds;
     const messageEmbed = allEmbeds[0];
 
-    const messageAttachments = interaction.message.attachments.map(
-      (a) => a.url
-    );
+    const messageAttachments = interaction.message.attachments.map((a) => a.url);
 
-    const vnrCompletedChannel = await client.channels.cache.get(
-      vnrCompletedChannelId
-    );
+    const vnrCompletedChannel = await client.channels.cache.get(vnrCompletedChannelId);
 
     messageEmbed.data.footer.text += `\nCompleted By: ${confirmedBy}`;
     messageEmbed.data.fields.push({
-      name: "Disciplinary Meeting Thread",
-      value: interaction.channel.toString(),
+      name: 'Disciplinary Meeting Thread',
+      value: interaction.channel.toString()
     });
 
     const vnrThreadMessage = await vnrCompletedChannel.send({
       embeds: allEmbeds,
-      files: messageAttachments,
+      files: messageAttachments
     });
 
-    await client.commands
-      .get("edit_vnr_status")
-      .execute(messageEmbed, "✅ Completed", vnrThreadMessage.url, client);
+    await editVnrStatus(messageEmbed, '✅ Completed', vnrThreadMessage.url, client);
 
     const replyEmbed = new EmbedBuilder()
       .setDescription(`✅ VN has been completed.`)
-      .setColor("Green");
+      .setColor('Green');
 
     await interaction.message.edit({
-      content: "",
-      components: [],
+      content: '',
+      components: []
     });
 
     await interaction.editReply({
-      embeds: [replyEmbed],
+      embeds: [replyEmbed]
     });
 
     if (interaction.channel.isThread()) {
@@ -94,8 +87,8 @@ module.exports = {
 
         await interaction.channel.setArchived(true);
       } catch (threadError) {
-        console.log("Error deleting thread or starter message:", threadError);
+        console.log('Error deleting thread or starter message:', threadError);
       }
     }
-  },
+  }
 };

@@ -10,7 +10,10 @@ const {
 } = require('discord.js');
 const AsyncLock = require('async-lock');
 
-const db = require('../../../sqliteConnection.js');
+const { getNextAuditId } = require('../../../sqliteFunctions.js');
+const { cleanAuditDescription } = require('../../../functions/code/repeatFunctions.js');
+
+const auditTypes = require('../../../config/audit_type.json');
 
 const lock = new AsyncLock();
 const CLAIM_TTL_MS = 3 * 60 * 1000;
@@ -120,7 +123,9 @@ module.exports = {
 };
 
 async function sendLoser(interaction) {
-  const loserEmbed = new EmbedBuilder().setDescription('This audit has already been claimed.').setColor(0xed4245);
+  const loserEmbed = new EmbedBuilder()
+    .setDescription('This audit has already been claimed.')
+    .setColor(0xed4245);
 
   try {
     if (interaction.deferred) {
@@ -147,7 +152,8 @@ async function sendLoser(interaction) {
  */
 async function runForWinner(interaction, client) {
   const auditProcessingChannel =
-    client.channels.cache.get(auditProcessingChannelId) ?? (await client.channels.fetch(auditProcessingChannelId));
+    client.channels.cache.get(auditProcessingChannelId) ??
+    (await client.channels.fetch(auditProcessingChannelId));
 
   const auditor = interaction.member?.nickname
     ? interaction.member.nickname.replace(/^[🔴🟢]\s*/, '')
@@ -156,9 +162,18 @@ async function runForWinner(interaction, client) {
   const base = interaction.message.embeds?.[0];
   const auditEmbed = base ? EmbedBuilder.from(base) : new EmbedBuilder();
 
-  const auditId = getNextAuditId();
+  const auditTitleRaw = auditEmbed.data?.description;
+  const { audit_type, audit_id } = cleanAuditDescription(auditTitleRaw); // null audit_id here
 
-  const auditTitle = `${auditEmbed.data?.description} | AUD-${auditId}`;
+  const auditType = auditTypes.find((type) => type.name === audit_type);
+
+  if (!auditType) {
+    throw new Error('Audit type not found');
+  }
+
+  const auditId = getNextAuditId(auditType.code);
+
+  const auditTitle = `${auditEmbed.data?.description} | ${auditType.code}-${auditId}`;
 
   auditEmbed.setDescription(auditTitle);
 
@@ -214,10 +229,4 @@ async function runForWinner(interaction, client) {
       content: `<@748568303219245117> ERROR: Failed to assign auditing role.`
     });
   }
-}
-
-function getNextAuditId() {
-  const result = db.prepare('INSERT INTO audit_id_count DEFAULT VALUES').run();
-  const id = result.lastInsertRowid;
-  return id.toString().padStart(4, '0');
 }
