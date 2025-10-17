@@ -14,7 +14,7 @@ const auditingRoleId = '1428232349417607269';
 const { createAuditSalaryAttachment, storeAuditRating } = require('../../../odooRpc.js');
 const { cleanAuditDescription } = require('../../../functions/code/repeatFunctions.js');
 const auditRates = require('../../../config/audit_rates.json');
-const auditTypes = require('../../../config/audit_types.json');
+const auditTypes = require('../../../config/audit_type.json');
 
 module.exports = {
   data: {
