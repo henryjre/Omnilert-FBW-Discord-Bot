@@ -8,16 +8,16 @@ const {
   ButtonBuilder,
   ButtonStyle,
   StringSelectMenuBuilder,
-  StringSelectMenuOptionBuilder,
-} = require("discord.js");
+  StringSelectMenuOptionBuilder
+} = require('discord.js');
 
-const departments = require("../../../config/departments.json");
+const departments = require('../../../config/departments.json');
 
-const managementRole = "1314413671245676685";
+const managementRole = '1314413671245676685';
 
 module.exports = {
   data: {
-    name: `posOrderVerificationReject`,
+    name: `posOrderVerificationReject`
   },
   async execute(interaction, client) {
     let allEmbeds = interaction.message.embeds;
@@ -25,9 +25,7 @@ module.exports = {
 
     const replyEmbed = new EmbedBuilder();
 
-    const sessionField = messageEmbed.data.fields.find(
-      (f) => f.name === "Session Name"
-    );
+    const sessionField = messageEmbed.data.fields.find((f) => f.name === 'Session Name');
 
     const mentionedUser = interaction.message.mentions.users.first();
     const mentionedRole = interaction.message.mentions.roles.first();
@@ -37,29 +35,23 @@ module.exports = {
       const isNotMentionedUser = interaction.user.id !== mentionedUser.id;
 
       if (isNotMentionedUser) {
-        replyEmbed
-          .setDescription(`🔴 ERROR: You cannot use this button.`)
-          .setColor("Red");
+        replyEmbed.setDescription(`🔴 ERROR: You cannot use this button.`).setColor('Red');
 
         return await interaction.reply({
           embeds: [replyEmbed],
-          flags: MessageFlags.Ephemeral,
+          flags: MessageFlags.Ephemeral
         });
       }
     } else if (mentionedRole) {
       // Handle role mention
-      const doesNotHaveRole = !interaction.member.roles.cache.has(
-        mentionedRole.id
-      );
+      const doesNotHaveRole = !interaction.member.roles.cache.has(mentionedRole.id);
 
       if (doesNotHaveRole) {
-        replyEmbed
-          .setDescription(`🔴 ERROR: You cannot use this button.`)
-          .setColor("Red");
+        replyEmbed.setDescription(`🔴 ERROR: You cannot use this button.`).setColor('Red');
 
         return await interaction.reply({
           embeds: [replyEmbed],
-          flags: MessageFlags.Ephemeral,
+          flags: MessageFlags.Ephemeral
         });
       }
     }
@@ -83,20 +75,19 @@ module.exports = {
     const modalResponse = await interaction.awaitModalSubmit({
       filter: async (i) => {
         const f =
-          i.customId === `orderReject${interaction.id}` &&
-          i.user.id === interaction.user.id;
+          i.customId === `orderReject${interaction.id}` && i.user.id === interaction.user.id;
 
         if (f) {
           await i.deferUpdate();
         }
         return f;
       },
-      time: 300000,
+      time: 300000
     });
 
     try {
       if (modalResponse.isModalSubmit()) {
-        const details = modalResponse.fields.getTextInputValue("rejectReason");
+        const details = modalResponse.fields.getTextInputValue('rejectReason');
 
         const sessionName = sessionField.value;
 
@@ -108,16 +99,14 @@ module.exports = {
 
         const sessionMessage = await posChannel.messages
           .fetch({ limit: 100 })
-          .then((messages) =>
-            messages.find((msg) => msg.content.includes(sessionName))
-          );
+          .then((messages) => messages.find((msg) => msg.content.includes(sessionName)));
 
         const posThread = await sessionMessage.thread;
 
         if (!posThread) {
           return await modalResponse.followUp({
             content: `🔴 ERROR: No thread found.`,
-            flags: MessageFlags.Ephemeral,
+            flags: MessageFlags.Ephemeral
           });
         }
 
@@ -125,33 +114,23 @@ module.exports = {
           messageEmbed.data.description += `\n\u200b\nReason for Rejection:\n> *"${details}"*\n\u200b`;
         }
 
-        messageEmbed.data.footer = {
-          text: `Rejected By: ${interaction.member.nickname.replace(
-            /^[🔴🟢]\s*/,
-            ""
-          )}`,
-        };
+        messageEmbed.data.fields.push({
+          name: 'Rejected By',
+          value: interaction.user.toString()
+        });
 
         const auditRatingMenu = new StringSelectMenuBuilder()
-          .setCustomId("posAuditRatingMenu")
+          .setCustomId('posAuditRatingMenu')
           .setOptions([
-            new StringSelectMenuOptionBuilder().setLabel("⭐").setValue("⭐"),
-            new StringSelectMenuOptionBuilder()
-              .setLabel("⭐⭐")
-              .setValue("⭐⭐"),
-            new StringSelectMenuOptionBuilder()
-              .setLabel("⭐⭐⭐")
-              .setValue("⭐⭐⭐"),
-            new StringSelectMenuOptionBuilder()
-              .setLabel("⭐⭐⭐⭐")
-              .setValue("⭐⭐⭐⭐"),
-            new StringSelectMenuOptionBuilder()
-              .setLabel("⭐⭐⭐⭐⭐")
-              .setValue("⭐⭐⭐⭐⭐"),
+            new StringSelectMenuOptionBuilder().setLabel('⭐').setValue('⭐'),
+            new StringSelectMenuOptionBuilder().setLabel('⭐⭐').setValue('⭐⭐'),
+            new StringSelectMenuOptionBuilder().setLabel('⭐⭐⭐').setValue('⭐⭐⭐'),
+            new StringSelectMenuOptionBuilder().setLabel('⭐⭐⭐⭐').setValue('⭐⭐⭐⭐'),
+            new StringSelectMenuOptionBuilder().setLabel('⭐⭐⭐⭐⭐').setValue('⭐⭐⭐⭐⭐')
           ])
           .setMinValues(1)
           .setMaxValues(1)
-          .setPlaceholder("Select audit rating.");
+          .setPlaceholder('Select audit rating.');
 
         // const submit = new ButtonBuilder()
         //   .setCustomId("posOrderAudit")
@@ -164,7 +143,7 @@ module.exports = {
         await posThread.send({
           content: `<@&${managementRole}>`,
           embeds: allEmbeds,
-          components: [menuRow],
+          components: [menuRow]
         });
 
         try {
@@ -174,11 +153,10 @@ module.exports = {
             await interaction.message.thread.delete();
           }
         } catch (error) {
-          console.error("Error deleting messages:", error);
+          console.error('Error deleting messages:', error);
           await interaction.followUp({
-            content:
-              "🔴 ERROR: Failed to clean up messages. Please contact an administrator.",
-            flags: MessageFlags.Ephemeral,
+            content: '🔴 ERROR: Failed to clean up messages. Please contact an administrator.',
+            flags: MessageFlags.Ephemeral
           });
         }
       }
@@ -186,8 +164,8 @@ module.exports = {
       console.log(error);
       await modalResponse.followUp({
         content: `🔴 ERROR: An error occurred while creating your signature request. Please try again.`,
-        flags: MessageFlags.Ephemeral,
+        flags: MessageFlags.Ephemeral
       });
     }
-  },
+  }
 };

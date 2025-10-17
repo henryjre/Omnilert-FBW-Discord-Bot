@@ -6,34 +6,30 @@ const {
   ActionRowBuilder,
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
-  ChannelType,
-} = require("discord.js");
+  ChannelType
+} = require('discord.js');
 
-const departments = require("../../../config/departments.json");
+const departments = require('../../../config/departments.json');
 
 module.exports = {
   data: {
-    name: `posOrderVerificationApprove`,
+    name: `posOrderVerificationApprove`
   },
   async execute(interaction, client) {
     let messageEmbed = interaction.message.embeds[0];
 
     const replyEmbed = new EmbedBuilder();
 
-    const sessionField = messageEmbed.data.fields.find(
-      (f) => f.name === "Session Name"
-    );
+    const sessionField = messageEmbed.data.fields.find((f) => f.name === 'Session Name');
 
     const messageMention = interaction.message.mentions.users.first();
 
     if (interaction.user.id !== messageMention?.id) {
-      replyEmbed
-        .setDescription(`🔴 ERROR: You cannot use this button.`)
-        .setColor("Red");
+      replyEmbed.setDescription(`🔴 ERROR: You cannot use this button.`).setColor('Red');
 
       return await interaction.reply({
         embeds: [replyEmbed],
-        flags: MessageFlags.Ephemeral,
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -47,44 +43,34 @@ module.exports = {
 
     const sessionMessage = await posChannel.messages
       .fetch({ limit: 100 })
-      .then((messages) =>
-        messages.find((msg) => msg.content.includes(sessionName))
-      );
+      .then((messages) => messages.find((msg) => msg.content.includes(sessionName)));
 
     const posThread = await sessionMessage.thread;
 
     if (!posThread) {
       return await interaction.reply({
         content: `🔴 ERROR: No thread found.`,
-        flags: MessageFlags.Ephemeral,
+        flags: MessageFlags.Ephemeral
       });
     }
 
-    messageEmbed.data.footer = {
-      text: `Approved By: ${interaction.member.nickname.replace(
-        /^[🔴🟢]\s*/,
-        ""
-      )}`,
-    };
+    messageEmbed.data.fields.push({
+      name: 'Approved By',
+      value: interaction.user.toString()
+    });
 
     const auditRatingMenu = new StringSelectMenuBuilder()
-      .setCustomId("posAuditRatingMenu")
+      .setCustomId('posAuditRatingMenu')
       .setOptions([
-        new StringSelectMenuOptionBuilder().setLabel("⭐").setValue("⭐"),
-        new StringSelectMenuOptionBuilder().setLabel("⭐⭐").setValue("⭐⭐"),
-        new StringSelectMenuOptionBuilder()
-          .setLabel("⭐⭐⭐")
-          .setValue("⭐⭐⭐"),
-        new StringSelectMenuOptionBuilder()
-          .setLabel("⭐⭐⭐⭐")
-          .setValue("⭐⭐⭐⭐"),
-        new StringSelectMenuOptionBuilder()
-          .setLabel("⭐⭐⭐⭐⭐")
-          .setValue("⭐⭐⭐⭐⭐"),
+        new StringSelectMenuOptionBuilder().setLabel('⭐').setValue('⭐'),
+        new StringSelectMenuOptionBuilder().setLabel('⭐⭐').setValue('⭐⭐'),
+        new StringSelectMenuOptionBuilder().setLabel('⭐⭐⭐').setValue('⭐⭐⭐'),
+        new StringSelectMenuOptionBuilder().setLabel('⭐⭐⭐⭐').setValue('⭐⭐⭐⭐'),
+        new StringSelectMenuOptionBuilder().setLabel('⭐⭐⭐⭐⭐').setValue('⭐⭐⭐⭐⭐')
       ])
       .setMinValues(1)
       .setMaxValues(1)
-      .setPlaceholder("Select audit rating.");
+      .setPlaceholder('Select audit rating.');
 
     // const submit = new ButtonBuilder()
     //   .setCustomId("posOrderAudit")
@@ -96,9 +82,9 @@ module.exports = {
 
     await posThread.send({
       embeds: [messageEmbed],
-      components: [menuRow],
+      components: [menuRow]
     });
 
     await interaction.message.delete();
-  },
+  }
 };

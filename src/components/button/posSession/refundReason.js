@@ -6,26 +6,22 @@ const {
   TextInputStyle,
   MessageFlags,
   StringSelectMenuBuilder,
-  StringSelectMenuOptionBuilder,
-} = require("discord.js");
+  StringSelectMenuOptionBuilder
+} = require('discord.js');
 
-const departments = require("../../../config/departments.json");
+const departments = require('../../../config/departments.json');
 
 module.exports = {
   data: {
-    name: `posOrderVerificationRefundReason`,
+    name: `posOrderVerificationRefundReason`
   },
   async execute(interaction, client) {
     let messageEmbed = interaction.message.embeds[0];
 
     const replyEmbed = new EmbedBuilder();
 
-    const sessionField = messageEmbed.data.fields.find(
-      (f) => f.name === "Session Name"
-    );
-    const cashierField = messageEmbed.data.fields.find(
-      (f) => f.name === "Cashier"
-    );
+    const sessionField = messageEmbed.data.fields.find((f) => f.name === 'Session Name');
+    const cashierField = messageEmbed.data.fields.find((f) => f.name === 'Cashier');
 
     const mentionedUser = interaction.message.mentions.users.first();
     const mentionedRole = interaction.message.mentions.roles.first();
@@ -35,29 +31,23 @@ module.exports = {
       const isNotMentionedUser = interaction.user.id !== mentionedUser.id;
 
       if (isNotMentionedUser) {
-        replyEmbed
-          .setDescription(`🔴 ERROR: You cannot use this button.`)
-          .setColor("Red");
+        replyEmbed.setDescription(`🔴 ERROR: You cannot use this button.`).setColor('Red');
 
         return await interaction.reply({
           embeds: [replyEmbed],
-          flags: MessageFlags.Ephemeral,
+          flags: MessageFlags.Ephemeral
         });
       }
     } else if (mentionedRole) {
       // Handle role mention
-      const doesNotHaveRole = !interaction.member.roles.cache.has(
-        mentionedRole.id
-      );
+      const doesNotHaveRole = !interaction.member.roles.cache.has(mentionedRole.id);
 
       if (doesNotHaveRole) {
-        replyEmbed
-          .setDescription(`🔴 ERROR: You cannot use this button.`)
-          .setColor("Red");
+        replyEmbed.setDescription(`🔴 ERROR: You cannot use this button.`).setColor('Red');
 
         return await interaction.reply({
           embeds: [replyEmbed],
-          flags: MessageFlags.Ephemeral,
+          flags: MessageFlags.Ephemeral
         });
       }
     }
@@ -89,14 +79,14 @@ module.exports = {
         }
         return f;
       },
-      time: 180000,
+      time: 180000
     });
 
     try {
       if (modalResponse.isModalSubmit()) {
-        const details = modalResponse.fields.getTextInputValue("refundReason");
+        const details = modalResponse.fields.getTextInputValue('refundReason');
 
-        const cashierName = cashierField.value.split("-")[1];
+        const cashierName = cashierField.value.split('-')[1];
         const sessionName = sessionField.value;
 
         const department = departments.find(
@@ -107,16 +97,14 @@ module.exports = {
 
         const sessionMessage = await posChannel.messages
           .fetch({ limit: 100 })
-          .then((messages) =>
-            messages.find((msg) => msg.content.includes(sessionName))
-          );
+          .then((messages) => messages.find((msg) => msg.content.includes(sessionName)));
 
         const posThread = await sessionMessage.thread;
 
         if (!posThread) {
           return await modalResponse.followUp({
             content: `🔴 ERROR: No thread found.`,
-            flags: MessageFlags.Ephemeral,
+            flags: MessageFlags.Ephemeral
           });
         }
 
@@ -124,33 +112,23 @@ module.exports = {
           messageEmbed.data.description += `\n\u200b\nReason for Refund:\n> *"${details}"*\n\u200b`;
         }
 
-        messageEmbed.data.footer = {
-          text: `Refunded By: ${interaction.member.nickname.replace(
-            /^[🔴🟢]\s*/,
-            ""
-          )}`,
-        };
+        messageEmbed.data.fields.push({
+          name: 'Refunded By',
+          value: interaction.user.toString()
+        });
 
         const auditRatingMenu = new StringSelectMenuBuilder()
-          .setCustomId("posAuditRatingMenu")
+          .setCustomId('posAuditRatingMenu')
           .setOptions([
-            new StringSelectMenuOptionBuilder().setLabel("⭐").setValue("⭐"),
-            new StringSelectMenuOptionBuilder()
-              .setLabel("⭐⭐")
-              .setValue("⭐⭐"),
-            new StringSelectMenuOptionBuilder()
-              .setLabel("⭐⭐⭐")
-              .setValue("⭐⭐⭐"),
-            new StringSelectMenuOptionBuilder()
-              .setLabel("⭐⭐⭐⭐")
-              .setValue("⭐⭐⭐⭐"),
-            new StringSelectMenuOptionBuilder()
-              .setLabel("⭐⭐⭐⭐⭐")
-              .setValue("⭐⭐⭐⭐⭐"),
+            new StringSelectMenuOptionBuilder().setLabel('⭐').setValue('⭐'),
+            new StringSelectMenuOptionBuilder().setLabel('⭐⭐').setValue('⭐⭐'),
+            new StringSelectMenuOptionBuilder().setLabel('⭐⭐⭐').setValue('⭐⭐⭐'),
+            new StringSelectMenuOptionBuilder().setLabel('⭐⭐⭐⭐').setValue('⭐⭐⭐⭐'),
+            new StringSelectMenuOptionBuilder().setLabel('⭐⭐⭐⭐⭐').setValue('⭐⭐⭐⭐⭐')
           ])
           .setMinValues(1)
           .setMaxValues(1)
-          .setPlaceholder("Select audit rating.");
+          .setPlaceholder('Select audit rating.');
 
         // const submit = new ButtonBuilder()
         //   .setCustomId("posOrderAudit")
@@ -162,7 +140,7 @@ module.exports = {
 
         await posThread.send({
           embeds: [messageEmbed],
-          components: [menuRow],
+          components: [menuRow]
         });
 
         await interaction.message.delete();
@@ -171,8 +149,8 @@ module.exports = {
       console.log(error);
       await modalResponse.followUp({
         content: `🔴 ERROR: An error occurred while creating your signature request. Please try again.`,
-        flags: MessageFlags.Ephemeral,
+        flags: MessageFlags.Ephemeral
       });
     }
-  },
+  }
 };
