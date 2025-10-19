@@ -117,6 +117,10 @@ module.exports = {
           value: interaction.user.toString()
         });
 
+        messageEmbed.data.footer = {
+          text: ``
+        };
+
         const auditRatingMenu = new StringSelectMenuBuilder()
           .setCustomId('posAuditRatingMenu')
           .setOptions([
