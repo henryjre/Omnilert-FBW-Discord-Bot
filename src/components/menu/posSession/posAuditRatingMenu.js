@@ -6,12 +6,15 @@ const {
   TextInputBuilder,
   TextInputStyle
 } = require('discord.js');
+const moment = require('moment-timezone');
+
+const { storeAuditRating } = require('../../../odooRpc.js');
 
 const managementRole = '1314413671245676685';
 
 module.exports = {
   data: {
-    name: `posAuditRatingMenu`
+    name: `posAuditRatingMenuu`
   },
   async execute(interaction, client) {
     let allEmbeds = interaction.message.embeds;
@@ -83,10 +86,12 @@ module.exports = {
 
         messageEmbed.data.color = color;
 
-        await interaction.message.edit({
-          embeds: allEmbeds,
-          components: []
-        });
+        await odooStoreAuditRating(interaction);
+
+        // await interaction.message.edit({
+        //   embeds: allEmbeds,
+        //   components: []
+        // });
       }
     } catch (error) {
       console.log(error);
@@ -112,5 +117,59 @@ function getColor(rating) {
       return 0x5865f2;
     default:
       return 0x5865f2;
+  }
+}
+
+async function odooStoreAuditRating(interaction) {
+  const messageEmbed = interaction.message.embeds[0];
+
+  const rating = interaction.values[0];
+  const ratingInteger = starsToNumber(rating);
+
+  const orderReference =
+    messageEmbed.data.fields.find((f) => f.name === 'Order Reference')?.value ||
+    'No order reference';
+  const orderSession =
+    messageEmbed.data.fields.find((f) => f.name === 'Session Name')?.value || 'No session name';
+
+  const audit_id = `${orderSession} | ${orderReference}`;
+  const audit_type = 'POS Session Audits';
+  const audit_code = 'PSA';
+
+  const auditedEmployeeTypes = ['Confirmed By', 'Rejected By', 'Refunded By'];
+
+  const auditedEmployee = messageEmbed.fields.find((f) => auditedEmployeeTypes.includes(f.name));
+
+  if (!auditedEmployee) {
+    return;
+  }
+
+  const auditedDiscordId = extractUserId(auditedEmployee.value);
+
+  const auditDate = moment().tz('Asia/Manila').utc().format('YYYY-MM-DD HH:mm:ss');
+
+  const payload = {
+    description: audit_type,
+    audit_code: audit_code,
+    audit_id: audit_id,
+    rating: ratingInteger,
+    audit_date: auditDate,
+    discord_id: auditedDiscordId
+  };
+
+  await storeAuditRating(payload);
+
+  function starsToNumber(input) {
+    if (!input || typeof input !== 'string') return 0;
+
+    // Match both standard and variant star emojis
+    const starRegex = /[\u2B50\uFE0F\u2605\u2728\uD83C\uDF1F]/g;
+
+    const matches = input.match(starRegex);
+    return matches ? matches.length : 0;
+  }
+
+  function extractUserId(mention) {
+    return mention.match(/<@!?(\d+)>/)?.[1] ?? null;
   }
 }
