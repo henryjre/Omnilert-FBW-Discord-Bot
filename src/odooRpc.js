@@ -223,7 +223,8 @@ async function callOdooWebhook(webhookType, payload) {
     work_entry: process.env.ODOO_WORK_ENTRY_SECRET, // Fixed typo in original (sECRET)
     planning_shift: process.env.ODOO_CREATE_PLANNING_SHIFT_SECRET,
     audit_salary_attachment: process.env.ODOO_CREATE_AUDIT_SALARY_ATTACHMENT_SECRET,
-    store_audit_rating: process.env.ODOO_STORE_AUDIT_RATING_SECRET
+    store_audit_rating: process.env.ODOO_STORE_AUDIT_RATING_SECRET,
+    merit_demerit: process.env.ODOO_MERIT_DEMERIT_SECRET
   };
 
   // Validate webhook type
@@ -268,6 +269,51 @@ async function storeAuditRating(payload) {
   return callOdooWebhook('store_audit_rating', payload);
 }
 
+async function meritDemerit(payload) {
+  return callOdooWebhook('merit_demerit', payload);
+}
+
+/**
+ * Retrieves a specific attendance record by its ID
+ * @param {string} auditCode - The audit code of the audit rating to search for
+ * @returns {Promise<object|null>} - The audit rating record if found, otherwise null
+ * @throws {Error} - If the auditCode is invalid or if the RPC call fails
+ */
+async function getAuditRatingByCode(auditCode) {
+  try {
+    const domain = [['x_audit_code', '=', auditCode]];
+
+    // Search for the audit rating record
+    const auditRating = await jsonRpc('call', {
+      service: 'object',
+      method: 'execute_kw',
+      args: [
+        process.env.odoo_db,
+        2,
+        process.env.odoo_password,
+        'x_audit_ratings',
+        'search_read',
+        [domain],
+        {
+          fields: [
+            'x_audit_date',
+            'x_audit_code',
+            'x_audit_id',
+            'x_name',
+            'x_rating',
+            'x_employee_id'
+          ]
+        }
+      ]
+    });
+
+    return auditRating.result && auditRating.result.length > 0 ? auditRating.result : null; // null if no record found
+  } catch (error) {
+    console.error('Error fetching audit rating by code:', error);
+    throw error;
+  }
+}
+
 module.exports = {
   jsonRpc,
   odooLogin,
@@ -279,5 +325,7 @@ module.exports = {
   createWorkEntry,
   createPlanningShift,
   createAuditSalaryAttachment,
-  storeAuditRating
+  storeAuditRating,
+  getAuditRatingByCode,
+  meritDemerit
 };
