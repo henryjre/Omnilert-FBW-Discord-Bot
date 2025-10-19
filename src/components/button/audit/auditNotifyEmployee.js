@@ -48,10 +48,12 @@ module.exports = {
     const allEmbeds = interaction.message.embeds;
     const messageEmbed = allEmbeds[0];
 
-    const mentionableEmployeeField = messageEmbed.data.fields.find(
-      (f) => f.name === 'Cashier Discord User'
+    const mentionableEmployeeFieldNames = ['Cashier Discord User', 'Employees On Duty'];
+    const mentionableEmployeeField = messageEmbed.data.fields.find((f) =>
+      mentionableEmployeeFieldNames.includes(f.name)
     );
     const mentionableEmployee = mentionableEmployeeField.value;
+    const mentionableEmployees = mentionableEmployee.split('\n').join(' ');
 
     // Filter out the fields we want to remove
     if (messageEmbed.data && messageEmbed.data.fields) {
@@ -144,18 +146,14 @@ async function createSalaryAttachment(interaction) {
     amount: 1
   };
 
+  const ratePayload = { auditType: auditType };
+
   switch (auditType.code) {
     case 'SQAA':
       const orderAmountText = messageEmbed.data.fields.find((f) => f.name === 'Order Total').value;
       const orderAmount = parseFloat(orderAmountText.replace(/[^\d.]/g, ''));
 
-      const ratePayload = {
-        auditType: auditType,
-        orderAmount: orderAmount
-      };
-
-      const rate = getRandomRate(ratePayload);
-      payload.amount = rate;
+      ratePayload.orderAmount = orderAmount;
       break;
     case 'SCSA':
       break;
@@ -166,33 +164,47 @@ async function createSalaryAttachment(interaction) {
     default:
       throw new Error('Audit type not found');
   }
+
+  const rate = getRandomRate(ratePayload);
+  if (!rate) {
+    throw new Error('Rate not found');
+  }
+  payload.amount = rate;
 
   await createAuditSalaryAttachment(payload);
 }
 
 function getRandomRate(payload) {
   const auditType = payload.auditType;
+
+  let rate = 1;
   switch (auditType.code) {
     case 'SQAA':
-      for (const rate of auditType.rates) {
+      for (const rateObj of auditType.rates) {
         if (
-          payload.orderAmount >= rate.order_amount_min &&
-          payload.orderAmount <= rate.order_amount_max
+          payload.orderAmount >= rateObj.order_amount_min &&
+          payload.orderAmount <= rateObj.order_amount_max
         ) {
-          const randomRate = Math.random() * (rate.rate_max - rate.rate_min) + rate.rate_min;
-          return Math.round(randomRate * 100) / 100; // Round to 2 decimal places
+          const randomRate =
+            Math.random() * (rateObj.rate_max - rateObj.rate_min) + rateObj.rate_min;
+          rate = Math.round(randomRate * 100) / 100; // Round to 2 decimal places
         }
       }
       break;
     case 'SCSA':
+      const rateObj = auditType.rates[0];
+      const randomRate = Math.random() * (rateObj.rate_max - rateObj.rate_min) + rateObj.rate_min;
+      rate = Math.round(randomRate * 100) / 100; // Round to 2 decimal places
       break;
     case 'PSA':
       break;
     case 'DTA':
       break;
     default:
-      throw new Error('Audit type not found');
+      return null;
   }
+
+  return rate;
 }
 
 async function odooStoreAuditRating(interaction) {
@@ -208,25 +220,40 @@ async function odooStoreAuditRating(interaction) {
     throw new Error('Audit type not found');
   }
 
-  const auditedDiscord = messageEmbed.fields.find((f) => f.name === 'Cashier Discord User');
-  const auditedDiscordId = extractUserId(auditedDiscord.value);
+  const auditedEmployee = messageEmbed.fields.find((f) => f.name === 'Cashier Discord User');
+  const auditedEmployees = messageEmbed.fields.find((f) => f.name === 'Employees On Duty');
 
-  if (!auditedDiscordId) {
-    throw new Error('Audited Discord ID not found');
+  const auditedDiscordIds = [];
+
+  if (auditedEmployee) {
+    auditedDiscordIds.push(extractUserId(auditedEmployee.value));
+  }
+
+  if (auditedEmployees) {
+    const employees = auditedEmployees.value.split('\n').join(' ');
+    for (const employee of employees) {
+      auditedDiscordIds.push(extractUserId(employee));
+    }
+  }
+
+  if (!auditedDiscordIds.length) {
+    throw new Error('Audited employees not found');
   }
 
   const auditDate = moment().tz('Asia/Manila').utc().format('YYYY-MM-DD HH:mm:ss');
 
-  const payload = {
-    description: audit_type,
-    audit_code: auditType.code,
-    audit_id: audit_id,
-    rating: ratingInteger,
-    audit_date: auditDate,
-    discord_id: auditedDiscordId
-  };
+  for (const discordId of auditedDiscordIds) {
+    const payload = {
+      description: audit_type,
+      audit_code: auditType.code,
+      audit_id: audit_id,
+      rating: ratingInteger,
+      audit_date: auditDate,
+      discord_id: discordId
+    };
 
-  await storeAuditRating(payload);
+    await storeAuditRating(payload);
+  }
 
   function starsToNumber(input) {
     if (!input || typeof input !== 'string') return 0;
