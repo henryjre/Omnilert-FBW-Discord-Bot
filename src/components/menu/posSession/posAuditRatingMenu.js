@@ -14,7 +14,7 @@ const managementRole = '1314413671245676685';
 
 module.exports = {
   data: {
-    name: `posAuditRatingMenuu`
+    name: `posAuditRatingMenu`
   },
   async execute(interaction, client) {
     let allEmbeds = interaction.message.embeds;
@@ -88,10 +88,10 @@ module.exports = {
 
         await odooStoreAuditRating(interaction);
 
-        // await interaction.message.edit({
-        //   embeds: allEmbeds,
-        //   components: []
-        // });
+        await interaction.message.edit({
+          embeds: allEmbeds,
+          components: []
+        });
       }
     } catch (error) {
       console.log(error);
@@ -132,9 +132,9 @@ async function odooStoreAuditRating(interaction) {
   const orderSession =
     messageEmbed.data.fields.find((f) => f.name === 'Session Name')?.value || 'No session name';
 
-  const audit_id = `${orderSession} | ${orderReference}`;
-  const audit_type = 'POS Session Audits';
-  const audit_code = 'PSA';
+  const audit_id = `PSA-${orderReference}`;
+  const audit_type = `POS Session Audits`;
+  const audit_code = orderSession;
 
   const auditedEmployeeTypes = ['Confirmed By', 'Rejected By', 'Refunded By'];
 
