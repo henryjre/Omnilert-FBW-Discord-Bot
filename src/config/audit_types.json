@@ -39,13 +39,67 @@
         "rate_min": 15,
         "rate_max": 30
       }
+    ],
+    "merit": [
+      {
+        "avg_min": 1.0,
+        "avg_max": 1.8,
+        "merit_amount": -1
+      },
+      {
+        "avg_min": 1.81,
+        "avg_max": 2.6,
+        "merit_amount": -0.5
+      },
+      {
+        "avg_min": 2.61,
+        "avg_max": 3.4,
+        "merit_amount": 0
+      },
+      {
+        "avg_min": 3.41,
+        "avg_max": 4.2,
+        "merit_amount": 0.5
+      },
+      {
+        "avg_min": 4.21,
+        "avg_max": 5,
+        "merit_amount": 1
+      }
     ]
   },
   {
     "id": 3,
     "name": "POS Session Audits",
     "code": "PSA",
-    "rates": null
+    "rates": null,
+    "merit": [
+      {
+        "avg_min": 1.0,
+        "avg_max": 1.8,
+        "merit_amount": -1
+      },
+      {
+        "avg_min": 1.81,
+        "avg_max": 2.6,
+        "merit_amount": -0.5
+      },
+      {
+        "avg_min": 2.61,
+        "avg_max": 3.4,
+        "merit_amount": 0
+      },
+      {
+        "avg_min": 3.41,
+        "avg_max": 4.2,
+        "merit_amount": 0.5
+      },
+      {
+        "avg_min": 4.21,
+        "avg_max": 5,
+        "merit_amount": 1
+      }
+    ]
   },
   {
     "id": 4,
