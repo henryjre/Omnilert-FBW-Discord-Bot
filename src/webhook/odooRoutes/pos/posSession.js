@@ -5,22 +5,22 @@ const {
   ButtonStyle,
   ActionRowBuilder,
   StringSelectMenuBuilder,
-  StringSelectMenuOptionBuilder,
-} = require("discord.js");
-const moment = require("moment-timezone");
+  StringSelectMenuOptionBuilder
+} = require('discord.js');
+const moment = require('moment-timezone');
 
-const client = require("../../../index.js");
-const { content } = require("googleapis/build/src/apis/content/index.js");
-const pesoFormatter = new Intl.NumberFormat("en-PH", {
-  style: "currency",
-  currency: "PHP",
+const client = require('../../../index.js');
+const { content } = require('googleapis/build/src/apis/content/index.js');
+const pesoFormatter = new Intl.NumberFormat('en-PH', {
+  style: 'currency',
+  currency: 'PHP',
   maximumFractionDigits: 2,
-  minimumFractionDigits: 2,
+  minimumFractionDigits: 2
 });
 
-const { updateClosingPcfBalance } = require("../../../odooRpc.js");
+const { updateClosingPcfBalance } = require('../../../odooRpc.js');
 
-const departments = require("../../../config/departments.json");
+const departments = require('../../../config/departments.json');
 
 // ✅ Employee Check-In
 const sessionOpen = async (req, res) => {
@@ -31,18 +31,16 @@ const sessionOpen = async (req, res) => {
     opening_notes,
     x_company_name,
     company_id,
-    x_closing_pcf = 0,
+    x_closing_pcf = 0
   } = req.body;
 
   const department = departments.find((d) => d.id === company_id);
 
   if (!department) {
-    return res.status(200).json({ ok: true, message: "Webhook received" });
+    return res.status(200).json({ ok: true, message: 'Webhook received' });
   }
 
-  const verificationChannel = client.channels.cache.get(
-    department.verificationChannel
-  );
+  const verificationChannel = client.channels.cache.get(department.verificationChannel);
 
   const currentDate = getFormattedDate();
   const sessionChannel = client.channels.cache.get(department.posChannel);
@@ -52,119 +50,127 @@ const sessionOpen = async (req, res) => {
   const cashDiff = cash_register_balance_end - cash_register_balance_start;
   const cashDiffBal = pesoFormatter.format(cashDiff);
 
+  const auditCompleteButton = new ButtonBuilder()
+    .setCustomId('posAuditComplete')
+    .setLabel('Audit Complete')
+    .setStyle(ButtonStyle.Success);
+
+  const auditButtonRow = new ActionRowBuilder().addComponents(auditCompleteButton);
+
   // sending the session name as a message content
   const sessionMessage = await sessionChannel.send({
     content: `# ${threadName}`,
+    components: [auditButtonRow]
   });
 
   // creating a thread for the opened session
   const sessionThread = await sessionMessage.startThread({
     name: threadName,
-    type: ChannelType.PublicThread,
+    type: ChannelType.PublicThread
   });
 
   //creating an embed for the session
   const fields = [
-    { name: "Session Name", value: display_name },
-    { name: "Branch", value: x_company_name },
-    { name: "Opening Date", value: getCurrentFormattedDate() },
+    { name: 'Session Name', value: display_name },
+    { name: 'Branch', value: x_company_name },
+    { name: 'Opening Date', value: getCurrentFormattedDate() },
     {
-      name: "Opening Cash Counted (ODOO)",
-      value: pesoStartBal,
+      name: 'Opening Cash Counted (ODOO)',
+      value: pesoStartBal
     },
     {
-      name: "Opening Cash Expected (ODOO)",
-      value: pesoEndBal,
+      name: 'Opening Cash Expected (ODOO)',
+      value: pesoEndBal
     },
     {
-      name: "Opening Cash Difference (ODOO)",
-      value: cashDiffBal,
-    },
+      name: 'Opening Cash Difference (ODOO)',
+      value: cashDiffBal
+    }
   ];
 
   if (opening_notes && opening_notes.length > 0) {
     fields.push({
-      name: "Opening Notes",
-      value: `*${opening_notes}*`,
+      name: 'Opening Notes',
+      value: `*${opening_notes}*`
     });
   }
 
   const openingEmbed = new EmbedBuilder()
     .setTitle(` 🟢 Register Open`)
-    .setColor("Green")
+    .setColor('Green')
     .addFields(fields);
 
   await sessionThread.send({ embeds: [openingEmbed] });
 
   const openingCashFields = [
-    { name: "Session Name", value: display_name },
+    { name: 'Session Name', value: display_name },
     {
-      name: "Opening Cash Expected (ODOO)",
-      value: pesoEndBal,
+      name: 'Opening Cash Expected (ODOO)',
+      value: pesoEndBal
     },
     {
-      name: "Opening Cash Counted (Discord)",
-      value: "₱0.00",
+      name: 'Opening Cash Counted (Discord)',
+      value: '₱0.00'
     },
     {
-      name: "Opening Cash Difference (Discord)",
-      value: pesoFormatter.format(0 - cash_register_balance_end),
-    },
+      name: 'Opening Cash Difference (Discord)',
+      value: pesoFormatter.format(0 - cash_register_balance_end)
+    }
   ];
 
   const openingcashEmbed = new EmbedBuilder()
     .setDescription(`## 📝 Opening Change Fund Breakdown`)
-    .setColor("Green")
+    .setColor('Green')
     .setFooter({
-      text: "Add change fund breakdown details by selecting the denomination below and inputting the amount.",
+      text: 'Add change fund breakdown details by selecting the denomination below and inputting the amount.'
     })
     .addFields(openingCashFields);
 
   const openingPcfEmbed = new EmbedBuilder()
     .setDescription(`## 💰 Opening PCF Breakdown`)
-    .setColor("DarkGreen")
+    .setColor('DarkGreen')
     .setFooter({
-      text: "Add PCF breakdown details by selecting the denomination below and inputting the amount.",
+      text: 'Add PCF breakdown details by selecting the denomination below and inputting the amount.'
     })
     .addFields(
-      { name: "Session Name", value: display_name },
+      { name: 'Session Name', value: display_name },
       {
-        name: "Opening PCF Expected",
-        value: pesoFormatter.format(x_closing_pcf),
+        name: 'Opening PCF Expected',
+        value: pesoFormatter.format(x_closing_pcf)
       },
       {
-        name: "Opening PCF Counted",
-        value: "₱0.00",
+        name: 'Opening PCF Counted',
+        value: '₱0.00'
       },
       {
-        name: "Opening PCF Difference",
-        value: pesoFormatter.format(0 - x_closing_pcf),
+        name: 'Opening PCF Difference',
+        value: pesoFormatter.format(0 - x_closing_pcf)
       }
     );
 
   const confirm = new ButtonBuilder()
-    .setCustomId("posOrderVerificationConfirm")
-    .setLabel("Confirm")
+    .setCustomId('posOrderVerificationConfirm')
+    .setLabel('Confirm')
     .setDisabled(true)
     .setStyle(ButtonStyle.Success);
 
   const reset = new ButtonBuilder()
-    .setCustomId("cashBreakdownReset")
-    .setLabel("Reset")
+    .setCustomId('cashBreakdownReset')
+    .setLabel('Reset')
     .setStyle(ButtonStyle.Danger);
 
   const buttonRow = new ActionRowBuilder().addComponents(confirm, reset);
 
   const denominations = [
-    { label: "₱1000", id: "1000" },
-    { label: "₱500", id: "500" },
-    { label: "₱200", id: "200" },
-    { label: "₱100", id: "100" },
-    { label: "₱50", id: "50" },
-    { label: "₱20", id: "20" },
-    { label: "₱10", id: "10" },
-    { label: "₱5", id: "5" },
-    { label: "₱1", id: "1" },
+    { label: '₱1000', id: '1000' },
+    { label: '₱500', id: '500' },
+    { label: '₱200', id: '200' },
+    { label: '₱100', id: '100' },
+    { label: '₱50', id: '50' },
+    { label: '₱20', id: '20' },
+    { label: '₱10', id: '10' },
+    { label: '₱5', id: '5' },
+    { label: '₱1', id: '1' }
   ];
 
   const denomButtonRows = [];
@@ -186,34 +192,34 @@ const sessionOpen = async (req, res) => {
   const message = await verificationChannel.send({
     content: `<@&${department.role}>`,
     embeds: [openingcashEmbed],
-    components: [...denomButtonRows, buttonRow],
+    components: [...denomButtonRows, buttonRow]
   });
 
   const proofThread = await message.startThread({
     name: `CF Breakdown Proof - ${message.id}`,
-    type: ChannelType.PublicThread, // Set to 'GuildPrivateThread' if only the user should see it
+    type: ChannelType.PublicThread // Set to 'GuildPrivateThread' if only the user should see it
   });
 
   await proofThread.send({
-    content: `📸 **${department.role}, please upload the picture of the opening cash as proof here.**`,
+    content: `📸 **${department.role}, please upload the picture of the opening cash as proof here.**`
   });
 
   const pcfMessage = await verificationChannel.send({
     content: `<@&${department.role}>`,
     embeds: [openingPcfEmbed],
-    components: [...denomButtonRows, buttonRow],
+    components: [...denomButtonRows, buttonRow]
   });
 
   const pcfProofThread = await pcfMessage.startThread({
     name: `PCF Breakdown Proof - ${pcfMessage.id}`,
-    type: ChannelType.PublicThread, // Set to 'GuildPrivateThread' if only the user should see it
+    type: ChannelType.PublicThread // Set to 'GuildPrivateThread' if only the user should see it
   });
 
   await pcfProofThread.send({
-    content: `📸 **${department.role}, please upload the picture of the opening PCF as proof here.**`,
+    content: `📸 **${department.role}, please upload the picture of the opening PCF as proof here.**`
   });
 
-  return res.status(200).json({ ok: true, message: "Webhook received" });
+  return res.status(200).json({ ok: true, message: 'Webhook received' });
 };
 
 /**
@@ -222,8 +228,7 @@ const sessionOpen = async (req, res) => {
  * @param {number} id - Discount ID to find
  * @returns {Object|null} Found discount order or null
  */
-const findDiscount = (orders, id) =>
-  orders?.find((item) => item.id === id) ?? null;
+const findDiscount = (orders, id) => orders?.find((item) => item.id === id) ?? null;
 
 const sessionClose = async (req, res) => {
   try {
@@ -240,34 +245,30 @@ const sessionClose = async (req, res) => {
       x_statement_lines,
       closing_notes,
       x_ispe_total = 0,
-      x_opening_pcf = 0,
+      x_opening_pcf = 0
     } = req.body;
 
     const department = departments.find((d) => d.id === company_id);
 
     if (!department) {
-      return res.status(200).json({ ok: true, message: "Webhook received" });
+      return res.status(200).json({ ok: true, message: 'Webhook received' });
     }
 
     const sessionChannel = client.channels.cache.get(department.posChannel);
-    const verificationChannel = client.channels.cache.get(
-      department.verificationChannel
-    );
+    const verificationChannel = client.channels.cache.get(department.verificationChannel);
 
     if (!sessionChannel) {
-      return res.status(200).json({ ok: true, message: "Channel not found" });
+      return res.status(200).json({ ok: true, message: 'Channel not found' });
     }
 
     const sessionMessage = await sessionChannel.messages
       .fetch({ limit: 100 })
-      .then((messages) =>
-        messages.find((msg) => msg.content.includes(display_name))
-      );
+      .then((messages) => messages.find((msg) => msg.content.includes(display_name)));
 
     const posThread = await sessionMessage?.thread;
 
     if (!posThread) {
-      return res.status(200).json({ ok: true, message: "Webhook received" });
+      return res.status(200).json({ ok: true, message: 'Webhook received' });
     }
 
     const pesoEndBal = pesoFormatter.format(cash_register_balance_end); //expected
@@ -284,7 +285,7 @@ const sessionClose = async (req, res) => {
             acc[key] = {
               id: key,
               name: item.product_name,
-              amount: 0,
+              amount: 0
             };
           }
           acc[key].amount += Math.abs(item.price_unit);
@@ -292,10 +293,7 @@ const sessionClose = async (req, res) => {
         }, {})
       );
 
-      discountSales = totalDiscountOrders.reduce(
-        (total, item) => total + Math.abs(item.amount),
-        0
-      );
+      discountSales = totalDiscountOrders.reduce((total, item) => total + Math.abs(item.amount), 0);
     }
 
     const pwdDiscount = findDiscount(totalDiscountOrders, 1032);
@@ -305,15 +303,12 @@ const sessionClose = async (req, res) => {
     const freeChocoCoupon = findDiscount(totalDiscountOrders, 1353);
 
     const otherPayments = x_payment_methods
-      ? x_payment_methods.filter((item) => item.payment_method_name !== "Cash")
+      ? x_payment_methods.filter((item) => item.payment_method_name !== 'Cash')
       : [];
 
     const totalOtherPayments =
       otherPayments.length > 0
-        ? otherPayments.reduce(
-            (total, item) => total + Math.abs(item.amount),
-            0
-          )
+        ? otherPayments.reduce((total, item) => total + Math.abs(item.amount), 0)
         : 0;
 
     let totalRefunds = 0;
@@ -324,14 +319,9 @@ const sessionClose = async (req, res) => {
       );
     }
 
-    const netSales = x_payment_methods.reduce(
-      (total, item) => total + Math.abs(item.amount),
-      0
-    );
+    const netSales = x_payment_methods.reduce((total, item) => total + Math.abs(item.amount), 0);
 
-    const cashPayments = x_payment_methods.find(
-      (item) => item.payment_method_name === "Cash"
-    );
+    const cashPayments = x_payment_methods.find((item) => item.payment_method_name === 'Cash');
 
     const grossSales = netSales + totalRefunds + discountSales;
 
@@ -341,66 +331,58 @@ const sessionClose = async (req, res) => {
     }
 
     const closingFields = [
-      { name: "Session Name", value: display_name },
-      { name: "Branch", value: x_company_name },
-      { name: "Closing Date", value: getCurrentFormattedDate() },
+      { name: 'Session Name', value: display_name },
+      { name: 'Branch', value: x_company_name },
+      { name: 'Closing Date', value: getCurrentFormattedDate() },
       {
-        name: "Closing Cash Counted",
-        value: pesoEndBalReal,
+        name: 'Closing Cash Counted',
+        value: pesoEndBalReal
       },
       {
-        name: "Closing Cash Expected",
-        value: pesoEndBal,
+        name: 'Closing Cash Expected',
+        value: pesoEndBal
       },
       {
-        name: "Closing Cash Difference",
-        value: cashDiffBal,
-      },
+        name: 'Closing Cash Difference',
+        value: cashDiffBal
+      }
     ];
 
     const salesReportFields = [
       {
-        name: "Gross Sales",
-        value: pesoFormatter.format(grossSales),
+        name: 'Gross Sales',
+        value: pesoFormatter.format(grossSales)
       },
       {
-        name: "PWD and Senior Discount",
-        value: pwdDiscount
-          ? pesoFormatter.format(pwdDiscount.amount)
-          : pesoFormatter.format(0),
+        name: 'PWD and Senior Discount',
+        value: pwdDiscount ? pesoFormatter.format(pwdDiscount.amount) : pesoFormatter.format(0)
       },
       {
-        name: "XOPB",
-        value: xopb
-          ? pesoFormatter.format(xopb.amount)
-          : pesoFormatter.format(0),
+        name: 'XOPB',
+        value: xopb ? pesoFormatter.format(xopb.amount) : pesoFormatter.format(0)
       },
       {
-        name: "GC100",
-        value: gc100
-          ? pesoFormatter.format(gc100.amount)
-          : pesoFormatter.format(0),
+        name: 'GC100',
+        value: gc100 ? pesoFormatter.format(gc100.amount) : pesoFormatter.format(0)
       },
       {
-        name: "Free Chocolate Coupon",
+        name: 'Free Chocolate Coupon',
         value: freeChocoCoupon
           ? pesoFormatter.format(freeChocoCoupon.amount)
-          : pesoFormatter.format(0),
+          : pesoFormatter.format(0)
       },
       {
-        name: "Token Pay",
-        value: tokenPay
-          ? pesoFormatter.format(tokenPay.amount)
-          : pesoFormatter.format(0),
+        name: 'Token Pay',
+        value: tokenPay ? pesoFormatter.format(tokenPay.amount) : pesoFormatter.format(0)
       },
       {
-        name: "Refund Claims",
-        value: pesoFormatter.format(totalRefunds),
+        name: 'Refund Claims',
+        value: pesoFormatter.format(totalRefunds)
       },
       {
-        name: "Net Sales",
-        value: pesoFormatter.format(netSales),
-      },
+        name: 'Net Sales',
+        value: pesoFormatter.format(netSales)
+      }
     ];
 
     const nonCashReportFields =
@@ -408,66 +390,58 @@ const sessionClose = async (req, res) => {
         ? [
             ...otherPayments.map((item) => ({
               name: item.payment_method_name,
-              value: pesoFormatter.format(item.amount),
+              value: pesoFormatter.format(item.amount)
             })),
             {
-              name: "Total Non-Cash Payments",
-              value: pesoFormatter.format(totalOtherPayments),
-            },
+              name: 'Total Non-Cash Payments',
+              value: pesoFormatter.format(totalOtherPayments)
+            }
           ]
         : [];
 
     const cashReportFields = [
       {
-        name: "Cash In",
+        name: 'Cash In',
         value:
           cashInOut && cashInOut.in.length > 0
             ? cashInOut.in
-                .map(
-                  (item) =>
-                    `> **${item.name}:** ${pesoFormatter.format(item.amount)}`
-                )
-                .join("\n")
-            : "No cash in found.",
+                .map((item) => `> **${item.name}:** ${pesoFormatter.format(item.amount)}`)
+                .join('\n')
+            : 'No cash in found.'
       },
       {
-        name: "Cash Out",
+        name: 'Cash Out',
         value:
           cashInOut && cashInOut.out.length > 0
             ? cashInOut.out
-                .map(
-                  (item) =>
-                    `> **${item.name}:** ${pesoFormatter.format(item.amount)}`
-                )
-                .join("\n")
-            : "No cash out found.",
+                .map((item) => `> **${item.name}:** ${pesoFormatter.format(item.amount)}`)
+                .join('\n')
+            : 'No cash out found.'
       },
       {
-        name: "Cash Payments",
-        value: cashPayments
-          ? pesoFormatter.format(cashPayments.amount)
-          : pesoFormatter.format(0),
-      },
+        name: 'Cash Payments',
+        value: cashPayments ? pesoFormatter.format(cashPayments.amount) : pesoFormatter.format(0)
+      }
     ];
 
     const salesReportEmbed = new EmbedBuilder()
       .setTitle(` 📊 Sales Report`)
-      .setColor("#FF0000")
+      .setColor('#FF0000')
       .addFields(salesReportFields);
 
     const nonCashReportEmbed = new EmbedBuilder()
       .setTitle(` 📊 Non-Cash Report`)
-      .setColor("#FF0000")
+      .setColor('#FF0000')
       .addFields(nonCashReportFields);
 
     const cashReportEmbed = new EmbedBuilder()
       .setTitle(` 📊 Cash Report`)
-      .setColor("#FF0000")
+      .setColor('#FF0000')
       .addFields(cashReportFields);
 
     const closingEmbed = new EmbedBuilder()
       .setTitle(` 🔴 Register Closed`)
-      .setColor("#FF0000")
+      .setColor('#FF0000')
       .addFields(closingFields);
 
     if (closing_notes && closing_notes.length > 0) {
@@ -475,23 +449,17 @@ const sessionClose = async (req, res) => {
     }
 
     const auditRatingMenu = new StringSelectMenuBuilder()
-      .setCustomId("posAuditRatingMenu")
+      .setCustomId('posAuditRatingMenu')
       .setOptions([
-        new StringSelectMenuOptionBuilder().setLabel("⭐").setValue("⭐"),
-        new StringSelectMenuOptionBuilder().setLabel("⭐⭐").setValue("⭐⭐"),
-        new StringSelectMenuOptionBuilder()
-          .setLabel("⭐⭐⭐")
-          .setValue("⭐⭐⭐"),
-        new StringSelectMenuOptionBuilder()
-          .setLabel("⭐⭐⭐⭐")
-          .setValue("⭐⭐⭐⭐"),
-        new StringSelectMenuOptionBuilder()
-          .setLabel("⭐⭐⭐⭐⭐")
-          .setValue("⭐⭐⭐⭐⭐"),
+        new StringSelectMenuOptionBuilder().setLabel('⭐').setValue('⭐'),
+        new StringSelectMenuOptionBuilder().setLabel('⭐⭐').setValue('⭐⭐'),
+        new StringSelectMenuOptionBuilder().setLabel('⭐⭐⭐').setValue('⭐⭐⭐'),
+        new StringSelectMenuOptionBuilder().setLabel('⭐⭐⭐⭐').setValue('⭐⭐⭐⭐'),
+        new StringSelectMenuOptionBuilder().setLabel('⭐⭐⭐⭐⭐').setValue('⭐⭐⭐⭐⭐')
       ])
       .setMinValues(1)
       .setMaxValues(1)
-      .setPlaceholder("Select audit rating.");
+      .setPlaceholder('Select audit rating.');
 
     // const submit = new ButtonBuilder()
     //   .setCustomId("posOrderAudit")
@@ -503,19 +471,19 @@ const sessionClose = async (req, res) => {
 
     await posThread.send({
       embeds: [salesReportEmbed],
-      components: [menuRow],
+      components: [menuRow]
     });
     await posThread.send({
       embeds: [nonCashReportEmbed],
-      components: [menuRow],
+      components: [menuRow]
     });
     await posThread.send({
       embeds: [cashReportEmbed],
-      components: [menuRow],
+      components: [menuRow]
     });
     await posThread.send({
       embeds: [closingEmbed],
-      components: [menuRow],
+      components: [menuRow]
     });
 
     const totalPCfTopUp = netPcfTotal(cashInOut);
@@ -523,41 +491,41 @@ const sessionClose = async (req, res) => {
 
     const pcfEmbed = new EmbedBuilder()
       .setDescription(`## 📝 PCF Report`)
-      .setURL("https://omnilert.odoo.com/")
-      .setColor("White")
+      .setURL('https://omnilert.odoo.com/')
+      .setColor('White')
       .addFields([
         {
-          name: "Session Name",
-          value: display_name,
+          name: 'Session Name',
+          value: display_name
         },
         {
-          name: "Opening PCF Expected",
-          value: pesoFormatter.format(x_opening_pcf),
+          name: 'Opening PCF Expected',
+          value: pesoFormatter.format(x_opening_pcf)
         },
         {
-          name: "Closing PCF Expected",
-          value: pesoFormatter.format(closingPcfExpected),
+          name: 'Closing PCF Expected',
+          value: pesoFormatter.format(closingPcfExpected)
         },
         {
-          name: "Closing PCF Counted",
-          value: pesoFormatter.format(0),
+          name: 'Closing PCF Counted',
+          value: pesoFormatter.format(0)
         },
         {
-          name: "Closing PCF Difference",
-          value: pesoFormatter.format(0 - closingPcfExpected),
-        },
+          name: 'Closing PCF Difference',
+          value: pesoFormatter.format(0 - closingPcfExpected)
+        }
       ]);
 
     const denominations = [
-      { label: "₱1000", id: "1000" },
-      { label: "₱500", id: "500" },
-      { label: "₱200", id: "200" },
-      { label: "₱100", id: "100" },
-      { label: "₱50", id: "50" },
-      { label: "₱20", id: "20" },
-      { label: "₱10", id: "10" },
-      { label: "₱5", id: "5" },
-      { label: "₱1", id: "1" },
+      { label: '₱1000', id: '1000' },
+      { label: '₱500', id: '500' },
+      { label: '₱200', id: '200' },
+      { label: '₱100', id: '100' },
+      { label: '₱50', id: '50' },
+      { label: '₱20', id: '20' },
+      { label: '₱10', id: '10' },
+      { label: '₱5', id: '5' },
+      { label: '₱1', id: '1' }
     ];
 
     const denomButtonRows = [];
@@ -577,13 +545,13 @@ const sessionClose = async (req, res) => {
     }
 
     const confirm = new ButtonBuilder()
-      .setCustomId("posOrderVerificationConfirm")
-      .setLabel("Confirm")
+      .setCustomId('posOrderVerificationConfirm')
+      .setLabel('Confirm')
       .setStyle(ButtonStyle.Success);
 
     const reset = new ButtonBuilder()
-      .setCustomId("cashBreakdownReset")
-      .setLabel("Reset")
+      .setCustomId('cashBreakdownReset')
+      .setLabel('Reset')
       .setStyle(ButtonStyle.Danger);
 
     const pcfButtonRow = new ActionRowBuilder().addComponents(confirm, reset);
@@ -591,22 +559,22 @@ const sessionClose = async (req, res) => {
     const pcfMessage = await verificationChannel.send({
       content: `<@&${department.role}>`,
       embeds: [pcfEmbed],
-      components: [...denomButtonRows, pcfButtonRow],
+      components: [...denomButtonRows, pcfButtonRow]
     });
 
     const pcfThread = await pcfMessage.startThread({
       name: `PCF Report Proof - ${pcfMessage.id}`,
-      type: ChannelType.PublicThread,
+      type: ChannelType.PublicThread
     });
 
     await pcfThread.send({
-      content: `📸 **<@&${department.role}>, please upload the picture of the closing PCF here.**`,
+      content: `📸 **<@&${department.role}>, please upload the picture of the closing PCF here.**`
     });
 
-    return res.status(200).json({ ok: true, message: "Webhook received" });
+    return res.status(200).json({ ok: true, message: 'Webhook received' });
   } catch (error) {
-    console.error("Error in sessionClose:", error);
-    return res.status(200).json({ ok: true, message: "Webhook received" });
+    console.error('Error in sessionClose:', error);
+    return res.status(200).json({ ok: true, message: 'Webhook received' });
   }
 };
 
@@ -620,27 +588,23 @@ const discountOrder = async (req, res) => {
     x_discord_id,
     x_order_lines,
     x_session_name,
-    company_id,
+    company_id
   } = req.body;
 
   const targetProductIds = [1032, 1033, 1034, 1353];
-  const orderVerif = x_order_lines.find((o) =>
-    targetProductIds.includes(o.product_id)
-  );
+  const orderVerif = x_order_lines.find((o) => targetProductIds.includes(o.product_id));
 
   if (!orderVerif) {
-    return res.status(200).json({ ok: true, message: "Webhook received" });
+    return res.status(200).json({ ok: true, message: 'Webhook received' });
   }
 
   const department = departments.find((d) => d.id === company_id);
 
   if (!department) {
-    return res.status(200).json({ ok: true, message: "Webhook received" });
+    return res.status(200).json({ ok: true, message: 'Webhook received' });
   }
 
-  const verificationChannel = client.channels.cache.get(
-    department.verificationChannel
-  );
+  const verificationChannel = client.channels.cache.get(department.verificationChannel);
   const orderDate = formatDateTime(date_order);
 
   let mentionable;
@@ -651,57 +615,55 @@ const discountOrder = async (req, res) => {
     mentionable = `<@&${department.role}>`;
   }
 
-  let orderLinesMessage = "";
+  let orderLinesMessage = '';
 
   for (const order of x_order_lines) {
     orderLinesMessage += `> **Name:** ${order.product_name}\n`;
     orderLinesMessage += `> **Quantity:** ${order.qty} ${order.uom_name}\n`;
-    orderLinesMessage += `> **Unit Price:** ${pesoFormatter.format(
-      order.price_unit
-    )}`;
+    orderLinesMessage += `> **Unit Price:** ${pesoFormatter.format(order.price_unit)}`;
     orderLinesMessage += `\n\n`;
   }
 
   //creating an embed for the session
   const fields = [
-    { name: "Session Name", value: x_session_name },
-    { name: "Order Reference", value: name },
-    { name: "Branch", value: x_company_name },
-    { name: "Order Date", value: orderDate },
+    { name: 'Session Name', value: x_session_name },
+    { name: 'Order Reference', value: name },
+    { name: 'Branch', value: x_company_name },
+    { name: 'Order Date', value: orderDate },
     {
-      name: "Cashier",
-      value: cashier,
+      name: 'Cashier',
+      value: cashier
     },
     {
-      name: "Discord User",
-      value: x_discord_id ? `<@${x_discord_id}>` : "No user found",
+      name: 'Discord User',
+      value: x_discord_id ? `<@${x_discord_id}>` : 'No user found'
     },
     {
-      name: "Products",
-      value: orderLinesMessage,
+      name: 'Products',
+      value: orderLinesMessage
     },
     {
-      name: "Order Total",
-      value: pesoFormatter.format(amount_total),
-    },
+      name: 'Order Total',
+      value: pesoFormatter.format(amount_total)
+    }
   ];
 
   const orderEmbed = new EmbedBuilder()
     .setDescription(`## 🔔 ${orderVerif.product_name} Verification`)
-    .setColor("Yellow")
+    .setColor('Yellow')
     .addFields(fields)
     .setFooter({
-      text: `Please send a photo as proof in the thread below this message and click "Confirm" to verify.`,
+      text: `Please send a photo as proof in the thread below this message and click "Confirm" to verify.`
     });
 
   const confirm = new ButtonBuilder()
-    .setCustomId("posOrderVerificationConfirm")
-    .setLabel("Confirm")
+    .setCustomId('posOrderVerificationConfirm')
+    .setLabel('Confirm')
     .setStyle(ButtonStyle.Success);
 
   const reject = new ButtonBuilder()
-    .setCustomId("posOrderVerificationReject")
-    .setLabel("Reject")
+    .setCustomId('posOrderVerificationReject')
+    .setLabel('Reject')
     .setStyle(ButtonStyle.Danger);
 
   const buttonRow = new ActionRowBuilder().addComponents(confirm, reject);
@@ -709,19 +671,19 @@ const discountOrder = async (req, res) => {
   const orderDiscordMessage = await verificationChannel.send({
     content: mentionable,
     embeds: [orderEmbed],
-    components: [buttonRow],
+    components: [buttonRow]
   });
 
   const proofThread = await orderDiscordMessage.startThread({
     name: `Discount Proof - ${orderDiscordMessage.id}`,
-    type: ChannelType.PublicThread, // Set to 'GuildPrivateThread' if only the user should see it
+    type: ChannelType.PublicThread // Set to 'GuildPrivateThread' if only the user should see it
   });
 
   await proofThread.send({
-    content: `📸 **${mentionable}, please upload the PWD ID or captured image here as proof.**`,
+    content: `📸 **${mentionable}, please upload the PWD ID or captured image here as proof.**`
   });
 
-  return res.status(200).json({ ok: true, message: "Webhook received" });
+  return res.status(200).json({ ok: true, message: 'Webhook received' });
 };
 
 const nonCashOrder = async (req, res) => {
@@ -735,23 +697,21 @@ const nonCashOrder = async (req, res) => {
     x_order_lines,
     x_session_name,
     company_id,
-    x_payments,
+    x_payments
   } = req.body;
 
-  const payments = x_payments.filter((p) => p.name !== "Cash");
+  const payments = x_payments.filter((p) => p.name !== 'Cash');
   if (payments.length === 0) {
-    return res.status(200).json({ ok: true, message: "Webhook received" });
+    return res.status(200).json({ ok: true, message: 'Webhook received' });
   }
 
   const department = departments.find((d) => d.id === company_id);
 
   if (!department) {
-    return res.status(200).json({ ok: true, message: "Webhook received" });
+    return res.status(200).json({ ok: true, message: 'Webhook received' });
   }
 
-  const verificationChannel = client.channels.cache.get(
-    department.verificationChannel
-  );
+  const verificationChannel = client.channels.cache.get(department.verificationChannel);
   const orderDate = formatDateTime(date_order);
 
   let mentionable;
@@ -762,67 +722,63 @@ const nonCashOrder = async (req, res) => {
     mentionable = `<@&${department.role}>`;
   }
 
-  let orderLinesMessage = "";
+  let orderLinesMessage = '';
 
   for (const order of x_order_lines) {
     orderLinesMessage += `> **Name:** ${order.product_name}\n`;
     orderLinesMessage += `> **Quantity:** ${order.qty} ${order.uom_name}\n`;
-    orderLinesMessage += `> **Unit Price:** ${pesoFormatter.format(
-      order.price_unit
-    )}`;
+    orderLinesMessage += `> **Unit Price:** ${pesoFormatter.format(order.price_unit)}`;
     orderLinesMessage += `\n\n`;
   }
 
   let paymentMessage = x_payments
-    ? x_payments
-        .map((p) => `> **${p.name}:** ${pesoFormatter.format(p.amount)}`)
-        .join("\n")
-    : "No payments found";
+    ? x_payments.map((p) => `> **${p.name}:** ${pesoFormatter.format(p.amount)}`).join('\n')
+    : 'No payments found';
 
   //creating an embed for the session
   const fields = [
-    { name: "Session Name", value: x_session_name },
-    { name: "Order Reference", value: name },
-    { name: "Branch", value: x_company_name },
-    { name: "Order Date", value: orderDate },
+    { name: 'Session Name', value: x_session_name },
+    { name: 'Order Reference', value: name },
+    { name: 'Branch', value: x_company_name },
+    { name: 'Order Date', value: orderDate },
     {
-      name: "Cashier",
-      value: cashier,
+      name: 'Cashier',
+      value: cashier
     },
     {
-      name: "Discord User",
-      value: x_discord_id ? `<@${x_discord_id}>` : "No user found",
+      name: 'Discord User',
+      value: x_discord_id ? `<@${x_discord_id}>` : 'No user found'
     },
     {
-      name: "Products",
-      value: orderLinesMessage,
+      name: 'Products',
+      value: orderLinesMessage
     },
     {
-      name: "Payments",
-      value: paymentMessage,
+      name: 'Payments',
+      value: paymentMessage
     },
     {
-      name: "Order Total",
-      value: pesoFormatter.format(amount_total),
-    },
+      name: 'Order Total',
+      value: pesoFormatter.format(amount_total)
+    }
   ];
 
   const orderEmbed = new EmbedBuilder()
     .setDescription(`## 🔔 Non-Cash Payment Verification`)
-    .setColor("Grey")
+    .setColor('Grey')
     .addFields(fields)
     .setFooter({
-      text: `Please send the receipt in the thread below this message and click "Confirm" to verify.`,
+      text: `Please send the receipt in the thread below this message and click "Confirm" to verify.`
     });
 
   const confirm = new ButtonBuilder()
-    .setCustomId("posOrderVerificationConfirm")
-    .setLabel("Confirm")
+    .setCustomId('posOrderVerificationConfirm')
+    .setLabel('Confirm')
     .setStyle(ButtonStyle.Success);
 
   const reject = new ButtonBuilder()
-    .setCustomId("posOrderVerificationReject")
-    .setLabel("Reject")
+    .setCustomId('posOrderVerificationReject')
+    .setLabel('Reject')
     .setStyle(ButtonStyle.Danger);
 
   const buttonRow = new ActionRowBuilder().addComponents(confirm, reject);
@@ -830,19 +786,19 @@ const nonCashOrder = async (req, res) => {
   const orderDiscordMessage = await verificationChannel.send({
     content: mentionable,
     embeds: [orderEmbed],
-    components: [buttonRow],
+    components: [buttonRow]
   });
 
   const proofThread = await orderDiscordMessage.startThread({
     name: `Receipt Proof - ${orderDiscordMessage.id}`,
-    type: ChannelType.PublicThread, // Set to 'GuildPrivateThread' if only the user should see it
+    type: ChannelType.PublicThread // Set to 'GuildPrivateThread' if only the user should see it
   });
 
   await proofThread.send({
-    content: `📸 **${mentionable}, please upload the PWD ID or captured image here as proof.**`,
+    content: `📸 **${mentionable}, please upload the PWD ID or captured image here as proof.**`
   });
 
-  return res.status(200).json({ ok: true, message: "Webhook received" });
+  return res.status(200).json({ ok: true, message: 'Webhook received' });
 };
 
 const refundOrder = async (req, res) => {
@@ -855,18 +811,16 @@ const refundOrder = async (req, res) => {
     x_discord_id,
     x_order_lines,
     x_session_name,
-    company_id,
+    company_id
   } = req.body;
 
   const department = departments.find((d) => d.id === company_id);
 
   if (!department) {
-    return res.status(200).json({ ok: true, message: "Webhook received" });
+    return res.status(200).json({ ok: true, message: 'Webhook received' });
   }
 
-  const verificationChannel = client.channels.cache.get(
-    department.verificationChannel
-  );
+  const verificationChannel = client.channels.cache.get(department.verificationChannel);
   const orderDate = formatDateTime(date_order);
 
   let mentionable;
@@ -877,52 +831,50 @@ const refundOrder = async (req, res) => {
     mentionable = `<@&${department.role}>`;
   }
 
-  let orderLinesMessage = "";
+  let orderLinesMessage = '';
 
   for (const order of x_order_lines) {
     orderLinesMessage += `> **Name:** ${order.product_name}\n`;
     orderLinesMessage += `> **Quantity:** ${order.qty} ${order.uom_name}\n`;
-    orderLinesMessage += `> **Unit Price:** ${pesoFormatter.format(
-      order.price_unit
-    )}`;
+    orderLinesMessage += `> **Unit Price:** ${pesoFormatter.format(order.price_unit)}`;
     orderLinesMessage += `\n\n`;
   }
 
   //creating an embed for the session
   const fields = [
-    { name: "Session Name", value: x_session_name },
-    { name: "Order Reference", value: name },
-    { name: "Branch", value: x_company_name },
-    { name: "Order Date", value: orderDate },
+    { name: 'Session Name', value: x_session_name },
+    { name: 'Order Reference', value: name },
+    { name: 'Branch', value: x_company_name },
+    { name: 'Order Date', value: orderDate },
     {
-      name: "Cashier",
-      value: cashier,
+      name: 'Cashier',
+      value: cashier
     },
     {
-      name: "Discord User",
-      value: x_discord_id ? `<@${x_discord_id}>` : "No user found",
+      name: 'Discord User',
+      value: x_discord_id ? `<@${x_discord_id}>` : 'No user found'
     },
     {
-      name: "Products",
-      value: orderLinesMessage,
+      name: 'Products',
+      value: orderLinesMessage
     },
     {
-      name: "Order Total",
-      value: pesoFormatter.format(amount_total),
-    },
+      name: 'Order Total',
+      value: pesoFormatter.format(amount_total)
+    }
   ];
 
   const orderEmbed = new EmbedBuilder()
     .setDescription(`## ↩️ Order Refund Verification`)
-    .setColor("Blue")
+    .setColor('Blue')
     .addFields(fields)
     .setFooter({
-      text: `Click the "Add Reason" button and explain the reason for refund.`,
+      text: `Click the "Add Reason" button and explain the reason for refund.`
     });
 
   const addReason = new ButtonBuilder()
-    .setCustomId("posOrderVerificationRefundReason")
-    .setLabel("Add Reason")
+    .setCustomId('posOrderVerificationRefundReason')
+    .setLabel('Add Reason')
     .setStyle(ButtonStyle.Success);
 
   const buttonRow = new ActionRowBuilder().addComponents(addReason);
@@ -930,10 +882,10 @@ const refundOrder = async (req, res) => {
   const orderDiscordMessage = await verificationChannel.send({
     content: mentionable,
     embeds: [orderEmbed],
-    components: [buttonRow],
+    components: [buttonRow]
   });
 
-  return res.status(200).json({ ok: true, message: "Webhook received" });
+  return res.status(200).json({ ok: true, message: 'Webhook received' });
 };
 
 const tokenPayOrder = async (req, res) => {
@@ -947,18 +899,16 @@ const tokenPayOrder = async (req, res) => {
     x_customer_discord_id,
     x_order_lines,
     x_session_name,
-    company_id,
+    company_id
   } = req.body;
 
   const department = departments.find((d) => d.id === company_id);
 
   if (!department) {
-    return res.status(200).json({ ok: true, message: "Webhook received" });
+    return res.status(200).json({ ok: true, message: 'Webhook received' });
   }
 
-  const verificationChannel = client.channels.cache.get(
-    department.verificationChannel
-  );
+  const verificationChannel = client.channels.cache.get(department.verificationChannel);
   const orderDate = formatDateTime(date_order);
 
   let mentionable, customerMentionable;
@@ -971,78 +921,74 @@ const tokenPayOrder = async (req, res) => {
     customerMentionable = `the crew customer`;
   }
 
-  let orderLinesMessage = "";
+  let orderLinesMessage = '';
 
   for (const order of x_order_lines) {
     orderLinesMessage += `> **Name:** ${order.product_name}\n`;
     orderLinesMessage += `> **Quantity:** ${order.qty} ${order.uom_name}\n`;
-    orderLinesMessage += `> **Unit Price:** ${pesoFormatter.format(
-      order.price_unit
-    )}`;
+    orderLinesMessage += `> **Unit Price:** ${pesoFormatter.format(order.price_unit)}`;
     orderLinesMessage += `\n\n`;
   }
 
   //creating an embed for the session
   const fields = [
-    { name: "Session Name", value: x_session_name },
-    { name: "Order Reference", value: name },
-    { name: "Branch", value: x_company_name },
-    { name: "Order Date", value: orderDate },
+    { name: 'Session Name', value: x_session_name },
+    { name: 'Order Reference', value: name },
+    { name: 'Branch', value: x_company_name },
+    { name: 'Order Date', value: orderDate },
     {
-      name: "Cashier",
-      value: cashier,
+      name: 'Cashier',
+      value: cashier
     },
     {
-      name: "Customer",
-      value: x_customer_discord_id
-        ? `<@${x_customer_discord_id}>`
-        : "No user found",
+      name: 'Customer',
+      value: x_customer_discord_id ? `<@${x_customer_discord_id}>` : 'No user found'
     },
     {
-      name: "Products",
-      value: orderLinesMessage,
+      name: 'Products',
+      value: orderLinesMessage
     },
     {
-      name: "Order Total",
-      value: pesoFormatter.format(amount_total),
-    },
+      name: 'Order Total',
+      value: pesoFormatter.format(amount_total)
+    }
   ];
 
   const orderEmbed = new EmbedBuilder()
     .setDescription(`## 🪙 Token Pay Order Verification`)
-    .setColor("Orange")
+    .setColor('Orange')
     .addFields(fields)
     .setFooter({
-      text: `Please send a photo as proof in the thread below this message and click "Confirm" to verify.`,
+      text: `Please send a photo as proof in the thread below this message and click "Confirm" to verify.`
     });
 
   const confirm = new ButtonBuilder()
-    .setCustomId("posOrderVerificationConfirm")
-    .setLabel("Confirm")
+    .setCustomId('posOrderVerificationConfirm')
+    .setLabel('Confirm')
     .setStyle(ButtonStyle.Success);
 
   const reject = new ButtonBuilder()
-    .setCustomId("posOrderVerificationReject")
-    .setLabel("Reject")
+    .setCustomId('posOrderVerificationReject')
+    .setLabel('Reject')
     .setStyle(ButtonStyle.Danger);
   const buttonRow = new ActionRowBuilder().addComponents(confirm, reject);
 
   const orderDiscordMessage = await verificationChannel.send({
     content: mentionable,
     embeds: [orderEmbed],
-    components: [buttonRow],
+    components: [buttonRow]
   });
 
   const proofThread = await orderDiscordMessage.startThread({
     name: `Token Pay Proof - ${orderDiscordMessage.id}`,
-    type: ChannelType.PublicThread, // Set to 'GuildPrivateThread' if only the user should see it
+    type: ChannelType.PublicThread // Set to 'GuildPrivateThread' if only the user should see it
   });
 
   await proofThread.send({
-    content: `📸 **${mentionable}, please upload the captured picture of ${customerMentionable} ordering here as proof.**`,
+    content: `📸 **${mentionable}, please upload the captured picture of ${customerMentionable} ordering here as proof.**`
   });
 
-  return res.status(200).json({ ok: true, message: "Webhook received" });
+  return res.status(200).json({ ok: true, message: 'Webhook received' });
 };
 
 const ispeOrder = async (req, res) => {
@@ -1053,90 +999,82 @@ const ispeOrder = async (req, res) => {
     x_pos_session,
     company_id,
     x_order_line_details,
-    date_approve,
+    date_approve
   } = req.body;
 
   const department = departments.find((d) => d.id === company_id);
 
   if (!department) {
-    return res.status(200).json({ ok: true, message: "Webhook received" });
+    return res.status(200).json({ ok: true, message: 'Webhook received' });
   }
 
   const departmentName = department.name;
   const mentionable = `<@&${department.role}>`;
-  const verificationChannel = client.channels.cache.get(
-    department.verificationChannel
-  );
+  const verificationChannel = client.channels.cache.get(department.verificationChannel);
 
   const orderDate = formatDateTime(date_approve);
 
-  let orderLinesMessage = "";
+  let orderLinesMessage = '';
 
   for (const order of x_order_line_details) {
-    orderLinesMessage += `> **Name:** ${
-      order.product_name || "No Product Name"
-    }\n`;
-    orderLinesMessage += `> **Quantity:** ${order.quantity || "N/A"} ${
-      order.uom_name || "N/A"
-    }\n`;
-    orderLinesMessage += `> **Unit Price:** ${pesoFormatter.format(
-      order.price_unit || "N/A"
-    )}`;
+    orderLinesMessage += `> **Name:** ${order.product_name || 'No Product Name'}\n`;
+    orderLinesMessage += `> **Quantity:** ${order.quantity || 'N/A'} ${order.uom_name || 'N/A'}\n`;
+    orderLinesMessage += `> **Unit Price:** ${pesoFormatter.format(order.price_unit || 'N/A')}`;
     orderLinesMessage += `\n\n`;
   }
 
   const fields = [
-    { name: "Session Name", value: x_pos_session },
-    { name: "Order Reference", value: name },
-    { name: "Vendor Reference", value: partner_ref || "N/A" },
-    { name: "Branch", value: departmentName },
-    { name: "Confirmation Date", value: orderDate },
+    { name: 'Session Name', value: x_pos_session },
+    { name: 'Order Reference', value: name },
+    { name: 'Vendor Reference', value: partner_ref || 'N/A' },
+    { name: 'Branch', value: departmentName },
+    { name: 'Confirmation Date', value: orderDate },
     {
-      name: "Products",
-      value: orderLinesMessage,
+      name: 'Products',
+      value: orderLinesMessage
     },
     {
-      name: "Amount Total",
-      value: pesoFormatter.format(amount_total),
-    },
+      name: 'Amount Total',
+      value: pesoFormatter.format(amount_total)
+    }
   ];
 
   const orderEmbed = new EmbedBuilder()
     .setDescription(`## 🛒 ISPE Order Verification`)
-    .setURL("https://omnilert.odoo.com/")
-    .setColor("White")
+    .setURL('https://omnilert.odoo.com/')
+    .setColor('White')
     .addFields(fields)
     .setFooter({
-      text: `Please send the receipts as proof in the thread below this message and click "Confirm" to verify.`,
+      text: `Please send the receipts as proof in the thread below this message and click "Confirm" to verify.`
     });
 
   const confirm = new ButtonBuilder()
-    .setCustomId("posOrderVerificationConfirm")
-    .setLabel("Confirm")
+    .setCustomId('posOrderVerificationConfirm')
+    .setLabel('Confirm')
     .setStyle(ButtonStyle.Success);
 
   const reject = new ButtonBuilder()
-    .setCustomId("posOrderVerificationReject")
-    .setLabel("Reject")
+    .setCustomId('posOrderVerificationReject')
+    .setLabel('Reject')
     .setStyle(ButtonStyle.Danger);
   const buttonRow = new ActionRowBuilder().addComponents(confirm, reject);
 
   const orderDiscordMessage = await verificationChannel.send({
     content: mentionable,
     embeds: [orderEmbed],
-    components: [buttonRow],
+    components: [buttonRow]
   });
 
   const proofThread = await orderDiscordMessage.startThread({
     name: `ISPE Receipts Proof - ${orderDiscordMessage.id}`,
-    type: ChannelType.PublicThread, // Set to 'GuildPrivateThread' if only the user should see it
+    type: ChannelType.PublicThread // Set to 'GuildPrivateThread' if only the user should see it
   });
 
   await proofThread.send({
-    content: `📸 **${mentionable}, please upload the receipts here as proof.**`,
+    content: `📸 **${mentionable}, please upload the receipts here as proof.**`
   });
 
-  return res.status(200).json({ ok: true, message: "Webhook received" });
+  return res.status(200).json({ ok: true, message: 'Webhook received' });
 };
 
 const posCashOutCashIn = async (req, res) => {
@@ -1145,83 +1083,79 @@ const posCashOutCashIn = async (req, res) => {
   const department = departments.find((d) => d.id === company_id);
 
   if (!department) {
-    return res.status(200).json({ ok: true, message: "Webhook received" });
+    return res.status(200).json({ ok: true, message: 'Webhook received' });
   }
 
-  const verificationChannel = client.channels.cache.get(
-    department.verificationChannel
-  );
+  const verificationChannel = client.channels.cache.get(department.verificationChannel);
 
-  const paymentRef = payment_ref.split("-");
+  const paymentRef = payment_ref.split('-');
 
   const orderDate = formatDateTime(create_date);
-  const sessionName = paymentRef[0] || "N/A";
-  const cashOutReason = paymentRef[2] || "N/A";
-  const type = paymentRef[1] || "out";
+  const sessionName = paymentRef[0] || 'N/A';
+  const cashOutReason = paymentRef[2] || 'N/A';
+  const type = paymentRef[1] || 'out';
 
-  const title = type === "out" ? "📤 CASH OUT" : "📥 CASH IN";
-  const color = type === "out" ? "#9b001f" : "#0e9b00";
+  const title = type === 'out' ? '📤 CASH OUT' : '📥 CASH IN';
+  const color = type === 'out' ? '#9b001f' : '#0e9b00';
 
   const pcfEmbed = new EmbedBuilder()
     .setDescription(`## ${title} Verification`)
-    .setURL("https://omnilert.odoo.com/")
+    .setURL('https://omnilert.odoo.com/')
     .setColor(color)
     .addFields([
       {
-        name: "Session Name",
-        value: sessionName,
+        name: 'Session Name',
+        value: sessionName
       },
       {
-        name: `${type === "out" ? "Cash Out" : "Cash In"} Date`,
-        value: orderDate,
+        name: `${type === 'out' ? 'Cash Out' : 'Cash In'} Date`,
+        value: orderDate
       },
       {
-        name: "Total Amount",
-        value: pesoFormatter.format(amount_total),
+        name: 'Total Amount',
+        value: pesoFormatter.format(amount_total)
       },
       {
-        name: `${type === "out" ? "Cash Out" : "Cash In"} Reason`,
-        value: cashOutReason,
-      },
+        name: `${type === 'out' ? 'Cash Out' : 'Cash In'} Reason`,
+        value: cashOutReason
+      }
     ])
     .setFooter({
       text: `Please send the image of the ${
-        type === "out" ? "cash out" : "cash in"
-      } money as proof in the thread below this message and click "Confirm" to verify.`,
+        type === 'out' ? 'cash out' : 'cash in'
+      } money as proof in the thread below this message and click "Confirm" to verify.`
     });
 
   const confirm = new ButtonBuilder()
-    .setCustomId("posOrderVerificationConfirm")
-    .setLabel("Confirm")
+    .setCustomId('posOrderVerificationConfirm')
+    .setLabel('Confirm')
     .setDisabled(true)
     .setStyle(ButtonStyle.Success);
 
   const reject = new ButtonBuilder()
-    .setCustomId("posOrderVerificationReject")
-    .setLabel("Reject")
+    .setCustomId('posOrderVerificationReject')
+    .setLabel('Reject')
     .setStyle(ButtonStyle.Danger);
   const buttonRow = new ActionRowBuilder().addComponents(confirm, reject);
 
   const orderDiscordMessage = await verificationChannel.send({
     content: `<@&${department.role}>`,
     embeds: [pcfEmbed],
-    components: [buttonRow],
+    components: [buttonRow]
   });
 
   const proofThread = await orderDiscordMessage.startThread({
-    name: `${type === "out" ? "Cash Out" : "Cash In"} Proof - ${
-      orderDiscordMessage.id
-    }`,
-    type: ChannelType.PublicThread, // Set to 'GuildPrivateThread' if only the user should see it
+    name: `${type === 'out' ? 'Cash Out' : 'Cash In'} Proof - ${orderDiscordMessage.id}`,
+    type: ChannelType.PublicThread // Set to 'GuildPrivateThread' if only the user should see it
   });
 
   await proofThread.send({
     content: `📸 **${department.role}, please upload the image of the ${
-      type === "out" ? "cash out" : "cash in"
-    } money here as proof.**`,
+      type === 'out' ? 'cash out' : 'cash in'
+    } money here as proof.**`
   });
 
-  return res.status(200).json({ ok: true, message: "Webhook received" });
+  return res.status(200).json({ ok: true, message: 'Webhook received' });
 };
 
 module.exports = {
@@ -1232,17 +1166,17 @@ module.exports = {
   tokenPayOrder,
   nonCashOrder,
   ispeOrder,
-  posCashOutCashIn,
+  posCashOutCashIn
 };
 
 ////////////////////////// HELPER FUNCTIONS /////////////////////////////////////////
 
-function getFormattedDate(timezone = "Asia/Manila") {
-  return moment().tz(timezone).format("MMMM DD, YYYY");
+function getFormattedDate(timezone = 'Asia/Manila') {
+  return moment().tz(timezone).format('MMMM DD, YYYY');
 }
 
-function getCurrentFormattedDate(timezone = "Asia/Manila") {
-  return moment().tz(timezone).format("MMMM DD, YYYY [at] h:mm A");
+function getCurrentFormattedDate(timezone = 'Asia/Manila') {
+  return moment().tz(timezone).format('MMMM DD, YYYY [at] h:mm A');
 }
 
 function formatDateTime(datetime) {
@@ -1251,19 +1185,19 @@ function formatDateTime(datetime) {
   }
 
   // Parse the datetime and add 8 hours to adjust for Manila time (UTC+8)
-  return moment(datetime).add(8, "hours").format("MMMM DD, YYYY [at] h:mm A");
+  return moment(datetime).add(8, 'hours').format('MMMM DD, YYYY [at] h:mm A');
 }
 
 function groupCashInOutByType(data) {
   const grouped = { out: [], in: [] };
 
   data.forEach((item) => {
-    const parts = item.payment_ref.split("-");
+    const parts = item.payment_ref.split('-');
     const type = parts[1];
-    const name = parts.slice(2).join("-");
+    const name = parts.slice(2).join('-');
     const amount = Math.abs(item.amount);
 
-    if (["in", "out"].includes(type)) {
+    if (['in', 'out'].includes(type)) {
       grouped[type].push({ name, amount });
     }
   });
@@ -1273,16 +1207,11 @@ function groupCashInOutByType(data) {
 
 function netPcfTotal(grouped) {
   const filterFn = (item) =>
-    item.name.toLowerCase().includes("pcf") ||
-    item.name.toLowerCase().includes("petty");
+    item.name.toLowerCase().includes('pcf') || item.name.toLowerCase().includes('petty');
 
-  const totalOut = grouped.out
-    .filter(filterFn)
-    .reduce((sum, item) => sum + item.amount, 0);
+  const totalOut = grouped.out.filter(filterFn).reduce((sum, item) => sum + item.amount, 0);
 
-  const totalIn = grouped.in
-    .filter(filterFn)
-    .reduce((sum, item) => sum + item.amount, 0);
+  const totalIn = grouped.in.filter(filterFn).reduce((sum, item) => sum + item.amount, 0);
 
   return totalOut - totalIn;
 }
