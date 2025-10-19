@@ -34,10 +34,12 @@
     "id": 2,
     "name": "Store CCTV Spot Audit",
     "code": "SCSA",
-    "rates": {
-      "rate_min": 15,
-      "rate_max": 30
-    }
+    "rates": [
+      {
+        "rate_min": 15,
+        "rate_max": 30
+      }
+    ]
   },
   {
     "id": 3,
