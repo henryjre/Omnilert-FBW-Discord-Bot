@@ -50,7 +50,7 @@ const storeCCTVSpotAudit = async (req, res) => {
 };
 
 const calculateWeeklyMerit = async (req, res) => {
-  console.log(res.body);
+  console.log(req.body);
 };
 
 module.exports = {
