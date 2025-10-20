@@ -3,69 +3,70 @@ const {
   ButtonBuilder,
   ButtonStyle,
   ActionRowBuilder,
-  EmbedBuilder,
-} = require("discord.js");
+  EmbedBuilder
+} = require('discord.js');
 
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName("test")
-    .setDescription("Testing purposes!"),
+  data: new SlashCommandBuilder().setName('testt').setDescription('Testing purposes!'),
   async execute(interaction, client) {
-    const embed = new EmbedBuilder()
-      .setURL("https://omnilert.odoo.com/")
-      .setDescription("## 📝 Opening Change Fund Breakdown")
-      .addFields({
-        name: "Opening Cash Counted",
-        value: "₱0.00",
-      })
-      .setColor("Green")
-      .setFooter({
-        text: "Add change fund breakdown details by selecting the denomination below and inputting the amount.",
+    try {
+      // Get the channel and message
+      const channel = await client.channels.fetch('1416339740352843928');
+      const message = await channel.messages.fetch('1429475544679972934');
+
+      // Get the current embed
+      const embed = message.embeds[0];
+
+      // Create a new embed with updated fields
+      const updatedEmbed = new EmbedBuilder()
+        .setColor(embed.color)
+        .setDescription(embed.description)
+        .setTitle(embed.title)
+        .setFooter(embed.footer)
+        .setTimestamp(embed.timestamp);
+
+      // Update the fields
+      embed.fields.forEach((field) => {
+        let updatedValue = field.value;
+
+        switch (field.name) {
+          case 'ID':
+            updatedValue = '🆔 | 175';
+            break;
+          case 'Employee':
+            updatedValue = '🪪 | Jomar Dela Cruz';
+            break;
+          case 'Discord User':
+            updatedValue = '👤 | <@1334898126414282817>';
+            break;
+          case 'Shift Start':
+            updatedValue = 'October 8, 2025 at 12:00 PM';
+            break;
+          case 'Shift End':
+            updatedValue = 'October 8, 2025 at 9:00 PM';
+            break;
+        }
+
+        updatedEmbed.addFields({
+          name: field.name,
+          value: updatedValue,
+          inline: field.inline
+        });
       });
 
-    const confirm = new ButtonBuilder()
-      .setCustomId("posOrderVerificationConfirm")
-      .setLabel("Confirm")
-      .setStyle(ButtonStyle.Success);
+      // Update the message
+      await message.edit({
+        content: '# Oct 8, 2025 | 175\n<@1334898126414282817>',
+        embeds: [updatedEmbed]
+      });
 
-    const reset = new ButtonBuilder()
-      .setCustomId("cashBreakdownReset")
-      .setLabel("Reset")
-      .setStyle(ButtonStyle.Danger);
-
-    const buttonRow = new ActionRowBuilder().addComponents(confirm, reset);
-
-    const denominations = [
-      { label: "₱1000", id: "1000" },
-      { label: "₱500", id: "500" },
-      { label: "₱200", id: "200" },
-      { label: "₱100", id: "100" },
-      { label: "₱50", id: "50" },
-      { label: "₱20", id: "20" },
-      { label: "₱10", id: "10" },
-      { label: "₱5", id: "5" },
-      { label: "₱1", id: "1" },
-    ];
-
-    const denomButtonRows = [];
-    for (let i = 0; i < denominations.length; i += 3) {
-      const row = new ActionRowBuilder();
-      row.addComponents(
-        ...denominations
-          .slice(i, i + 3)
-          .map((denom) =>
-            new ButtonBuilder()
-              .setCustomId(`cashBreakdown_${denom.id}`)
-              .setLabel(denom.label)
-              .setStyle(ButtonStyle.Primary)
-          )
-      );
-      denomButtonRows.push(row);
+      await interaction.reply({ content: 'Message updated successfully!', ephemeral: true });
+    } catch (error) {
+      console.error('Error updating message:', error);
+      await interaction.reply({
+        content: 'Error updating message: ' + error.message,
+        ephemeral: true
+      });
     }
-
-    await interaction.reply({
-      embeds: [embed],
-      components: [...denomButtonRows, buttonRow],
-    });
-  },
+  }
 };
