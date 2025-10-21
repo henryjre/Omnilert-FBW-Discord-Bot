@@ -291,6 +291,11 @@ const updatePlanningShift = async (payload, planningMessage) => {
     embeds: [newPlanningEmbed]
   });
 
+  const thread = await planningMessage.thread;
+  if (thread) {
+    await thread.setName(`# ${startDate} | ${id}\n<@${x_discord_id}>`);
+  }
+
   if (changedFields.length > 0) {
     const replyEmbed = new EmbedBuilder()
       .setDescription('## Shift Updated\n### The following fields have been changed:')
