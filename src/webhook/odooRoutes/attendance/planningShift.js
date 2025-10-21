@@ -39,7 +39,7 @@ const publishedShift = async (req, res) => {
 
 const deletedPlanningShift = async (req, res) => {
   try {
-    const { id, company_id } = req.body;
+    const { id, company_id, start_datetime } = req.body;
 
     const department = departments.find((d) => d.id === company_id);
     if (!department) throw new Error('Department not found');
