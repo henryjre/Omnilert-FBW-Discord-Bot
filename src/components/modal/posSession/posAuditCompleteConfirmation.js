@@ -54,6 +54,10 @@ module.exports = {
 
     await meritDemerit(payload);
 
+    await message.edit({
+      components: []
+    });
+
     interaction.followUp({
       content: `🟢 Audit completed successfully.`,
       flags: MessageFlags.Ephemeral
