@@ -38,6 +38,10 @@ module.exports = {
     const auditRating = await getAuditRatingByCode(sessionName);
 
     if (auditRating.length === 0) {
+      await message.edit({
+        components: []
+      });
+
       return await interaction.followUp({
         content: `🔴 ERROR: No audit rating found.`,
         flags: MessageFlags.Ephemeral
