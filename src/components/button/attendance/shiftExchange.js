@@ -36,7 +36,7 @@ module.exports = {
 
     const allowedUsers = ['748568303219245117', '844881805688963072'];
 
-    if (allowedUsers.includes(interaction.user.id)) {
+    if (!allowedUsers.includes(interaction.user.id)) {
       return await interaction.reply({
         content: `🔴 ERROR: You cannot use this button.`,
         flags: MessageFlags.Ephemeral
