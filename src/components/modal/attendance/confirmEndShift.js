@@ -3,26 +3,26 @@ const {
   MessageFlags,
   ButtonBuilder,
   ButtonStyle,
-  EmbedBuilder,
-} = require("discord.js");
+  EmbedBuilder
+} = require('discord.js');
 
-const moment = require("moment-timezone");
+const moment = require('moment-timezone');
 
-const { getAttendanceById } = require("../../../odooRpc.js");
-const workEntryTypes = require("../../../config/work_entry_types.json");
+const { getAttendanceById } = require('../../../odooRpc.js');
+const workEntryTypes = require('../../../config/work_entry_types.json');
 
-const hrRoleId = "1314815153421680640";
+const hrRoleId = '1314815153421680640';
 
 module.exports = {
   data: {
-    name: `endShiftConfirmation`,
+    name: `endShiftConfirmation`
   },
   async execute(interaction, client) {
-    const endShiftInput = interaction.fields.getTextInputValue("endShiftInput");
-    if (endShiftInput.toLowerCase() !== "end") {
+    const endShiftInput = interaction.fields.getTextInputValue('endShiftInput');
+    if (endShiftInput.toLowerCase() !== 'end') {
       return await interaction.reply({
         content: `🔴 ERROR: Type 'end' to confirm end of duty.`,
-        flags: MessageFlags.Ephemeral,
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -31,38 +31,42 @@ module.exports = {
     const threadChannel = interaction.channel;
     const originalMessage = await threadChannel.fetchStarterMessage();
 
+    await originalMessage.edit({
+      components: []
+    });
+
     const checkoutMessageEmbed = interaction.message.embeds[0];
     const planningMessageEmbed = originalMessage.embeds[0];
 
     const checkoutTimestampField = checkoutMessageEmbed.data.fields.find(
-      (field) => field.name === "Timestamp"
+      (field) => field.name === 'Timestamp'
     );
     const planningStartShiftEndField = planningMessageEmbed.data.fields.find(
-      (field) => field.name === "Shift Start"
+      (field) => field.name === 'Shift Start'
     );
     const planningEndShiftField = planningMessageEmbed.data.fields.find(
-      (field) => field.name === "Shift End"
+      (field) => field.name === 'Shift End'
     );
     const employeeNameField = planningMessageEmbed.data.fields.find(
-      (field) => field.name === "Employee"
+      (field) => field.name === 'Employee'
     );
     const discordUserField = planningMessageEmbed.data.fields.find(
-      (field) => field.name === "Discord User"
+      (field) => field.name === 'Discord User'
     );
     const departmentField = planningMessageEmbed.data.fields.find(
-      (field) => field.name === "Branch"
+      (field) => field.name === 'Branch'
     );
     const shiftStartField = planningMessageEmbed.data.fields.find(
-      (field) => field.name === "Shift Start"
+      (field) => field.name === 'Shift Start'
     );
     const shiftEndField = planningMessageEmbed.data.fields.find(
-      (field) => field.name === "Shift End"
+      (field) => field.name === 'Shift End'
     );
     const attendanceIdField = checkoutMessageEmbed.data.fields.find(
-      (field) => field.name === "Attendance ID"
+      (field) => field.name === 'Attendance ID'
     );
 
-    const attendanceId = attendanceIdField.value.split("|")[1].trim();
+    const attendanceId = attendanceIdField.value.split('|')[1].trim();
 
     const checkoutTimestamp = checkoutTimestampField.value;
     const planningStartShift = planningStartShiftEndField.value;
@@ -75,12 +79,12 @@ module.exports = {
     );
 
     const approve = new ButtonBuilder()
-      .setCustomId("attendanceLogApprove")
-      .setLabel("Approve")
+      .setCustomId('attendanceLogApprove')
+      .setLabel('Approve')
       .setStyle(ButtonStyle.Success);
     const reject = new ButtonBuilder()
-      .setCustomId("attendanceLogReject")
-      .setLabel("Reject")
+      .setCustomId('attendanceLogReject')
+      .setLabel('Reject')
       .setStyle(ButtonStyle.Danger);
 
     const buttonRow = new ActionRowBuilder().addComponents(approve, reject);
@@ -91,26 +95,26 @@ module.exports = {
       const newCheckoutEmbed = EmbedBuilder.from(checkoutMessageEmbed.data);
       newCheckoutEmbed.setDescription(`## 🔴 EARLY CHECKOUT`).setFields(
         {
-          name: "Attendance ID",
-          value: attendanceIdField.value,
+          name: 'Attendance ID',
+          value: attendanceIdField.value
         },
         {
-          name: "Check-Out Time",
-          value: checkoutTimestamp,
+          name: 'Check-Out Time',
+          value: checkoutTimestamp
         },
         {
-          name: "Planning Shift End",
-          value: planningEndShift,
+          name: 'Planning Shift End',
+          value: planningEndShift
         },
         {
-          name: "Checkout Time Difference",
-          value: `⌛ | ${checkoutStatus.diff_pretty} early`,
+          name: 'Checkout Time Difference',
+          value: `⌛ | ${checkoutStatus.diff_pretty} early`
         }
       );
 
       messagePayload.embeds = [newCheckoutEmbed];
       messagePayload.components = [];
-      messagePayload.content = "";
+      messagePayload.content = '';
 
       await interaction.message.edit(messagePayload);
     } else if (checkoutStatus.status === 2) {
@@ -118,26 +122,26 @@ module.exports = {
       const newCheckoutEmbed = EmbedBuilder.from(checkoutMessageEmbed.data);
       newCheckoutEmbed.setDescription(`## 🔴 LATE CHECKOUT`).setFields(
         {
-          name: "Attendance ID",
-          value: attendanceIdField.value,
+          name: 'Attendance ID',
+          value: attendanceIdField.value
         },
         {
-          name: "Check-Out Time",
-          value: checkoutTimestamp,
+          name: 'Check-Out Time',
+          value: checkoutTimestamp
         },
         {
-          name: "Planning Shift End",
-          value: planningEndShift,
+          name: 'Planning Shift End',
+          value: planningEndShift
         },
         {
-          name: "Checkout Time Difference",
-          value: `⌛ | ${checkoutStatus.diff_pretty} late`,
+          name: 'Checkout Time Difference',
+          value: `⌛ | ${checkoutStatus.diff_pretty} late`
         }
       );
 
       messagePayload.embeds = [newCheckoutEmbed];
       messagePayload.components = [];
-      messagePayload.content = "";
+      messagePayload.content = '';
 
       await interaction.message.edit(messagePayload);
 
@@ -145,41 +149,41 @@ module.exports = {
         .setDescription(`## ⏰ LATE CHECKOUT APPROVAL`)
         .addFields(
           {
-            name: "Attendance ID",
-            value: attendanceIdField.value,
+            name: 'Attendance ID',
+            value: attendanceIdField.value
           },
           {
-            name: "Date",
-            value: `📆 | ${moment().format("MMMM DD, YYYY")}`,
+            name: 'Date',
+            value: `📆 | ${moment().format('MMMM DD, YYYY')}`
           },
-          { name: "Employee", value: employeeNameField.value },
+          { name: 'Employee', value: employeeNameField.value },
           {
-            name: "Discord User",
-            value: discordUserField.value,
-          },
-          {
-            name: "Branch",
-            value: departmentField.value,
+            name: 'Discord User',
+            value: discordUserField.value
           },
           {
-            name: "Shift Start Date",
-            value: shiftStartField.value,
+            name: 'Branch',
+            value: departmentField.value
           },
           {
-            name: "Shift End Date",
-            value: shiftEndField.value,
+            name: 'Shift Start Date',
+            value: shiftStartField.value
           },
           {
-            name: "Checkout Status",
-            value: `⏱️ | ${checkoutStatus.diff_pretty} late`,
+            name: 'Shift End Date',
+            value: shiftEndField.value
+          },
+          {
+            name: 'Checkout Status',
+            value: `⏱️ | ${checkoutStatus.diff_pretty} late`
           }
         )
-        .setColor("Red");
+        .setColor('Red');
 
       await threadChannel.send({
         content: `<@&${hrRoleId}>`,
         embeds: [embed],
-        components: [buttonRow],
+        components: [buttonRow]
       });
     }
     const attendance = await getAttendanceById(attendanceId);
@@ -190,12 +194,7 @@ module.exports = {
     const x_shift_end = attendance.x_shift_end;
     console.log(attendance);
 
-    const overtime = calculateOvertime(
-      x_shift_start,
-      x_shift_end,
-      checkOut,
-      x_cumulative_minutes
-    );
+    const overtime = calculateOvertime(x_shift_start, x_shift_end, checkOut, x_cumulative_minutes);
 
     if (!overtime) {
       await interaction.editReply({ content: `Checkout status updated.` });
@@ -206,49 +205,47 @@ module.exports = {
       work_entry_type_id: 118,
       name: `Overtime Premium: ${attendance.x_employee_contact_name}`,
       date_start: overtime.startTime,
-      date_stop: overtime.endTime,
+      date_stop: overtime.endTime
     };
 
     const otPremiumEmbed = new EmbedBuilder()
       .setDescription(`## 🕙 OVERTIME PREMIUM AUTHORIZATION`)
       .addFields(
         {
-          name: "Attendance ID",
-          value: attendanceId,
+          name: 'Attendance ID',
+          value: attendanceId
         },
         {
-          name: "Date",
-          value: `📆 | ${moment().format("MMMM DD, YYYY")}`,
+          name: 'Date',
+          value: `📆 | ${moment().format('MMMM DD, YYYY')}`
         },
         {
-          name: "Employee",
-          value: employeeNameField.value,
+          name: 'Employee',
+          value: employeeNameField.value
         },
         {
-          name: "Discord User",
-          value: discordUserField.value,
+          name: 'Discord User',
+          value: discordUserField.value
         },
         {
-          name: "Branch",
-          value: departmentField.value,
+          name: 'Branch',
+          value: departmentField.value
         },
         {
-          name: "Prescribed Duration",
-          value: `⏱️ | ${minutesToHoursFormatted(
-            overtime.prescribed_duration
-          )}`,
+          name: 'Prescribed Duration',
+          value: `⏱️ | ${minutesToHoursFormatted(overtime.prescribed_duration)}`
         },
         {
-          name: "Total Worked Time",
-          value: `⏱️ | ${minutesToHoursFormatted(x_cumulative_minutes)}`,
+          name: 'Total Worked Time',
+          value: `⏱️ | ${minutesToHoursFormatted(x_cumulative_minutes)}`
         },
         {
-          name: "OT Premium Duration",
-          value: `⌛ | ${minutesToHoursFormatted(overtime.duration)}`,
+          name: 'OT Premium Duration',
+          value: `⌛ | ${minutesToHoursFormatted(overtime.duration)}`
         },
         {
-          name: "JSON Details",
-          value: `\`\`\`${JSON.stringify(jsonPayload)}\`\`\``,
+          name: 'JSON Details',
+          value: `\`\`\`${JSON.stringify(jsonPayload)}\`\`\``
         }
       )
       .setColor(workEntryTypes.find((type) => type.id === 118).color_hex);
@@ -256,36 +253,29 @@ module.exports = {
     await threadChannel.send({
       content: `<@&${hrRoleId}>`,
       embeds: [otPremiumEmbed],
-      components: [buttonRow],
+      components: [buttonRow]
     });
 
     await interaction.editReply({ content: `Checkout status updated.` });
-  },
+  }
 };
 
 // Requires moment-timezone
-function getCheckoutStatus(
-  checkoutStr,
-  startStr,
-  endStr,
-  timezone = "Asia/Manila"
-) {
-  const FORMAT = "MMMM DD, YYYY [at] h:mm A";
+function getCheckoutStatus(checkoutStr, startStr, endStr, timezone = 'Asia/Manila') {
+  const FORMAT = 'MMMM DD, YYYY [at] h:mm A';
 
   // Optional cleaner (handles leading emoji + pipe like "⏱️ | ")
-  const clean = (s) => s.replace(/^[^\|]+\|\s*/, "");
+  const clean = (s) => s.replace(/^[^\|]+\|\s*/, '');
 
   const checkout = moment.tz(clean(checkoutStr), FORMAT, timezone);
   const start = moment.tz(clean(startStr), FORMAT, timezone);
   const end = moment.tz(clean(endStr), FORMAT, timezone);
 
   if (!checkout.isValid() || !start.isValid() || !end.isValid()) {
-    throw new Error(
-      "Invalid date(s). Ensure format: 'MMMM DD, YYYY at h:mm A'."
-    );
+    throw new Error("Invalid date(s). Ensure format: 'MMMM DD, YYYY at h:mm A'.");
   }
   if (end.isBefore(start)) {
-    throw new Error("planning end must be after planning start.");
+    throw new Error('planning end must be after planning start.');
   }
 
   // Status logic
@@ -295,39 +285,39 @@ function getCheckoutStatus(
 
   if (checkout.isBefore(start)) {
     status = 0; // before planning start
-    boundary = "start";
-    diffMinutes = start.diff(checkout, "minutes");
+    boundary = 'start';
+    diffMinutes = start.diff(checkout, 'minutes');
   } else if (checkout.isSameOrBefore(end)) {
     status = 1; // between start and end (early vs end → undertime)
-    boundary = "end";
-    diffMinutes = end.diff(checkout, "minutes");
+    boundary = 'end';
+    diffMinutes = end.diff(checkout, 'minutes');
   } else {
     status = 2; // after end (past shift end → overtime)
-    boundary = "end";
-    diffMinutes = checkout.diff(end, "minutes");
+    boundary = 'end';
+    diffMinutes = checkout.diff(end, 'minutes');
   }
 
   // Pretty duration with dynamic plurals
   const hours = Math.floor(diffMinutes / 60);
   const minutes = diffMinutes % 60;
-  const pluralize = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
+  const pluralize = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
   const pretty =
     diffMinutes === 0
-      ? "0 minutes"
+      ? '0 minutes'
       : [
-          hours > 0 ? pluralize(hours, "hour") : null,
-          minutes > 0 ? pluralize(minutes, "minute") : null,
+          hours > 0 ? pluralize(hours, 'hour') : null,
+          minutes > 0 ? pluralize(minutes, 'minute') : null
         ]
           .filter(Boolean)
-          .join(" ");
+          .join(' ');
 
   // Helpful human label
   const status_label =
     status === 0
-      ? "before planning start"
+      ? 'before planning start'
       : status === 1
-      ? "before planning end (undertime)"
-      : "after planning end (overtime)";
+      ? 'before planning end (undertime)'
+      : 'after planning end (overtime)';
 
   return {
     status, // 0 | 1 | 2
@@ -337,7 +327,7 @@ function getCheckoutStatus(
     diff_pretty: pretty, // e.g., "1 hour 15 minutes"
     checkout_iso: checkout.toISOString(),
     start_iso: start.toISOString(),
-    end_iso: end.toISOString(),
+    end_iso: end.toISOString()
   };
 }
 
@@ -346,9 +336,9 @@ function calculateOvertime(
   x_shift_end,
   check_out,
   x_cumulative_minutes,
-  tz = "Asia/Manila"
+  tz = 'Asia/Manila'
 ) {
-  const fmt = "YYYY-MM-DD HH:mm:ss";
+  const fmt = 'YYYY-MM-DD HH:mm:ss';
 
   // Parse as zoned moments
   const shiftStart = moment.tz(x_shift_start, fmt, tz);
@@ -361,11 +351,11 @@ function calculateOvertime(
 
   // Handle overnight shifts: if end <= start, move end to next day
   if (!shiftEnd.isAfter(shiftStart)) {
-    shiftEnd.add(1, "day");
+    shiftEnd.add(1, 'day');
   }
 
   // 1) prescribed_duration = (shiftEnd - shiftStart - 1 hour) in minutes
-  let prescribed_duration = shiftEnd.diff(shiftStart, "minutes") - 60;
+  let prescribed_duration = shiftEnd.diff(shiftStart, 'minutes') - 60;
   if (prescribed_duration < 0) prescribed_duration = 0; // safety guard
 
   // 2) If cumulative > prescribed, overtime = difference; else, no OT
@@ -375,17 +365,17 @@ function calculateOvertime(
   const duration = x_cumulative_minutes - prescribed_duration; // minutes
 
   // 3) startTime = check_out + 1 minute (still in same tz)
-  const startTime = checkOut.clone().add(1, "minute");
+  const startTime = checkOut.clone().add(1, 'minute');
 
   // 4) endTime = startTime + duration minutes
-  const endTime = startTime.clone().add(duration, "minutes");
+  const endTime = startTime.clone().add(duration, 'minutes');
 
   // 5) return formatted values
   return {
     prescribed_duration,
-    startTime: startTime.clone().add(8, "hours").format(fmt),
-    endTime: endTime.clone().add(8, "hours").format(fmt),
-    duration, // minutes
+    startTime: startTime.clone().add(8, 'hours').format(fmt),
+    endTime: endTime.clone().add(8, 'hours').format(fmt),
+    duration // minutes
   };
 }
 
@@ -398,34 +388,34 @@ function calculateOvertime(
  */
 function minutesToHoursFormatted(minutes) {
   // Validate input
-  if (typeof minutes !== "number" || isNaN(minutes)) {
-    throw new Error("Minutes must be a valid number");
+  if (typeof minutes !== 'number' || isNaN(minutes)) {
+    throw new Error('Minutes must be a valid number');
   }
 
   // Create a moment duration object from minutes
-  const duration = moment.duration(minutes, "minutes");
+  const duration = moment.duration(minutes, 'minutes');
 
   // Extract hours and minutes from the duration
   const hours = Math.floor(duration.asHours());
   const remainingMinutes = duration.minutes();
 
   // Build the formatted string with dynamic pluralization
-  let result = "";
+  let result = '';
 
   if (hours > 0) {
-    result += `${hours} hour${hours !== 1 ? "s" : ""}`;
+    result += `${hours} hour${hours !== 1 ? 's' : ''}`;
   }
 
   if (remainingMinutes > 0) {
     if (result) {
-      result += " and ";
+      result += ' and ';
     }
-    result += `${remainingMinutes} minute${remainingMinutes !== 1 ? "s" : ""}`;
+    result += `${remainingMinutes} minute${remainingMinutes !== 1 ? 's' : ''}`;
   }
 
   // Handle edge case of zero minutes
-  if (result === "") {
-    result = "0 minutes";
+  if (result === '') {
+    result = '0 minutes';
   }
 
   return result;
