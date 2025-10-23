@@ -1,4 +1,10 @@
-const { EmbedBuilder, ChannelType } = require('discord.js');
+const {
+  EmbedBuilder,
+  ChannelType,
+  ButtonBuilder,
+  ButtonStyle,
+  ActionRowBuilder
+} = require('discord.js');
 const moment = require('moment-timezone');
 
 const departments = require('../../../config/departments.json');
@@ -146,9 +152,18 @@ const processPublishedShift = async (payload) => {
       planningEmbed.setThumbnail(x_employee_avatar);
     }
 
+    const shiftExchangeButton = new ButtonBuilder()
+      .setCustomId('shiftExchangeButton')
+      .setLabel('Shift Exchange')
+      .setEmoji('🔄')
+      .setStyle(ButtonStyle.Primary);
+
+    const buttonRow = new ActionRowBuilder().addComponents(shiftExchangeButton);
+
     const scheduleMessage = await scheduleChannel.send({
       content: `# ${startDate} | ${id}\n<@${x_discord_id}>`,
-      embeds: [planningEmbed]
+      embeds: [planningEmbed],
+      components: [buttonRow]
     });
 
     const thread = await scheduleMessage.startThread({
