@@ -8,7 +8,7 @@ const {
 
 module.exports = {
   data: {
-    name: `shiftExchangeButton`
+    name: `shiftExchangeButtonn`
   },
   async execute(interaction, client) {
     // const mentionedUser = interaction.message.mentions?.users?.first() || null;
@@ -43,6 +43,8 @@ module.exports = {
       });
     }
 
+    await interaction.deferUpdate();
+
     const allEmbeds = interaction.message.embeds;
     const messageEmbed = allEmbeds[0];
 
@@ -57,6 +59,7 @@ module.exports = {
 
     const shiftExchangeEmbed = new EmbedBuilder()
       .setDescription('## 🔄 SHIFT EXCHANGE REQUEST')
+      .setColor('#1000ff')
       .addFields([
         { name: 'Shift ID', value: shiftIdField.value },
         { name: 'Branch', value: branchField.value },
@@ -85,6 +88,26 @@ module.exports = {
       content: `${interaction.user.toString()}, select a reliever from the menu below.`,
       embeds: [shiftExchangeEmbed],
       components: [relieverMenuRow]
+    });
+
+    const messageComponents = interaction.message.components;
+
+    const shiftExchangeButtonRow = messageComponents.find((row) =>
+      row.components.some((component) => component.customId === 'shiftExchangeButton')
+    );
+
+    if (shiftExchangeButtonRow) {
+      const shiftExchangeButtonIndex = shiftExchangeButtonRow.components.findIndex(
+        (component) => component.customId === 'shiftExchangeButton'
+      );
+
+      if (shiftExchangeButtonIndex !== -1) {
+        shiftExchangeButtonRow.components[shiftExchangeButtonIndex].data.disabled = true;
+      }
+    }
+
+    await interaction.message.edit({
+      components: messageComponents
     });
   }
 };
