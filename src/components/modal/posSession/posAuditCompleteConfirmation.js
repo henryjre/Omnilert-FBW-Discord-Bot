@@ -11,13 +11,19 @@ const auditTypes = require('../../../config/audit_types.json');
 
 module.exports = {
   data: {
-    name: 'posAuditCompleteConfirmationn'
+    name: 'posAuditCompleteConfirmation'
   },
   async execute(interaction, client) {
     await interaction.deferUpdate();
 
     const messageId = interaction.fields.getTextInputValue('posSessionMessageId');
     const message = await interaction.channel.messages.fetch(messageId);
+    if (!message) {
+      return await interaction.followUp({
+        content: `🔴 ERROR: No message found.`,
+        flags: MessageFlags.Ephemeral
+      });
+    }
     const messageSessionName = message.content.split('|')[2];
 
     if (!messageSessionName) {
@@ -49,7 +55,7 @@ module.exports = {
     await meritDemerit(payload);
 
     interaction.followUp({
-      content: `🟢 Audit complete confirmation successful.`,
+      content: `🟢 Audit completed successfully.`,
       flags: MessageFlags.Ephemeral
     });
   }
