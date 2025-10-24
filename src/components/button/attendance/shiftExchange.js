@@ -8,7 +8,7 @@ const {
 
 module.exports = {
   data: {
-    name: `shiftExchangeButtonn`
+    name: `shiftExchangeButton`
   },
   async execute(interaction, client) {
     // const mentionedUser = interaction.message.mentions?.users?.first() || null;
@@ -49,7 +49,7 @@ module.exports = {
     const messageEmbed = allEmbeds[0];
 
     const shiftIdField = messageEmbed.data.fields.find((field) => field.name === 'ID');
-    const assignedNameField = messageEmbed.data.fields.find(
+    const assignedEmployeeField = messageEmbed.data.fields.find(
       (field) => field.name === 'Discord User'
     );
     const branchField = messageEmbed.data.fields.find((field) => field.name === 'Branch');
@@ -66,7 +66,7 @@ module.exports = {
         { name: 'Duty Type', value: dutyTypeField.value },
         { name: 'Shift Start', value: shiftStartField.value },
         { name: 'Shift End', value: shiftEndField.value },
-        { name: 'Assigned Name', value: assignedNameField.value }
+        { name: 'Assigned Employee', value: assignedEmployeeField.value }
       ]);
 
     const serviceCrewRole = await interaction.guild.roles.cache.get('1314413960274907238');
@@ -78,17 +78,11 @@ module.exports = {
     const relieverMenu = new StringSelectMenuBuilder()
       .setCustomId('relieverMenu')
       .setPlaceholder('Select a reliever')
+      .setMinValues(1)
+      .setMaxValues(1)
       .addOptions(membersWithServiceCrewRoles);
 
     const relieverMenuRow = new ActionRowBuilder().addComponents(relieverMenu);
-
-    const thread = interaction.message.thread;
-
-    await thread.send({
-      content: `${interaction.user.toString()}, select a reliever from the menu below.`,
-      embeds: [shiftExchangeEmbed],
-      components: [relieverMenuRow]
-    });
 
     const messageComponents = interaction.message.components;
 
@@ -108,6 +102,13 @@ module.exports = {
 
     await interaction.message.edit({
       components: messageComponents
+    });
+
+    const thread = interaction.message.thread;
+    await thread.send({
+      content: `${interaction.user.toString()}, select a reliever from the menu below.`,
+      embeds: [shiftExchangeEmbed],
+      components: [relieverMenuRow]
     });
   }
 };
