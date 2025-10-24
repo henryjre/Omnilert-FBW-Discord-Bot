@@ -53,7 +53,7 @@ module.exports = {
     const payload = {
       audit_title: 'POS Session Audits',
       audit_code: sessionName,
-      data: employeeAverageAndMerit
+      data: employeeAverageAndMerit // { x_employee_id: 1, x_average: 1.5, merit_amount: 10 }
     };
 
     await meritDemerit(payload);
