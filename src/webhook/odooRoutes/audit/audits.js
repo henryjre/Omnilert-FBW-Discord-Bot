@@ -70,7 +70,7 @@ const calculateWeeklyMerit = async (req, res) => {
   if (x_average_sqaa) {
     const auditType = auditTypes.find((type) => type.code === 'SQAA');
     const meritAmount = getMeritAmount(x_average_sqaa, auditType);
-    if (!meritAmount) {
+    if (meritAmount === null) {
       console.log('No merit amount for SQAA audit for employee', employee_id);
       return res.status(200).json({ ok: true, message: 'No merit amount for SQAA audit' });
     }
@@ -87,7 +87,7 @@ const calculateWeeklyMerit = async (req, res) => {
   if (x_average_scsa) {
     const auditType = auditTypes.find((type) => type.code === 'SCSA');
     const meritAmount = getMeritAmount(x_average_scsa, auditType);
-    if (!meritAmount) {
+    if (meritAmount === null) {
       console.log('No merit amount for SCSA audit for employee', employee_id);
       return res.status(200).json({ ok: true, message: 'No merit amount for SCSA audit' });
     }
