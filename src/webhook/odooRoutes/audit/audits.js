@@ -63,8 +63,8 @@ const calculateWeeklyMerit = async (req, res) => {
 
   const payload = {
     audit_title: 'POS Session Audits',
-    audit_code: sessionName,
-    data: employeeAverageAndMerit // { x_employee_id: 1, x_average: 1.5, merit_amount: 10 }
+    audit_code: 'String',
+    data: [] // { x_employee_id: 1, x_average: 1.5, merit_amount: 10 }
   };
 
   if (x_average_sqaa) {
@@ -77,9 +77,11 @@ const calculateWeeklyMerit = async (req, res) => {
 
     payload.audit_title = auditType.name;
     payload.audit_code = auditType.code;
-    payload.data = [
-      { x_employee_id: employee_id, x_average: x_average_sqaa, merit_amount: meritAmount }
-    ];
+    payload.data.push({
+      x_employee_id: employee_id,
+      x_average: x_average_sqaa,
+      merit_amount: meritAmount
+    });
 
     await meritDemerit(payload);
   }
@@ -94,9 +96,11 @@ const calculateWeeklyMerit = async (req, res) => {
 
     payload.audit_title = auditType.name;
     payload.audit_code = auditType.code;
-    payload.data = [
-      { x_employee_id: employee_id, x_average: x_average_scsa, merit_amount: meritAmount }
-    ];
+    payload.data.push({
+      x_employee_id: employee_id,
+      x_average: x_average_scsa,
+      merit_amount: meritAmount
+    });
 
     await meritDemerit(payload);
   }
