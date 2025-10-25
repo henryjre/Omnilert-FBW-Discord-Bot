@@ -17,7 +17,7 @@ const auditTypes = require('../../../config/audit_types.json');
 
 module.exports = {
   data: {
-    name: `auditNotifyEmployeee`
+    name: `auditNotifyEmployee`
   },
   async execute(interaction, client) {
     const mentionedUser = interaction.message.mentions?.users?.first() || null;
@@ -104,13 +104,15 @@ module.exports = {
 
     const notifyEmployeeButtonRow = new ActionRowBuilder().addComponents(vnrButton);
 
-    // await employeeNotificationChannel.send({
-    //   content: mentionableEmployee,
-    //   embeds: allEmbeds,
-    //   components: [buttonRow]
-    // });
+    const messagePayload = {
+      content: mentionableEmployees,
+      embeds: allEmbeds,
+      components: [buttonRow]
+    };
 
-    // await interaction.message.edit({ content: '', components: [notifyEmployeeButtonRow] });
+    await employeeNotificationChannel.send(messagePayload);
+
+    await interaction.message.edit({ content: '', components: [notifyEmployeeButtonRow] });
 
     if (interaction.member.roles.cache.has(auditingRoleId)) {
       await interaction.member.roles.remove(auditingRoleId);
