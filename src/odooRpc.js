@@ -111,48 +111,26 @@ async function searchActiveAttendance(discordId, attendanceId) {
  * @throws {Error} - If the attendanceId is invalid or if the RPC call fails
  */
 async function getAttendanceById(attendanceId) {
-  // Validate & parse attendanceId
   const parsedId = Number(attendanceId);
   if (isNaN(parsedId) || parsedId <= 0) {
     throw new Error('Invalid attendance ID format');
   }
 
-  try {
-    const domain = [['id', '=', parsedId]];
+  const domain = [['id', '=', parsedId]];
+  const fields = [
+    'id',
+    'employee_id',
+    'check_in',
+    'check_out',
+    'x_discord_id',
+    'x_cumulative_minutes',
+    'x_shift_start',
+    'x_shift_end',
+    'x_employee_contact_name'
+  ];
 
-    // Search for the attendance record
-    const attendance = await jsonRpc('call', {
-      service: 'object',
-      method: 'execute_kw',
-      args: [
-        process.env.odoo_db,
-        2,
-        process.env.odoo_password,
-        'hr.attendance',
-        'search_read',
-        [domain],
-        {
-          fields: [
-            'id',
-            'employee_id',
-            'check_in',
-            'check_out',
-            'x_discord_id',
-            'x_cumulative_minutes',
-            'x_shift_start',
-            'x_shift_end',
-            'x_employee_contact_name'
-          ],
-          limit: 1 // Only one record should match an ID
-        }
-      ]
-    });
-
-    return attendance.result && attendance.result.length > 0 ? attendance.result[0] : null; // null if no record found
-  } catch (error) {
-    console.error('Error fetching attendance by ID:', error);
-    throw error;
-  }
+  const result = await callOdooRpc('hr.attendance', 'search_read', domain, fields, { limit: 1 });
+  return result ? result[0] : null;
 }
 
 /**
@@ -282,34 +260,52 @@ async function meritDemerit(payload) {
 async function getAuditRatingByCode(auditCode) {
   try {
     const domain = [['x_audit_code', '=', auditCode]];
-
-    // Search for the audit rating record
-    const auditRating = await jsonRpc('call', {
-      service: 'object',
-      method: 'execute_kw',
-      args: [
-        process.env.odoo_db,
-        2,
-        process.env.odoo_password,
-        'x_audit_ratings',
-        'search_read',
-        [domain],
-        {
-          fields: [
-            'x_audit_date',
-            'x_audit_code',
-            'x_audit_id',
-            'x_name',
-            'x_rating',
-            'x_employee_id'
-          ]
-        }
-      ]
-    });
-
-    return auditRating.result && auditRating.result.length > 0 ? auditRating.result : null; // null if no record found
+    const fields = [
+      'x_audit_date',
+      'x_audit_code',
+      'x_audit_id',
+      'x_name',
+      'x_rating',
+      'x_employee_id'
+    ];
+    return await callOdooRpc('x_audit_ratings', 'search_read', domain, fields);
   } catch (error) {
     console.error('Error fetching audit rating by code:', error);
+    throw error;
+  }
+}
+
+/**
+ * Retrieves a specific employee data by its Discord ID
+ * @param {string} discordId - The Discord user ID to search for
+ * @returns {Promise<object|null>} - The employee data record if found, otherwise null
+ * @throws {Error} - If the discordId is invalid or if the RPC call fails
+ */
+async function getEmployeeEPIData(discordId) {
+  try {
+    const domain = ['&', ['x_discord_id', '=', discordId], ['company_id', '=', 1]];
+    const fields = ['x_epi', 'x_average_scsa', 'x_average_sqaa', 'employee_id', 'x_audit_ratings'];
+    return await callOdooRpc('hr.employee', 'search_read', domain, fields);
+  } catch (error) {
+    console.error('Error fetching employee data by Discord ID:', error);
+    throw error;
+  }
+}
+
+async function getEmployeeAuditRatings(discordId) {
+  try {
+    const domain = [['x_discord_id', '=', discordId]];
+    const fields = [
+      'x_audit_date',
+      'x_audit_code',
+      'x_audit_id',
+      'x_name',
+      'x_rating',
+      'x_employee_id'
+    ];
+    return await callOdooRpc('x_audit_ratings', 'search_read', domain, fields);
+  } catch (error) {
+    console.error('Error fetching employee audit ratings by Discord ID:', error);
     throw error;
   }
 }
@@ -327,5 +323,31 @@ module.exports = {
   createAuditSalaryAttachment,
   storeAuditRating,
   getAuditRatingByCode,
-  meritDemerit
+  meritDemerit,
+  getEmployeeEPIData,
+  getEmployeeAuditRatings
 };
+
+async function callOdooRpc(model, method, domain = [], fields = [], options = {}) {
+  try {
+    const payload = {
+      service: 'object',
+      method: 'execute_kw',
+      args: [
+        process.env.odoo_db,
+        2,
+        process.env.odoo_password,
+        model,
+        method,
+        [domain],
+        { fields, ...options } // merge any extra options like limit, offset, etc.
+      ]
+    };
+
+    const res = await jsonRpc('call', payload);
+    return res.result && res.result.length > 0 ? res.result : null;
+  } catch (err) {
+    console.error(`Error calling Odoo RPC for model "${model}":`, err);
+    throw err;
+  }
+}
