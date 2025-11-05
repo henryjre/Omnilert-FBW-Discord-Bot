@@ -17,7 +17,7 @@ const botCommandsChannelId = '1372559141071228998';
 const management = require('../../config/management.json');
 
 module.exports = {
-  data: new SlashCommandBuilder().setName('dashboard').setDescription('View the dashboard.'),
+  data: new SlashCommandBuilder().setName('dashboardie').setDescription('View the dashboard.'),
 
   async execute(interaction, client) {
     const replyEmbed = new EmbedBuilder();
@@ -50,11 +50,20 @@ module.exports = {
 
     const epiDashboardButton = new ButtonBuilder()
       .setCustomId('viewEpiDashboard')
-      .setLabel('View EPI')
+      .setLabel('EPI')
       .setEmoji('📈')
       .setStyle(ButtonStyle.Success);
 
-    const buttonRow = new ActionRowBuilder().addComponents(epiDashboardButton);
+    const salaryComputationButton = new ButtonBuilder()
+      .setCustomId('salaryComputationDashboard')
+      .setLabel('Salary Computation')
+      .setEmoji('💵')
+      .setStyle(ButtonStyle.Success);
+
+    const buttonRow = new ActionRowBuilder().addComponents(
+      epiDashboardButton,
+      salaryComputationButton
+    );
 
     await interaction.editReply({
       embeds: [dashboardEmbed],
