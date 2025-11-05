@@ -17,7 +17,7 @@ const botCommandsChannelId = '1372559141071228998';
 const management = require('../../config/management.json');
 
 module.exports = {
-  data: new SlashCommandBuilder().setName('dashboardie').setDescription('View the dashboard.'),
+  data: new SlashCommandBuilder().setName('dashboard').setDescription('View the dashboard.'),
 
   async execute(interaction, client) {
     const replyEmbed = new EmbedBuilder();
