@@ -268,7 +268,8 @@ const updatePlanningShift = async (payload, planningMessage) => {
     allocated_hours,
     x_role_color,
     x_role_name,
-    x_interim_form_id
+    x_interim_form_id,
+    x_attendance_id
   } = payload;
 
   const department = departments.find((d) => d.id === company_id);
@@ -393,6 +394,40 @@ const updatePlanningShift = async (payload, planningMessage) => {
       }
     } catch (error) {
       console.error('Error processing interim form:', error);
+    }
+  }
+
+  if (x_attendance_id) {
+    const attendance = await getAttendanceById(x_attendance_id);
+    if (attendance) {
+      const embed = new EmbedBuilder()
+        .setDescription('## 🗓️ Interim Attendance Log')
+        .addFields(
+          { name: 'Attendance ID', value: `🆔 | ${attendance.id}` },
+          { name: 'Employee', value: `🪪 | ${employeeName}` },
+          {
+            name: 'Discord User',
+            value: `👤 | ${attendance.x_discord_id ? `<@${attendance.x_discord_id}>` : 'N/A'}`
+          },
+          { name: 'Branch', value: `🛒 | ${department?.name || 'Omnilert'}` },
+          {
+            name: 'Check-In',
+            value: `⏱️ | ${formatTime(attendance.check_in)}`
+          },
+          {
+            name: 'Check-Out',
+            value: `⏱️ | ${formatTime(attendance.check_out)}`
+          },
+          {
+            name: 'Total Working Time',
+            value: `🕒 | ${formatMinutes(attendance.x_cumulative_minutes)}`
+          }
+        )
+        .setColor('Grey');
+
+      await thread.send({
+        embeds: [embed]
+      });
     }
   }
 };
