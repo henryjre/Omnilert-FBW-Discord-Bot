@@ -122,13 +122,18 @@ const processPublishedShift = async (payload) => {
       msg.content.includes(`${startDate} | ${id}`)
     );
 
+    let attendance = null;
+    if (x_attendance_id) {
+      attendance = await getAttendanceById(x_attendance_id);
+    }
+
     if (planningMessage) {
-      await updatePlanningShift(payload, planningMessage);
+      await updatePlanningShift(payload, planningMessage, attendance);
 
       return { ok: true, message: 'Schedule updated' };
     }
 
-    const planningEmbed = new EmbedBuilder().setTitle('🗓️ Shift Schedule').addFields([
+    const fields = [
       { name: 'ID', value: `🆔 | ${id}` },
       { name: 'Employee', value: `🪪 | ${employeeName}` },
       {
@@ -143,7 +148,16 @@ const processPublishedShift = async (payload) => {
       { name: 'Shift Start', value: `⏰ | ${startDateTime}` },
       { name: 'Shift End', value: `⏰ | ${endDateTime}` },
       { name: 'Allocated Hours', value: `⌛ | ${allocated_hours} hours` }
-    ]);
+    ];
+
+    if (attendance) {
+      fields.push({
+        name: 'Total Worked Time',
+        value: `🕒 | ${formatMinutes(attendance.x_cumulative_minutes)}`
+      });
+    }
+
+    const planningEmbed = new EmbedBuilder().setTitle('🗓️ Shift Schedule').addFields(fields);
 
     planningEmbed.setColor(roleColors[x_role_color] || 'Blurple');
 
@@ -175,38 +189,35 @@ const processPublishedShift = async (payload) => {
       autoArchiveDuration: 1440
     });
 
-    if (x_attendance_id) {
-      const attendance = await getAttendanceById(x_attendance_id);
-      if (attendance) {
-        const embed = new EmbedBuilder()
-          .setDescription('## 🗓️ Interim Attendance Log')
-          .addFields(
-            { name: 'Attendance ID', value: `🆔 | ${attendance.id}` },
-            { name: 'Employee', value: `🪪 | ${employeeName}` },
-            {
-              name: 'Discord User',
-              value: `👤 | ${attendance.x_discord_id ? `<@${attendance.x_discord_id}>` : 'N/A'}`
-            },
-            { name: 'Branch', value: `🛒 | ${department?.name || 'Omnilert'}` },
-            {
-              name: 'Check-In',
-              value: `⏱️ | ${formatTime(attendance.check_in)}`
-            },
-            {
-              name: 'Check-Out',
-              value: `⏱️ | ${formatTime(attendance.check_out)}`
-            },
-            {
-              name: 'Total Working Time',
-              value: `🕒 | ${formatMinutes(attendance.x_cumulative_minutes)}`
-            }
-          )
-          .setColor('Grey');
+    if (attendance) {
+      const embed = new EmbedBuilder()
+        .setDescription('## 🗓️ Interim Attendance Log')
+        .addFields(
+          { name: 'Attendance ID', value: `🆔 | ${attendance.id}` },
+          { name: 'Employee', value: `🪪 | ${employeeName}` },
+          {
+            name: 'Discord User',
+            value: `👤 | ${attendance.x_discord_id ? `<@${attendance.x_discord_id}>` : 'N/A'}`
+          },
+          { name: 'Branch', value: `🛒 | ${department?.name || 'Omnilert'}` },
+          {
+            name: 'Check-In',
+            value: `⏱️ | ${formatTime(attendance.check_in)}`
+          },
+          {
+            name: 'Check-Out',
+            value: `⏱️ | ${formatTime(attendance.check_out)}`
+          },
+          {
+            name: 'Total Working Time',
+            value: `🕒 | ${formatMinutes(attendance.x_cumulative_minutes)}`
+          }
+        )
+        .setColor('Grey');
 
-        await thread.send({
-          embeds: [embed]
-        });
-      }
+      await thread.send({
+        embeds: [embed]
+      });
     }
 
     if (x_interim_form_id) {
@@ -255,7 +266,7 @@ module.exports = { publishedShift, deletedPlanningShift };
 /////////////////////////////////////////// UPDATE PLANNING SHIFT ///////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const updatePlanningShift = async (payload, planningMessage) => {
+const updatePlanningShift = async (payload, planningMessage, attendance) => {
   const {
     id,
     company_id,
@@ -307,7 +318,9 @@ const updatePlanningShift = async (payload, planningMessage) => {
   if (totalWorkedTimeField) {
     newFields.push({
       name: 'Total Worked Time',
-      value: totalWorkedTimeField.value
+      value: attendance
+        ? `🕒 | ${formatMinutes(attendance.x_cumulative_minutes)}`
+        : totalWorkedTimeField.value
     });
   }
 
@@ -364,38 +377,35 @@ const updatePlanningShift = async (payload, planningMessage) => {
     });
   }
 
-  if (x_attendance_id) {
-    const attendance = await getAttendanceById(x_attendance_id);
-    if (attendance) {
-      const embed = new EmbedBuilder()
-        .setDescription('## 🗓️ Interim Attendance Log')
-        .addFields(
-          { name: 'Attendance ID', value: `🆔 | ${attendance.id}` },
-          { name: 'Employee', value: `🪪 | ${employeeName}` },
-          {
-            name: 'Discord User',
-            value: `👤 | ${attendance.x_discord_id ? `<@${attendance.x_discord_id}>` : 'N/A'}`
-          },
-          { name: 'Branch', value: `🛒 | ${department?.name || 'Omnilert'}` },
-          {
-            name: 'Check-In',
-            value: `⏱️ | ${formatTime(attendance.check_in)}`
-          },
-          {
-            name: 'Check-Out',
-            value: `⏱️ | ${formatTime(attendance.check_out)}`
-          },
-          {
-            name: 'Total Working Time',
-            value: `🕒 | ${formatMinutes(attendance.x_cumulative_minutes)}`
-          }
-        )
-        .setColor('Grey');
+  if (attendance) {
+    const embed = new EmbedBuilder()
+      .setDescription('## 🗓️ Interim Attendance Log')
+      .addFields(
+        { name: 'Attendance ID', value: `🆔 | ${attendance.id}` },
+        { name: 'Employee', value: `🪪 | ${employeeName}` },
+        {
+          name: 'Discord User',
+          value: `👤 | ${attendance.x_discord_id ? `<@${attendance.x_discord_id}>` : 'N/A'}`
+        },
+        { name: 'Branch', value: `🛒 | ${department?.name || 'Omnilert'}` },
+        {
+          name: 'Check-In',
+          value: `⏱️ | ${formatTime(attendance.check_in)}`
+        },
+        {
+          name: 'Check-Out',
+          value: `⏱️ | ${formatTime(attendance.check_out)}`
+        },
+        {
+          name: 'Total Working Time',
+          value: `🕒 | ${formatMinutes(attendance.x_cumulative_minutes)}`
+        }
+      )
+      .setColor('Grey');
 
-      await thread.send({
-        embeds: [embed]
-      });
-    }
+    await thread.send({
+      embeds: [embed]
+    });
   }
 
   if (x_interim_form_id) {
