@@ -45,8 +45,7 @@ module.exports = {
     const dashboardEmbed = new EmbedBuilder()
       .setTitle('📊 Employee Dashboard')
       .setDescription('*Select a button below to view the dashboard.*')
-      .setColor(employeeRole.color || 'Blurple')
-      .addFields([{ name: 'Employee', value: interaction.member.toString() }]);
+      .setColor(employeeRole.color || 'Blurple');
 
     const epiDashboardButton = new ButtonBuilder()
       .setCustomId('viewEpiDashboard')
@@ -56,7 +55,7 @@ module.exports = {
 
     const salaryComputationButton = new ButtonBuilder()
       .setCustomId('salaryComputationDashboard')
-      .setLabel('Salary Computation')
+      .setLabel('Payslip Details')
       .setEmoji('💵')
       .setStyle(ButtonStyle.Success);
 
