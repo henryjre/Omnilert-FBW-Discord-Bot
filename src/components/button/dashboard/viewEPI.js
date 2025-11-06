@@ -19,11 +19,13 @@ module.exports = {
     const allEmbeds = interaction.message.embeds;
     const messageEmbed = allEmbeds[0];
 
-    const employeeField = messageEmbed.data.fields.find((field) => field.name === 'Employee');
-
-    if (!employeeField.value.includes(interaction.user.id)) {
-      replyEmbed.setDescription(`🔴 ERROR: You cannot use this button.`).setColor('Red');
-      return await interaction.reply({ embeds: [replyEmbed], flags: MessageFlags.Ephemeral });
+    const slashInteraction = interaction.message.interaction;
+    if (slashInteraction) {
+      const slashUser = slashInteraction.user;
+      if (!slashUser.id.includes(interaction.user.id)) {
+        replyEmbed.setDescription(`🔴 ERROR: You cannot use this button.`).setColor('Red');
+        return await interaction.reply({ embeds: [replyEmbed], flags: MessageFlags.Ephemeral });
+      }
     }
 
     const preloadEmbed = new EmbedBuilder()
@@ -51,7 +53,6 @@ module.exports = {
     const viewEpiEmbed = EmbedBuilder.from(messageEmbed)
       .setDescription('## 📈 EMPLOYEE PERFORMANCE INDEX')
       .setFields(
-        { name: 'Employee', value: employeeField.value },
         { name: 'EPI Value', value: `${employeeData.x_epi} points` },
         {
           name: 'Service QA Audit',
