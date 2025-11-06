@@ -57,12 +57,6 @@ async function odooLogin() {
   }
 }
 
-/**
- * Searches for active attendance records based on Discord ID, excluding a specific attendance ID
- * @param {string} discordId - The Discord user ID to search for
- * @param {number} [attendanceId] - Optional attendance ID to exclude from the search
- * @returns {Promise<object>} - The response containing active attendance information
- */
 async function searchActiveAttendance(discordId, attendanceId) {
   // Validate input
   if (!discordId || typeof discordId !== 'string') {
@@ -104,12 +98,6 @@ async function searchActiveAttendance(discordId, attendanceId) {
   }
 }
 
-/**
- * Retrieves a specific attendance record by its ID
- * @param {string|number} attendanceId - The attendance ID to search for (parsed to number internally)
- * @returns {Promise<object|null>} - The attendance record if found, otherwise null
- * @throws {Error} - If the attendanceId is invalid or if the RPC call fails
- */
 async function getAttendanceById(attendanceId) {
   const parsedId = Number(attendanceId);
   if (isNaN(parsedId) || parsedId <= 0) {
@@ -133,13 +121,6 @@ async function getAttendanceById(attendanceId) {
   return result ? result[0] : null;
 }
 
-/**
- * Calls the Odoo webhook for check-in or check-out with the current datetime.
- * @param {'checkin'|'checkout'} action - The action to perform.
- * @param {string} url - The Odoo webhook URL.
- * @param {string} discordId - The Discord user ID.
- * @returns {Promise<object>} - The response from Odoo.
- */
 async function callOdooAttendanceWebhook(action, url, discordId) {
   // Format current date/time as 'YYYY-MM-DD HH:MM:SS'
   const now = new Date();
@@ -251,12 +232,6 @@ async function meritDemerit(payload) {
   return callOdooWebhook('merit_demerit', payload);
 }
 
-/**
- * Retrieves a specific attendance record by its ID
- * @param {string} auditCode - The audit code of the audit rating to search for
- * @returns {Promise<object|null>} - The audit rating record if found, otherwise null
- * @throws {Error} - If the auditCode is invalid or if the RPC call fails
- */
 async function getAuditRatingByCode(auditCode) {
   try {
     const domain = [['x_audit_code', '=', auditCode]];
@@ -275,12 +250,6 @@ async function getAuditRatingByCode(auditCode) {
   }
 }
 
-/**
- * Retrieves a specific employee data by its Discord ID
- * @param {string} discordId - The Discord user ID to search for
- * @returns {Promise<object|null>} - The employee data record if found, otherwise null
- * @throws {Error} - If the discordId is invalid or if the RPC call fails
- */
 async function getEmployeeEPIData(discordId) {
   try {
     const domain = ['&', ['x_discord_id', '=', discordId], ['company_id', '=', 1]];
@@ -310,6 +279,171 @@ async function getEmployeeAuditRatings(discordId) {
   }
 }
 
+async function getEmployeePayslipData(discordId) {
+  try {
+    const { date_from, date_to } = currentSemiMonthRangeUTC8();
+    const domain = [
+      ['x_discord_id', '=', discordId],
+      ['x_view_only', '=', true],
+      ['date_from', '=', date_from],
+      ['date_to', '=', date_to]
+    ];
+    const fields = [
+      'id',
+      'name',
+      'state',
+      'employee_id',
+      'date_from',
+      'date_to',
+      'x_view_only',
+      'line_ids',
+      'worked_days_line_ids'
+    ];
+
+    const slips = await callOdooRpc('hr.payslip', 'search_read', domain, fields);
+    return slips?.length ? slips.sort((a, b) => b.id - a.id)[0] : null;
+  } catch (error) {
+    console.error('Error fetching employee salary payslip data:', error);
+    throw error;
+  }
+}
+
+async function getEmployeePayslipData(discordId) {
+  try {
+    const { date_from, date_to } = currentSemiMonthRangeUTC8();
+    const domain = [
+      ['x_discord_id', '=', discordId],
+      ['x_view_only', '=', true],
+      ['date_from', '=', date_from],
+      ['date_to', '=', date_to]
+    ];
+    const fields = [
+      'id',
+      'name',
+      'state',
+      'employee_id',
+      'date_from',
+      'date_to',
+      'x_view_only',
+      'line_ids',
+      'worked_days_line_ids'
+    ];
+
+    const slips = await callOdooRpc('hr.payslip', 'search_read', domain, fields);
+    const slip = slips?.length ? slips.sort((a, b) => b.id - a.id)[0] : null;
+    if (!slip) return null;
+
+    let targetSlipId = slip.id;
+
+    // Compute the salary rule lines
+    await callOdooKw('hr.payslip', 'compute_sheet', [[targetSlipId]]);
+
+    const lines = await callOdooKw('hr.payslip.line', 'search_read', [], {
+      domain: [['slip_id', '=', targetSlipId]],
+      fields: [
+        'id',
+        'name',
+        'code',
+        'category_id',
+        'total',
+        'amount',
+        'quantity',
+        'rate',
+        'sequence'
+      ],
+      order: 'sequence asc, id asc',
+      limit: 1000
+    });
+
+    const workedDays = await callOdooKw('hr.payslip.worked_days', 'search_read', [], {
+      domain: [['payslip_id', '=', targetSlipId]],
+      fields: ['id', 'name', 'code', 'number_of_days', 'number_of_hours', 'amount'],
+      order: 'id asc',
+      limit: 1000
+    });
+
+    // Return the slip header plus fresh details
+    return {
+      ...slip,
+      lines: lines,
+      worked_days: workedDays
+    };
+  } catch (error) {
+    console.error('Error fetching employee salary payslip data:', error);
+    throw error;
+  }
+}
+
+async function createViewOnlyPayslip(discordId) {
+  try {
+    const { date_from, date_to } = currentSemiMonthRangeUTC8();
+
+    const employee = await getEmployeeByDiscordId(discordId);
+
+    const vals = {
+      employee_id: employee.id,
+      date_from,
+      date_to,
+      x_view_only: true, // your custom flag
+      name: `${employee.name} | View-Only Payslip`
+    };
+
+    const slipId = await callOdooKw('hr.payslip', 'create', [vals]);
+
+    const fields = [
+      'id',
+      'name',
+      'state',
+      'employee_id',
+      'date_from',
+      'date_to',
+      'x_view_only',
+      'line_ids',
+      'worked_days_line_ids'
+    ];
+
+    const [slip] = await callOdooKw('hr.payslip', 'read', [[slipId]], { fields });
+
+    let targetSlipId = slip.id;
+
+    await callOdooKw('hr.payslip', 'compute_sheet', [[targetSlipId]]);
+
+    const lines = await callOdooKw('hr.payslip.line', 'search_read', [], {
+      domain: [['slip_id', '=', targetSlipId]],
+      fields: [
+        'id',
+        'name',
+        'code',
+        'category_id',
+        'total',
+        'amount',
+        'quantity',
+        'rate',
+        'sequence'
+      ],
+      order: 'sequence asc, id asc',
+      limit: 1000
+    });
+
+    const workedDays = await callOdooKw('hr.payslip.worked_days', 'search_read', [], {
+      domain: [['payslip_id', '=', targetSlipId]],
+      fields: ['id', 'name', 'code', 'number_of_days', 'number_of_hours', 'amount'],
+      order: 'id asc',
+      limit: 1000
+    });
+
+    // Return the slip header plus fresh details
+    return {
+      ...slip,
+      lines: lines,
+      worked_days: workedDays
+    };
+  } catch (error) {
+    console.error('Error creating view only payslip:', error);
+    throw error;
+  }
+}
+
 module.exports = {
   jsonRpc,
   odooLogin,
@@ -325,7 +459,9 @@ module.exports = {
   getAuditRatingByCode,
   meritDemerit,
   getEmployeeEPIData,
-  getEmployeeAuditRatings
+  getEmployeeAuditRatings,
+  getEmployeePayslipData,
+  createViewOnlyPayslip
 };
 
 async function callOdooRpc(model, method, domain = [], fields = [], options = {}) {
@@ -350,4 +486,65 @@ async function callOdooRpc(model, method, domain = [], fields = [], options = {}
     console.error(`Error calling Odoo RPC for model "${model}":`, err);
     throw err;
   }
+}
+
+async function callOdooKw(model, method, args = [], kwargs = {}) {
+  try {
+    const payload = {
+      service: 'object',
+      method: 'execute_kw',
+      args: [
+        process.env.odoo_db, // database name
+        2, // user ID (adjust if not always 2)
+        process.env.odoo_password, // API key or password
+        model, // model name
+        method, // method to call
+        args, // positional arguments (list)
+        kwargs // keyword arguments (object)
+      ]
+    };
+
+    const res = await jsonRpc('call', payload);
+    // return whatever Odoo returned (result can be object, list, or boolean)
+    return res.result ?? null;
+  } catch (err) {
+    console.error(`Error calling Odoo execute_kw for model "${model}", method "${method}":`, err);
+    throw err;
+  }
+}
+
+async function getEmployeeByDiscordId(discordId) {
+  const empFields = ['id', 'name'];
+  const employees = await callOdooRpc(
+    'hr.employee',
+    'search_read',
+    [
+      ['x_discord_id', '=', discordId],
+      ['company_id', '=', 1]
+    ],
+    empFields
+  );
+  if (!employees?.length) throw new Error(`No employee with x_discord_id = ${discordId}`);
+  return employees[0];
+}
+
+function currentSemiMonthRangeUTC8() {
+  const now = new Date();
+  // Build a "Manila now" by adding the local offset to hit UTC, then +8h
+  const utc = new Date(now.getTime() + now.getTimezoneOffset() * 60000);
+  const manila = new Date(utc.getTime() + 8 * 3600 * 1000);
+  const y = manila.getFullYear();
+  const m = manila.getMonth() + 1; // 1..12
+  const pad = (n) => String(n).padStart(2, '0');
+  const first = `${y}-${pad(m)}-01`;
+  const fifteenth = `${y}-${pad(m)}-15`;
+  const last = new Date(y, m, 0).getDate();
+  const sixteenth = `${y}-${pad(m)}-16`;
+  const end = `${y}-${pad(m)}-${pad(last)}`;
+
+  // If today <= 15 → 01–15; else → 16–end
+  const day = manila.getDate();
+  return day <= 15
+    ? { date_from: first, date_to: fifteenth }
+    : { date_from: sixteenth, date_to: end };
 }
