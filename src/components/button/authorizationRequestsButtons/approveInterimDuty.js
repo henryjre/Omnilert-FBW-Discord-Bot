@@ -114,19 +114,18 @@ function createInterimDutyPayload(interimDutyData, department) {
   try {
     const dutyDate = moment(interimDutyData.date, 'MMMM DD, YYYY');
 
-    const startTime = moment(interimDutyData.shiftStartTime, 'h:mm A');
-    const endTime = moment(interimDutyData.shiftEndTime, 'h:mm A');
-
     let startDateTime, endDateTime;
 
     if (interimDutyData.attendanceId) {
-      startDateTime = moment(interimDutyData.start_datetime, 'MMMM DD, YYYY [at] h:mm A').format(
+      startDateTime = moment(interimDutyData.shiftStartTime, 'MMMM DD, YYYY [at] h:mm A').format(
         'YYYY-MM-DD HH:mm:ss'
       );
-      endDateTime = moment(interimDutyData.end_datetime, 'MMMM DD, YYYY [at] h:mm A').format(
+      endDateTime = moment(interimDutyData.shiftEndTime, 'MMMM DD, YYYY [at] h:mm A').format(
         'YYYY-MM-DD HH:mm:ss'
       );
     } else {
+      const startTime = moment(interimDutyData.shiftStartTime, 'h:mm A');
+      const endTime = moment(interimDutyData.shiftEndTime, 'h:mm A');
       startDateTime = dutyDate
         .clone()
         .hour(startTime.hour())
