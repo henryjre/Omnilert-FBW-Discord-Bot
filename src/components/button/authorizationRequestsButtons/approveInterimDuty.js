@@ -83,10 +83,10 @@ module.exports = {
     };
     messageEmbed.data.color = 5763719;
 
-    await interaction.message.edit({
-      embeds: [messageEmbed],
-      components: []
-    });
+    // await interaction.message.edit({
+    //   embeds: [messageEmbed],
+    //   components: []
+    // });
 
     replyEmbed
       .setDescription(
@@ -114,6 +114,7 @@ function extractUserId(mention) {
 
 function createInterimDutyPayload(interimDutyData, department) {
   try {
+    console.log('interimDutyData', interimDutyData);
     const dutyDate = moment(interimDutyData.date, 'MMMM DD, YYYY');
 
     let startDateTime, endDateTime;
