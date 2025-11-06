@@ -499,11 +499,11 @@ const employeeCheckOut = async (req, res) => {
           },
           {
             name: 'Shift Start Time',
-            value: `⏰ | ${shift_start_time}`
+            value: `⏰ | ${check_in_time}`
           },
           {
             name: 'Shift End Time',
-            value: `⏰ | ${shift_end_time}`
+            value: `⏰ | ${check_out_time}`
           },
           {
             name: 'Shift Coverage',
