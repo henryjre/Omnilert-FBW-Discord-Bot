@@ -59,6 +59,10 @@ module.exports = {
         text: `Page ${page} of ${totalPages} | Showing ${start + 1} - ${end} of ${total} entries`
       });
 
+    if (auditRatingsEmbed.data.fields) {
+      delete auditRatingsEmbed.data.fields;
+    }
+
     const nextButton = new ButtonBuilder()
       .setCustomId('nextAuditRatings')
       .setLabel('Next Page')
