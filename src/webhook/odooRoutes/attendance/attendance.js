@@ -14,6 +14,7 @@ const { searchActiveAttendance, editAttendance } = require('../../../odooRpc.js'
 
 const managementAttendanceLogChannelId = '1314413190074994690';
 const hrRoleId = '1314815153421680640';
+const hrDepartmentChannelId = '1372557527715156049';
 
 const attendanceCheckIn = async (req, res) => {
   try {
@@ -481,18 +482,43 @@ const employeeCheckOut = async (req, res) => {
     }
 
     if (!isWorkValid(check_in, check_out, x_shift_start, x_shift_end)) {
-      const attendanceErrorEmbed = new EmbedBuilder()
-        .setDescription(
-          '## ⚠️ INVALID ATTENDANCE\n\u200b\n**This attendance is outside the shift schedule and has been deleted. Please contact the management for assistance.**'
-        )
-        .addFields(
-          { name: 'Attendance ID', value: `🆔 | ${attendanceId}` },
-          { name: 'Check-In', value: `⏱️ | ${check_in_time}` },
-          { name: 'Check-Out', value: `⏱️ | ${check_out_time}` },
-          { name: 'Shift Start', value: `⏰ | ${shift_start_time}` },
-          { name: 'Shift End', value: `⏰ | ${shift_end_time}` }
-        )
-        .setColor('Yellow');
+      const authRequestEmbed = new EmbedBuilder()
+        .setDescription(`## ⌛ INTERIM DUTY FORM`)
+        .addFields([
+          {
+            name: 'Branch',
+            value: `🛒 | ${department?.name || 'Omnilert'}`
+          },
+          {
+            name: 'Attendance ID',
+            value: `🆔 | ${attendanceId}`
+          },
+          {
+            name: 'Interim Duty Date',
+            value: `📆 | ${shift_start_date}`
+          },
+          {
+            name: 'Shift Start Time',
+            value: `⏰ | ${shift_start_time}`
+          },
+          {
+            name: 'Shift End Time',
+            value: `⏰ | ${shift_end_time}`
+          },
+          {
+            name: 'Shift Coverage',
+            value: `🎯 | Attendance Interim`
+          },
+          {
+            name: 'Interim Duty Reason',
+            value: `❓ | There was no planning schedule for this employee.`
+          },
+          {
+            name: 'Employee',
+            value: `👤 | <@${x_discord_id}>`
+          }
+        ])
+        .setColor('#f3ff00');
 
       try {
         const threadMessages = await thread.messages.fetch({ limit: 100 });
@@ -524,18 +550,31 @@ const employeeCheckOut = async (req, res) => {
       }
 
       try {
-        await editAttendance({
-          attendanceId: attendanceId,
-          field: 'delete'
-        });
-      } catch (error) {
-        console.error('Error deleting attendance:', error);
-      }
+        const confirmInterim = new ButtonBuilder()
+          .setCustomId('approveInterimDuty')
+          .setLabel('Approve')
+          .setStyle(ButtonStyle.Success);
 
-      await thread.send({
-        content: `${x_discord_id ? `<@${x_discord_id}>` : department?.role}`,
-        embeds: [attendanceErrorEmbed]
-      });
+        const rejectInterim = new ButtonBuilder()
+          .setCustomId('rejectInterimDuty')
+          .setLabel('Reject')
+          .setStyle(ButtonStyle.Danger);
+
+        const interimButtonRow = new ActionRowBuilder().addComponents(
+          confirmInterim,
+          rejectInterim
+        );
+
+        const messagePayload = {
+          content: `<@&${hrRoleId}>`,
+          embeds: [authRequestEmbed],
+          components: [interimButtonRow]
+        };
+
+        await client.channels.cache.get(hrDepartmentChannelId).send(messagePayload);
+      } catch (error) {
+        console.error('Error sending interim duty request:', error);
+      }
       return res.status(200).json({ ok: true, message: 'Invalid attendance' });
     }
 
