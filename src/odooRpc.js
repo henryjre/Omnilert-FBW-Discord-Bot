@@ -279,14 +279,15 @@ async function getEmployeeAuditRatings(discordId) {
   }
 }
 
-async function getEmployeePayslipData(discordId) {
+async function getEmployeePayslipData(discordId, company_id) {
   try {
     const { date_from, date_to } = currentSemiMonthRangeUTC8();
     const domain = [
       ['x_discord_id', '=', discordId],
       ['x_view_only', '=', true],
       ['date_from', '=', date_from],
-      ['date_to', '=', date_to]
+      ['date_to', '=', date_to],
+      ['company_id', '=', company_id]
     ];
     const fields = [
       'id',
@@ -374,7 +375,7 @@ async function getEmployeePayslipData(discordId) {
   }
 }
 
-async function createViewOnlyPayslip(discordId) {
+async function createViewOnlyPayslip(discordId, company_id) {
   try {
     const { date_from, date_to } = currentSemiMonthRangeUTC8();
 
@@ -385,7 +386,8 @@ async function createViewOnlyPayslip(discordId) {
       date_from,
       date_to,
       x_view_only: true, // your custom flag
-      name: `${employee.name} | View-Only Payslip`
+      name: `${employee.name} | View-Only Payslip`,
+      company_id: company_id
     };
 
     const slipId = await callOdooKw('hr.payslip', 'create', [vals]);
