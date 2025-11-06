@@ -31,6 +31,10 @@ module.exports = {
       .setDescription('*Select a button below to view the dashboard.*')
       .setFields([{ name: 'Employee', value: interaction.member.toString() }]);
 
+    if (dashboardEmbed.data.fields) {
+      delete dashboardEmbed.data.fields;
+    }
+
     if (dashboardEmbed.data.footer) {
       delete dashboardEmbed.data.footer;
     }
