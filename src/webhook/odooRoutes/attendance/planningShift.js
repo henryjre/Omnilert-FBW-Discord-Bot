@@ -175,39 +175,6 @@ const processPublishedShift = async (payload) => {
       autoArchiveDuration: 1440
     });
 
-    if (x_interim_form_id) {
-      const hrChannel = client.channels.cache.get(hrChannelId);
-      try {
-        if (!hrChannel) {
-          console.error('HR Channel not found with ID:', hrChannelId);
-          return;
-        }
-
-        const interimFormMessage = await hrChannel.messages
-          .fetch(x_interim_form_id)
-          .catch((error) => {
-            console.error('Error fetching interim form message:', error);
-            return null;
-          });
-
-        if (interimFormMessage) {
-          const interimEmbeds = [...interimFormMessage.embeds];
-
-          await thread.send({
-            embeds: interimEmbeds
-          });
-
-          await interimFormMessage.delete().catch((error) => {
-            console.error('Error deleting interim form message:', error);
-          });
-        } else {
-          console.error('Interim form message not found with ID:', x_interim_form_id);
-        }
-      } catch (error) {
-        console.error('Error processing interim form:', error);
-      }
-    }
-
     if (x_attendance_id) {
       const attendance = await getAttendanceById(x_attendance_id);
       if (attendance) {
@@ -239,6 +206,39 @@ const processPublishedShift = async (payload) => {
         await thread.send({
           embeds: [embed]
         });
+      }
+    }
+
+    if (x_interim_form_id) {
+      const hrChannel = client.channels.cache.get(hrChannelId);
+      try {
+        if (!hrChannel) {
+          console.error('HR Channel not found with ID:', hrChannelId);
+          return;
+        }
+
+        const interimFormMessage = await hrChannel.messages
+          .fetch(x_interim_form_id)
+          .catch((error) => {
+            console.error('Error fetching interim form message:', error);
+            return null;
+          });
+
+        if (interimFormMessage) {
+          const interimEmbeds = [...interimFormMessage.embeds];
+
+          await thread.send({
+            embeds: interimEmbeds
+          });
+
+          await interimFormMessage.delete().catch((error) => {
+            console.error('Error deleting interim form message:', error);
+          });
+        } else {
+          console.error('Interim form message not found with ID:', x_interim_form_id);
+        }
+      } catch (error) {
+        console.error('Error processing interim form:', error);
       }
     }
 
@@ -346,7 +346,7 @@ const updatePlanningShift = async (payload, planningMessage) => {
 
   const thread = await planningMessage.thread;
   if (thread) {
-    await thread.setName(`# ${startDate} | ${employeeName} | ${id}`);
+    await thread.setName(`${startDate} | ${employeeName} | ${id}`);
   }
 
   if (changedFields.length > 0) {
@@ -362,39 +362,6 @@ const updatePlanningShift = async (payload, planningMessage) => {
     planningMessage.thread.send({
       embeds: [replyEmbed]
     });
-  }
-
-  if (x_interim_form_id) {
-    const hrChannel = client.channels.cache.get(hrChannelId);
-    try {
-      if (!hrChannel) {
-        console.error('HR Channel not found with ID:', hrChannelId);
-        return;
-      }
-
-      const interimFormMessage = await hrChannel.messages
-        .fetch(x_interim_form_id)
-        .catch((error) => {
-          console.error('Error fetching interim form message:', error);
-          return null;
-        });
-
-      if (interimFormMessage) {
-        const interimEmbeds = [...interimFormMessage.embeds];
-
-        await planningMessage.thread.send({
-          embeds: interimEmbeds
-        });
-
-        await interimFormMessage.delete().catch((error) => {
-          console.error('Error deleting interim form message:', error);
-        });
-      } else {
-        console.error('Interim form message not found with ID:', x_interim_form_id);
-      }
-    } catch (error) {
-      console.error('Error processing interim form:', error);
-    }
   }
 
   if (x_attendance_id) {
@@ -428,6 +395,39 @@ const updatePlanningShift = async (payload, planningMessage) => {
       await thread.send({
         embeds: [embed]
       });
+    }
+  }
+
+  if (x_interim_form_id) {
+    const hrChannel = client.channels.cache.get(hrChannelId);
+    try {
+      if (!hrChannel) {
+        console.error('HR Channel not found with ID:', hrChannelId);
+        return;
+      }
+
+      const interimFormMessage = await hrChannel.messages
+        .fetch(x_interim_form_id)
+        .catch((error) => {
+          console.error('Error fetching interim form message:', error);
+          return null;
+        });
+
+      if (interimFormMessage) {
+        const interimEmbeds = [...interimFormMessage.embeds];
+
+        await planningMessage.thread.send({
+          embeds: interimEmbeds
+        });
+
+        await interimFormMessage.delete().catch((error) => {
+          console.error('Error deleting interim form message:', error);
+        });
+      } else {
+        console.error('Interim form message not found with ID:', x_interim_form_id);
+      }
+    } catch (error) {
+      console.error('Error processing interim form:', error);
     }
   }
 };
