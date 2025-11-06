@@ -308,6 +308,8 @@ async function getEmployeePayslipData(discordId, company_id) {
 
     let targetSlipId = slip.id;
 
+    await callOdooKw('hr.payslip', 'action_refresh_from_work_entries', [[targetSlipId]]);
+
     // Compute the salary rule lines
     await callOdooKw('hr.payslip', 'compute_sheet', [[targetSlipId]]);
 
