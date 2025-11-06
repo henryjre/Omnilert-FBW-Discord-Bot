@@ -62,7 +62,7 @@ module.exports = {
 
     const backButton = new ButtonBuilder()
       .setCustomId('backToDashboard')
-      .setLabel('Back')
+      .setLabel('Back To Dashboard')
       .setEmoji('⬅️')
       .setStyle(ButtonStyle.Secondary);
 
