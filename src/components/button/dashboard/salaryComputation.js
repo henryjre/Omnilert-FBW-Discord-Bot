@@ -67,9 +67,9 @@ module.exports = {
 
     const salaryComputationEmbed = EmbedBuilder.from(messageEmbed)
       .setDescription(
-        `## 📈 PAYSLIP DETAILS\n\u200b\n### PERIOD: ${dateRange.date_from} - ${
+        `## 📈 PAYSLIP DETAILS\n### PERIOD: ${dateRange.date_from} - ${
           dateRange.date_to
-        }\n\u200b\n**WORKED DAYS**\n${makeEmbedTable(
+        }\n**WORKED DAYS**\n${makeEmbedTable(
           headers,
           rows
         )}\n\u200b\n**SALARY COMPUTATION**\n${description}`
