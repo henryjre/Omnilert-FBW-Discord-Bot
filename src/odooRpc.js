@@ -281,42 +281,14 @@ async function getEmployeeAuditRatings(discordId) {
 
 async function getEmployeePayslipData(discordId, company_id) {
   try {
+    const employee = await getEmployeeByDiscordId(discordId, company_id);
     const { date_from, date_to } = currentSemiMonthRangeUTC8();
     const domain = [
-      ['x_discord_id', '=', discordId],
       ['x_view_only', '=', true],
       ['date_from', '=', date_from],
       ['date_to', '=', date_to],
+      ['employee_id', '=', employee.id],
       ['company_id', '=', company_id]
-    ];
-    const fields = [
-      'id',
-      'name',
-      'state',
-      'employee_id',
-      'date_from',
-      'date_to',
-      'x_view_only',
-      'line_ids',
-      'worked_days_line_ids'
-    ];
-
-    const slips = await callOdooRpc('hr.payslip', 'search_read', domain, fields);
-    return slips?.length ? slips.sort((a, b) => b.id - a.id)[0] : null;
-  } catch (error) {
-    console.error('Error fetching employee salary payslip data:', error);
-    throw error;
-  }
-}
-
-async function getEmployeePayslipData(discordId) {
-  try {
-    const { date_from, date_to } = currentSemiMonthRangeUTC8();
-    const domain = [
-      ['x_discord_id', '=', discordId],
-      ['x_view_only', '=', true],
-      ['date_from', '=', date_from],
-      ['date_to', '=', date_to]
     ];
     const fields = [
       'id',
@@ -379,7 +351,7 @@ async function createViewOnlyPayslip(discordId, company_id) {
   try {
     const { date_from, date_to } = currentSemiMonthRangeUTC8();
 
-    const employee = await getEmployeeByDiscordId(discordId);
+    const employee = await getEmployeeByDiscordId(discordId, company_id);
 
     const vals = {
       employee_id: employee.id,
@@ -515,14 +487,14 @@ async function callOdooKw(model, method, args = [], kwargs = {}) {
   }
 }
 
-async function getEmployeeByDiscordId(discordId) {
+async function getEmployeeByDiscordId(discordId, company_id) {
   const empFields = ['id', 'name'];
   const employees = await callOdooRpc(
     'hr.employee',
     'search_read',
     [
       ['x_discord_id', '=', discordId],
-      ['company_id', '=', 1]
+      ['company_id', '=', company_id]
     ],
     empFields
   );
