@@ -346,7 +346,7 @@ const updatePlanningShift = async (payload, planningMessage) => {
 
   const thread = await planningMessage.thread;
   if (thread) {
-    await thread.setName(`# ${startDate} | ${id}\n<@${x_discord_id}>`);
+    await thread.setName(`# ${startDate} | ${employeeName} | ${id}`);
   }
 
   if (changedFields.length > 0) {
