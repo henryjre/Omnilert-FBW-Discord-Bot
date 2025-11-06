@@ -83,12 +83,18 @@ module.exports = {
       });
 
     const backButton = new ButtonBuilder()
-      .setCustomId('backToDashboard')
+      .setCustomId('salaryComputationDashboard')
       .setLabel('Back')
       .setEmoji('⬅️')
       .setStyle(ButtonStyle.Secondary);
 
-    const buttonRow = new ActionRowBuilder().addComponents(backButton);
+    const backToDashboardButton = new ButtonBuilder()
+      .setCustomId('backToDashboard')
+      .setLabel('Back To Dashboard')
+      .setEmoji('↩️')
+      .setStyle(ButtonStyle.Secondary);
+
+    const buttonRow = new ActionRowBuilder().addComponents(backButton, backToDashboardButton);
 
     await interaction.message.edit({ embeds: [salaryComputationEmbed], components: [buttonRow] });
   }
