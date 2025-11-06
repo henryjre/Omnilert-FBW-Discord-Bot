@@ -7,6 +7,8 @@ const {
 } = require('discord.js');
 const moment = require('moment-timezone');
 
+const { getAttendanceById } = require('../../../odooRpc.js');
+
 const departments = require('../../../config/departments.json');
 const client = require('../../../index');
 
@@ -92,7 +94,8 @@ const processPublishedShift = async (payload) => {
       allocated_hours,
       x_role_color,
       x_role_name,
-      x_interim_form_id
+      x_interim_form_id,
+      x_attendance_id
     } = payload;
 
     const department = departments.find((d) => d.id === company_id);
@@ -202,6 +205,40 @@ const processPublishedShift = async (payload) => {
         }
       } catch (error) {
         console.error('Error processing interim form:', error);
+      }
+    }
+
+    if (x_attendance_id) {
+      const attendance = await getAttendanceById(x_attendance_id);
+      if (attendance) {
+        const embed = new EmbedBuilder()
+          .setDescription('## 🗓️ Interim Attendance Log')
+          .addFields(
+            { name: 'Attendance ID', value: `🆔 | ${attendance.id}` },
+            { name: 'Employee', value: `🪪 | ${employeeName}` },
+            {
+              name: 'Discord User',
+              value: `👤 | ${attendance.x_discord_id ? `<@${attendance.x_discord_id}>` : 'N/A'}`
+            },
+            { name: 'Branch', value: `🛒 | ${department?.name || 'Omnilert'}` },
+            {
+              name: 'Check-In',
+              value: `⏱️ | ${formatTime(attendance.check_in)}`
+            },
+            {
+              name: 'Check-Out',
+              value: `⏱️ | ${formatTime(attendance.check_out)}`
+            },
+            {
+              name: 'Total Working Time',
+              value: `🕒 | ${formatMinutes(attendance.x_cumulative_minutes)}`
+            }
+          )
+          .setColor('Grey');
+
+        await thread.send({
+          embeds: [embed]
+        });
       }
     }
 
@@ -354,6 +391,15 @@ const updatePlanningShift = async (payload, planningMessage) => {
       } else {
         console.error('Interim form message not found with ID:', x_interim_form_id);
       }
+
+      if (x_attendance_id) {
+        const attendance = await getAttendanceById(x_attendance_id);
+        if (attendance) {
+          const attendanceEmbed = new EmbedBuilder()
+            .setDescription('## Attendance Interim')
+            .addFields([{ name: 'Attendance ID', value: `🆔 | ${attendance.id}` }]);
+        }
+      }
     } catch (error) {
       console.error('Error processing interim form:', error);
     }
@@ -366,6 +412,21 @@ const updatePlanningShift = async (payload, planningMessage) => {
 
 function cleanFieldValue(s) {
   return s.replace(/^[^|]*\|\s*/, '').trim();
+}
+
+function formatMinutes(minutes) {
+  const hours = Math.floor(Math.abs(minutes) / 60);
+  const mins = Math.abs(minutes) % 60;
+
+  let parts = [];
+  if (hours > 0) {
+    parts.push(`${hours} hour${hours > 1 ? 's' : ''}`);
+  }
+  if (mins > 0) {
+    parts.push(`${mins} minute${mins > 1 ? 's' : ''}`);
+  }
+
+  return parts.length > 0 ? parts.join(' and ') : '0 minutes';
 }
 
 function formatTime(rawTime) {
