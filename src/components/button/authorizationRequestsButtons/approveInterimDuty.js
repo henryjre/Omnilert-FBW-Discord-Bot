@@ -46,7 +46,9 @@ module.exports = {
     const shiftCoverage = dutyTypes.find(
       (d) => d.code === shiftCoverageValue.toLowerCase() || d.name === shiftCoverageValue
     );
-    const submittedByField = messageEmbed.data.fields.find((f) => f.name === 'Submitted By');
+    const submittedByField = messageEmbed.data.fields.find(
+      (f) => f.name === 'Submitted By' || f.name === 'Employee'
+    );
 
     const interimDutyData = {
       branch: branchField ? cleanFieldValue(branchField.value) : '',
