@@ -391,15 +391,6 @@ const updatePlanningShift = async (payload, planningMessage) => {
       } else {
         console.error('Interim form message not found with ID:', x_interim_form_id);
       }
-
-      if (x_attendance_id) {
-        const attendance = await getAttendanceById(x_attendance_id);
-        if (attendance) {
-          const attendanceEmbed = new EmbedBuilder()
-            .setDescription('## Attendance Interim')
-            .addFields([{ name: 'Attendance ID', value: `🆔 | ${attendance.id}` }]);
-        }
-      }
     } catch (error) {
       console.error('Error processing interim form:', error);
     }
