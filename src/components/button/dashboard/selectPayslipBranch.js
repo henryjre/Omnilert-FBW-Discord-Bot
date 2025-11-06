@@ -39,6 +39,14 @@ module.exports = {
       '*Select a branch to view the payslip details.*'
     );
 
+    if (selectBranchEmbed.data.fields) {
+      delete selectBranchEmbed.data.fields;
+    }
+
+    if (selectBranchEmbed.data.footer) {
+      delete selectBranchEmbed.data.footer;
+    }
+
     const branchMenu = new StringSelectMenuBuilder()
       .setCustomId('payslipBranchMenu')
       .setPlaceholder('Select a branch')
