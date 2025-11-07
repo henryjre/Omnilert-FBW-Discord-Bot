@@ -120,12 +120,12 @@ function createInterimDutyPayload(interimDutyData, department) {
     let startDateTime, endDateTime;
 
     if (interimDutyData.attendanceId) {
-      startDateTime = moment(interimDutyData.shiftStartTime, 'MMMM DD, YYYY [at] h:mm A').format(
-        'YYYY-MM-DD HH:mm:ss'
-      );
-      endDateTime = moment(interimDutyData.shiftEndTime, 'MMMM DD, YYYY [at] h:mm A').format(
-        'YYYY-MM-DD HH:mm:ss'
-      );
+      startDateTime = moment(interimDutyData.shiftStartTime, 'MMMM DD, YYYY [at] h:mm A')
+        .utc()
+        .format('YYYY-MM-DD HH:mm:ss');
+      endDateTime = moment(interimDutyData.shiftEndTime, 'MMMM DD, YYYY [at] h:mm A')
+        .utc()
+        .format('YYYY-MM-DD HH:mm:ss');
     } else {
       const startTime = moment(interimDutyData.shiftStartTime, 'h:mm A');
       const endTime = moment(interimDutyData.shiftEndTime, 'h:mm A');
@@ -134,6 +134,7 @@ function createInterimDutyPayload(interimDutyData, department) {
         .hour(startTime.hour())
         .minute(startTime.minute())
         .second(0)
+        .utc()
         .format('YYYY-MM-DD HH:mm:ss');
 
       // Check if end time is earlier than start time (crosses to next day)
@@ -145,6 +146,7 @@ function createInterimDutyPayload(interimDutyData, department) {
           .hour(endTime.hour())
           .minute(endTime.minute())
           .second(0)
+          .utc()
           .format('YYYY-MM-DD HH:mm:ss');
       } else {
         // Same day
@@ -153,6 +155,7 @@ function createInterimDutyPayload(interimDutyData, department) {
           .hour(endTime.hour())
           .minute(endTime.minute())
           .second(0)
+          .utc()
           .format('YYYY-MM-DD HH:mm:ss');
       }
     }
