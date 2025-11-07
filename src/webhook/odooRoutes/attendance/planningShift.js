@@ -317,12 +317,15 @@ const updatePlanningShift = async (payload, planningMessage, attendance) => {
     (field) => field.name === 'Total Worked Time'
   );
 
-  if (totalWorkedTimeField) {
+  if (attendance) {
     newFields.push({
       name: 'Total Worked Time',
-      value: attendance
-        ? `🕒 | ${formatMinutes(attendance.x_cumulative_minutes)}`
-        : totalWorkedTimeField.value
+      value: `🕒 | ${formatMinutes(attendance.x_cumulative_minutes)}`
+    });
+  } else if (totalWorkedTimeField) {
+    newFields.push({
+      name: 'Total Worked Time',
+      value: totalWorkedTimeField.value
     });
   }
 
@@ -359,7 +362,7 @@ const updatePlanningShift = async (payload, planningMessage, attendance) => {
     embeds: [newPlanningEmbed]
   });
 
-  const thread = await planningMessage.thread;
+  const thread = planningMessage.thread;
   if (thread) {
     await thread.setName(`${startDate} | ${employeeName} | ${id}`);
   }
@@ -374,7 +377,7 @@ const updatePlanningShift = async (payload, planningMessage, attendance) => {
         }))
       )
       .setColor('Grey');
-    planningMessage.thread.send({
+    await thread.send({
       embeds: [replyEmbed]
     });
   }
@@ -427,7 +430,7 @@ const updatePlanningShift = async (payload, planningMessage, attendance) => {
       if (interimFormMessage) {
         const interimEmbeds = [...interimFormMessage.embeds];
 
-        await planningMessage.thread.send({
+        await thread.send({
           embeds: interimEmbeds
         });
 
