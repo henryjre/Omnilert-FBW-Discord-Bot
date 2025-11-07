@@ -127,6 +127,9 @@ const processPublishedShift = async (payload) => {
       attendance = await getAttendanceById(x_attendance_id);
     }
 
+    console.log('payload', payload);
+    console.log('attendance', attendance);
+
     if (planningMessage) {
       await updatePlanningShift(payload, planningMessage, attendance);
 
@@ -190,7 +193,7 @@ const processPublishedShift = async (payload) => {
     });
 
     if (attendance) {
-      const embed = new EmbedBuilder()
+      const attendanceEmbed = new EmbedBuilder()
         .setDescription('## 🗓️ Interim Attendance Log')
         .addFields(
           { name: 'Attendance ID', value: `🆔 | ${attendance.id}` },
@@ -216,7 +219,7 @@ const processPublishedShift = async (payload) => {
         .setColor('Grey');
 
       await thread.send({
-        embeds: [embed]
+        embeds: [attendanceEmbed]
       });
     }
 
@@ -231,7 +234,6 @@ const processPublishedShift = async (payload) => {
         const interimFormMessage = await hrChannel.messages
           .fetch(x_interim_form_id)
           .catch((error) => {
-            console.error('Error fetching interim form message:', error);
             return null;
           });
 
@@ -378,7 +380,7 @@ const updatePlanningShift = async (payload, planningMessage, attendance) => {
   }
 
   if (attendance) {
-    const embed = new EmbedBuilder()
+    const attendanceEmbed = new EmbedBuilder()
       .setDescription('## 🗓️ Interim Attendance Log')
       .addFields(
         { name: 'Attendance ID', value: `🆔 | ${attendance.id}` },
@@ -404,7 +406,7 @@ const updatePlanningShift = async (payload, planningMessage, attendance) => {
       .setColor('Grey');
 
     await thread.send({
-      embeds: [embed]
+      embeds: [attendanceEmbed]
     });
   }
 
@@ -419,7 +421,6 @@ const updatePlanningShift = async (payload, planningMessage, attendance) => {
       const interimFormMessage = await hrChannel.messages
         .fetch(x_interim_form_id)
         .catch((error) => {
-          console.error('Error fetching interim form message:', error);
           return null;
         });
 
