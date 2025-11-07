@@ -192,37 +192,6 @@ const processPublishedShift = async (payload) => {
       autoArchiveDuration: 1440
     });
 
-    if (attendance) {
-      const attendanceEmbed = new EmbedBuilder()
-        .setDescription('## 🗓️ Interim Attendance Log')
-        .addFields(
-          { name: 'Attendance ID', value: `🆔 | ${attendance.id}` },
-          { name: 'Employee', value: `🪪 | ${employeeName}` },
-          {
-            name: 'Discord User',
-            value: `👤 | ${attendance.x_discord_id ? `<@${attendance.x_discord_id}>` : 'N/A'}`
-          },
-          { name: 'Branch', value: `🛒 | ${department?.name || 'Omnilert'}` },
-          {
-            name: 'Check-In',
-            value: `⏱️ | ${formatTime(attendance.check_in)}`
-          },
-          {
-            name: 'Check-Out',
-            value: `⏱️ | ${formatTime(attendance.check_out)}`
-          },
-          {
-            name: 'Total Working Time',
-            value: `🕒 | ${formatMinutes(attendance.x_cumulative_minutes)}`
-          }
-        )
-        .setColor('Grey');
-
-      await thread.send({
-        embeds: [attendanceEmbed]
-      });
-    }
-
     if (x_interim_form_id) {
       const hrChannel = client.channels.cache.get(hrChannelId);
       try {
@@ -253,6 +222,37 @@ const processPublishedShift = async (payload) => {
       } catch (error) {
         console.error('Error processing interim form:', error);
       }
+    }
+
+    if (attendance) {
+      const attendanceEmbed = new EmbedBuilder()
+        .setDescription('## 🗓️ Interim Attendance Log')
+        .addFields(
+          { name: 'Attendance ID', value: `🆔 | ${attendance.id}` },
+          { name: 'Employee', value: `🪪 | ${employeeName}` },
+          {
+            name: 'Discord User',
+            value: `👤 | ${attendance.x_discord_id ? `<@${attendance.x_discord_id}>` : 'N/A'}`
+          },
+          { name: 'Branch', value: `🛒 | ${department?.name || 'Omnilert'}` },
+          {
+            name: 'Check-In',
+            value: `⏱️ | ${formatTime(attendance.check_in)}`
+          },
+          {
+            name: 'Check-Out',
+            value: `⏱️ | ${formatTime(attendance.check_out)}`
+          },
+          {
+            name: 'Total Working Time',
+            value: `🕒 | ${formatMinutes(attendance.x_cumulative_minutes)}`
+          }
+        )
+        .setColor('Grey');
+
+      await thread.send({
+        embeds: [attendanceEmbed]
+      });
     }
 
     return { ok: true, message: 'Schedule logged' };
@@ -382,37 +382,6 @@ const updatePlanningShift = async (payload, planningMessage, attendance) => {
     });
   }
 
-  if (attendance) {
-    const attendanceEmbed = new EmbedBuilder()
-      .setDescription('## 🗓️ Interim Attendance Log')
-      .addFields(
-        { name: 'Attendance ID', value: `🆔 | ${attendance.id}` },
-        { name: 'Employee', value: `🪪 | ${employeeName}` },
-        {
-          name: 'Discord User',
-          value: `👤 | ${attendance.x_discord_id ? `<@${attendance.x_discord_id}>` : 'N/A'}`
-        },
-        { name: 'Branch', value: `🛒 | ${department?.name || 'Omnilert'}` },
-        {
-          name: 'Check-In',
-          value: `⏱️ | ${formatTime(attendance.check_in)}`
-        },
-        {
-          name: 'Check-Out',
-          value: `⏱️ | ${formatTime(attendance.check_out)}`
-        },
-        {
-          name: 'Total Working Time',
-          value: `🕒 | ${formatMinutes(attendance.x_cumulative_minutes)}`
-        }
-      )
-      .setColor('Grey');
-
-    await thread.send({
-      embeds: [attendanceEmbed]
-    });
-  }
-
   if (x_interim_form_id) {
     const hrChannel = client.channels.cache.get(hrChannelId);
     try {
@@ -443,6 +412,37 @@ const updatePlanningShift = async (payload, planningMessage, attendance) => {
     } catch (error) {
       console.error('Error processing interim form:', error);
     }
+  }
+
+  if (attendance) {
+    const attendanceEmbed = new EmbedBuilder()
+      .setDescription('## 🗓️ Interim Attendance Log')
+      .addFields(
+        { name: 'Attendance ID', value: `🆔 | ${attendance.id}` },
+        { name: 'Employee', value: `🪪 | ${employeeName}` },
+        {
+          name: 'Discord User',
+          value: `👤 | ${attendance.x_discord_id ? `<@${attendance.x_discord_id}>` : 'N/A'}`
+        },
+        { name: 'Branch', value: `🛒 | ${department?.name || 'Omnilert'}` },
+        {
+          name: 'Check-In',
+          value: `⏱️ | ${formatTime(attendance.check_in)}`
+        },
+        {
+          name: 'Check-Out',
+          value: `⏱️ | ${formatTime(attendance.check_out)}`
+        },
+        {
+          name: 'Total Working Time',
+          value: `🕒 | ${formatMinutes(attendance.x_cumulative_minutes)}`
+        }
+      )
+      .setColor('Grey');
+
+    await thread.send({
+      embeds: [attendanceEmbed]
+    });
   }
 };
 
