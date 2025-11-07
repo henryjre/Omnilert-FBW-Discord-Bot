@@ -1,4 +1,5 @@
 const axios = require('axios');
+const moment = require('moment');
 
 const rpcUrl = 'https://omnilert.odoo.com/jsonrpc';
 const webhookUrl = 'https://omnilert.odoo.com/web/hook/';
@@ -216,9 +217,9 @@ async function createWorkEntry(payload) {
   return callOdooWebhook('work_entry', payload);
 }
 
-async function createPlanningShift(payload) {
-  return callOdooWebhook('planning_shift', payload);
-}
+// async function createPlanningShift(payload) {
+//   return callOdooWebhook('planning_shift', payload);
+// }
 
 async function createAuditSalaryAttachment(payload) {
   return callOdooWebhook('audit_salary_attachment', payload);
@@ -419,6 +420,48 @@ async function createViewOnlyPayslip(discordId, company_id) {
     throw error;
   }
 }
+
+const createPlanningShift = async (payload) => {
+  try {
+    const {
+      x_attendance_id,
+      x_discord_id,
+      start_datetime,
+      end_datetime,
+      role_id,
+      company_id,
+      x_interim_form_id
+    } = payload;
+
+    const employee = await getEmployeeByDiscordId(x_discord_id, company_id);
+
+    let vals = {
+      resource_id: employee.resource_id[0],
+      company_id: company_id,
+      start_datetime,
+      end_datetime
+    };
+
+    if (x_interim_form_id) {
+      vals.x_interim_form_id = x_interim_form_id;
+    }
+
+    if (x_attendance_id) {
+      vals.x_attendance_id = x_attendance_id;
+    }
+
+    if (role_id) {
+      vals.role_id = role_id;
+    }
+
+    const slot_id = await callOdooKw('planning.slot', 'create', [vals]);
+    await callOdooKw('planning.slot', 'action_planning_publish_and_send', [[slot_id]]);
+    return slot_id;
+  } catch (error) {
+    console.error('Error creating planning shift:', error);
+    throw error;
+  }
+};
 
 module.exports = {
   jsonRpc,
