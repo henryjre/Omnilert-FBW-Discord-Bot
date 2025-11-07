@@ -91,7 +91,6 @@ const processPublishedShift = async (payload) => {
       x_employee_avatar,
       x_employee_contact_name,
       name,
-      allocated_hours,
       x_role_color,
       x_role_name,
       x_interim_form_id,
@@ -127,8 +126,7 @@ const processPublishedShift = async (payload) => {
       attendance = await getAttendanceById(x_attendance_id);
     }
 
-    console.log('payload', payload);
-    console.log('attendance', attendance);
+    const calculatedAllocation = calculateTimeAllocation(start_datetime, end_datetime);
 
     if (planningMessage) {
       await updatePlanningShift(payload, planningMessage, attendance);
@@ -150,7 +148,7 @@ const processPublishedShift = async (payload) => {
       },
       { name: 'Shift Start', value: `⏰ | ${startDateTime}` },
       { name: 'Shift End', value: `⏰ | ${endDateTime}` },
-      { name: 'Allocated Hours', value: `⌛ | ${allocated_hours} hours` }
+      { name: 'Allocated Hours', value: `⌛ | ${calculatedAllocation} hours` }
     ];
 
     if (attendance) {
@@ -294,6 +292,8 @@ const updatePlanningShift = async (payload, planningMessage, attendance) => {
   const endDateTime = formatTime(end_datetime);
   const employeeName = x_employee_contact_name?.split('-')[1]?.trim() || 'Unknown';
 
+  const calculatedAllocation = calculateTimeAllocation(start_datetime, end_datetime);
+
   const messageEmbed = planningMessage.embeds[0];
 
   const newFields = [
@@ -310,7 +310,7 @@ const updatePlanningShift = async (payload, planningMessage, attendance) => {
     },
     { name: 'Shift Start', value: `⏰ | ${startDateTime}` },
     { name: 'Shift End', value: `⏰ | ${endDateTime}` },
-    { name: 'Allocated Hours', value: `⌛ | ${allocated_hours} hours` }
+    { name: 'Allocated Hours', value: `⌛ | ${calculatedAllocation} hours` }
   ];
 
   const totalWorkedTimeField = messageEmbed.data.fields.find(
@@ -499,4 +499,24 @@ async function flushWindow(key) {
     await processPublishedShift(evt.payload);
   }
   buffers.delete(key);
+}
+
+function calculateTimeAllocation(startTime, endTime) {
+  const startMoment = moment.tz(startTime, 'YYYY-MM-DD HH:mm:ss', 'UTC').tz('Asia/Manila');
+  const endMoment = moment.tz(endTime, 'YYYY-MM-DD HH:mm:ss', 'UTC').tz('Asia/Manila');
+
+  // Get the difference in minutes
+  const diffMinutes = endMoment.diff(startMoment, 'minutes');
+  const diffHours = diffMinutes / 60;
+
+  // Format the allocated hours/minutes
+  if (diffHours < 1) {
+    return `${diffMinutes} minute${diffMinutes !== 1 ? 's' : ''}`;
+  } else {
+    const hours = Math.floor(diffHours);
+    const minutes = diffMinutes % 60;
+    return `${hours} hour${hours !== 1 ? 's' : ''}${
+      minutes > 0 ? ` and ${minutes} minute${minutes !== 1 ? 's' : ''}` : ''
+    }`;
+  }
 }
