@@ -533,7 +533,7 @@ async function callOdooKw(model, method, args = [], kwargs = {}) {
 }
 
 async function getEmployeeByDiscordId(discordId, company_id) {
-  const empFields = ['id', 'name'];
+  const empFields = ['id', 'name', 'resource_id'];
   const employees = await callOdooRpc(
     'hr.employee',
     'search_read',
