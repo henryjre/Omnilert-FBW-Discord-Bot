@@ -178,11 +178,16 @@ const processPublishedShift = async (payload) => {
 
     const buttonRow = new ActionRowBuilder().addComponents(shiftExchangeButton);
 
-    const scheduleMessage = await scheduleChannel.send({
+    const shiftMessagePayload = {
       content: `# ${startDate} | ${id}\n<@${x_discord_id}>`,
-      embeds: [planningEmbed],
-      components: [buttonRow]
-    });
+      embeds: [planningEmbed]
+    };
+
+    if (!attendance) {
+      shiftMessagePayload.components = [buttonRow];
+    }
+
+    const scheduleMessage = await scheduleChannel.send(shiftMessagePayload);
 
     const thread = await scheduleMessage.startThread({
       name: `${startDate} | ${employeeName} | ${id}`,
