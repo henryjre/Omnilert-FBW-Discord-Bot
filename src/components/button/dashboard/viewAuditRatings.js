@@ -3,7 +3,7 @@ const {
   MessageFlags,
   EmbedBuilder,
   ButtonBuilder,
-  ButtonStyle
+  ButtonStyle,
 } = require('discord.js');
 
 const moment = require('moment-timezone');
@@ -14,7 +14,7 @@ const auditTypes = require('../../../config/audit_types.json');
 
 module.exports = {
   data: {
-    name: `viewAuditRatingss`
+    name: `viewAuditRatings`,
   },
   async execute(interaction, client) {
     const replyEmbed = new EmbedBuilder();
@@ -41,9 +41,34 @@ module.exports = {
     await interaction.deferUpdate();
 
     const employeeDataFetch = await getEmployeeAuditRatings(interaction.user.id);
+
+    const epiDashboardButton = new ButtonBuilder()
+      .setCustomId('viewEpiDashboard')
+      .setLabel('View EPI')
+      .setEmoji('📈')
+      .setStyle(ButtonStyle.Success);
+
+    const backButton = new ButtonBuilder()
+      .setCustomId('backToDashboard')
+      .setLabel('Back To Dashboard')
+      .setEmoji('↩️')
+      .setStyle(ButtonStyle.Secondary);
+
+    const buttonRow = new ActionRowBuilder().addComponents(backButton, epiDashboardButton);
+
     if (!employeeDataFetch) {
-      replyEmbed.setDescription(`🔴 ERROR: No employee data found.`).setColor('Red');
-      return await interaction.reply({ embeds: [replyEmbed], flags: MessageFlags.Ephemeral });
+      const noAuditRatingsEmbed = EmbedBuilder.from(messageEmbed).setDescription(
+        `## 📈 AUDIT RATINGS\n\u200b\n*No audit ratings found... 🕸️* `
+      );
+
+      if (noAuditRatingsEmbed.data.fields) {
+        delete noAuditRatingsEmbed.data.fields;
+      }
+
+      return await interaction.message.edit({
+        embeds: [noAuditRatingsEmbed],
+        components: [buttonRow],
+      });
     }
 
     saveAuditRatings(interaction.user.id, employeeDataFetch);
@@ -56,7 +81,7 @@ module.exports = {
     const auditRatingsEmbed = EmbedBuilder.from(messageEmbed)
       .setDescription(`## 📈 AUDIT RATINGS\n\u200b\n${tableStr}`)
       .setFooter({
-        text: `Page ${page} of ${totalPages} | Showing ${start + 1} - ${end} of ${total} entries`
+        text: `Page ${page} of ${totalPages} | Showing ${start + 1} - ${end} of ${total} entries`,
       });
 
     if (auditRatingsEmbed.data.fields) {
@@ -96,25 +121,11 @@ module.exports = {
       nextButton
     );
 
-    const epiDashboardButton = new ButtonBuilder()
-      .setCustomId('viewEpiDashboard')
-      .setLabel('View EPI')
-      .setEmoji('📈')
-      .setStyle(ButtonStyle.Success);
-
-    const backButton = new ButtonBuilder()
-      .setCustomId('backToDashboard')
-      .setLabel('Back To Dashboard')
-      .setEmoji('↩️')
-      .setStyle(ButtonStyle.Secondary);
-
-    const buttonRow = new ActionRowBuilder().addComponents(backButton, epiDashboardButton);
-
     await interaction.message.edit({
       embeds: [auditRatingsEmbed],
-      components: [paginationButtonRow, buttonRow]
+      components: [paginationButtonRow, buttonRow],
     });
-  }
+  },
 };
 
 function buildRowsFromOdoo(data) {
