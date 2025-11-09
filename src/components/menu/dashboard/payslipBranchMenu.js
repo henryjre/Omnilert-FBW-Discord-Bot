@@ -94,7 +94,7 @@ module.exports = {
       .setCustomId('viewAttendances')
       .setLabel('View Attendances')
       .setEmoji('📅')
-      .setStyle(ButtonStyle.Secondary);
+      .setStyle(ButtonStyle.Success);
 
     const backButton = new ButtonBuilder()
       .setCustomId('salaryComputationDashboard')
