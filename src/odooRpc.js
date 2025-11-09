@@ -122,6 +122,20 @@ async function getAttendanceById(attendanceId) {
   return result ? result[0] : null;
 }
 
+async function getAttendanceByEmployee(discordId, company_id) {
+  const domain = [['x_discord_id', '=', discordId], ['company_id', '=', company_id]];
+  const fields = [
+    'id',
+    'create_date',
+    'check_in',
+    'check_out',
+    'worked_hours',
+  ];
+
+  const result = await callOdooRpc('hr.attendance', 'search_read', domain, fields, { limit: 1 });
+  return result ? result[0] : null;
+}
+
 async function callOdooAttendanceWebhook(action, url, discordId) {
   // Format current date/time as 'YYYY-MM-DD HH:MM:SS'
   const now = new Date();
@@ -471,6 +485,7 @@ module.exports = {
   updateClosingPcfBalance,
   editAttendance,
   getAttendanceById,
+  getAttendanceByEmployee,
   createWorkEntry,
   createPlanningShift,
   createAuditSalaryAttachment,
