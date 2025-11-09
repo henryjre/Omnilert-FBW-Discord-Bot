@@ -9,14 +9,14 @@ async function jsonRpc(method, params) {
     jsonrpc: '2.0',
     method: method,
     params: params,
-    id: Math.floor(Math.random() * 1000000000)
+    id: Math.floor(Math.random() * 1000000000),
   };
 
   try {
     const response = await axios.post(rpcUrl, data, {
       headers: {
-        'Content-Type': 'application/json'
-      }
+        'Content-Type': 'application/json',
+      },
     });
 
     if (response.data.error) {
@@ -24,7 +24,7 @@ async function jsonRpc(method, params) {
       console.error('Odoo Error Details:', {
         message: response.data.error.message,
         code: response.data.error.code,
-        data: response.data.error.data
+        data: response.data.error.data,
       });
       throw new Error(`Odoo Server Error: ${JSON.stringify(response.data.error)}`);
     }
@@ -46,7 +46,7 @@ async function odooLogin() {
     const uid = await jsonRpc('call', {
       service: 'common',
       method: 'login',
-      args: [process.env.odoo_db, process.env.odoo_username, process.env.odoo_password]
+      args: [process.env.odoo_db, process.env.odoo_username, process.env.odoo_password],
     });
 
     console.log('Logged in as UID:', uid.result);
@@ -68,7 +68,7 @@ async function searchActiveAttendance(discordId, attendanceId) {
     // Build domain with optional attendance ID exclusion
     const domain = [
       ['x_discord_id', '=', discordId],
-      ['check_out', '=', false]
+      ['check_out', '=', false],
     ];
 
     if (attendanceId) {
@@ -87,9 +87,9 @@ async function searchActiveAttendance(discordId, attendanceId) {
         'search_read',
         [domain],
         {
-          fields: ['id', 'employee_id', 'check_in', 'in_mode', 'x_discord_id']
-        }
-      ]
+          fields: ['id', 'employee_id', 'check_in', 'in_mode', 'x_discord_id'],
+        },
+      ],
     });
 
     return activeAttendance.result;
@@ -115,25 +115,30 @@ async function getAttendanceById(attendanceId) {
     'x_cumulative_minutes',
     'x_shift_start',
     'x_shift_end',
-    'x_employee_contact_name'
+    'x_employee_contact_name',
   ];
 
   const result = await callOdooRpc('hr.attendance', 'search_read', domain, fields, { limit: 1 });
   return result ? result[0] : null;
 }
 
-async function getAttendanceByEmployee(discordId, company_id) {
-  const domain = [['x_discord_id', '=', discordId], ['company_id', '=', company_id]];
-  const fields = [
-    'id',
-    'create_date',
-    'check_in',
-    'check_out',
-    'worked_hours',
+async function getAttendanceByEmployee(discordId, company_id, dateStart = null, dateEnd = null) {
+  const domain = [
+    ['x_discord_id', '=', discordId],
+    ['x_company_id', '=', company_id],
   ];
 
-  const result = await callOdooRpc('hr.attendance', 'search_read', domain, fields, { limit: 1 });
-  return result ? result[0] : null;
+  if (dateStart && dateEnd) {
+    // Include attendances overlapping the given range
+    domain.push(['check_in', '<=', dateEnd], ['check_out', '>=', dateStart]);
+  }
+
+  const fields = ['id', 'check_in', 'check_out', 'worked_hours', 'create_date'];
+
+  const result = await callOdooRpc('hr.attendance', 'search_read', domain, fields, {
+    order: 'check_in asc',
+  });
+  return result?.length ? result : null;
 }
 
 async function callOdooAttendanceWebhook(action, url, discordId) {
@@ -153,7 +158,7 @@ async function callOdooAttendanceWebhook(action, url, discordId) {
 
   try {
     const response = await axios.post(url, payload, {
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json' },
     });
     return response.data;
   } catch (error) {
@@ -167,14 +172,14 @@ async function updateClosingPcfBalance(balance, company_id, session_id, type) {
     amount: balance,
     session_id: session_id,
     company_id: company_id,
-    type: type
+    type: type,
   };
 
   const url = webhookUrl + process.env.ODOO_CLOSING_PCF_SECRET;
 
   try {
     const response = await axios.post(url, payload, {
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json' },
     });
     return response.data;
   } catch (error) {
@@ -198,7 +203,7 @@ async function callOdooWebhook(webhookType, payload) {
     planning_shift: process.env.ODOO_CREATE_PLANNING_SHIFT_SECRET,
     audit_salary_attachment: process.env.ODOO_CREATE_AUDIT_SALARY_ATTACHMENT_SECRET,
     store_audit_rating: process.env.ODOO_STORE_AUDIT_RATING_SECRET,
-    merit_demerit: process.env.ODOO_MERIT_DEMERIT_SECRET
+    merit_demerit: process.env.ODOO_MERIT_DEMERIT_SECRET,
   };
 
   // Validate webhook type
@@ -210,7 +215,7 @@ async function callOdooWebhook(webhookType, payload) {
 
   try {
     const response = await axios.post(url, payload, {
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json' },
     });
     return response.data;
   } catch (error) {
@@ -256,7 +261,7 @@ async function getAuditRatingByCode(auditCode) {
       'x_audit_id',
       'x_name',
       'x_rating',
-      'x_employee_id'
+      'x_employee_id',
     ];
     return await callOdooRpc('x_audit_ratings', 'search_read', domain, fields);
   } catch (error) {
@@ -285,7 +290,7 @@ async function getEmployeeAuditRatings(discordId) {
       'x_audit_id',
       'x_name',
       'x_rating',
-      'x_employee_id'
+      'x_employee_id',
     ];
     return await callOdooRpc('x_audit_ratings', 'search_read', domain, fields);
   } catch (error) {
@@ -303,7 +308,7 @@ async function getEmployeePayslipData(discordId, company_id) {
       ['date_from', '=', date_from],
       ['date_to', '=', date_to],
       ['employee_id', '=', employee.id],
-      ['company_id', '=', company_id]
+      ['company_id', '=', company_id],
     ];
     const fields = [
       'id',
@@ -314,7 +319,7 @@ async function getEmployeePayslipData(discordId, company_id) {
       'date_to',
       'x_view_only',
       'line_ids',
-      'worked_days_line_ids'
+      'worked_days_line_ids',
     ];
 
     const slips = await callOdooRpc('hr.payslip', 'search_read', domain, fields);
@@ -339,24 +344,24 @@ async function getEmployeePayslipData(discordId, company_id) {
         'amount',
         'quantity',
         'rate',
-        'sequence'
+        'sequence',
       ],
       order: 'sequence asc, id asc',
-      limit: 1000
+      limit: 1000,
     });
 
     const workedDays = await callOdooKw('hr.payslip.worked_days', 'search_read', [], {
       domain: [['payslip_id', '=', targetSlipId]],
       fields: ['id', 'name', 'code', 'number_of_days', 'number_of_hours', 'amount'],
       order: 'id asc',
-      limit: 1000
+      limit: 1000,
     });
 
     // Return the slip header plus fresh details
     return {
       ...slip,
       lines: lines,
-      worked_days: workedDays
+      worked_days: workedDays,
     };
   } catch (error) {
     console.error('Error fetching employee salary payslip data:', error);
@@ -376,7 +381,7 @@ async function createViewOnlyPayslip(discordId, company_id) {
       date_to,
       x_view_only: true, // your custom flag
       name: `${employee.name} | View-Only Payslip`,
-      company_id: company_id
+      company_id: company_id,
     };
 
     const slipId = await callOdooKw('hr.payslip', 'create', [vals]);
@@ -390,7 +395,7 @@ async function createViewOnlyPayslip(discordId, company_id) {
       'date_to',
       'x_view_only',
       'line_ids',
-      'worked_days_line_ids'
+      'worked_days_line_ids',
     ];
 
     const [slip] = await callOdooKw('hr.payslip', 'read', [[slipId]], { fields });
@@ -410,24 +415,24 @@ async function createViewOnlyPayslip(discordId, company_id) {
         'amount',
         'quantity',
         'rate',
-        'sequence'
+        'sequence',
       ],
       order: 'sequence asc, id asc',
-      limit: 1000
+      limit: 1000,
     });
 
     const workedDays = await callOdooKw('hr.payslip.worked_days', 'search_read', [], {
       domain: [['payslip_id', '=', targetSlipId]],
       fields: ['id', 'name', 'code', 'number_of_days', 'number_of_hours', 'amount'],
       order: 'id asc',
-      limit: 1000
+      limit: 1000,
     });
 
     // Return the slip header plus fresh details
     return {
       ...slip,
       lines: lines,
-      worked_days: workedDays
+      worked_days: workedDays,
     };
   } catch (error) {
     console.error('Error creating view only payslip:', error);
@@ -444,7 +449,7 @@ const createPlanningShift = async (payload) => {
       end_datetime,
       role_id,
       company_id,
-      x_interim_form_id
+      x_interim_form_id,
     } = payload;
 
     const employee = await getEmployeeByDiscordId(x_discord_id, company_id);
@@ -453,7 +458,7 @@ const createPlanningShift = async (payload) => {
       resource_id: employee.resource_id[0],
       company_id: company_id,
       start_datetime,
-      end_datetime
+      end_datetime,
     };
 
     if (x_interim_form_id) {
@@ -495,7 +500,7 @@ module.exports = {
   getEmployeeEPIData,
   getEmployeeAuditRatings,
   getEmployeePayslipData,
-  createViewOnlyPayslip
+  createViewOnlyPayslip,
 };
 
 async function callOdooRpc(model, method, domain = [], fields = [], options = {}) {
@@ -510,8 +515,8 @@ async function callOdooRpc(model, method, domain = [], fields = [], options = {}
         model,
         method,
         [domain],
-        { fields, ...options } // merge any extra options like limit, offset, etc.
-      ]
+        { fields, ...options }, // merge any extra options like limit, offset, etc.
+      ],
     };
 
     const res = await jsonRpc('call', payload);
@@ -534,8 +539,8 @@ async function callOdooKw(model, method, args = [], kwargs = {}) {
         model, // model name
         method, // method to call
         args, // positional arguments (list)
-        kwargs // keyword arguments (object)
-      ]
+        kwargs, // keyword arguments (object)
+      ],
     };
 
     const res = await jsonRpc('call', payload);
@@ -554,7 +559,7 @@ async function getEmployeeByDiscordId(discordId, company_id) {
     'search_read',
     [
       ['x_discord_id', '=', discordId],
-      ['company_id', '=', company_id]
+      ['company_id', '=', company_id],
     ],
     empFields
   );
