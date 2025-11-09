@@ -29,7 +29,7 @@ const saveAuditRatings = db.transaction((discordId, dataArray) => {
 
   upsertStmt.run({
     discord_id: discordId,
-    data: JSON.stringify(dataArray)
+    data: JSON.stringify(dataArray),
   });
 });
 
@@ -49,8 +49,48 @@ const getAuditRatings = db.transaction((discordId) => {
   }
 });
 
+////////////////////////////////////////////////////////////
+
+const saveAttendanceRecords = db.transaction((discordId, dataArray) => {
+  const upsertStmt = db.prepare(`
+    INSERT INTO attendance_records (discord_id, data)
+    VALUES (@discord_id, @data)
+    ON CONFLICT(discord_id)
+    DO UPDATE SET
+      data = excluded.data,
+      last_updated = datetime('now')
+    `);
+
+  if (!Array.isArray(dataArray)) {
+    throw new Error('dataArray must be an array of objects');
+  }
+
+  upsertStmt.run({
+    discord_id: discordId,
+    data: JSON.stringify(dataArray),
+  });
+});
+
+const getAttendanceRecords = db.transaction((discordId) => {
+  const selectStmt = db.prepare(`
+    SELECT data FROM attendance_records WHERE discord_id = ?
+    `);
+
+  const row = selectStmt.get(discordId);
+  if (!row) return null;
+
+  try {
+    return JSON.parse(row.data);
+  } catch (err) {
+    console.error('Failed to parse data JSON:', err);
+    return [];
+  }
+});
+
 module.exports = {
   getNextAuditId,
   saveAuditRatings,
-  getAuditRatings
+  getAuditRatings,
+  saveAttendanceRecords,
+  getAttendanceRecords,
 };
