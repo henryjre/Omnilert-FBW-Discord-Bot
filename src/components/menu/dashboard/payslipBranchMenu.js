@@ -3,7 +3,7 @@ const {
   MessageFlags,
   EmbedBuilder,
   ButtonBuilder,
-  ButtonStyle
+  ButtonStyle,
 } = require('discord.js');
 
 const { getEmployeePayslipData, createViewOnlyPayslip } = require('../../../odooRpc.js');
@@ -11,7 +11,7 @@ const departments = require('../../../config/departments.json');
 
 module.exports = {
   data: {
-    name: `payslipBranchMenu`
+    name: `payslipBranchMenu`,
   },
   async execute(interaction, client) {
     const replyEmbed = new EmbedBuilder();
@@ -62,7 +62,7 @@ module.exports = {
       d.name,
       d.number_of_days.toFixed(2),
       d.number_of_hours.toFixed(2),
-      `₱${d.amount.toFixed(2)}`
+      `₱${d.amount.toFixed(2)}`,
     ]);
 
     rows.push(['TOTAL', totalDays.toFixed(2), totalHours.toFixed(2), `₱${totalAmount.toFixed(2)}`]);
@@ -71,16 +71,30 @@ module.exports = {
 
     const salaryComputationEmbed = EmbedBuilder.from(messageEmbed)
       .setDescription(
-        `## 📈 PAYSLIP DETAILS\n### BRANCH: ${department.name}\n### PERIOD: ${
-          dateRange.date_from
-        } - ${dateRange.date_to}\n\u200b\n**WORKED DAYS**\n${makeEmbedTable(
+        `## 💵 PAYSLIP DETAILS\n\u200b\n**WORKED DAYS**\n${makeEmbedTable(
           headers,
           rows
         )}\n\u200b\n**SALARY COMPUTATION**\n${description}`
       )
+      .setFields([
+        {
+          name: 'Branch',
+          value: `${department.name}`,
+        },
+        {
+          name: 'Period',
+          value: `${dateRange.date_from} - ${dateRange.date_to}`,
+        },
+      ])
       .setFooter({
-        text: `This is an unofficial payslip and is not entirely accurate.`
+        text: `This is an unofficial payslip and is not entirely accurate.`,
       });
+
+    const viewAttendancesButton = new ButtonBuilder()
+      .setCustomId('viewAttendances')
+      .setLabel('View Attendances')
+      .setEmoji('📅')
+      .setStyle(ButtonStyle.Secondary);
 
     const backButton = new ButtonBuilder()
       .setCustomId('salaryComputationDashboard')
@@ -94,10 +108,14 @@ module.exports = {
       .setEmoji('↩️')
       .setStyle(ButtonStyle.Secondary);
 
-    const buttonRow = new ActionRowBuilder().addComponents(backButton, backToDashboardButton);
+    const buttonRow = new ActionRowBuilder().addComponents(
+      backButton,
+      backToDashboardButton,
+      viewAttendancesButton
+    );
 
     await interaction.message.edit({ embeds: [salaryComputationEmbed], components: [buttonRow] });
-  }
+  },
 };
 
 function makeEmbedTable(headers, rows, maxWidth = 60) {
@@ -187,7 +205,7 @@ function renderBlock(title, rows) {
     centerTitle(title),
     dash(),
     ...rows.map(([l, r]) => `${fit(l, COL_LEFT)}${SEP}${fit(r, COL_RIGHT)}`),
-    dash()
+    dash(),
   ];
   return lines.join('\n');
 }
@@ -246,6 +264,6 @@ function getDateRange() {
 
   return {
     date_from: format(dateFrom),
-    date_to: format(dateTo)
+    date_to: format(dateTo),
   };
 }
