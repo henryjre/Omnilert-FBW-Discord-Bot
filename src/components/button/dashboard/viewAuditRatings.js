@@ -14,7 +14,7 @@ const auditTypes = require('../../../config/audit_types.json');
 
 module.exports = {
   data: {
-    name: `viewAuditRatings`
+    name: `viewAuditRatingss`
   },
   async execute(interaction, client) {
     const replyEmbed = new EmbedBuilder();
