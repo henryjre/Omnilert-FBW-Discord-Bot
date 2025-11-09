@@ -52,4 +52,12 @@ db.exec(`
   )
 `);
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS attendance_records (
+    discord_id TEXT PRIMARY KEY,
+    data TEXT NOT NULL,
+    last_updated TEXT DEFAULT (datetime('now'))
+  )
+`);
+
 module.exports = db;
