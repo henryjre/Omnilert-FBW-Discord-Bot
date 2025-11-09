@@ -9,8 +9,8 @@ const {
 const moment = require('moment-timezone');
 
 const { getEmployeeAuditRatings } = require('../../../odooRpc.js');
+const { makeEmbedTable } = require('../../../functions/code/repeatFunctions.js');
 const { saveAuditRatings } = require('../../../sqliteFunctions.js');
-const auditTypes = require('../../../config/audit_types.json');
 
 module.exports = {
   data: {
@@ -133,41 +133,6 @@ function buildRowsFromOdoo(data) {
     const localDate = moment.utc(e.x_audit_date).tz('Asia/Manila').format('MMM DD, YYYY hh:mm A');
     return [localDate, e.x_name, String(e.x_rating + ' ⭐' ?? '')];
   });
-}
-
-function makeEmbedTable(headers, rows, maxWidth = 60) {
-  const s = (v) =>
-    String(v ?? '')
-      .replace(/\n/g, ' ')
-      .trim();
-
-  const cols = headers.length;
-  const widths = headers.map((h, i) =>
-    Math.max(4, s(h).length, ...rows.map((r) => s(r[i]).length))
-  );
-
-  const sepOverhead = 3 * (cols - 1);
-  const totalWidth = () => widths.reduce((a, b) => a + b, 0) + sepOverhead;
-
-  while (totalWidth() > maxWidth) {
-    let widest = 0;
-    for (let i = 1; i < cols; i++) if (widths[i] > widths[widest]) widest = i;
-    if (widths[widest] <= 4) break;
-    widths[widest]--;
-  }
-
-  const cut = (text, w) => {
-    const t = s(text);
-    return t.length <= w ? t : w <= 1 ? t.slice(0, w) : t.slice(0, w - 1) + '…';
-  };
-  const pad = (text, w) => cut(text, w).padEnd(w, ' ');
-  const join = (arr) => arr.join(' | ');
-
-  const headerLine = join(headers.map((h, i) => pad(h, widths[i])));
-  const rule = '-'.repeat(Math.min(maxWidth, headerLine.length));
-  const body = rows.map((r) => join(r.map((c, i) => pad(c, widths[i]))));
-
-  return '```\n' + headerLine + '\n' + rule + '\n' + body.join('\n') + '\n```';
 }
 
 function paginateRows(rows, page = 1, pageSize = 5) {
