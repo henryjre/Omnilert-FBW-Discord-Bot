@@ -34,6 +34,8 @@ const sessionOpen = async (req, res) => {
     x_closing_pcf = 0
   } = req.body;
 
+  console.log(req.body);
+
   const department = departments.find((d) => d.id === company_id);
 
   if (!department) {
