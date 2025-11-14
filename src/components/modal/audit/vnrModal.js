@@ -7,7 +7,7 @@ const {
   ChannelType,
   StringSelectMenuBuilder,
   MessageFlags,
-  StringSelectMenuOptionBuilder
+  StringSelectMenuOptionBuilder,
 } = require('discord.js');
 
 const { cleanAuditDescription } = require('../../../functions/code/repeatFunctions.js');
@@ -22,29 +22,6 @@ module.exports = {
    * @param {import('discord.js').Client} client
    */
   async execute(interaction, client) {
-    const mentionedUser = interaction.message.mentions?.users?.first() || null;
-    const mentionedRole = interaction.message.mentions?.roles?.first() || null;
-
-    if (mentionedUser) {
-      const isNotMentionedUser = interaction.user.id !== mentionedUser.id;
-      if (isNotMentionedUser) {
-        return await interaction.reply({
-          content: `🔴 ERROR: You cannot use this button.`,
-          flags: MessageFlags.Ephemeral
-        });
-      }
-    }
-
-    if (mentionedRole) {
-      const doesNotHaveRole = !interaction.member.roles.cache.has(mentionedRole.id);
-      if (doesNotHaveRole) {
-        return await interaction.reply({
-          content: `🔴 ERROR: You cannot use this button.`,
-          flags: MessageFlags.Ephemeral
-        });
-      }
-    }
-
     await interaction.deferUpdate();
 
     const messageId = interaction.fields.getTextInputValue('messageIdInput');
@@ -57,19 +34,28 @@ module.exports = {
     } catch (error) {
       return await interaction.editReply({
         content: `🔴 ERROR: Could not find the original message with ID: ${messageId}. Please try again.`,
-        flags: MessageFlags.Ephemeral
+        flags: MessageFlags.Ephemeral,
       });
     }
 
+    let request_id;
+    let request_type;
     const allEmbeds = originalMessage.embeds;
-    const messageEmbed = allEmbeds[0];
+    if (allEmbeds.length > 0) {
+      const messageEmbed = allEmbeds[0];
 
-    const auditTitle = messageEmbed.data.description;
-    const { audit_id } = cleanAuditDescription(auditTitle);
+      const auditTitle = messageEmbed.data.description;
+      const { audit_id } = cleanAuditDescription(auditTitle);
+      request_id = audit_id;
+      request_type = 'Audit';
+    } else {
+      request_id = originalMessage.content.split('|')[0].trim();
+      request_type = 'Case';
+    }
 
-    const serviceCrewRole = await interaction.guild.roles.cache.get('1314413960274907238');
+    const serviceCrewRole = interaction.guild.roles.cache.get('1314413960274907238');
 
-    const membersWithServiceCrewRoles = await serviceCrewRole.members.map((m) => {
+    const membersWithServiceCrewRoles = serviceCrewRole.members.map((m) => {
       const name = m.nickname.replace(/^[🔴🟢]\s*/, '') || m.user.username;
       return new StringSelectMenuOptionBuilder().setLabel(name).setValue(m.user.id);
     });
@@ -113,7 +99,7 @@ module.exports = {
     }
 
     await interaction.message.edit({
-      components: messageComponents
+      components: messageComponents,
     });
 
     const vnrEmbed = new EmbedBuilder()
@@ -122,51 +108,55 @@ module.exports = {
       .addFields(
         {
           name: 'Requested By',
-          value: interaction.user.toString()
+          value: interaction.user.toString(),
         },
         {
           name: 'Employees Involved',
-          value: 'Select employees involved on the menu below'
+          value: 'Select employees involved on the menu below',
         },
         {
-          name: 'Audit Link',
-          value: originalMessage.url
+          name: `${request_type} Link`,
+          value: originalMessage.url,
         },
         {
-          name: 'Audit Message ID',
-          value: interaction.message.id
+          name: `${request_type} Message ID`,
+          value: interaction.message.id,
         },
         {
-          name: 'Description',
-          value: vnrDescription
+          name: 'VN Description',
+          value: vnrDescription,
         }
       )
       .setTimestamp(Date.now());
 
-    const vnrThread = await interaction.message.startThread({
-      name: `VN Request - ${audit_id}`,
-      type: ChannelType.PublicThread,
-      autoArchiveDuration: 60
-    });
+    let vnrThread = interaction.message.thread;
 
-    const threadCreatedMessages = await interaction.channel.messages.fetch().then((messages) => {
-      return messages.filter((m) => m.author.bot && m.type === 18);
-    });
+    if (!vnrThread) {
+      vnrThread = await interaction.message.startThread({
+        name: `VN Request - ${request_id}`,
+        type: ChannelType.PublicThread,
+        autoArchiveDuration: 60,
+      });
 
-    const lastThreadCreated = await threadCreatedMessages.find(
-      (t) => t.reference.channelId === vnrThread.id
-    );
+      const threadCreatedMessages = await interaction.channel.messages.fetch().then((messages) => {
+        return messages.filter((m) => m.author.bot && m.type === 18);
+      });
 
-    if (lastThreadCreated) {
-      await lastThreadCreated.delete();
+      const lastThreadCreated = threadCreatedMessages.find(
+        (t) => t.reference.channelId === vnrThread.id
+      );
+
+      if (lastThreadCreated) {
+        await lastThreadCreated.delete();
+      }
     }
 
     await vnrThread.send({
       content: `${interaction.user.toString()}, select employees or submit this VN Request.`,
       embeds: [vnrEmbed],
-      components: [serviceCrewMenuRow, vnrButtonRow]
+      components: [serviceCrewMenuRow, vnrButtonRow],
     });
-  }
+  },
 };
 
 /**
