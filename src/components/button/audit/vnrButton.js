@@ -3,38 +3,23 @@ const {
   MessageFlags,
   ModalBuilder,
   TextInputBuilder,
-  TextInputStyle
+  TextInputStyle,
 } = require('discord.js');
 
 module.exports = {
   data: {
-    name: `auditVnr`
+    name: `auditVnr`,
   },
   async execute(interaction, client) {
-    // const mentionedUser = interaction.message.mentions?.users?.first() || null;
-    // const mentionedRole = interaction.message.mentions?.roles?.first() || null;
+    const permissionRole = '1314413671245676685';
 
-    // if (mentionedUser) {
-    //   const isNotMentionedUser = interaction.user.id !== mentionedUser.id;
-    //   if (isNotMentionedUser) {
-    //     return await interaction.reply({
-    //       content: `🔴 ERROR: You cannot use this button.`,
-    //       flags: MessageFlags.Ephemeral,
-    //     });
-    //   }
-    // }
-
-    // if (mentionedRole) {
-    //   const doesNotHaveRole = !interaction.member.roles.cache.has(
-    //     mentionedRole.id
-    //   );
-    //   if (doesNotHaveRole) {
-    //     return await interaction.reply({
-    //       content: `🔴 ERROR: You cannot use this button.`,
-    //       flags: MessageFlags.Ephemeral,
-    //     });
-    //   }
-    // }
+    if (!interaction.member.roles.cache.has(permissionRole)) {
+      await interaction.reply({
+        content: `🔴 ERROR: You cannot use this button.`,
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
 
     const modal = new ModalBuilder().setCustomId('vnrModal').setTitle('Violation Notice Request');
 
@@ -60,5 +45,5 @@ module.exports = {
     modal.addComponents(firstActionRow, secondActionRow);
 
     await interaction.showModal(modal);
-  }
+  },
 };
