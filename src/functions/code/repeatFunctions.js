@@ -18,8 +18,9 @@ const editVnrStatus = async (messageEmbed, status, link, client) => {
     message = await messageChannel.messages.fetch(messageId);
   } else {
     const thread = await client.channels.cache.get(messageId);
-    const messages = await thread.messages.fetch({ after: '0', limit: 1 });
-    message = messages.first();
+    const fetchedMessages = await thread.messages.fetch({ limit: 100 });
+    const embedMessages = fetchedMessages.filter((msg) => msg.embeds && msg.embeds.length > 0);
+    message = embedMessages.sort((a, b) => a.createdTimestamp - b.createdTimestamp).first();
   }
 
   const newEmbed = message.embeds[0];
