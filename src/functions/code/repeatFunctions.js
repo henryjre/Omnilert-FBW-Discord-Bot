@@ -21,9 +21,10 @@ const editVnrStatus = async (messageEmbed, status, link, client) => {
     const messages = await thread.messages.fetch({ after: '0', limit: 1 });
     message = messages.first();
   }
-  console.log(message);
 
   const newEmbed = message.embeds[0];
+
+  console.log(newEmbed);
 
   const vnrStatusField = newEmbed.data.fields.find((f) => f.name === 'Violation Notice Status');
   const vnrLinkField = newEmbed.data.fields.find((f) => f.name === 'Violation Notice Link');
