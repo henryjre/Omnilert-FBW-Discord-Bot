@@ -15,7 +15,7 @@ module.exports = {
     const permissionRole = "1314413671245676685";
 
     if (!interaction.member.roles.cache.has(permissionRole)) {
-      await interaction.editReply({
+      await interaction.reply({
         content: `🔴 ERROR: You cannot use this button.`,
         flags: MessageFlags.Ephemeral,
       });
