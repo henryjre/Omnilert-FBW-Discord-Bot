@@ -18,12 +18,8 @@ const editVnrStatus = async (messageEmbed, status, link, client) => {
     message = await messageChannel.messages.fetch(messageId);
   } else {
     const thread = await client.channels.cache.get(messageId);
-    message = (
-      await thread.messages.fetch({
-        limit: 1,
-        after: thread.id,
-      })
-    ).first();
+    const messages = await thread.messages.fetch({ after: '0', limit: 1 });
+    message = messages.first();
   }
   console.log(message);
 
