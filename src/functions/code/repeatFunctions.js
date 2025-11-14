@@ -26,16 +26,16 @@ const editVnrStatus = async (messageEmbed, status, link, client) => {
     ).first();
   }
 
-  const messageEmbed = message.embeds[0];
+  const newEmbed = message.embeds[0];
 
-  const vnrStatusField = messageEmbed.data.fields.find((f) => f.name === 'Violation Notice Status');
-  const vnrLinkField = messageEmbed.data.fields.find((f) => f.name === 'Violation Notice Link');
+  const vnrStatusField = newEmbed.data.fields.find((f) => f.name === 'Violation Notice Status');
+  const vnrLinkField = newEmbed.data.fields.find((f) => f.name === 'Violation Notice Link');
 
   if (vnrStatusField && vnrLinkField) {
     vnrStatusField.value = status || 'Undefined Status';
     vnrLinkField.value = link || 'No VN link found.';
   } else {
-    messageEmbed.data.fields.push(
+    newEmbed.data.fields.push(
       {
         name: '\u200b',
         value: '\u200b',
@@ -51,7 +51,7 @@ const editVnrStatus = async (messageEmbed, status, link, client) => {
     );
   }
 
-  await message.edit({ embeds: [messageEmbed] });
+  await message.edit({ embeds: [newEmbed] });
 };
 
 const fetchVNandRequestID = async (messageEmbed, client) => {
