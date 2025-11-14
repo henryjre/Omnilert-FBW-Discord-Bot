@@ -3,9 +3,8 @@ const caseReportChannelId = '1342895351631187970';
 
 const editVnrStatus = async (messageEmbed, status, link, client) => {
   const messageField = messageEmbed.data.fields.find(
-    (f) => f.name === 'Audit Message ID' || 'Case Message ID'
+    (f) => f.name === 'Audit Message ID' || f.name === 'Case Message ID'
   );
-  console.log(messageField);
   const messageIdFieldName = messageField.name;
   const messageId = messageField.value;
 
