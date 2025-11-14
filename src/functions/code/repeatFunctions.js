@@ -25,6 +25,7 @@ const editVnrStatus = async (messageEmbed, status, link, client) => {
       })
     ).first();
   }
+  console.log(message);
 
   const newEmbed = message.embeds[0];
 
