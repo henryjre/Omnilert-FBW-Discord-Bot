@@ -7,15 +7,15 @@ const {
   ChannelType,
   StringSelectMenuBuilder,
   MessageFlags,
-} = require("discord.js");
-const moment = require("moment-timezone");
+} = require('discord.js');
+const moment = require('moment-timezone');
 
-const { analyzeAudit } = require("../../../openai.js");
+const { analyzeAudit } = require('../../../openai.js');
 
-const auditCompletedChannelId = "1423597979604095046";
+const auditCompletedChannelId = '1423597979604095046';
 
 module.exports = {
-  data: { name: "auditFinish" },
+  data: { name: 'auditFinish' },
 
   /**
    * @param {import('discord.js').ButtonInteraction} interaction
@@ -36,9 +36,7 @@ module.exports = {
     }
 
     if (mentionedRole) {
-      const doesNotHaveRole = !interaction.member.roles.cache.has(
-        mentionedRole.id
-      );
+      const doesNotHaveRole = !interaction.member.roles.cache.has(mentionedRole.id);
       if (doesNotHaveRole) {
         return await interaction.reply({
           content: `🔴 ERROR: You cannot use this button.`,
@@ -55,48 +53,46 @@ module.exports = {
     messageEmbed.data.author = null;
 
     const notifyEmployeeButton = new ButtonBuilder()
-      .setCustomId("auditNotifyEmployee")
-      .setLabel("Notify Employee")
+      .setCustomId('auditNotifyEmployee')
+      .setLabel('Notify Employee')
       .setStyle(ButtonStyle.Success);
 
     const vnrButton = new ButtonBuilder()
-      .setCustomId("auditVnr")
-      .setLabel("Request VN")
-      .setStyle(ButtonStyle.Primary);
+      .setCustomId('auditVnr')
+      .setLabel('Request VN')
+      .setStyle(ButtonStyle.Danger);
 
     const notifyEmployeeButtonRow = new ActionRowBuilder().addComponents(
       notifyEmployeeButton,
       vnrButton
     );
 
-    const auditCompletedChannel = client.channels.cache.get(
-      auditCompletedChannelId
-    );
+    const auditCompletedChannel = client.channels.cache.get(auditCompletedChannelId);
 
     const threadMsgs = await getAllUserMessages(interaction.channel);
 
     messageEmbed.data.fields.push({
-      name: "Audit Logs",
+      name: 'Audit Logs',
       value: interaction.channel.toString(),
     });
 
     if (!threadMsgs.length) {
       messageEmbed.data.fields.push({
-        name: "Audit Summary",
-        value: "No summary available.",
+        name: 'Audit Summary',
+        value: 'No summary available.',
       });
     } else {
       // Prepare minimal content array for the summarizer
       const msgsForSummary = threadMsgs.map((m) => ({
-        author: "Auditor", // deliberately anonymized
-        content: (m.content || "").replace(/\s+/g, " ").trim(),
+        author: 'Auditor', // deliberately anonymized
+        content: (m.content || '').replace(/\s+/g, ' ').trim(),
       }));
 
       // Call GPT-4o-mini to produce a confidential summary
-      const summaryText = await analyzeAudit(msgsForSummary, "summary");
+      const summaryText = await analyzeAudit(msgsForSummary, 'summary');
 
       messageEmbed.data.fields.push({
-        name: "Audit Summary",
+        name: 'Audit Summary',
         value: summaryText,
       });
     }
@@ -121,8 +117,7 @@ module.exports = {
     });
 
     // Delete the thread starter message instead of the interaction message
-    const threadStarterMessage =
-      await interaction.channel.fetchStarterMessage();
+    const threadStarterMessage = await interaction.channel.fetchStarterMessage();
     if (threadStarterMessage) {
       await threadStarterMessage.delete();
     }
