@@ -79,6 +79,7 @@ module.exports = {
       .setColor('Grey');
 
     await interaction.message.edit({
+      content: '',
       embeds: [editedEmbed],
       components: [],
     });
