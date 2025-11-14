@@ -1,27 +1,41 @@
+const auditCompletedChannelId = '1423597979604095046';
+const caseReportChannelId = '1342895351631187970';
+
 const editVnrStatus = async (messageEmbed, status, link, client) => {
-  const auditCompletedChannelId = '1423597979604095046';
-
-  const auditMessageIdField = messageEmbed.data.fields.find((f) => f.name === 'Audit Message ID');
-  const auditMessageId = auditMessageIdField.value;
-
-  const auditCompletedChannel = client.channels.cache.get(auditCompletedChannelId);
-
-  const auditMessage = await auditCompletedChannel.messages.fetch(auditMessageId);
-
-  const auditMessageEmbed = auditMessage.embeds[0];
-
-  const vnrStatusField = auditMessageEmbed.data.fields.find(
-    (f) => f.name === 'Violation Notice Status'
+  const messageField = messageEmbed.data.fields.find(
+    (f) => f.name === 'Audit Message ID' || 'Case Message ID'
   );
-  const vnrLinkField = auditMessageEmbed.data.fields.find(
-    (f) => f.name === 'Violation Notice Link'
+  const messageIdFieldName = messageField.name;
+  const messageId = messageField.value;
+
+  const messageChannel = client.channels.cache.get(
+    messageIdFieldName === 'Audit Message ID' ? auditCompletedChannelId : caseReportChannelId
   );
+
+  let message;
+
+  if (messageIdFieldName === 'Audit Message ID') {
+    message = await messageChannel.messages.fetch(messageId);
+  } else {
+    const thread = await client.channels.cache.get(messageId);
+    message = (
+      await thread.messages.fetch({
+        limit: 1,
+        after: thread.id,
+      })
+    ).first();
+  }
+
+  const messageEmbed = message.embeds[0];
+
+  const vnrStatusField = messageEmbed.data.fields.find((f) => f.name === 'Violation Notice Status');
+  const vnrLinkField = messageEmbed.data.fields.find((f) => f.name === 'Violation Notice Link');
 
   if (vnrStatusField && vnrLinkField) {
     vnrStatusField.value = status || 'Undefined Status';
     vnrLinkField.value = link || 'No VN link found.';
   } else {
-    auditMessageEmbed.data.fields.push(
+    messageEmbed.data.fields.push(
       {
         name: '\u200b',
         value: '\u200b',
@@ -37,7 +51,44 @@ const editVnrStatus = async (messageEmbed, status, link, client) => {
     );
   }
 
-  await auditMessage.edit({ embeds: [auditMessageEmbed] });
+  await message.edit({ embeds: [messageEmbed] });
+};
+
+const fetchVNandRequestID = async (messageEmbed, client) => {
+  const messageIdField = messageEmbed.data.fields.find(
+    (f) => f.name === 'Audit Message ID' || f.name === 'Case Message ID'
+  );
+  const messageIdFieldName = messageIdField.name;
+  const messageId = messageIdField.value;
+
+  const messageChannel = client.channels.cache.get(
+    messageIdFieldName === 'Audit Message ID' ? auditCompletedChannelId : caseReportChannelId
+  );
+
+  let request_id;
+  if (messageIdFieldName === 'Audit Message ID') {
+    const auditMessage = await messageChannel.messages.fetch(messageId);
+    const title = auditMessage.embeds[0].data.description;
+    const { audit_id } = cleanAuditDescription(title);
+    request_id = audit_id;
+  } else {
+    const thread = await client.channels.cache.get(messageId);
+    const caseMessage = (
+      await thread.messages.fetch({
+        limit: 1,
+        after: thread.id,
+      })
+    ).first();
+    const title = caseMessage.embeds[0].data.title;
+    const case_id = cleanCaseDescription(title);
+    request_id = case_id;
+  }
+
+  const vnrTitle = messageEmbed.data.description;
+  const vnrIdMatch = vnrTitle.match(/VN-\d+/);
+  const vnrId = vnrIdMatch ? vnrIdMatch[0] : '0000';
+
+  return { vnrId, request_id };
 };
 
 const cleanAuditDescription = (description) => {
@@ -47,6 +98,12 @@ const cleanAuditDescription = (description) => {
   const auditType = splitDescription[0] ? splitDescription[0].trim() : null;
   const auditId = splitDescription[1] ? splitDescription[1].trim() : null;
   return { audit_type: auditType, audit_id: auditId };
+};
+
+const cleanCaseDescription = (description) => {
+  const beforePipe = description.split('|')[0]; // "📌 CASE 0081 "
+  const cleaned = beforePipe.replace('📌', '').trim(); // "CASE 0081"
+  return cleaned;
 };
 
 function makeEmbedTable(headers, rows, maxWidth = 60) {
@@ -88,4 +145,5 @@ module.exports = {
   editVnrStatus,
   cleanAuditDescription,
   makeEmbedTable,
+  fetchVNandRequestID,
 };
