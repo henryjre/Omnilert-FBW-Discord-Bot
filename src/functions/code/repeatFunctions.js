@@ -72,12 +72,11 @@ const fetchVNandRequestID = async (messageEmbed, client) => {
     request_id = audit_id;
   } else {
     const thread = await client.channels.cache.get(messageId);
-    const caseMessage = (
-      await thread.messages.fetch({
-        limit: 1,
-        after: thread.id,
-      })
-    ).first();
+    const fetchedMessages = await thread.messages.fetch({ limit: 100 });
+    const embedMessages = fetchedMessages.filter((msg) => msg.embeds && msg.embeds.length > 0);
+    const caseMessage = embedMessages
+      .sort((a, b) => a.createdTimestamp - b.createdTimestamp)
+      .first();
     const title = caseMessage.embeds[0].data.title;
     const case_id = cleanCaseDescription(title);
     request_id = case_id;
