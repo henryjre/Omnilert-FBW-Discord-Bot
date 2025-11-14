@@ -4,18 +4,19 @@ const {
   ChannelType,
   ButtonBuilder,
   ButtonStyle,
-  EmbedBuilder
+  EmbedBuilder,
 } = require('discord.js');
 
 const vnInquiriesAndDiscussionsChannelId = '1424951056558854144';
-const auditCompletedChannelId = '1423597979604095046';
 
-const { editVnrStatus } = require('../../../functions/code/repeatFunctions.js');
-const { cleanAuditDescription } = require('../../../functions/code/repeatFunctions.js');
+const {
+  editVnrStatus,
+  fetchVNandRequestID,
+} = require('../../../functions/code/repeatFunctions.js');
 
 module.exports = {
   data: {
-    name: `vnrConfirm`
+    name: `vnrConfirm`,
   },
   async execute(interaction, client) {
     const mentionedUser = interaction.message.mentions?.users?.first() || null;
@@ -26,7 +27,7 @@ module.exports = {
       if (isNotMentionedUser) {
         return await interaction.reply({
           content: `🔴 ERROR: You cannot use this button.`,
-          flags: MessageFlags.Ephemeral
+          flags: MessageFlags.Ephemeral,
         });
       }
     }
@@ -36,7 +37,7 @@ module.exports = {
       if (doesNotHaveRole) {
         return await interaction.reply({
           content: `🔴 ERROR: You cannot use this button.`,
-          flags: MessageFlags.Ephemeral
+          flags: MessageFlags.Ephemeral,
         });
       }
     }
@@ -49,34 +50,21 @@ module.exports = {
     const allEmbeds = interaction.message.embeds;
     const messageEmbed = allEmbeds[0];
 
-    const auditCompletedChannel = await client.channels.cache.get(auditCompletedChannelId);
-    const auditMessageIdField = messageEmbed.data.fields.find((f) => f.name === 'Audit Message ID');
-    const auditMessageId = auditMessageIdField.value;
-
-    const auditMessage = await auditCompletedChannel.messages.fetch(auditMessageId);
-    const auditMessageEmbed = auditMessage.embeds[0];
-
-    const auditTitle = auditMessageEmbed.data.description;
-    const { audit_id } = cleanAuditDescription(auditTitle);
-
-    const vnrTitle = messageEmbed.data.description;
-    const vnrIdMatch = vnrTitle.match(/VN-\d+/);
-
-    const vnrId = vnrIdMatch ? vnrIdMatch[0] : '0000';
+    const { vnrId, request_id } = await fetchVNandRequestID(messageEmbed, client);
 
     const vnInquiriesAndDiscussionsChannel = await client.channels.cache.get(
       vnInquiriesAndDiscussionsChannelId
     );
 
     const thread = await vnInquiriesAndDiscussionsChannel.threads.create({
-      name: `Violation Notice - ${vnrId} | ${audit_id}`,
-      type: ChannelType.PublicThread
+      name: `Violation Notice - ${vnrId} | ${request_id}`,
+      type: ChannelType.PublicThread,
     });
 
     const newVnEmbed = EmbedBuilder.from(messageEmbed)
       .setDescription(`## 🚫 VIOLATION NOTICE | ${vnrId}`)
       .setFooter({
-        text: `Confirmed By: ${confirmedBy}`
+        text: `Confirmed By: ${confirmedBy}`,
       });
 
     const issueVnrButton = new ButtonBuilder()
@@ -94,10 +82,12 @@ module.exports = {
     const vnrThreadMessage = await thread.send({
       content: `${interaction.user.toString()}`,
       embeds: [newVnEmbed],
-      components: [issueVnrButtonRow]
+      components: [issueVnrButtonRow],
     });
 
     await editVnrStatus(messageEmbed, '🟢 Confirmed', vnrThreadMessage.url, client);
+
+    await interaction.message.delete();
 
     const replyEmbed = new EmbedBuilder()
       .setDescription(
@@ -106,7 +96,7 @@ module.exports = {
       .setColor('Green');
 
     await interaction.editReply({
-      embeds: [replyEmbed]
+      embeds: [replyEmbed],
     });
-  }
+  },
 };
