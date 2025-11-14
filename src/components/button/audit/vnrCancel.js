@@ -1,17 +1,8 @@
-const {
-  EmbedBuilder,
-  MessageFlags,
-  ButtonBuilder,
-  ActionRowBuilder,
-  ButtonStyle,
-  StringSelectMenuBuilder
-} = require('discord.js');
-
-const vnrQueueChannelId = '1424950819501113466';
+const { EmbedBuilder, MessageFlags } = require('discord.js');
 
 module.exports = {
   data: {
-    name: `cancelVnr`
+    name: `cancelVnr`,
   },
   async execute(interaction, client) {
     await interaction.deferUpdate();
@@ -30,11 +21,14 @@ module.exports = {
 
       return await interaction.followUp({
         embeds: [replyEmbed],
-        flags: MessageFlags.Ephemeral
+        flags: MessageFlags.Ephemeral,
       });
     }
 
-    const messageComponents = interaction.message.components;
+    const originalMessage = await interaction.channel.fetchStarterMessage();
+    const thread = originalMessage.thread;
+
+    const messageComponents = originalMessage.components;
 
     const submitButtonRow = messageComponents.find((row) =>
       row.components.some((component) => component.customId === 'auditVnr')
@@ -50,10 +44,12 @@ module.exports = {
       }
     }
 
-    await interaction.message.edit({
-      components: messageComponents
+    await originalMessage.edit({
+      components: messageComponents,
     });
 
-    await interaction.channel.delete();
-  }
+    if (thread.name.includes('VN Request')) {
+      await thread.delete();
+    }
+  },
 };
