@@ -41,8 +41,11 @@ module.exports = {
       .setLabel('Request VN')
       .setStyle(ButtonStyle.Danger);
 
+    const vnrButtonRow = new ActionRowBuilder().addComponents(vnrButton);
+
     const caseMessage = await caseChannel.send({
       content: `# ${caseFullTitle}`,
+      components: [vnrButtonRow],
     });
 
     const caseThread = await caseMessage.startThread({
