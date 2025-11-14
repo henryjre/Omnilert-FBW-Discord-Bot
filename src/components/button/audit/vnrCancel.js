@@ -50,6 +50,12 @@ module.exports = {
 
     if (thread.name.includes('VN Request')) {
       await thread.delete();
+    } else {
+      await interaction.message.delete();
+      await thread.send({
+        content: 'VN request has been cancelled.',
+        flags: MessageFlags.Ephemeral,
+      });
     }
   },
 };
