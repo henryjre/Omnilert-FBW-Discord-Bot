@@ -197,7 +197,7 @@ module.exports = {
       )
       .addSeparatorComponents(separatorDividerLarge)
       .addActionRowComponents((actionRow) =>
-        actionRow.setComponents(backButton, epiDashboardButton)
+        actionRow.setComponents(backButton, salaryComputationButton)
       );
 
     await interaction.message.edit({
