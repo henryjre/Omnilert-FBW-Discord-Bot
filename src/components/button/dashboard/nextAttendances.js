@@ -6,6 +6,7 @@ const {
   ButtonStyle,
   ContainerBuilder,
   SeparatorSpacingSize,
+  SeparatorBuilder,
 } = require('discord.js');
 
 const { getAttendanceRecords } = require('../../../sqliteFunctions.js');
