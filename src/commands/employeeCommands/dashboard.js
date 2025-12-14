@@ -1,13 +1,13 @@
 const {
   SlashCommandBuilder,
-  ActionRowBuilder,
   MessageFlags,
   EmbedBuilder,
   ButtonBuilder,
-  ButtonStyle
+  ButtonStyle,
+  ContainerBuilder,
+  SeparatorSpacingSize,
 } = require('discord.js');
 
-const serviceEmployeeRoleId = '1314413960274907238';
 const botCommandsChannelId = '1372559141071228998';
 
 module.exports = {
@@ -25,21 +25,12 @@ module.exports = {
 
       await interaction.reply({
         embeds: [replyEmbed],
-        flags: MessageFlags.Ephemeral
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
 
     await interaction.deferReply();
-
-    const employeeRole = interaction.guild.roles.cache.find(
-      (role) => role.id === serviceEmployeeRoleId
-    );
-
-    const dashboardEmbed = new EmbedBuilder()
-      .setTitle('📊 Employee Dashboard')
-      .setDescription('*Select a button below to view the dashboard.*')
-      .setColor(employeeRole.color || 'Blurple');
 
     const epiDashboardButton = new ButtonBuilder()
       .setCustomId('viewEpiDashboard')
@@ -53,14 +44,19 @@ module.exports = {
       .setEmoji('💵')
       .setStyle(ButtonStyle.Success);
 
-    const buttonRow = new ActionRowBuilder().addComponents(
-      epiDashboardButton,
-      salaryComputationButton
-    );
+    const dashboardContainer = new ContainerBuilder()
+      .addTextDisplayComponents((textDisplay) => textDisplay.setContent('# 📊 Employee Dashboard'))
+      .addTextDisplayComponents((textDisplay) =>
+        textDisplay.setContent('*Select a button below to view the dashboard.*')
+      )
+      .addSeparatorComponents((separator) => separator.setSpacing(SeparatorSpacingSize.Large))
+      .addActionRowComponents((actionRow) =>
+        actionRow.setComponents(epiDashboardButton, salaryComputationButton)
+      );
 
     await interaction.editReply({
-      embeds: [dashboardEmbed],
-      components: [buttonRow]
+      components: [dashboardContainer],
+      flags: MessageFlags.IsComponentsV2,
     });
-  }
+  },
 };

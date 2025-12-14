@@ -4,6 +4,9 @@ const {
   EmbedBuilder,
   ButtonBuilder,
   ButtonStyle,
+  ContainerBuilder,
+  SeparatorSpacingSize,
+  SeparatorBuilder,
 } = require('discord.js');
 
 const moment = require('moment-timezone');
@@ -31,12 +34,17 @@ module.exports = {
       }
     }
 
-    const preloadEmbed = new EmbedBuilder()
-      .setTitle('📊Employee Dashboard')
-      .setDescription('*Retrieving audit ratings... Please wait.*')
-      .setColor('Orange');
+    const preloadContainer = new ContainerBuilder()
+      .addTextDisplayComponents((textDisplay) => textDisplay.setContent('# 📊 Employee Dashboard'))
+      .addSeparatorComponents((separator) => separator)
+      .addTextDisplayComponents((textDisplay) =>
+        textDisplay.setContent('*Retrieving audit ratings... Please wait.*')
+      );
 
-    await interaction.message.edit({ embeds: [preloadEmbed], components: [] });
+    await interaction.message.edit({
+      components: [preloadContainer],
+      flags: MessageFlags.IsComponentsV2,
+    });
 
     await interaction.deferUpdate();
 
@@ -54,20 +62,31 @@ module.exports = {
       .setEmoji('↩️')
       .setStyle(ButtonStyle.Secondary);
 
-    const buttonRow = new ActionRowBuilder().addComponents(backButton, epiDashboardButton);
+    const separatorDividerLarge = new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Large);
+    const separatorDividerSmall = new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small);
+    const separatorSpaceSm = new SeparatorBuilder()
+      .setDivider(false)
+      .setSpacing(SeparatorSpacingSize.Small);
 
     if (!employeeDataFetch) {
-      const noAuditRatingsEmbed = EmbedBuilder.from(messageEmbed).setDescription(
-        `## 📈 AUDIT RATINGS\n\u200b\n*No audit ratings found... 🕸️* `
-      );
-
-      if (noAuditRatingsEmbed.data.fields) {
-        delete noAuditRatingsEmbed.data.fields;
-      }
+      const viewAuditRatingsContainer = new ContainerBuilder()
+        .addTextDisplayComponents((textDisplay) =>
+          textDisplay.setContent('# 📊 Employee Dashboard')
+        )
+        .addSeparatorComponents(separatorDividerLarge)
+        .addTextDisplayComponents((textDisplay) => textDisplay.setContent('## 📈 Audit Ratings'))
+        .addSeparatorComponents(separatorDividerSmall)
+        .addTextDisplayComponents((textDisplay) =>
+          textDisplay.setContent('*No audit ratings found... 🕸️*')
+        )
+        .addSeparatorComponents(separatorDividerLarge)
+        .addActionRowComponents((actionRow) =>
+          actionRow.setComponents(backButton, epiDashboardButton)
+        );
 
       return await interaction.message.edit({
-        embeds: [noAuditRatingsEmbed],
-        components: [buttonRow],
+        components: [viewAuditRatingsContainer],
+        flags: MessageFlags.IsComponentsV2,
       });
     }
 
@@ -77,16 +96,6 @@ module.exports = {
     const rows = buildRowsFromOdoo(employeeDataFetch);
     const { pageRows, page, totalPages, total, start, end } = paginateRows(rows, 1, 5);
     const tableStr = makeEmbedTable(headers, pageRows, 60);
-
-    const auditRatingsEmbed = EmbedBuilder.from(messageEmbed)
-      .setDescription(`## 📈 AUDIT RATINGS\n\u200b\n${tableStr}`)
-      .setFooter({
-        text: `Page ${page} of ${totalPages} | Showing ${start + 1} - ${end} of ${total} entries`,
-      });
-
-    if (auditRatingsEmbed.data.fields) {
-      delete auditRatingsEmbed.data.fields;
-    }
 
     const nextButton = new ButtonBuilder()
       .setCustomId('nextAuditRatings')
@@ -114,16 +123,29 @@ module.exports = {
       .setEmoji('⬅️')
       .setStyle(page === 1 ? ButtonStyle.Secondary : ButtonStyle.Primary);
 
-    const paginationButtonRow = new ActionRowBuilder().addComponents(
-      previousButton,
-      blankButton1,
-      blankButton2,
-      nextButton
-    );
+    const viewAuditRatingsContainer = new ContainerBuilder()
+      .addTextDisplayComponents((textDisplay) => textDisplay.setContent('# 📊 Employee Dashboard'))
+      .addSeparatorComponents(separatorDividerLarge)
+      .addTextDisplayComponents((textDisplay) => textDisplay.setContent('## 📈 Audit Ratings'))
+      .addSeparatorComponents(separatorDividerSmall)
+      .addTextDisplayComponents((textDisplay) => textDisplay.setContent(tableStr))
+      .addSeparatorComponents(separatorDividerSmall)
+      .addTextDisplayComponents((textDisplay) =>
+        textDisplay.setContent(
+          `Page ${page} of ${totalPages} | Showing ${start + 1} - ${end} of ${total} entries`
+        )
+      )
+      .addActionRowComponents((actionRow) =>
+        actionRow.setComponents(previousButton, blankButton1, blankButton2, nextButton)
+      )
+      .addSeparatorComponents(separatorDividerLarge)
+      .addActionRowComponents((actionRow) =>
+        actionRow.setComponents(backButton, epiDashboardButton)
+      );
 
     await interaction.message.edit({
-      embeds: [auditRatingsEmbed],
-      components: [paginationButtonRow, buttonRow],
+      components: [viewAuditRatingsContainer],
+      flags: MessageFlags.IsComponentsV2,
     });
   },
 };

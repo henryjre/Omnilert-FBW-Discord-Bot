@@ -1,9 +1,11 @@
 const {
-  ActionRowBuilder,
   MessageFlags,
   EmbedBuilder,
   ButtonBuilder,
   ButtonStyle,
+  ContainerBuilder,
+  SeparatorSpacingSize,
+  SeparatorBuilder,
 } = require('discord.js');
 
 const { getEmployeePayslipData, createViewOnlyPayslip } = require('../../../odooRpc.js');
@@ -28,12 +30,17 @@ module.exports = {
       }
     }
 
-    const preloadEmbed = new EmbedBuilder()
-      .setTitle('📊Employee Dashboard')
-      .setDescription('*Computing current payslip details... Please wait.*')
-      .setColor('Orange');
+    const preloadContainer = new ContainerBuilder()
+      .addTextDisplayComponents((textDisplay) => textDisplay.setContent('# 📊 Employee Dashboard'))
+      .addSeparatorComponents((separator) => separator)
+      .addTextDisplayComponents((textDisplay) =>
+        textDisplay.setContent('*Computing current payslip details... Please wait.*')
+      );
 
-    await interaction.message.edit({ embeds: [preloadEmbed], components: [] });
+    await interaction.message.edit({
+      components: [preloadContainer],
+      flags: MessageFlags.IsComponentsV2,
+    });
 
     await interaction.deferUpdate();
 
@@ -69,26 +76,11 @@ module.exports = {
 
     const dateRange = getDateRange();
 
-    const salaryComputationEmbed = EmbedBuilder.from(messageEmbed)
-      .setDescription(
-        `## 💵 PAYSLIP DETAILS\n\u200b\n**WORKED DAYS**\n${makeEmbedTable(
-          headers,
-          rows
-        )}\n\u200b\n**SALARY COMPUTATION**\n${description}`
-      )
-      .setFields([
-        {
-          name: 'Branch',
-          value: `${department.name}`,
-        },
-        {
-          name: 'Period',
-          value: `${dateRange.date_from} - ${dateRange.date_to}`,
-        },
-      ])
-      .setFooter({
-        text: `This is an unofficial payslip and is not entirely accurate.`,
-      });
+    const separatorDividerLarge = new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Large);
+    const separatorDividerSmall = new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small);
+    const separatorSpaceSm = new SeparatorBuilder()
+      .setDivider(false)
+      .setSpacing(SeparatorSpacingSize.Small);
 
     const viewAttendancesButton = new ButtonBuilder()
       .setCustomId('viewAttendances')
@@ -108,13 +100,37 @@ module.exports = {
       .setEmoji('↩️')
       .setStyle(ButtonStyle.Secondary);
 
-    const buttonRow = new ActionRowBuilder().addComponents(
-      backButton,
-      backToDashboardButton,
-      viewAttendancesButton
-    );
+    const salaryComputationContainer = new ContainerBuilder()
+      .addTextDisplayComponents((textDisplay) => textDisplay.setContent('# 📊 Employee Dashboard'))
+      .addSeparatorComponents(separatorDividerLarge)
+      .addTextDisplayComponents((textDisplay) => textDisplay.setContent('## 💵 Payslip Details'))
+      .addSeparatorComponents(separatorDividerSmall)
+      .addTextDisplayComponents((textDisplay) =>
+        textDisplay.setContent('*This is an unofficial payslip and is not entirely accurate.*')
+      )
+      .addSeparatorComponents(separatorSpaceSm)
+      .addTextDisplayComponents((textDisplay) =>
+        textDisplay.setContent(`**WORKED DAYS**\n${makeEmbedTable(headers, rows)}`)
+      )
+      .addSeparatorComponents(separatorSpaceSm)
+      .addTextDisplayComponents((textDisplay) =>
+        textDisplay.setContent(`**SALARY COMPUTATION**\n${description}`)
+      )
+      .addSeparatorComponents(separatorSpaceSm)
+      .addTextDisplayComponents((textDisplay) =>
+        textDisplay.setContent(
+          `**BRANCH**\n${department.name}\n**PERIOD**\n${dateRange.date_from} - ${dateRange.date_to}`
+        )
+      )
+      .addSeparatorComponents(separatorDividerLarge)
+      .addActionRowComponents((actionRow) =>
+        actionRow.setComponents(backButton, backToDashboardButton, viewAttendancesButton)
+      );
 
-    await interaction.message.edit({ embeds: [salaryComputationEmbed], components: [buttonRow] });
+    await interaction.message.edit({
+      components: [salaryComputationContainer],
+      flags: MessageFlags.IsComponentsV2,
+    });
   },
 };
 

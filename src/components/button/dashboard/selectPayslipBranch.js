@@ -4,12 +4,15 @@ const {
   EmbedBuilder,
   ButtonBuilder,
   ButtonStyle,
-  StringSelectMenuBuilder
+  StringSelectMenuBuilder,
+  ContainerBuilder,
+  SeparatorSpacingSize,
+  SeparatorBuilder,
 } = require('discord.js');
 
 module.exports = {
   data: {
-    name: `salaryComputationDashboard`
+    name: `salaryComputationDashboard`,
   },
   async execute(interaction, client) {
     const replyEmbed = new EmbedBuilder();
@@ -26,26 +29,13 @@ module.exports = {
       }
     }
 
-    // const preloadEmbed = new EmbedBuilder()
-    //   .setTitle('📊Employee Dashboard')
-    //   .setDescription('*Computing current payslip details... Please wait.*')
-    //   .setColor('Orange');
-
-    // await interaction.message.edit({ embeds: [preloadEmbed], components: [] });
+    const separatorDividerLarge = new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Large);
+    const separatorDividerSmall = new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small);
+    const separatorSpaceSm = new SeparatorBuilder()
+      .setDivider(false)
+      .setSpacing(SeparatorSpacingSize.Small);
 
     await interaction.deferUpdate();
-
-    const selectBranchEmbed = EmbedBuilder.from(messageEmbed).setDescription(
-      '*Select a branch to view the payslip details.*'
-    );
-
-    if (selectBranchEmbed.data.fields) {
-      delete selectBranchEmbed.data.fields;
-    }
-
-    if (selectBranchEmbed.data.footer) {
-      delete selectBranchEmbed.data.footer;
-    }
 
     const branchMenu = new StringSelectMenuBuilder()
       .setCustomId('payslipBranchMenu')
@@ -66,13 +56,21 @@ module.exports = {
       .setEmoji('⬅️')
       .setStyle(ButtonStyle.Secondary);
 
-    const menuRow = new ActionRowBuilder().addComponents(branchMenu);
-
-    const buttonRow = new ActionRowBuilder().addComponents(backButton);
+    const selectBranchContainer = new ContainerBuilder()
+      .addTextDisplayComponents((textDisplay) => textDisplay.setContent('# 📊 Employee Dashboard'))
+      .addSeparatorComponents(separatorDividerLarge)
+      .addTextDisplayComponents((textDisplay) => textDisplay.setContent('## 💵 PAYSLIP DETAILS'))
+      .addSeparatorComponents(separatorDividerSmall)
+      .addTextDisplayComponents((textDisplay) =>
+        textDisplay.setContent('*Select a branch to view the payslip details.*')
+      )
+      .addActionRowComponents((actionRow) => actionRow.setComponents(branchMenu))
+      .addSeparatorComponents(separatorDividerLarge)
+      .addActionRowComponents((actionRow) => actionRow.setComponents(backButton));
 
     await interaction.message.edit({
-      embeds: [selectBranchEmbed],
-      components: [menuRow, buttonRow]
+      components: [selectBranchContainer],
+      flags: MessageFlags.IsComponentsV2,
     });
-  }
+  },
 };

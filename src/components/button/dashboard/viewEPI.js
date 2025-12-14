@@ -1,17 +1,19 @@
 const {
-  ActionRowBuilder,
   MessageFlags,
   EmbedBuilder,
   ButtonBuilder,
-  ButtonStyle
+  ButtonStyle,
+  ContainerBuilder,
+  SeparatorSpacingSize,
+  SeparatorBuilder,
 } = require('discord.js');
 
-const { getEmployeeEPIData, getEmployeeAuditRatings } = require('../../../odooRpc.js');
+const { getEmployeeEPIData } = require('../../../odooRpc.js');
 const auditTypes = require('../../../config/audit_types.json');
 
 module.exports = {
   data: {
-    name: `viewEpiDashboard`
+    name: `viewEpiDashboard`,
   },
   async execute(interaction, client) {
     const replyEmbed = new EmbedBuilder();
@@ -28,12 +30,17 @@ module.exports = {
       }
     }
 
-    const preloadEmbed = new EmbedBuilder()
-      .setTitle('📊Employee Dashboard')
-      .setDescription('*Retrieving EPI data... Please wait.*')
-      .setColor('Orange');
+    const preloadContainer = new ContainerBuilder()
+      .addTextDisplayComponents((textDisplay) => textDisplay.setContent('📊 Employee Dashboard'))
+      .addSeparatorComponents((separator) => separator)
+      .addTextDisplayComponents((textDisplay) =>
+        textDisplay.setContent('*Retrieving EPI data... Please wait.*')
+      );
 
-    await interaction.message.edit({ embeds: [preloadEmbed], components: [] });
+    await interaction.message.edit({
+      components: [preloadContainer],
+      flags: MessageFlags.IsComponentsV2,
+    });
 
     await interaction.deferUpdate();
 
@@ -50,23 +57,11 @@ module.exports = {
     const scsaMeritFeedback = getMeritFeedback(scsaAudit, employeeData.x_average_scsa);
     const sqaaMeritFeedback = getMeritFeedback(sqaaAudit, employeeData.x_average_sqaa);
 
-    const viewEpiEmbed = EmbedBuilder.from(messageEmbed)
-      .setDescription('## 📈 EMPLOYEE PERFORMANCE INDEX')
-      .setFields(
-        { name: 'EPI Value', value: `${employeeData.x_epi} points` },
-        {
-          name: 'Service QA Audit',
-          value: `**Average:** ${employeeData.x_average_sqaa} ⭐\n**Merit Amount:** ${sqaaMeritFeedback.merit_amount}\n*${sqaaMeritFeedback.message}*`
-        },
-        {
-          name: 'Store CCTV Spot Audit',
-          value: `**Average:** ${employeeData.x_average_scsa} ⭐\n**Merit Amount:** ${scsaMeritFeedback.merit_amount}\n*${scsaMeritFeedback.message}*`
-        }
-      );
-
-    if (viewEpiEmbed.data.footer) {
-      delete viewEpiEmbed.data.footer;
-    }
+    const separatorDividerLarge = new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Large);
+    const separatorDividerSmall = new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small);
+    const separatorSpaceSm = new SeparatorBuilder()
+      .setDivider(false)
+      .setSpacing(SeparatorSpacingSize.Small);
 
     const backButton = new ButtonBuilder()
       .setCustomId('backToDashboard')
@@ -80,10 +75,38 @@ module.exports = {
       .setEmoji('🌟')
       .setStyle(ButtonStyle.Success);
 
-    const buttonRow = new ActionRowBuilder().addComponents(backButton, viewAuditRatingsButton);
+    const viewEpiContainer = new ContainerBuilder()
+      .addTextDisplayComponents((textDisplay) => textDisplay.setContent('# 📊 Employee Dashboard'))
+      .addSeparatorComponents(separatorDividerLarge)
+      .addTextDisplayComponents((textDisplay) =>
+        textDisplay.setContent('## 📈 Employee Performance Index')
+      )
+      .addSeparatorComponents(separatorDividerSmall)
+      .addTextDisplayComponents((textDisplay) =>
+        textDisplay.setContent(`**EPI Value:** ${employeeData.x_epi} points`)
+      )
+      .addSeparatorComponents(separatorSpaceSm)
+      .addTextDisplayComponents((textDisplay) =>
+        textDisplay.setContent(
+          `**Service QA Audit**\n**Average:** ${employeeData.x_average_sqaa} ⭐\n**Merit Amount:** ${sqaaMeritFeedback.merit_amount}\n*${sqaaMeritFeedback.message}*`
+        )
+      )
+      .addSeparatorComponents(separatorSpaceSm)
+      .addTextDisplayComponents((textDisplay) =>
+        textDisplay.setContent(
+          `**Store CCTV Spot Audit**\n**Average:** ${employeeData.x_average_scsa} ⭐\n**Merit Amount:** ${scsaMeritFeedback.merit_amount}\n*${scsaMeritFeedback.message}*`
+        )
+      )
+      .addSeparatorComponents(separatorDividerLarge)
+      .addActionRowComponents((actionRow) =>
+        actionRow.setComponents(backButton, viewAuditRatingsButton)
+      );
 
-    await interaction.message.edit({ embeds: [viewEpiEmbed], components: [buttonRow] });
-  }
+    await interaction.message.edit({
+      components: [viewEpiContainer],
+      flags: MessageFlags.IsComponentsV2,
+    });
+  },
 };
 
 function getMeritFeedback(audit, average) {

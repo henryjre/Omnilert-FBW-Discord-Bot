@@ -1,9 +1,11 @@
 const {
-  ActionRowBuilder,
   MessageFlags,
   EmbedBuilder,
   ButtonBuilder,
   ButtonStyle,
+  ContainerBuilder,
+  SeparatorSpacingSize,
+  SeparatorBuilder,
 } = require('discord.js');
 
 const moment = require('moment-timezone');
@@ -20,9 +22,6 @@ module.exports = {
   async execute(interaction, client) {
     const replyEmbed = new EmbedBuilder();
 
-    const allEmbeds = interaction.message.embeds;
-    const messageEmbed = allEmbeds[0];
-
     const slashInteraction = interaction.message.interaction;
     if (slashInteraction) {
       const slashUser = slashInteraction.user;
@@ -32,32 +31,77 @@ module.exports = {
       }
     }
 
-    const preloadEmbed = new EmbedBuilder()
-      .setTitle('📊Employee Dashboard')
-      .setDescription('*Retrieving attendance records... Please wait.*')
-      .setColor('Orange');
+    const components = interaction.message.components;
 
-    await interaction.message.edit({ embeds: [preloadEmbed], components: [] });
+    const preloadContainer = new ContainerBuilder()
+      .addTextDisplayComponents((textDisplay) => textDisplay.setContent('# 📊 Employee Dashboard'))
+      .addSeparatorComponents((separator) => separator)
+      .addTextDisplayComponents((textDisplay) =>
+        textDisplay.setContent('*Retrieving attendance records... Please wait.*')
+      );
+
+    await interaction.message.edit({
+      components: [preloadContainer],
+      flags: MessageFlags.IsComponentsV2,
+    });
 
     await interaction.deferUpdate();
 
-    const branchField = messageEmbed.data.fields.find((f) => f.name === 'Branch');
-    const branch = branchField.value;
-    const department = departments.find((d) => d.name === branch);
+    const containerComponent = components[0];
+    // action row
+    const actionRow = containerComponent.components.find((component) => component.type === 1);
+    // text display components
+    const textDisplayComponents = containerComponent.components.filter(
+      (component) => component.type === 10
+    );
+    const lastTextDisplayComponent =
+      textDisplayComponents.length > 0
+        ? textDisplayComponents[textDisplayComponents.length - 1]
+        : null;
+    const lastTextDisplayComponentContent = lastTextDisplayComponent.data.content;
+    // Extract branch and period from the lastTextDisplayComponentContent
+    let branchFromComponent = null;
+    let periodFromComponent = null;
+    if (lastTextDisplayComponentContent) {
+      const branchMatch = lastTextDisplayComponentContent.match(
+        /\*\*BRANCH\*\*\n(.+?)\n\*\*PERIOD\*\*/
+      );
+      if (branchMatch) {
+        branchFromComponent = branchMatch[1].trim();
+      }
+      const periodMatch = lastTextDisplayComponentContent.match(/\*\*PERIOD\*\*\n(.+?)(?:\n|$)/);
+      if (periodMatch) {
+        periodFromComponent = periodMatch[1].trim();
+      }
+    }
+
+    const department = departments.find((d) => d.name === branchFromComponent);
 
     if (!department) {
-      replyEmbed.setDescription(`🔴 ERROR: No department found.`).setColor('Red');
-      await interaction.followUp({ embeds: [replyEmbed], flags: MessageFlags.Ephemeral });
+      const noAttendancesContainer = new ContainerBuilder()
+        .addTextDisplayComponents((textDisplay) =>
+          textDisplay.setContent('# 📊 Employee Dashboard')
+        )
+        .addSeparatorComponents((separator) => separator)
+        .addTextDisplayComponents((textDisplay) =>
+          textDisplay.setContent('*No department found... 🕸️*')
+        )
+        .addActionRowComponents(actionRow);
+
       await interaction.message.edit({
-        embeds: interaction.message.embeds,
-        components: interaction.message.components,
+        components: [noAttendancesContainer],
+        flags: MessageFlags.IsComponentsV2,
       });
       return;
     }
 
-    const dateRangeField = messageEmbed.data.fields.find((f) => f.name === 'Period');
-    const dateRangeStr = dateRangeField.value;
-    const dateRange = getDateRange(dateRangeStr);
+    const separatorDividerLarge = new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Large);
+    const separatorDividerSmall = new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small);
+    const separatorSpaceSm = new SeparatorBuilder()
+      .setDivider(false)
+      .setSpacing(SeparatorSpacingSize.Small);
+
+    const dateRange = getDateRange(periodFromComponent);
 
     const employeeDataFetch = await getAttendanceByEmployee(
       interaction.user.id,
@@ -78,17 +122,27 @@ module.exports = {
       .setEmoji('↩️')
       .setStyle(ButtonStyle.Secondary);
 
-    const buttonRow = new ActionRowBuilder().addComponents(backButton, salaryComputationButton);
-
     if (!employeeDataFetch) {
-      const noAttendancesEmbed = EmbedBuilder.from(messageEmbed).setDescription(
-        `## 📈 ATTENDANCES\n\u200b\n*No attendances found... 🕸️* `
-      );
+      const noAttendancesContainer = new ContainerBuilder()
+        .addTextDisplayComponents((textDisplay) =>
+          textDisplay.setContent('# 📊 Employee Dashboard')
+        )
+        .addSeparatorComponents(separatorDividerLarge)
+        .addTextDisplayComponents((textDisplay) => textDisplay.setContent('## 📈 ATTENDANCES'))
+        .addSeparatorComponents(separatorDividerSmall)
+        .addTextDisplayComponents((textDisplay) =>
+          textDisplay.setContent('*No attendances found... 🕸️*')
+        )
+        .addSeparatorComponents(separatorDividerLarge)
+        .addActionRowComponents((actionRow) =>
+          actionRow.setComponents(backButton, salaryComputationButton)
+        );
 
-      return await interaction.message.edit({
-        embeds: [noAttendancesEmbed],
-        components: [buttonRow],
+      await interaction.message.edit({
+        components: [noAttendancesContainer],
+        flags: MessageFlags.IsComponentsV2,
       });
+      return;
     }
 
     const parsedAttendanceRecords = parseAttendanceRecords(employeeDataFetch);
@@ -99,12 +153,6 @@ module.exports = {
     const rows = buildRowsFromOdoo(parsedAttendanceRecords);
     const { pageRows, page, totalPages, total, start, end } = paginateRows(rows, 1, 5);
     const tableStr = makeEmbedTable(headers, pageRows, 60);
-
-    const attendancesEmbed = EmbedBuilder.from(messageEmbed)
-      .setDescription(`## 📈 ATTENDANCES\n\u200b\n${tableStr}`)
-      .setFooter({
-        text: `Page ${page} of ${totalPages} | Showing ${start + 1} - ${end} of ${total} entries`,
-      });
 
     const nextButton = new ButtonBuilder()
       .setCustomId('nextAttendances')
@@ -132,16 +180,29 @@ module.exports = {
       .setEmoji('⬅️')
       .setStyle(page === 1 ? ButtonStyle.Secondary : ButtonStyle.Primary);
 
-    const paginationButtonRow = new ActionRowBuilder().addComponents(
-      previousButton,
-      blankButton1,
-      blankButton2,
-      nextButton
-    );
+    const viewAttendancesContainer = new ContainerBuilder()
+      .addTextDisplayComponents((textDisplay) => textDisplay.setContent('# 📊 Employee Dashboard'))
+      .addSeparatorComponents(separatorDividerLarge)
+      .addTextDisplayComponents((textDisplay) => textDisplay.setContent('## 📈 Attendances'))
+      .addSeparatorComponents(separatorDividerSmall)
+      .addTextDisplayComponents((textDisplay) => textDisplay.setContent(tableStr))
+      .addSeparatorComponents(separatorDividerSmall)
+      .addTextDisplayComponents((textDisplay) =>
+        textDisplay.setContent(
+          `Page ${page} of ${totalPages} | Showing ${start + 1} - ${end} of ${total} entries`
+        )
+      )
+      .addActionRowComponents((actionRow) =>
+        actionRow.setComponents(previousButton, blankButton1, blankButton2, nextButton)
+      )
+      .addSeparatorComponents(separatorDividerLarge)
+      .addActionRowComponents((actionRow) =>
+        actionRow.setComponents(backButton, epiDashboardButton)
+      );
 
     await interaction.message.edit({
-      embeds: [attendancesEmbed],
-      components: [paginationButtonRow, buttonRow],
+      components: [viewAttendancesContainer],
+      flags: MessageFlags.IsComponentsV2,
     });
   },
 };

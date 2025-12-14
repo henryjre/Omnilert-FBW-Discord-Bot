@@ -4,6 +4,8 @@ const {
   EmbedBuilder,
   ButtonBuilder,
   ButtonStyle,
+  ContainerBuilder,
+  SeparatorSpacingSize,
 } = require('discord.js');
 
 const { getAttendanceRecords } = require('../../../sqliteFunctions.js');
@@ -16,8 +18,7 @@ module.exports = {
   async execute(interaction, client) {
     const replyEmbed = new EmbedBuilder();
 
-    const allEmbeds = interaction.message.embeds;
-    const messageEmbed = allEmbeds[0];
+    const components = interaction.message.components;
 
     const slashInteraction = interaction.message.interaction;
     if (slashInteraction) {
@@ -43,19 +44,23 @@ module.exports = {
       return await interaction.reply({ embeds: [replyEmbed], flags: MessageFlags.Ephemeral });
     }
 
-    const pageFooter = messageEmbed.data.footer.text.split('|')[0];
-    const pageNumber = parseInt(pageFooter.match(/Page (\d+) of/)[1]) + 1;
+    const containerComponent = components[0];
+    // text display components
+    const textDisplayComponents = containerComponent.components.filter(
+      (component) => component.type === 10
+    );
+    const lastTextDisplayComponent =
+      textDisplayComponents.length > 0
+        ? textDisplayComponents[textDisplayComponents.length - 1]
+        : null;
+    const lastTextDisplayComponentContent = lastTextDisplayComponent.data.content;
+
+    const pageNumber = parseInt(lastTextDisplayComponentContent.match(/Page (\d+) of/)[1]) + 1;
 
     const headers = ['Date', 'Check In', 'Check Out', 'Hours Worked'];
     const rows = buildRowsFromOdoo(attendanceRecords);
     const { pageRows, page, totalPages, total, start, end } = paginateRows(rows, pageNumber, 5);
     const tableStr = makeEmbedTable(headers, pageRows, 60);
-
-    const attendancesEmbed = EmbedBuilder.from(messageEmbed)
-      .setDescription(`## 📈 ATTENDANCES\n\u200b\n${tableStr}`)
-      .setFooter({
-        text: `Page ${page} of ${totalPages} | Showing ${start + 1} - ${end} of ${total} entries`,
-      });
 
     const nextButton = new ButtonBuilder()
       .setCustomId('nextAttendances')
@@ -83,13 +88,6 @@ module.exports = {
       .setEmoji('⬅️')
       .setStyle(page === 1 ? ButtonStyle.Secondary : ButtonStyle.Primary);
 
-    const paginationButtonRow = new ActionRowBuilder().addComponents(
-      previousButton,
-      blankButton1,
-      blankButton2,
-      nextButton
-    );
-
     const salaryComputationButton = new ButtonBuilder()
       .setCustomId('salaryComputationDashboard')
       .setLabel('Back To Payslip Details')
@@ -102,11 +100,35 @@ module.exports = {
       .setEmoji('↩️')
       .setStyle(ButtonStyle.Secondary);
 
-    const buttonRow = new ActionRowBuilder().addComponents(backButton, salaryComputationButton);
+    const separatorDividerLarge = new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Large);
+    const separatorDividerSmall = new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small);
+    const separatorSpaceSm = new SeparatorBuilder()
+      .setDivider(false)
+      .setSpacing(SeparatorSpacingSize.Small);
+
+    const nextAttendancesContainer = new ContainerBuilder()
+      .addTextDisplayComponents((textDisplay) => textDisplay.setContent('# 📊 Employee Dashboard'))
+      .addSeparatorComponents(separatorDividerLarge)
+      .addTextDisplayComponents((textDisplay) => textDisplay.setContent('## 📈 Attendances'))
+      .addSeparatorComponents(separatorDividerSmall)
+      .addTextDisplayComponents((textDisplay) => textDisplay.setContent(tableStr))
+      .addSeparatorComponents(separatorDividerSmall)
+      .addTextDisplayComponents((textDisplay) =>
+        textDisplay.setContent(
+          `Page ${page} of ${totalPages} | Showing ${start + 1} - ${end} of ${total} entries`
+        )
+      )
+      .addActionRowComponents((actionRow) =>
+        actionRow.setComponents(previousButton, blankButton1, blankButton2, nextButton)
+      )
+      .addSeparatorComponents(separatorDividerLarge)
+      .addActionRowComponents((actionRow) =>
+        actionRow.setComponents(backButton, salaryComputationButton)
+      );
 
     await interaction.message.edit({
-      embeds: [attendancesEmbed],
-      components: [paginationButtonRow, buttonRow],
+      components: [nextAttendancesContainer],
+      flags: MessageFlags.IsComponentsV2,
     });
   },
 };
