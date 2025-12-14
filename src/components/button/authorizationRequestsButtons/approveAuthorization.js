@@ -2,37 +2,36 @@ const {
   ActionRowBuilder,
   MessageFlags,
   EmbedBuilder,
-  ButtonStyle,
-  ButtonBuilder,
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
-} = require("discord.js");
+  LabelBuilder,
+} = require('discord.js');
 
-const { google } = require("googleapis");
+const { google } = require('googleapis');
 
 const credentials = JSON.parse(
-  Buffer.from(process.env.googleServiceAccountKey, "base64").toString("utf8")
+  Buffer.from(process.env.googleServiceAccountKey, 'base64').toString('utf8')
 );
 
-const hrDepartmentChannel = "1372557527715156049";
-const financeDepartmentChannel = "1372557255966330981";
-const ehChannel = "1372556586089844876";
+const hrDepartmentChannel = '1372557527715156049';
+const financeDepartmentChannel = '1372557255966330981';
+const ehChannel = '1372556586089844876';
 
-const hrLogsChannel = "1343869449455009833";
-const financeLogsChannel = "1346465399369367645";
+const hrLogsChannel = '1343869449455009833';
+const financeLogsChannel = '1346465399369367645';
 
-const hrRole = "1314815153421680640";
-const financeRole = "1314815202679590984";
-const ehRole = "1314414836926386257";
+const hrRole = '1314815153421680640';
+const financeRole = '1314815202679590984';
+const ehRole = '1314414836926386257';
 
 const financeType = [
-  "SALARY/WAGE",
-  "CASH ADVANCE",
-  "EXPENSE REIMBURSEMENT",
-  "TRAINING ALLOWANCE",
-  "TRANSPORT ALLOWANCE",
-  "CASH DEPOSIT",
+  'SALARY/WAGE',
+  'CASH ADVANCE',
+  'EXPENSE REIMBURSEMENT',
+  'TRAINING ALLOWANCE',
+  'TRANSPORT ALLOWANCE',
+  'CASH DEPOSIT',
 ];
 
 module.exports = {
@@ -51,17 +50,17 @@ module.exports = {
     const replyEmbed = new EmbedBuilder();
 
     const ownerFieldNames = [
-      "Assigned Name",
-      "Employee Name",
-      "Notification By",
-      "Reported By",
-      "Requested By",
+      'Assigned Name',
+      'Employee Name',
+      'Notification By',
+      'Reported By',
+      'Requested By',
     ];
 
     const mentionableMembers = messageEmbed.data.fields
       .filter((f) => ownerFieldNames.includes(f.name))
       .map((f) => f.value)
-      .join("\n");
+      .join('\n');
 
     if (
       (!interaction.member.roles.cache.has(hrRole) &&
@@ -72,9 +71,7 @@ module.exports = {
       (interaction.member.roles.cache.has(financeRole) &&
         interaction.message.channelId !== financeDepartmentChannel)
     ) {
-      replyEmbed
-        .setDescription(`🔴 ERROR: You cannot use this button.`)
-        .setColor("Red");
+      replyEmbed.setDescription(`🔴 ERROR: You cannot use this button.`).setColor('Red');
 
       return await interaction.reply({
         embeds: [replyEmbed],
@@ -104,22 +101,21 @@ module.exports = {
 
     const details = new TextInputBuilder()
       .setCustomId(`additionalNotes`)
-      .setLabel(`Notes (OPTIONAL)`)
-      .setPlaceholder(
-        `Add some additional details/notes for the employees assigned.`
-      )
       .setStyle(TextInputStyle.Paragraph)
       .setRequired(false);
 
-    const firstRow = new ActionRowBuilder().addComponents(details);
-    modal.addComponents(firstRow);
+    const detailsLabel = new LabelBuilder()
+      .setLabel('Additional Details')
+      .setDescription('Add some additional details/notes for the employees assigned.')
+      .setTextInputComponent(details);
+
+    modal.addLabelComponents(detailsLabel);
     await interaction.showModal(modal);
 
     const modalResponse = await interaction.awaitModalSubmit({
       filter: async (i) => {
         const f =
-          i.customId === `approveRequest_${interaction.id}` &&
-          i.user.id === interaction.user.id;
+          i.customId === `approveRequest_${interaction.id}` && i.user.id === interaction.user.id;
 
         if (f) {
           await i.deferUpdate();
@@ -131,21 +127,17 @@ module.exports = {
 
     try {
       if (modalResponse.isModalSubmit()) {
-        const details =
-          modalResponse.fields.getTextInputValue("additionalNotes");
+        const details = modalResponse.fields.getTextInputValue('additionalNotes');
 
         if (details) {
           messageEmbed.data.description += `\n\u200b\nAdditional notes from **${interaction.member.nickname.replace(
             /^[🔴🟢]\s*/,
-            ""
+            ''
           )}**:\n>>> *${details}*`;
         }
 
         messageEmbed.data.footer = {
-          text: `Approved By: ${interaction.member.nickname.replace(
-            /^[🔴🟢]\s*/,
-            ""
-          )}`,
+          text: `Approved By: ${interaction.member.nickname.replace(/^[🔴🟢]\s*/, '')}`,
         };
 
         messageEmbed.data.color = 5763719;
@@ -184,7 +176,7 @@ async function insertToGoogleSheet(messageEmbed, client) {
   const filteredData = await filterData(messageEmbed, client);
 
   if (!filteredData) {
-    console.log("No data to insert");
+    console.log('No data to insert');
     return;
   }
 
@@ -194,13 +186,13 @@ async function insertToGoogleSheet(messageEmbed, client) {
 
   const auth = new google.auth.GoogleAuth({
     credentials,
-    scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
   });
 
-  const sheets = google.sheets({ version: "v4", auth });
+  const sheets = google.sheets({ version: 'v4', auth });
 
   const spreadsheetId = process.env.sheetId; // Replace with actual ID
-  const sheetName = "Authorization Requests";
+  const sheetName = 'Authorization Requests';
 
   const values = [[type, date, branch, shift, employeeName]];
 
@@ -209,14 +201,14 @@ async function insertToGoogleSheet(messageEmbed, client) {
     const response = await sheets.spreadsheets.values.append({
       spreadsheetId,
       range: `${sheetName}!A:E`, // Target range
-      valueInputOption: "USER_ENTERED", // Lets Google format date values
-      insertDataOption: "INSERT_ROWS",
+      valueInputOption: 'USER_ENTERED', // Lets Google format date values
+      insertDataOption: 'INSERT_ROWS',
       resource: { values },
     });
 
-    console.log("Data successfully inserted:", response.data.updates);
+    console.log('Data successfully inserted:', response.data.updates);
   } catch (error) {
-    console.error("Error inserting data:", error);
+    console.error('Error inserting data:', error);
   }
 }
 
@@ -224,17 +216,17 @@ async function filterData(embed, client) {
   const fields = embed.data.fields;
 
   let data = {
-    type: "",
-    date: "",
-    branch: "",
-    shift: "",
-    employeeName: "",
+    type: '',
+    date: '',
+    branch: '',
+    shift: '',
+    employeeName: '',
   };
 
   // Helper function to get field value safely
   const getFieldValue = (name) => {
-    const value = fields.find((f) => f.name === name)?.value || "";
-    return value.includes("|") ? value.split("|")[1].trim() : value.trim();
+    const value = fields.find((f) => f.name === name)?.value || '';
+    return value.includes('|') ? value.split('|')[1].trim() : value.trim();
   };
 
   // Extract user ID from Discord mention format
@@ -249,9 +241,7 @@ async function filterData(embed, client) {
     if (!userId) return mention; // Return original if not a mention
 
     const guild = client.guilds.cache.get(
-      process.env.node_env === "prod"
-        ? process.env.prodGuildId
-        : process.env.testGuildId
+      process.env.node_env === 'prod' ? process.env.prodGuildId : process.env.testGuildId
     );
     if (!guild) return mention; // Guild not found
 
@@ -266,38 +256,36 @@ async function filterData(embed, client) {
     }
 
     // Clean nickname format: Remove emojis/symbols at the start
-    return (member.nickname || member.user.username)
-      .replace(/^[^\p{L}\p{N}]+/u, "")
-      .trim();
+    return (member.nickname || member.user.username).replace(/^[^\p{L}\p{N}]+/u, '').trim();
   };
 
   // Determine the request type
   switch (true) {
-    case embed.data.description.includes("TARDINESS AUTHORIZATION REQUEST"):
-      data.type = "Tardiness Authorization Request";
+    case embed.data.description.includes('TARDINESS AUTHORIZATION REQUEST'):
+      data.type = 'Tardiness Authorization Request';
       break;
-    case embed.data.description.includes("ABSENCE AUTHORIZATION REQUEST"):
-      data.type = "Absence Authorization Request";
+    case embed.data.description.includes('ABSENCE AUTHORIZATION REQUEST'):
+      data.type = 'Absence Authorization Request';
       break;
-    case embed.data.description.includes("UNDERTIME AUTHORIZATION REQUEST"):
-      data.type = "Undertime Authorization Request";
+    case embed.data.description.includes('UNDERTIME AUTHORIZATION REQUEST'):
+      data.type = 'Undertime Authorization Request';
       break;
-    case embed.data.description.includes("INTERIM DUTY FORM"):
-      data.type = "Interim Duty Form";
-      data.shift = getFieldValue("Shift Coverage");
+    case embed.data.description.includes('INTERIM DUTY FORM'):
+      data.type = 'Interim Duty Form';
+      data.shift = getFieldValue('Shift Coverage');
       break;
-    case embed.data.description.includes("OVERTIME CLAIM"):
-      data.type = "Overtime Claim";
-      data.shift = getFieldValue("Shift Coverage");
+    case embed.data.description.includes('OVERTIME CLAIM'):
+      data.type = 'Overtime Claim';
+      data.shift = getFieldValue('Shift Coverage');
       break;
-    case embed.data.description.includes("SHIFT EXCHANGE REQUEST"):
-      data.type = "Shift Exchange Request";
-      data.shift = getFieldValue("Shift Coverage");
+    case embed.data.description.includes('SHIFT EXCHANGE REQUEST'):
+      data.type = 'Shift Exchange Request';
+      data.shift = getFieldValue('Shift Coverage');
 
       // Fetch both assigned and reliever names in parallel
       const [assigned, reliever] = await Promise.all([
-        getUserNickname(getFieldValue("Assigned Name")),
-        getUserNickname(getFieldValue("Reliever Name")),
+        getUserNickname(getFieldValue('Assigned Name')),
+        getUserNickname(getFieldValue('Reliever Name')),
       ]);
 
       data.employeeName = `${assigned} and ${reliever}`;
@@ -307,16 +295,16 @@ async function filterData(embed, client) {
   }
 
   // Common field assignments with safe fallback
-  data.date = getFieldValue("Date");
-  data.branch = getFieldValue("Branch");
+  data.date = getFieldValue('Date');
+  data.branch = getFieldValue('Branch');
 
   // Assign employee name for cases that don’t have custom logic
   if (!data.employeeName) {
-    data.employeeName = await getUserNickname(getFieldValue("Employee Name"));
+    data.employeeName = await getUserNickname(getFieldValue('Employee Name'));
   }
 
   if (!data.shift) {
-    data.shift = getFieldValue("Shift");
+    data.shift = getFieldValue('Shift');
   }
 
   return data;
