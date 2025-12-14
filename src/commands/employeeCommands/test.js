@@ -16,23 +16,13 @@ module.exports = {
       });
     }
 
-    try {
-      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-      const messageId = '1438770927021326387';
-      const message = await interaction.channel.messages.fetch(messageId);
-
-      const vnrButton = new ButtonBuilder()
-        .setCustomId('auditVnr')
-        .setLabel('Request VN')
-        .setStyle(ButtonStyle.Danger);
-
-      const vnrButtonRow = new ActionRowBuilder().addComponents(vnrButton);
-
-      await message.edit({ components: [vnrButtonRow] });
-
-      await interaction.editReply({ content: 'Button added successfully!' });
-    } catch (error) {
-      console.log(error);
-    }
+    const embed = new EmbedBuilder()
+      .setDescription(
+        `
+      # Welcome to Omnilert!
+      To continue, click the **JOIN** button below and follow the onboarding process.
+      `
+      )
+      .setColor('White');
   },
 };
