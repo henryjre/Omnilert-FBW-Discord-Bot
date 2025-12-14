@@ -1,19 +1,16 @@
 const {
   MessageFlags,
   EmbedBuilder,
-  ButtonBuilder,
-  ButtonStyle,
   ActionRowBuilder,
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
-  ChannelType
 } = require('discord.js');
 
 const departments = require('../../../config/departments.json');
 
 module.exports = {
   data: {
-    name: `posOrderVerificationApprove`
+    name: `posOrderVerificationApprove`,
   },
   async execute(interaction, client) {
     let messageEmbed = interaction.message.embeds[0];
@@ -29,7 +26,7 @@ module.exports = {
 
       return await interaction.reply({
         embeds: [replyEmbed],
-        flags: MessageFlags.Ephemeral
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -50,17 +47,17 @@ module.exports = {
     if (!posThread) {
       return await interaction.reply({
         content: `🔴 ERROR: No thread found.`,
-        flags: MessageFlags.Ephemeral
+        flags: MessageFlags.Ephemeral,
       });
     }
 
     messageEmbed.data.fields.push({
       name: 'Approved By',
-      value: interaction.user.toString()
+      value: interaction.user.toString(),
     });
 
     messageEmbed.data.footer = {
-      text: ``
+      text: ``,
     };
 
     const auditRatingMenu = new StringSelectMenuBuilder()
@@ -70,7 +67,7 @@ module.exports = {
         new StringSelectMenuOptionBuilder().setLabel('⭐⭐').setValue('⭐⭐'),
         new StringSelectMenuOptionBuilder().setLabel('⭐⭐⭐').setValue('⭐⭐⭐'),
         new StringSelectMenuOptionBuilder().setLabel('⭐⭐⭐⭐').setValue('⭐⭐⭐⭐'),
-        new StringSelectMenuOptionBuilder().setLabel('⭐⭐⭐⭐⭐').setValue('⭐⭐⭐⭐⭐')
+        new StringSelectMenuOptionBuilder().setLabel('⭐⭐⭐⭐⭐').setValue('⭐⭐⭐⭐⭐'),
       ])
       .setMinValues(1)
       .setMaxValues(1)
@@ -86,9 +83,9 @@ module.exports = {
 
     await posThread.send({
       embeds: [messageEmbed],
-      components: [menuRow]
+      components: [menuRow],
     });
 
     await interaction.message.delete();
-  }
+  },
 };

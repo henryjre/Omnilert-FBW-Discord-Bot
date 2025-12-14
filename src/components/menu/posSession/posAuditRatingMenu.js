@@ -4,7 +4,8 @@ const {
   EmbedBuilder,
   ModalBuilder,
   TextInputBuilder,
-  TextInputStyle
+  TextInputStyle,
+  LabelBuilder,
 } = require('discord.js');
 const moment = require('moment-timezone');
 
@@ -14,7 +15,7 @@ const managementRole = '1314413671245676685';
 
 module.exports = {
   data: {
-    name: `posAuditRatingMenu`
+    name: `posAuditRatingMenu`,
   },
   async execute(interaction, client) {
     let allEmbeds = interaction.message.embeds;
@@ -27,7 +28,7 @@ module.exports = {
 
       return await interaction.reply({
         embeds: [replyEmbed],
-        flags: MessageFlags.Ephemeral
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -40,14 +41,16 @@ module.exports = {
 
     const details = new TextInputBuilder()
       .setCustomId(`ratingReason`)
-      .setLabel(`Rating Reason`)
-      .setPlaceholder(`Insert the rating reason here.`)
       .setMaxLength(1000)
       .setStyle(TextInputStyle.Paragraph)
       .setRequired(true);
 
-    const firstRow = new ActionRowBuilder().addComponents(details);
-    modal.addComponents(firstRow);
+    const label = new LabelBuilder()
+      .setLabel(`Rating Reason`)
+      .setDescription(`Insert the rating reason here.`)
+      .setTextInputComponent(details);
+
+    modal.addLabelComponents(label);
     await interaction.showModal(modal);
 
     const modalResponse = await interaction.awaitModalSubmit({
@@ -60,7 +63,7 @@ module.exports = {
         }
         return f;
       },
-      time: 300000
+      time: 300000,
     });
 
     try {
@@ -71,16 +74,16 @@ module.exports = {
 
         messageEmbed.data.fields.push({
           name: 'Audit Rating',
-          value: rating
+          value: rating,
         });
 
         if (messageEmbed.data.footer) {
           messageEmbed.data.footer = {
-            text: `${messageEmbed.data.footer.text}\n\u200b\nAudited By: ${auditor}\nRating Reason: ${details}`
+            text: `${messageEmbed.data.footer.text}\n\u200b\nAudited By: ${auditor}\nRating Reason: ${details}`,
           };
         } else {
           messageEmbed.data.footer = {
-            text: `Audited By: ${auditor}\nRating Reason: ${details}`
+            text: `Audited By: ${auditor}\nRating Reason: ${details}`,
           };
         }
 
@@ -90,17 +93,17 @@ module.exports = {
 
         await interaction.message.edit({
           embeds: allEmbeds,
-          components: []
+          components: [],
         });
       }
     } catch (error) {
       console.log(error);
       await modalResponse.followUp({
         content: `🔴 ERROR: An error occurred while creating your signature request. Please try again.`,
-        flags: MessageFlags.Ephemeral
+        flags: MessageFlags.Ephemeral,
       });
     }
-  }
+  },
 };
 
 function getColor(rating) {
@@ -154,7 +157,7 @@ async function odooStoreAuditRating(interaction) {
     audit_id: audit_id,
     rating: ratingInteger,
     audit_date: auditDate,
-    discord_id: auditedDiscordId
+    discord_id: auditedDiscordId,
   };
 
   await storeAuditRating(payload);

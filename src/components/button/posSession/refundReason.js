@@ -6,14 +6,15 @@ const {
   TextInputStyle,
   MessageFlags,
   StringSelectMenuBuilder,
-  StringSelectMenuOptionBuilder
+  StringSelectMenuOptionBuilder,
+  LabelBuilder,
 } = require('discord.js');
 
 const departments = require('../../../config/departments.json');
 
 module.exports = {
   data: {
-    name: `posOrderVerificationRefundReason`
+    name: `posOrderVerificationRefundReason`,
   },
   async execute(interaction, client) {
     let messageEmbed = interaction.message.embeds[0];
@@ -35,7 +36,7 @@ module.exports = {
 
         return await interaction.reply({
           embeds: [replyEmbed],
-          flags: MessageFlags.Ephemeral
+          flags: MessageFlags.Ephemeral,
         });
       }
     } else if (mentionedRole) {
@@ -47,7 +48,7 @@ module.exports = {
 
         return await interaction.reply({
           embeds: [replyEmbed],
-          flags: MessageFlags.Ephemeral
+          flags: MessageFlags.Ephemeral,
         });
       }
     }
@@ -58,14 +59,16 @@ module.exports = {
 
     const details = new TextInputBuilder()
       .setCustomId(`refundReason`)
-      .setLabel(`Reason for Refund`)
-      .setPlaceholder(`Insert the reason for refund here.`)
       .setMaxLength(1000)
       .setStyle(TextInputStyle.Paragraph)
       .setRequired(true);
 
-    const firstRow = new ActionRowBuilder().addComponents(details);
-    modal.addComponents(firstRow);
+    const label = new LabelBuilder()
+      .setLabel('Reason for Refund')
+      .setDescription('Insert the reason for refund here.')
+      .setTextInputComponent(details);
+
+    modal.addLabelComponents(label);
     await interaction.showModal(modal);
 
     const modalResponse = await interaction.awaitModalSubmit({
@@ -79,7 +82,7 @@ module.exports = {
         }
         return f;
       },
-      time: 180000
+      time: 180000,
     });
 
     try {
@@ -104,7 +107,7 @@ module.exports = {
         if (!posThread) {
           return await modalResponse.followUp({
             content: `🔴 ERROR: No thread found.`,
-            flags: MessageFlags.Ephemeral
+            flags: MessageFlags.Ephemeral,
           });
         }
 
@@ -114,11 +117,11 @@ module.exports = {
 
         messageEmbed.data.fields.push({
           name: 'Refunded By',
-          value: interaction.user.toString()
+          value: interaction.user.toString(),
         });
 
         messageEmbed.data.footer = {
-          text: ``
+          text: ``,
         };
 
         const auditRatingMenu = new StringSelectMenuBuilder()
@@ -128,7 +131,7 @@ module.exports = {
             new StringSelectMenuOptionBuilder().setLabel('⭐⭐').setValue('⭐⭐'),
             new StringSelectMenuOptionBuilder().setLabel('⭐⭐⭐').setValue('⭐⭐⭐'),
             new StringSelectMenuOptionBuilder().setLabel('⭐⭐⭐⭐').setValue('⭐⭐⭐⭐'),
-            new StringSelectMenuOptionBuilder().setLabel('⭐⭐⭐⭐⭐').setValue('⭐⭐⭐⭐⭐')
+            new StringSelectMenuOptionBuilder().setLabel('⭐⭐⭐⭐⭐').setValue('⭐⭐⭐⭐⭐'),
           ])
           .setMinValues(1)
           .setMaxValues(1)
@@ -144,7 +147,7 @@ module.exports = {
 
         await posThread.send({
           embeds: [messageEmbed],
-          components: [menuRow]
+          components: [menuRow],
         });
 
         await interaction.message.delete();
@@ -153,8 +156,8 @@ module.exports = {
       console.log(error);
       await modalResponse.followUp({
         content: `🔴 ERROR: An error occurred while creating your signature request. Please try again.`,
-        flags: MessageFlags.Ephemeral
+        flags: MessageFlags.Ephemeral,
       });
     }
-  }
+  },
 };

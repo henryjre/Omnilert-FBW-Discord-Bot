@@ -1,23 +1,21 @@
 const {
-  ActionRowBuilder,
   MessageFlags,
   EmbedBuilder,
-  ButtonStyle,
-  ButtonBuilder,
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
-} = require("discord.js");
+  LabelBuilder,
+} = require('discord.js');
 
-const hrDepartmentChannel = "1372557527715156049";
-const financeDepartmentChannel = "1372557255966330981";
+const hrDepartmentChannel = '1372557527715156049';
+const financeDepartmentChannel = '1372557255966330981';
 
-const hrLogsChannel = "1343869449455009833";
-const financeLogsChannel = "1346465399369367645";
+const hrLogsChannel = '1343869449455009833';
+const financeLogsChannel = '1346465399369367645';
 
-const hrRole = "1314815153421680640";
-const financeRole = "1314815202679590984";
-const ehRole = "1314414836926386257";
+const hrRole = '1314815153421680640';
+const financeRole = '1314815202679590984';
+const ehRole = '1314414836926386257';
 
 module.exports = {
   data: {
@@ -31,12 +29,10 @@ module.exports = {
     const mentionableMembers = messageEmbed.data.fields
       .filter(
         (f) =>
-          f.name === "Assigned Name" ||
-          f.name === "Employee Name" ||
-          f.name === "Reliever Name"
+          f.name === 'Assigned Name' || f.name === 'Employee Name' || f.name === 'Reliever Name'
       )
       .map((f) => f.value)
-      .join("\n");
+      .join('\n');
 
     if (
       (!interaction.member.roles.cache.has(hrRole) &&
@@ -47,9 +43,7 @@ module.exports = {
       (interaction.member.roles.cache.has(financeRole) &&
         interaction.message.channelId !== financeDepartmentChannel)
     ) {
-      replyEmbed
-        .setDescription(`🔴 ERROR: You cannot use this button.`)
-        .setColor("Red");
+      replyEmbed.setDescription(`🔴 ERROR: You cannot use this button.`).setColor('Red');
 
       return await interaction.reply({
         embeds: [replyEmbed],
@@ -69,21 +63,22 @@ module.exports = {
 
     const details = new TextInputBuilder()
       .setCustomId(`additionalNotes`)
-      .setLabel(`Reason for Rejection`)
-      .setPlaceholder(`Insert the rejection details here.`)
       .setMaxLength(1000)
       .setStyle(TextInputStyle.Paragraph)
       .setRequired(true);
 
-    const firstRow = new ActionRowBuilder().addComponents(details);
-    modal.addComponents(firstRow);
+    const detailsLabel = new LabelBuilder()
+      .setLabel('Reason for Rejection')
+      .setDescription('Insert the rejection details here.')
+      .setTextInputComponent(details);
+
+    modal.addLabelComponents(detailsLabel);
     await interaction.showModal(modal);
 
     const modalResponse = await interaction.awaitModalSubmit({
       filter: async (i) => {
         const f =
-          i.customId === `rejectRequest_${interaction.id}` &&
-          i.user.id === interaction.user.id;
+          i.customId === `rejectRequest_${interaction.id}` && i.user.id === interaction.user.id;
 
         if (f) {
           await i.deferUpdate();
@@ -95,18 +90,14 @@ module.exports = {
 
     try {
       if (modalResponse.isModalSubmit()) {
-        const details =
-          modalResponse.fields.getTextInputValue("additionalNotes");
+        const details = modalResponse.fields.getTextInputValue('additionalNotes');
 
         if (details) {
           messageEmbed.data.description += `\n\u200b\nReason for Rejection:\n> *"${details}"*\n\u200b`;
         }
 
         messageEmbed.data.footer = {
-          text: `Rejected By: ${interaction.member.nickname.replace(
-            /^[🔴🟢]\s*/,
-            ""
-          )}`,
+          text: `Rejected By: ${interaction.member.nickname.replace(/^[🔴🟢]\s*/, '')}`,
         };
 
         messageEmbed.data.color = 15548997;

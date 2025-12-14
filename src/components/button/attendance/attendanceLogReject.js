@@ -1,17 +1,16 @@
 const {
-  ActionRowBuilder,
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
   EmbedBuilder,
   MessageFlags,
-} = require("discord.js");
-const moment = require("moment-timezone");
+  LabelBuilder,
+} = require('discord.js');
+const moment = require('moment-timezone');
 
-const { editAttendance } = require("../../../odooRpc.js");
+const { editAttendance } = require('../../../odooRpc.js');
 
-const hrRoleId = "1314815153421680640";
-const hrLogsChannel = "1343869449455009833";
+const hrRoleId = '1314815153421680640';
 
 module.exports = {
   data: {
@@ -34,20 +33,21 @@ module.exports = {
 
     const details = new TextInputBuilder()
       .setCustomId(`reasonInput`)
-      .setLabel(`Reason for Rejection`)
-      .setPlaceholder(`Add the reason for rejection.`)
       .setStyle(TextInputStyle.Paragraph)
       .setRequired(true);
 
-    const firstRow = new ActionRowBuilder().addComponents(details);
-    modal.addComponents(firstRow);
+    const detailsLabel = new LabelBuilder()
+      .setLabel('Reason for Rejection')
+      .setDescription('Add the reason for rejection.')
+      .setTextInputComponent(details);
+
+    modal.addLabelComponents(detailsLabel);
     await interaction.showModal(modal);
 
     const modalResponse = await interaction.awaitModalSubmit({
       filter: async (i) => {
         const f =
-          i.customId === `rejectRequest_${interaction.id}` &&
-          i.user.id === interaction.user.id;
+          i.customId === `rejectRequest_${interaction.id}` && i.user.id === interaction.user.id;
 
         if (f) {
           await i.deferUpdate();
@@ -59,24 +59,19 @@ module.exports = {
 
     try {
       if (modalResponse.isModalSubmit()) {
-        const details = modalResponse.fields.getTextInputValue("reasonInput");
-        const rejectedBy = interaction.member.nickname.replace(
-          /^[🔴🟢]\s*/,
-          ""
-        );
+        const details = modalResponse.fields.getTextInputValue('reasonInput');
+        const rejectedBy = interaction.member.nickname.replace(/^[🔴🟢]\s*/, '');
 
-        const discordUserField = messageEmbed.data.fields.find(
-          (f) => f.name === "Discord User"
-        );
+        const discordUserField = messageEmbed.data.fields.find((f) => f.name === 'Discord User');
         const discordUser = cleanFieldValue(discordUserField.value);
 
         messageEmbed.data.fields.push(
           {
-            name: "Status",
-            value: "🔴 | Rejected",
+            name: 'Status',
+            value: '🔴 | Rejected',
           },
           {
-            name: "Reason for Rejection",
+            name: 'Reason for Rejection',
             value: `*${details}*`,
           }
         );
@@ -92,11 +87,9 @@ module.exports = {
           components: [],
         };
 
-        const replyEmbed = new EmbedBuilder().setColor("Red");
+        const replyEmbed = new EmbedBuilder().setColor('Red');
 
-        if (
-          messageEmbed.data.description.includes("EARLY ATTENDANCE APPROVAL")
-        ) {
+        if (messageEmbed.data.description.includes('EARLY ATTENDANCE APPROVAL')) {
           const response = await rejectEarlyCheckIn(interaction, client);
           if (!response.ok) {
             throw new Error(response.message);
@@ -105,22 +98,19 @@ module.exports = {
             `### Your early check in has been rejected. Your check in time has been updated.`
           );
           replyEmbed.addFields({
-            name: "New Check-In Time",
+            name: 'New Check-In Time',
             value: `⏱️ | ${response.timestamp}`,
           });
-        } else if (
-          messageEmbed.data.description.includes("LATE CHECKOUT APPROVAL")
-        ) {
+        } else if (messageEmbed.data.description.includes('LATE CHECKOUT APPROVAL')) {
           const response = await rejectLateCheckOut(interaction, client);
           if (!response.ok) {
             throw new Error(response.message);
           }
 
-          const originalMessage =
-            await interaction.channel.fetchStarterMessage();
+          const originalMessage = await interaction.channel.fetchStarterMessage();
           const originalEmbed = originalMessage.embeds[0];
           const totalWorkedTimeField = originalEmbed.data.fields.find(
-            (field) => field.name === "Total Worked Time"
+            (field) => field.name === 'Total Worked Time'
           );
           totalWorkedTimeField.value = `⏱️ | ${response.timestamp}`;
 
@@ -128,22 +118,14 @@ module.exports = {
             `### Your late checkout has been rejected. Your check out time has been updated.`
           );
           replyEmbed.addFields({
-            name: "New Check-Out Time",
+            name: 'New Check-Out Time',
             value: `⏱️ | ${response.timestamp}`,
           });
-        } else if (
-          messageEmbed.data.description.includes(
-            "TARDINESS AUTHORIZATION REQUEST"
-          )
-        ) {
+        } else if (messageEmbed.data.description.includes('TARDINESS AUTHORIZATION REQUEST')) {
           replyEmbed.setDescription(
             `### Your tardiness request has been rejected. No changes have been made to your attendance.`
           );
-        } else if (
-          messageEmbed.data.description.includes(
-            "OVERTIME PREMIUM AUTHORIZATION"
-          )
-        ) {
+        } else if (messageEmbed.data.description.includes('OVERTIME PREMIUM AUTHORIZATION')) {
           replyEmbed.setDescription(
             `### Your overtime premium request has been rejected. No overtime premium has been added to your payroll.`
           );
@@ -174,10 +156,10 @@ async function rejectEarlyCheckIn(interaction, client) {
   const messageEmbed = interaction.message.embeds[0];
 
   const attendanceIdField = messageEmbed.data.fields.find(
-    (field) => field.name === "Attendance ID"
+    (field) => field.name === 'Attendance ID'
   );
   const startDateField = messageEmbed.data.fields.find(
-    (field) => field.name === "Shift Start Date"
+    (field) => field.name === 'Shift Start Date'
   );
 
   const attendanceId = cleanFieldValue(attendanceIdField.value);
@@ -186,7 +168,7 @@ async function rejectEarlyCheckIn(interaction, client) {
 
   const payload = {
     attendanceId: attendanceId,
-    field: "check_in",
+    field: 'check_in',
     timestamp: parsedStartDate,
   };
 
@@ -195,12 +177,12 @@ async function rejectEarlyCheckIn(interaction, client) {
     console.log(response);
     return {
       ok: true,
-      message: "Attendance updated successfully",
+      message: 'Attendance updated successfully',
       timestamp: startDate,
     };
   } catch (error) {
     console.error(error);
-    return { ok: false, message: "Error updating attendance" };
+    return { ok: false, message: 'Error updating attendance' };
   }
 }
 
@@ -212,11 +194,9 @@ async function rejectLateCheckOut(interaction, client) {
   const messageEmbed = interaction.message.embeds[0];
 
   const attendanceIdField = messageEmbed.data.fields.find(
-    (field) => field.name === "Attendance ID"
+    (field) => field.name === 'Attendance ID'
   );
-  const endDateField = messageEmbed.data.fields.find(
-    (field) => field.name === "Shift End Date"
-  );
+  const endDateField = messageEmbed.data.fields.find((field) => field.name === 'Shift End Date');
 
   const attendanceId = cleanFieldValue(attendanceIdField.value);
   const endDate = cleanFieldValue(endDateField.value);
@@ -224,7 +204,7 @@ async function rejectLateCheckOut(interaction, client) {
 
   const payload = {
     attendanceId: attendanceId,
-    field: "check_out",
+    field: 'check_out',
     timestamp: parsedEndDate,
   };
 
@@ -233,12 +213,12 @@ async function rejectLateCheckOut(interaction, client) {
     console.log(response);
     return {
       ok: true,
-      message: "Attendance updated successfully",
+      message: 'Attendance updated successfully',
       timestamp: endDate,
     };
   } catch (error) {
     console.error(error);
-    return { ok: false, message: "Error updating attendance" };
+    return { ok: false, message: 'Error updating attendance' };
   }
 }
 
@@ -247,16 +227,12 @@ async function rejectLateCheckOut(interaction, client) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 function cleanFieldValue(s) {
-  return s.replace(/^[^|]*\|\s*/, "").trim();
+  return s.replace(/^[^|]*\|\s*/, '').trim();
 }
 
-function formatDateToISOString(dateString, timezone = "Asia/Manila") {
+function formatDateToISOString(dateString, timezone = 'Asia/Manila') {
   // Parse the date string using moment
-  const parsedDate = moment.tz(
-    dateString,
-    "MMMM D, YYYY [at] h:mm A",
-    timezone
-  );
+  const parsedDate = moment.tz(dateString, 'MMMM D, YYYY [at] h:mm A', timezone);
 
   // Check if the date is valid
   if (!parsedDate.isValid()) {
@@ -264,5 +240,5 @@ function formatDateToISOString(dateString, timezone = "Asia/Manila") {
   }
 
   // Format as ISO 8601 string with timezone offset
-  return parsedDate.format("YYYY-MM-DDTHH:mm:ssZ");
+  return parsedDate.format('YYYY-MM-DDTHH:mm:ssZ');
 }

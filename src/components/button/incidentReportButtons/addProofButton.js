@@ -1,13 +1,4 @@
-const {
-  ActionRowBuilder,
-  MessageFlags,
-  EmbedBuilder,
-  StringSelectMenuBuilder,
-  StringSelectMenuOptionBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  ChannelType,
-} = require("discord.js");
+const { MessageFlags, EmbedBuilder, ChannelType } = require('discord.js');
 
 module.exports = {
   data: {
@@ -16,16 +7,12 @@ module.exports = {
   async execute(interaction, client) {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     let messageEmbed = interaction.message.embeds[0];
-    const ownerField = messageEmbed.data.fields.find(
-      (f) => f.name === "Reported By"
-    );
+    const ownerField = messageEmbed.data.fields.find((f) => f.name === 'Reported By');
 
     const replyEmbed = new EmbedBuilder();
 
     if (!ownerField.value.includes(interaction.user.id)) {
-      replyEmbed
-        .setDescription(`🔴 ERROR: You cannot use this button.`)
-        .setColor("Red");
+      replyEmbed.setDescription(`🔴 ERROR: You cannot use this button.`).setColor('Red');
 
       return await interaction.editReply({
         embeds: [replyEmbed],
@@ -55,10 +42,8 @@ module.exports = {
     });
 
     replyEmbed
-      .setDescription(
-        `Please go to ${thread} and upload your image/video proof.`
-      )
-      .setColor("Green");
+      .setDescription(`Please go to ${thread} and upload your image/video proof.`)
+      .setColor('Green');
 
     return await interaction.editReply({
       embeds: [replyEmbed],

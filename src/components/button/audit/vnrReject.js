@@ -1,12 +1,9 @@
 const {
-  ActionRowBuilder,
   MessageFlags,
-  EmbedBuilder,
-  ButtonStyle,
-  ButtonBuilder,
   ModalBuilder,
   TextInputBuilder,
-  TextInputStyle
+  TextInputStyle,
+  LabelBuilder,
 } = require('discord.js');
 
 const vnrRejectChannelId = '1424951606436434032';
@@ -15,7 +12,7 @@ const { editVnrStatus } = require('../../../functions/code/repeatFunctions.js');
 
 module.exports = {
   data: {
-    name: `vnrReject`
+    name: `vnrReject`,
   },
   async execute(interaction, client) {
     const mentionedUser = interaction.message.mentions?.users?.first() || null;
@@ -26,7 +23,7 @@ module.exports = {
       if (isNotMentionedUser) {
         return await interaction.reply({
           content: `🔴 ERROR: You cannot use this button.`,
-          flags: MessageFlags.Ephemeral
+          flags: MessageFlags.Ephemeral,
         });
       }
     }
@@ -36,7 +33,7 @@ module.exports = {
       if (doesNotHaveRole) {
         return await interaction.reply({
           content: `🔴 ERROR: You cannot use this button.`,
-          flags: MessageFlags.Ephemeral
+          flags: MessageFlags.Ephemeral,
         });
       }
     }
@@ -54,14 +51,16 @@ module.exports = {
 
     const details = new TextInputBuilder()
       .setCustomId(`rejectVnReason`)
-      .setLabel(`Reason for Rejection`)
-      .setPlaceholder(`Insert the rejection details here.`)
       .setMaxLength(1000)
       .setStyle(TextInputStyle.Paragraph)
       .setRequired(true);
 
-    const firstRow = new ActionRowBuilder().addComponents(details);
-    modal.addComponents(firstRow);
+    const firstLabel = new LabelBuilder()
+      .setLabel('Reason for Rejection')
+      .setDescription('Insert the rejection details here.')
+      .setTextInputComponent(details);
+
+    modal.addLabelComponents(firstLabel);
     await interaction.showModal(modal);
 
     const modalResponse = await interaction.awaitModalSubmit({
@@ -73,7 +72,7 @@ module.exports = {
         }
         return f;
       },
-      time: 120000
+      time: 120000,
     });
 
     try {
@@ -89,7 +88,7 @@ module.exports = {
           messageEmbed.data.footer.text += `\nRejected By: ${rejectedBy}`;
         } else {
           messageEmbed.data.footer = {
-            text: `Rejected By: ${rejectedBy}`
+            text: `Rejected By: ${rejectedBy}`,
           };
         }
 
@@ -97,7 +96,7 @@ module.exports = {
 
         const vnrRejectMessage = await client.channels.cache.get(vnrRejectChannelId).send({
           content: mentionableMembers.value,
-          embeds: [messageEmbed]
+          embeds: [messageEmbed],
         });
 
         await editVnrStatus(messageEmbed, '🔴 Rejected', vnrRejectMessage.url, client);
@@ -124,8 +123,8 @@ module.exports = {
       console.log(error);
       await modalResponse.followUp({
         content: `🔴 ERROR: An error occurred while rejecting the violation notice. Please try again.`,
-        flags: MessageFlags.Ephemeral
+        flags: MessageFlags.Ephemeral,
       });
     }
-  }
+  },
 };

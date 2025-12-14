@@ -1,13 +1,14 @@
 const {
+  ContainerBuilder,
   SlashCommandBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  ActionRowBuilder,
   MessageFlags,
+  ButtonStyle,
+  ButtonBuilder,
+  SeparatorSpacingSize,
 } = require('discord.js');
 
 module.exports = {
-  data: new SlashCommandBuilder().setName('testt').setDescription('Testing purposes!'),
+  data: new SlashCommandBuilder().setName('test').setDescription('Testing purposes!'),
   async execute(interaction, client) {
     if (interaction.user.id !== '748568303219245117') {
       return await interaction.reply({
@@ -16,13 +17,31 @@ module.exports = {
       });
     }
 
-    const embed = new EmbedBuilder()
-      .setDescription(
-        `
-      # Welcome to Omnilert!
-      To continue, click the **JOIN** button below and follow the onboarding process.
-      `
+    const welcomeContainer = new ContainerBuilder()
+      .addTextDisplayComponents((textDisplay) =>
+        textDisplay.setContent(
+          `# Welcome to Omnilert!\nSelect the button below that best describes you. It will trigger the onboarding process.`
+        )
       )
-      .setColor('White');
+      .addSeparatorComponents((separator) => separator.setSpacing(SeparatorSpacingSize.Large))
+      .addActionRowComponents((actionRow) =>
+        actionRow.setComponents(
+          new ButtonBuilder()
+            .setCustomId('newToDiscordButton')
+            .setLabel(`I'm new to Discord!`)
+            .setEmoji({ name: '🐣' })
+            .setStyle(ButtonStyle.Primary),
+          new ButtonBuilder()
+            .setCustomId('discordProButton')
+            .setLabel(`I use Discord like a pro!`)
+            .setEmoji({ name: '🐔' })
+            .setStyle(ButtonStyle.Secondary)
+        )
+      );
+
+    await interaction.channel.send({
+      components: [welcomeContainer],
+      flags: MessageFlags.IsComponentsV2,
+    });
   },
 };

@@ -1,31 +1,17 @@
-const {
-  SlashCommandBuilder,
-  ActionRowBuilder,
-  MessageFlags,
-  EmbedBuilder,
-  StringSelectMenuBuilder,
-  StringSelectMenuOptionBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  ChannelType,
-} = require("discord.js");
+const { SlashCommandBuilder, MessageFlags, EmbedBuilder, ChannelType } = require('discord.js');
 
-const managementRoleId = "1314413671245676685";
-
-const management = require("../../config/management.json");
+const managementRoleId = '1314413671245676685';
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName("close")
-    .setDescription("Close something!")
-    .addSubcommand((subcommand) =>
-      subcommand.setName("thread").setDescription("Close a thread.")
-    ),
+    .setName('close')
+    .setDescription('Close something!')
+    .addSubcommand((subcommand) => subcommand.setName('thread').setDescription('Close a thread.')),
   async execute(interaction, client) {
     const subcommand = interaction.options.getSubcommand();
 
     switch (subcommand) {
-      case "thread":
+      case 'thread':
         await closeThreadCommand(interaction, client);
         break;
 
@@ -42,10 +28,8 @@ async function closeThreadCommand(interaction, client) {
 
   if (!interaction.member.roles.cache.has(managementRoleId)) {
     const replyEmbed = new EmbedBuilder()
-      .setDescription(
-        `🔴 ERROR: This command can only be used by <@&${managementRoleId}>.`
-      )
-      .setColor("Red");
+      .setDescription(`🔴 ERROR: This command can only be used by <@&${managementRoleId}>.`)
+      .setColor('Red');
     await interaction.editReply({
       flags: MessageFlags.Ephemeral,
       embeds: [replyEmbed],
@@ -59,10 +43,8 @@ async function closeThreadCommand(interaction, client) {
     interaction.channel.type !== ChannelType.PrivateThread
   ) {
     const errorEmbed = new EmbedBuilder()
-      .setDescription(
-        "🔴 ERROR: This command can only be used inside a thread channel."
-      )
-      .setColor("Red");
+      .setDescription('🔴 ERROR: This command can only be used inside a thread channel.')
+      .setColor('Red');
 
     await interaction.editReply({
       embeds: [errorEmbed],
@@ -76,10 +58,8 @@ async function closeThreadCommand(interaction, client) {
 
   if (!parentChannel) {
     const errorEmbed = new EmbedBuilder()
-      .setDescription(
-        "🔴 ERROR: Could not find the parent channel of this thread."
-      )
-      .setColor("Red");
+      .setDescription('🔴 ERROR: Could not find the parent channel of this thread.')
+      .setColor('Red');
 
     await interaction.editReply({
       embeds: [errorEmbed],
@@ -93,8 +73,8 @@ async function closeThreadCommand(interaction, client) {
 
   if (!category) {
     const errorEmbed = new EmbedBuilder()
-      .setDescription("🔴 ERROR: The parent channel is not in a category.")
-      .setColor("Red");
+      .setDescription('🔴 ERROR: The parent channel is not in a category.')
+      .setColor('Red');
 
     await interaction.editReply({
       embeds: [errorEmbed],
@@ -103,17 +83,17 @@ async function closeThreadCommand(interaction, client) {
     return;
   }
 
-  const allowedCategories = ["Management", "Offices"];
+  const allowedCategories = ['Management', 'Offices'];
 
   // Check if the thread is in an allowed category
   if (!allowedCategories.includes(category.name)) {
     const errorEmbed = new EmbedBuilder()
       .setDescription(
         `🔴 ERROR: This command can only be used in threads within the "${allowedCategories.join(
-          ", "
+          ', '
         )}" categories. Current category: "${category.name}".`
       )
-      .setColor("Red");
+      .setColor('Red');
 
     await interaction.editReply({
       embeds: [errorEmbed],
@@ -128,18 +108,18 @@ async function closeThreadCommand(interaction, client) {
 
     // Create success embed
     const successEmbed = new EmbedBuilder()
-      .setDescription("✅ Thread has been successfully closed and locked.")
-      .setColor("Green");
+      .setDescription('✅ Thread has been successfully closed and locked.')
+      .setColor('Green');
 
     const closedEmbed = new EmbedBuilder()
-      .setDescription("## 🔒 This thread has been closed and locked.")
+      .setDescription('## 🔒 This thread has been closed and locked.')
       .addFields([
         {
-          name: "Locked By",
+          name: 'Locked By',
           value: `${interaction.user.toString()}`,
         },
       ])
-      .setColor("Red")
+      .setColor('Red')
       .setTimestamp();
 
     // Create an unlock button for management to reopen the thread if needed
@@ -166,12 +146,12 @@ async function closeThreadCommand(interaction, client) {
     try {
       const currentName = interaction.channel.name;
       // Check if the thread name already has the lock emoji
-      if (!currentName.startsWith("🔒")) {
+      if (!currentName.startsWith('🔒')) {
         const newName = `🔒 ${currentName}`;
         await interaction.channel.setName(newName);
       }
     } catch (renameError) {
-      console.error("Error renaming thread:", renameError);
+      console.error('Error renaming thread:', renameError);
       // Continue with archiving even if renaming fails
     }
 
@@ -180,7 +160,7 @@ async function closeThreadCommand(interaction, client) {
     // Create error embed for any issues during thread closing
     const errorEmbed = new EmbedBuilder()
       .setDescription(`🔴 ERROR: Failed to close thread. ${error.message}`)
-      .setColor("Red");
+      .setColor('Red');
 
     // Reply with error message
     await interaction.editReply({
@@ -189,6 +169,6 @@ async function closeThreadCommand(interaction, client) {
     });
 
     // Log the error for debugging
-    console.error("Error closing thread:", error);
+    console.error('Error closing thread:', error);
   }
 }

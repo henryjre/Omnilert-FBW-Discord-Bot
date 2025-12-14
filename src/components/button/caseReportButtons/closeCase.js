@@ -1,18 +1,18 @@
 const {
   MessageFlags,
   EmbedBuilder,
-  ActionRowBuilder,
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
-} = require("discord.js");
+  LabelBuilder,
+} = require('discord.js');
 
 module.exports = {
   data: {
     name: `closeCaseButton`,
   },
   async execute(interaction, client) {
-    const permissionRole = "1314413671245676685";
+    const permissionRole = '1314413671245676685';
 
     if (!interaction.member.roles.cache.has(permissionRole)) {
       await interaction.reply({
@@ -26,12 +26,12 @@ module.exports = {
     const correctiveActionField = messageEmbed.data.fields[3];
     const resolutionField = messageEmbed.data.fields[4];
 
-    if (correctiveActionField.value === "To be added") {
+    if (correctiveActionField.value === 'To be added') {
       const replyEmbed = new EmbedBuilder()
         .setDescription(
           `🔴 ERROR: You cannot close a case without adding an **immediate corrective action**.`
         )
-        .setColor("Red");
+        .setColor('Red');
 
       return await interaction.reply({
         embeds: [replyEmbed],
@@ -39,12 +39,10 @@ module.exports = {
       });
     }
 
-    if (resolutionField.value === "To be added") {
+    if (resolutionField.value === 'To be added') {
       const replyEmbed = new EmbedBuilder()
-        .setDescription(
-          `🔴 ERROR: You cannot close a case without adding a **resolution**.`
-        )
-        .setColor("Red");
+        .setDescription(`🔴 ERROR: You cannot close a case without adding a **resolution**.`)
+        .setColor('Red');
 
       return await interaction.reply({
         embeds: [replyEmbed],
@@ -57,20 +55,21 @@ module.exports = {
 
     function buildEditModal() {
       const modal = new ModalBuilder()
-        .setCustomId("closeCaseConfirmation")
+        .setCustomId('closeCaseConfirmation')
         .setTitle(`CONFIRMATION`);
 
       const firstInput = new TextInputBuilder()
         .setCustomId(`closeCaseInput`)
-        .setLabel(`Type the CASE NUMBER to close this case.`)
         .setStyle(TextInputStyle.Short)
-        .setPlaceholder(`EXAMPLE: Case 0001 / CASE 0001 / case 0001`)
         .setMaxLength(100)
         .setRequired(true);
 
-      const firstActionRow = new ActionRowBuilder().addComponents(firstInput);
+      const firstLabel = new LabelBuilder()
+        .setLabel('Confirm closing the case?')
+        .setDescription('Type the CASE NUMBER to close this case.')
+        .setTextInputComponent(firstInput);
 
-      modal.addComponents(firstActionRow);
+      modal.addLabelComponents(firstLabel);
 
       return modal;
     }

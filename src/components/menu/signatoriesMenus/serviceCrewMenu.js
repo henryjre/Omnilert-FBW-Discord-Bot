@@ -1,11 +1,4 @@
-const {
-  EmbedBuilder,
-  MessageFlags,
-  ButtonBuilder,
-  ActionRowBuilder,
-  ButtonStyle,
-  StringSelectMenuBuilder,
-} = require("discord.js");
+const { EmbedBuilder, MessageFlags } = require('discord.js');
 
 module.exports = {
   data: {
@@ -25,19 +18,17 @@ module.exports = {
         .setDescription(
           `🔴 ERROR: Cannot add more serviceemployees. This signatory has reached the maximum signing parties that can be added.`
         )
-        .setColor("Red");
+        .setColor('Red');
 
       return await interaction.editReply({ embeds: [replyEmbed] });
     }
 
     if (
       !messageEmbed.data.fields
-        .find((f) => f.name === "Prepared By")
+        .find((f) => f.name === 'Prepared By')
         .value.includes(interaction.user.id)
     ) {
-      replyEmbed
-        .setDescription(`🔴 ERROR: You cannot use this menu.`)
-        .setColor("Red");
+      replyEmbed.setDescription(`🔴 ERROR: You cannot use this menu.`).setColor('Red');
 
       return await interaction.editReply({ embeds: [replyEmbed] });
     }
@@ -48,22 +39,20 @@ module.exports = {
       const employeeDiscord = interaction.guild.members.cache.get(employee);
 
       const employeeField = messageEmbed.data.fields.find(
-        (f) => f.value.includes(employee) && f.name === "Service Employee"
+        (f) => f.value.includes(employee) && f.name === 'Service Employee'
       );
 
       if (!employeeField) {
-        const preparedByIndex = messageEmbed.data.fields.findIndex(
-          (f) => f.name === "Prepared By"
-        );
+        const preparedByIndex = messageEmbed.data.fields.findIndex((f) => f.name === 'Prepared By');
 
         if (preparedByIndex !== -1) {
           messageEmbed.data.fields.splice(preparedByIndex + 1, 0, {
-            name: "Service Employee",
+            name: 'Service Employee',
             value: `${employeeDiscord.user.toString()} ⌛`,
           });
         } else {
           messageEmbed.data.fields.unshift({
-            name: "Service Employee",
+            name: 'Service Employee',
             value: `${employeeDiscord.user.toString()} ⌛`,
           });
         }
@@ -74,14 +63,12 @@ module.exports = {
 
     if (messageEmbed.data.description) {
       const submitButtonRow = messageComponents.find((row) =>
-        row.components.some(
-          (component) => component.customId === "signatoriesSubmit"
-        )
+        row.components.some((component) => component.customId === 'signatoriesSubmit')
       );
 
       if (submitButtonRow) {
         const submitButtonIndex = submitButtonRow.components.findIndex(
-          (component) => component.customId === "signatoriesSubmit"
+          (component) => component.customId === 'signatoriesSubmit'
         );
 
         if (submitButtonIndex !== -1) {
@@ -96,12 +83,12 @@ module.exports = {
         components: messageComponents,
       });
     } catch (error) {
-      if (error.message.includes("BASE_TYPE_MAX_LENGTH")) {
+      if (error.message.includes('BASE_TYPE_MAX_LENGTH')) {
         replyEmbed
           .setDescription(
             `🔴 ERROR: The maximum number of signing parties that can be added is **24**.`
           )
-          .setColor("Red");
+          .setColor('Red');
 
         return await interaction.editReply({ embeds: [replyEmbed] });
       }
@@ -109,9 +96,7 @@ module.exports = {
       console.error(error);
     }
 
-    replyEmbed
-      .setDescription(`✅ Signatories request has been updated.`)
-      .setColor("Grey");
+    replyEmbed.setDescription(`✅ Signatories request has been updated.`).setColor('Grey');
 
     await interaction.editReply({ embeds: [replyEmbed] });
   },

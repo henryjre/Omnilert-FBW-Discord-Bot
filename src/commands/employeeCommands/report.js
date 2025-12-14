@@ -1,31 +1,27 @@
 const {
   SlashCommandBuilder,
-  ActionRowBuilder,
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
   MessageFlags,
-} = require("discord.js");
+  LabelBuilder,
+} = require('discord.js');
 
-const commandsChannel = "1372559141071228998";
+const commandsChannel = '1372559141071228998';
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName("report")
-    .setDescription("Report something..")
+    .setName('report')
+    .setDescription('Report something..')
     .addSubcommand((subcommand) =>
-      subcommand
-        .setName("case")
-        .setDescription("Create a case management report.")
+      subcommand.setName('case').setDescription('Create a case management report.')
     )
     .addSubcommand((subcommand) =>
-      subcommand
-        .setName("incident")
-        .setDescription("Create an asset incident report.")
+      subcommand.setName('incident').setDescription('Create an asset incident report.')
     ),
 
   async execute(interaction, client) {
-    const permissionRole = "1314413671245676685";
+    const permissionRole = '1314413671245676685';
     const subcommand = interaction.options.getSubcommand();
 
     // Check if the command was invoked in a thread
@@ -37,7 +33,7 @@ module.exports = {
     }
 
     // let channel;
-    if (subcommand === "case") {
+    if (subcommand === 'case') {
       if (!interaction.member.roles.cache.has(permissionRole)) {
         await interaction.reply({
           content: `🔴 ERROR: This command can only be used by <@&${permissionRole}>.`,
@@ -49,11 +45,10 @@ module.exports = {
 
       const modal = buildCaseReportModal();
       await interaction.showModal(modal);
-    } else if (subcommand === "incident") {
+    } else if (subcommand === 'incident') {
       if (interaction.channel.id !== commandsChannel) {
         return await interaction.reply({
-          content:
-            "This command can only be used in the <#1372559141071228998> channel.",
+          content: 'This command can only be used in the <#1372559141071228998> channel.',
           flags: MessageFlags.Ephemeral,
         });
       }
@@ -72,23 +67,29 @@ module.exports = {
 function buildCaseReportModal() {
   const modal = new ModalBuilder();
 
-  modal.setCustomId("createCaseReportModal").setTitle(`CASE MANAGEMENT REPORT`);
+  modal.setCustomId('createCaseReportModal').setTitle(`CASE MANAGEMENT REPORT`);
 
   const firstInput = new TextInputBuilder()
     .setCustomId(`titleInput`)
-    .setLabel(`Case Title (Exclude Case Number)`)
     .setStyle(TextInputStyle.Short)
-    .setPlaceholder("A short, clear name for the issue.")
     .setMaxLength(100)
     .setRequired(true);
 
+  const firstLabel = new LabelBuilder()
+    .setLabel('Case Title (Exclude Case Number)')
+    .setDescription('A short, clear name for the issue.')
+    .setTextInputComponent(firstInput);
+
   const secondInput = new TextInputBuilder()
     .setCustomId(`problemInput`)
-    .setLabel(`Problem Description`)
     .setStyle(TextInputStyle.Paragraph)
     .setMaxLength(1000)
-    .setPlaceholder("Describe the problem in a detailed explanation.")
     .setRequired(true);
+
+  const secondLabel = new LabelBuilder()
+    .setLabel('Problem Description')
+    .setDescription('Describe the problem in a detailed explanation.')
+    .setTextInputComponent(secondInput);
 
   // const fourthInput = new TextInputBuilder()
   //   .setCustomId(`channelInput`)
@@ -97,11 +98,8 @@ function buildCaseReportModal() {
   //   .setValue(channel)
   //   .setRequired(true);
 
-  const firstActionRow = new ActionRowBuilder().addComponents(firstInput);
-  const secondActionRow = new ActionRowBuilder().addComponents(secondInput);
+  modal.addLabelComponents(firstLabel, secondLabel);
   // const fourthActionRow = new ActionRowBuilder().addComponents(fourthInput);
-
-  modal.addComponents(firstActionRow, secondActionRow);
 
   return modal;
 }
@@ -109,67 +107,64 @@ function buildCaseReportModal() {
 function buildIncidentReportModal() {
   const modal = new ModalBuilder();
 
-  modal
-    .setCustomId("createIncidentReportModal")
-    .setTitle(`ASSET INCIDENT REPORT`);
+  modal.setCustomId('createIncidentReportModal').setTitle(`ASSET INCIDENT REPORT`);
 
   const firstInput = new TextInputBuilder()
     .setCustomId(`dateInput`)
-    .setLabel(`📆 Date Reported`)
     .setStyle(TextInputStyle.Short)
-    .setPlaceholder("Enter the date this incident was reported.")
     .setMaxLength(100)
     .setRequired(true);
+
+  const firstLabel = new LabelBuilder()
+    .setLabel('Date Reported')
+    .setDescription('Enter the date this incident was reported.')
+    .setTextInputComponent(firstInput);
 
   const secondInput = new TextInputBuilder()
     .setCustomId(`branchInput`)
-    .setLabel(`🛒 Branch`)
     .setStyle(TextInputStyle.Short)
     .setMaxLength(100)
-    .setPlaceholder("Enter the store branch for this incident.")
     .setRequired(true);
+
+  const secondLabel = new LabelBuilder()
+    .setLabel('Branch')
+    .setDescription('Enter the store branch for this incident.')
+    .setTextInputComponent(secondInput);
 
   const thirdInput = new TextInputBuilder()
     .setCustomId(`assetInput`)
-    .setLabel(`📦 Damaged/Lost Asset`)
     .setStyle(TextInputStyle.Paragraph)
     .setMaxLength(1000)
-    .setPlaceholder("Provide the damaged/lost item.")
     .setRequired(true);
+
+  const thirdLabel = new LabelBuilder()
+    .setLabel('Damaged/Lost Asset')
+    .setDescription('Provide the damaged/lost item.')
+    .setTextInputComponent(thirdInput);
 
   const fourthInput = new TextInputBuilder()
     .setCustomId(`detailsInput`)
-    .setLabel(`📝 Incident Details`)
     .setStyle(TextInputStyle.Paragraph)
     .setMaxLength(1000)
-    .setPlaceholder(
-      "Brieflly describe the incident and include other relevant details."
-    )
     .setRequired(true);
+
+  const fourthLabel = new LabelBuilder()
+    .setLabel('Incident Details')
+    .setDescription('Briefly describe the incident and include other relevant details.')
+    .setTextInputComponent(fourthInput);
 
   const fifthInput = new TextInputBuilder()
     .setCustomId(`maintenanceRequestInput`)
-    .setLabel(`🛠️ Maintenance Request (if applicable)`)
     .setStyle(TextInputStyle.Paragraph)
     .setMaxLength(1000)
-    .setPlaceholder(
-      "Provide the needed maintenance request on the asset if applicable."
-    )
     .setRequired(false);
 
-  const firstActionRow = new ActionRowBuilder().addComponents(firstInput);
-  const secondActionRow = new ActionRowBuilder().addComponents(secondInput);
-  const thirdActionRow = new ActionRowBuilder().addComponents(thirdInput);
-  const fourthActionRow = new ActionRowBuilder().addComponents(fourthInput);
-  const fifthActionRow = new ActionRowBuilder().addComponents(fifthInput);
+  const fifthLabel = new LabelBuilder()
+    .setLabel('Maintenance Request (if applicable)')
+    .setDescription('Provide the needed maintenance request on the asset if applicable.')
+    .setTextInputComponent(fifthInput);
 
-  modal.addComponents(
-    firstActionRow,
-    secondActionRow,
-    thirdActionRow,
-    fourthActionRow,
-    fifthActionRow
-  );
+  modal.addLabelComponents(firstLabel, secondLabel, thirdLabel, fourthLabel, fifthLabel);
 
   return modal;
 }

@@ -1,29 +1,19 @@
 const {
   SlashCommandBuilder,
-  ActionRowBuilder,
   MessageFlags,
   EmbedBuilder,
-  StringSelectMenuBuilder,
-  StringSelectMenuOptionBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  ChannelType,
   GuildScheduledEventManager,
-} = require("discord.js");
+} = require('discord.js');
 
-const managementRoleId = "1314413671245676685";
-
-const management = require("../../../config/management.json");
+const managementRoleId = '1314413671245676685';
 
 module.exports = {
-  data: new SlashCommandBuilder().setName("create_meeting"),
+  data: new SlashCommandBuilder().setName('create_meeting'),
   pushToArray: false,
   async execute(interaction, client) {
     await interaction.deferReply({
       flags: MessageFlags.Ephemeral,
     });
-
-    const managementRole = interaction.guild.roles.cache.get(managementRoleId);
 
     if (!interaction.member.roles.cache.has(managementRoleId)) {
       const replyEmbed = new EmbedBuilder().setDescription(
@@ -37,8 +27,8 @@ module.exports = {
     }
 
     const event = new GuildScheduledEventManager({
-      name: "Meeting",
-      description: "A meeting with the management.",
+      name: 'Meeting',
+      description: 'A meeting with the management.',
       startAt: new Date(),
       endAt: new Date(),
       channel: interaction.channel,

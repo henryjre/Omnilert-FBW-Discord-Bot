@@ -1,72 +1,75 @@
 const {
   SlashCommandBuilder,
   ModalBuilder,
-  ActionRowBuilder,
   TextInputBuilder,
   TextInputStyle,
-} = require("discord.js");
+  LabelBuilder,
+} = require('discord.js');
 
 module.exports = {
-  data: new SlashCommandBuilder().setName("penalty"),
+  data: new SlashCommandBuilder().setName('penalty'),
   pushToArray: false,
   async execute(interaction, client) {
     const modal = new ModalBuilder()
-      .setCustomId("penaltyNotificationModal")
+      .setCustomId('penaltyNotificationModal')
       .setTitle(`PENALTY NOTIFICATION`);
 
     const firstInput = new TextInputBuilder()
       .setCustomId(`dateInput`)
-      .setLabel(`📆 Date`)
       .setStyle(TextInputStyle.Short)
-      .setPlaceholder("Enter the date.")
       .setRequired(true)
       .setMaxLength(100);
 
+    const firstLabel = new LabelBuilder()
+      .setLabel('📆 Date')
+      .setDescription('Enter the date.')
+      .setTextInputComponent(firstInput);
+
     const secondInput = new TextInputBuilder()
       .setCustomId(`branchInput`)
-      .setLabel(`🛒 Branch`)
       .setStyle(TextInputStyle.Short)
       .setMaxLength(100)
-      .setPlaceholder("Enter the branch.")
       .setRequired(true);
+
+    const secondLabel = new LabelBuilder()
+      .setLabel('🛒 Branch')
+      .setDescription('Enter the branch.')
+      .setTextInputComponent(secondInput);
 
     const thirdInput = new TextInputBuilder()
       .setCustomId(`shiftInput`)
-      .setLabel(`⏱️ Shift`)
       .setStyle(TextInputStyle.Short)
       .setMaxLength(200)
-      .setPlaceholder("Enter the shift.")
       .setRequired(true);
+
+    const thirdLabel = new LabelBuilder()
+      .setLabel('⏱️ Shift')
+      .setDescription('Enter the shift.')
+      .setTextInputComponent(thirdInput);
 
     const fourthInput = new TextInputBuilder()
       .setCustomId(`purposeInput`)
-      .setLabel(`📝 Purpose`)
       .setStyle(TextInputStyle.Short)
       .setMaxLength(200)
-      .setPlaceholder("Enter the purpose of deduction.")
       .setRequired(true);
+
+    const fourthLabel = new LabelBuilder()
+      .setLabel('📝 Purpose')
+      .setDescription('Enter the purpose of deduction.')
+      .setTextInputComponent(fourthInput);
 
     const fifthInput = new TextInputBuilder()
       .setCustomId(`amountInput`)
-      .setLabel(`💲 Deduction Amount`)
       .setStyle(TextInputStyle.Short)
       .setMaxLength(100)
-      .setPlaceholder("Enter the amount of deduction.")
       .setRequired(true);
 
-    const firstActionRow = new ActionRowBuilder().addComponents(firstInput);
-    const secondActionRow = new ActionRowBuilder().addComponents(secondInput);
-    const thirdActionRow = new ActionRowBuilder().addComponents(thirdInput);
-    const fourthActionRow = new ActionRowBuilder().addComponents(fourthInput);
-    const fifthActionRow = new ActionRowBuilder().addComponents(fifthInput);
+    const fifthLabel = new LabelBuilder()
+      .setLabel('💲 Deduction Amount')
+      .setDescription('Enter the amount of deduction.')
+      .setTextInputComponent(fifthInput);
 
-    modal.addComponents(
-      firstActionRow,
-      secondActionRow,
-      thirdActionRow,
-      fourthActionRow,
-      fifthActionRow
-    );
+    modal.addLabelComponents(firstLabel, secondLabel, thirdLabel, fourthLabel, fifthLabel);
     await interaction.showModal(modal);
   },
 };

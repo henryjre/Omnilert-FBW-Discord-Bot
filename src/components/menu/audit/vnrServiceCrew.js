@@ -1,11 +1,4 @@
-const {
-  EmbedBuilder,
-  MessageFlags,
-  ButtonBuilder,
-  ActionRowBuilder,
-  ButtonStyle,
-  StringSelectMenuBuilder,
-} = require("discord.js");
+const { EmbedBuilder, MessageFlags } = require('discord.js');
 
 module.exports = {
   data: {
@@ -21,32 +14,26 @@ module.exports = {
 
     if (
       !messageEmbed.data.fields
-        .find((f) => f.name === "Requested By")
+        .find((f) => f.name === 'Requested By')
         .value.includes(interaction.user.id)
     ) {
-      replyEmbed
-        .setDescription(`🔴 ERROR: You cannot use this menu.`)
-        .setColor("Red");
+      replyEmbed.setDescription(`🔴 ERROR: You cannot use this menu.`).setColor('Red');
 
       return await interaction.editReply({ embeds: [replyEmbed] });
     }
 
     const selectedEmployees = interaction.values;
 
-    const employeesField = messageEmbed.data.fields.find(
-      (f) => f.name === "Employees Involved"
-    );
+    const employeesField = messageEmbed.data.fields.find((f) => f.name === 'Employees Involved');
 
-    const formattedEmployees = selectedEmployees
-      .map((employeeId) => `<@${employeeId}>`)
-      .join("\n");
+    const formattedEmployees = selectedEmployees.map((employeeId) => `<@${employeeId}>`).join('\n');
 
     if (employeesField) {
-      employeesField.value = formattedEmployees || "No employees selected";
+      employeesField.value = formattedEmployees || 'No employees selected';
     } else {
       messageEmbed.data.fields.push({
-        name: "Employees Involved",
-        value: formattedEmployees || "No employees selected",
+        name: 'Employees Involved',
+        value: formattedEmployees || 'No employees selected',
       });
     }
 
@@ -54,12 +41,12 @@ module.exports = {
 
     if (messageEmbed.data.description) {
       const submitButtonRow = messageComponents.find((row) =>
-        row.components.some((component) => component.customId === "submitVnr")
+        row.components.some((component) => component.customId === 'submitVnr')
       );
 
       if (submitButtonRow) {
         const submitButtonIndex = submitButtonRow.components.findIndex(
-          (component) => component.customId === "submitVnr"
+          (component) => component.customId === 'submitVnr'
         );
 
         if (submitButtonIndex !== -1) {
@@ -77,9 +64,7 @@ module.exports = {
       console.error(error);
     }
 
-    replyEmbed
-      .setDescription(`✅ VNR request has been updated.`)
-      .setColor("Grey");
+    replyEmbed.setDescription(`✅ VNR request has been updated.`).setColor('Grey');
 
     await interaction.editReply({ embeds: [replyEmbed] });
   },

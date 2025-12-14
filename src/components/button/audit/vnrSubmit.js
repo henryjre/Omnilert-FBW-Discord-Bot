@@ -4,7 +4,6 @@ const {
   ButtonBuilder,
   ActionRowBuilder,
   ButtonStyle,
-  StringSelectMenuBuilder,
 } = require('discord.js');
 
 const db = require('../../../sqliteConnection.js');

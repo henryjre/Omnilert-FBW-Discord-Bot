@@ -1,10 +1,4 @@
-const {
-  ActionRowBuilder,
-  ModalBuilder,
-  TextInputBuilder,
-  TextInputStyle,
-  MessageFlags,
-} = require("discord.js");
+const { ModalBuilder, TextInputBuilder, TextInputStyle, MessageFlags } = require('discord.js');
 
 module.exports = {
   data: {
@@ -25,9 +19,7 @@ module.exports = {
     }
 
     if (mentionedRole) {
-      const doesNotHaveRole = !interaction.member.roles.cache.has(
-        mentionedRole.id
-      );
+      const doesNotHaveRole = !interaction.member.roles.cache.has(mentionedRole.id);
       if (doesNotHaveRole) {
         return await interaction.reply({
           content: `🔴 ERROR: You cannot use this button.`,
@@ -37,41 +29,41 @@ module.exports = {
     }
 
     const messageEmbed = interaction.message.embeds[0];
-    const tardinessReasonField = messageEmbed.fields.find(
-      (field) => field.name === "Reason"
-    );
+    const tardinessReasonField = messageEmbed.fields.find((field) => field.name === 'Reason');
 
-    let tardinessReasonInput = "";
+    let tardinessReasonInput = '';
 
     if (tardinessReasonField) {
-      tardinessReasonInput = tardinessReasonField.value.split("|")[1].trim();
+      tardinessReasonInput = tardinessReasonField.value.split('|')[1].trim();
     }
 
-    const modal = new ModalBuilder()
-      .setCustomId("attendanceTardinessModal")
-      .setTitle(`Add Reason`);
+    const modal = new ModalBuilder().setCustomId('attendanceTardinessModal').setTitle(`Add Reason`);
 
     const firstInput = new TextInputBuilder()
       .setCustomId(`tardinessReasonInput`)
-      .setLabel(`❓ Reason`)
       .setStyle(TextInputStyle.Paragraph)
       .setMaxLength(1000)
-      .setPlaceholder("Enter the reason.")
       .setValue(tardinessReasonInput)
       .setRequired(true);
 
+    const firstLabel = new LabelBuilder()
+      .setLabel('Reason')
+      .setDescription('Enter the reason.')
+      .setTextInputComponent(firstInput);
+
     const secondInput = new TextInputBuilder()
       .setCustomId(`messageId`)
-      .setLabel(`Message ID (DO NOT CHANGE)`)
       .setStyle(TextInputStyle.Short)
       .setMaxLength(100)
       .setValue(interaction.message.id)
       .setRequired(true);
 
-    const firstActionRow = new ActionRowBuilder().addComponents(firstInput);
-    const secondActionRow = new ActionRowBuilder().addComponents(secondInput);
+    const secondLabel = new LabelBuilder()
+      .setLabel('Message ID')
+      .setDescription('DO NOT CHANGE THIS')
+      .setTextInputComponent(secondInput);
 
-    modal.addComponents(firstActionRow, secondActionRow);
+    modal.addLabelComponents(firstLabel, secondLabel);
     await interaction.showModal(modal);
   },
 };

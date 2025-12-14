@@ -1,20 +1,18 @@
 const {
-  ActionRowBuilder,
   MessageFlags,
   EmbedBuilder,
   ButtonBuilder,
-  ButtonStyle
+  ButtonStyle,
+  ContainerBuilder,
+  SeparatorSpacingSize,
 } = require('discord.js');
 
 module.exports = {
   data: {
-    name: `backToDashboard`
+    name: `backToDashboard`,
   },
   async execute(interaction, client) {
     const replyEmbed = new EmbedBuilder();
-
-    const allEmbeds = interaction.message.embeds;
-    const messageEmbed = allEmbeds[0];
 
     const slashInteraction = interaction.message.interaction;
     if (slashInteraction) {
@@ -26,18 +24,6 @@ module.exports = {
     }
 
     await interaction.deferUpdate();
-
-    const dashboardEmbed = EmbedBuilder.from(messageEmbed)
-      .setDescription('*Select a button below to view the dashboard.*')
-      .setFields([{ name: 'Employee', value: interaction.member.toString() }]);
-
-    if (dashboardEmbed.data.fields) {
-      delete dashboardEmbed.data.fields;
-    }
-
-    if (dashboardEmbed.data.footer) {
-      delete dashboardEmbed.data.footer;
-    }
 
     const epiDashboardButton = new ButtonBuilder()
       .setCustomId('viewEpiDashboard')
@@ -51,11 +37,19 @@ module.exports = {
       .setEmoji('💵')
       .setStyle(ButtonStyle.Success);
 
-    const buttonRow = new ActionRowBuilder().addComponents(
-      epiDashboardButton,
-      salaryComputationButton
-    );
+    const dashboardContainer = new ContainerBuilder()
+      .addTextDisplayComponents((textDisplay) => textDisplay.setContent('# 📊 Employee Dashboard'))
+      .addTextDisplayComponents((textDisplay) =>
+        textDisplay.setContent('*Select a button below to view the dashboard.*')
+      )
+      .addSeparatorComponents((separator) => separator.setSpacing(SeparatorSpacingSize.Large))
+      .addActionRowComponents((actionRow) =>
+        actionRow.setComponents(epiDashboardButton, salaryComputationButton)
+      );
 
-    await interaction.message.edit({ embeds: [dashboardEmbed], components: [buttonRow] });
-  }
+    await interaction.message.edit({
+      components: [dashboardContainer],
+      flags: MessageFlags.IsComponentsV2,
+    });
+  },
 };

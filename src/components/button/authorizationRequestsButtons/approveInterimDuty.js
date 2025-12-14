@@ -11,7 +11,7 @@ const hrRole = '1314815153421680640';
 
 module.exports = {
   data: {
-    name: `approveInterimDuty`
+    name: `approveInterimDuty`,
   },
   async execute(interaction, client) {
     let messageEmbed = interaction.message.embeds[0];
@@ -20,17 +20,12 @@ module.exports = {
 
     const ownerFieldNames = ['Submitted By'];
 
-    const mentionableMembers = messageEmbed.data.fields
-      .filter((f) => ownerFieldNames.includes(f.name))
-      .map((f) => f.value)
-      .join('\n');
-
     if (!interaction.member.roles.cache.has(hrRole)) {
       replyEmbed.setDescription(`🔴 ERROR: You cannot use this button.`).setColor('Red');
 
       return await interaction.reply({
         embeds: [replyEmbed],
-        flags: MessageFlags.Ephemeral
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -57,7 +52,7 @@ module.exports = {
       shiftEndTime: shiftEndTimeField ? cleanFieldValue(shiftEndTimeField.value) : '',
       shiftCoverage: shiftCoverage ? shiftCoverage.id : '',
       discordId: submittedByField ? extractUserId(submittedByField.value) : '',
-      interimFormId: interaction.message.id
+      interimFormId: interaction.message.id,
     };
 
     if (attendanceIdField) {
@@ -69,7 +64,7 @@ module.exports = {
     if (!department) {
       replyEmbed.setDescription(`🔴 ERROR: Branch not found.`).setColor('Red');
       return await interaction.reply({
-        embeds: [replyEmbed]
+        embeds: [replyEmbed],
       });
     }
 
@@ -79,7 +74,7 @@ module.exports = {
     const approvedBy = interaction.member.nickname.replace(/^[🔴🟢]\s*/, '');
 
     messageEmbed.data.footer = {
-      text: `Approved By: ${approvedBy}`
+      text: `Approved By: ${approvedBy}`,
     };
     messageEmbed.data.color = 5763719;
 
@@ -95,13 +90,13 @@ module.exports = {
       .setColor('Green');
 
     await interaction.editReply({
-      embeds: [replyEmbed]
+      embeds: [replyEmbed],
     });
 
     await createPlanningShift(payload).then((res) => {
       console.log('Planning shift created:', res);
     });
-  }
+  },
 };
 
 function cleanFieldValue(s) {
@@ -164,7 +159,7 @@ function createInterimDutyPayload(interimDutyData, department) {
       x_discord_id: interimDutyData.discordId,
       start_datetime: startDateTime,
       end_datetime: endDateTime,
-      company_id: department.id
+      company_id: department.id,
     };
 
     if (interimDutyData.attendanceId) {

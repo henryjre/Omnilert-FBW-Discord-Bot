@@ -7,20 +7,19 @@ const {
   TextInputStyle,
   ButtonBuilder,
   ButtonStyle,
-} = require("discord.js");
+  TextDisplayBuilder,
+} = require('discord.js');
 
-const pesoFormatter = new Intl.NumberFormat("en-PH", {
-  style: "currency",
-  currency: "PHP",
+const pesoFormatter = new Intl.NumberFormat('en-PH', {
+  style: 'currency',
+  currency: 'PHP',
   maximumFractionDigits: 2,
   minimumFractionDigits: 2,
 });
 
-const { updateClosingPcfBalance } = require("../../../odooRpc.js");
+const { updateClosingPcfBalance } = require('../../../odooRpc.js');
 
-const departments = require("../../../config/departments.json");
-
-const managementRole = "1314413671245676685";
+const departments = require('../../../config/departments.json');
 
 module.exports = {
   data: {
@@ -37,21 +36,13 @@ module.exports = {
 
     const replyEmbed = new EmbedBuilder();
 
-    const sessionField = messageEmbed.data.fields.find(
-      (f) => f.name === "Session Name"
-    );
+    const sessionField = messageEmbed.data.fields.find((f) => f.name === 'Session Name');
 
-    const openingField = messageEmbed.data.fields.find(
-      (f) => f.name === "Opening PCF Expected"
-    );
-    const expectedField = messageEmbed.data.fields.find(
-      (f) => f.name === "Closing PCF Expected"
-    );
-    const countedField = messageEmbed.data.fields.find(
-      (f) => f.name === "Closing PCF Counted"
-    );
+    const openingField = messageEmbed.data.fields.find((f) => f.name === 'Opening PCF Expected');
+    const expectedField = messageEmbed.data.fields.find((f) => f.name === 'Closing PCF Expected');
+    const countedField = messageEmbed.data.fields.find((f) => f.name === 'Closing PCF Counted');
     const differenceField = messageEmbed.data.fields.find(
-      (f) => f.name === "Closing PCF Difference"
+      (f) => f.name === 'Closing PCF Difference'
     );
 
     const mentionedUser = interaction.message.mentions.users.first();
@@ -62,9 +53,7 @@ module.exports = {
       const isNotMentionedUser = interaction.user.id !== mentionedUser.id;
 
       if (isNotMentionedUser) {
-        replyEmbed
-          .setDescription(`🔴 ERROR: You cannot use this button.`)
-          .setColor("Red");
+        replyEmbed.setDescription(`🔴 ERROR: You cannot use this button.`).setColor('Red');
 
         return await interaction.reply({
           embeds: [replyEmbed],
@@ -73,14 +62,10 @@ module.exports = {
       }
     } else if (mentionedRole) {
       // Handle role mention
-      const doesNotHaveRole = !interaction.member.roles.cache.has(
-        mentionedRole.id
-      );
+      const doesNotHaveRole = !interaction.member.roles.cache.has(mentionedRole.id);
 
       if (doesNotHaveRole) {
-        replyEmbed
-          .setDescription(`🔴 ERROR: You cannot use this button.`)
-          .setColor("Red");
+        replyEmbed.setDescription(`🔴 ERROR: You cannot use this button.`).setColor('Red');
 
         return await interaction.reply({
           embeds: [replyEmbed],
@@ -93,39 +78,45 @@ module.exports = {
       .setCustomId(`pcfInput_${interaction.id}`)
       .setTitle(`Input PCF Report`);
 
+    const textDisplay = new TextDisplayBuilder().setContent(
+      `## Input numbers only!\nExample: 325 | 325.53`
+    );
+
     const opening = new TextInputBuilder()
       .setCustomId(`openingExpected`)
-      .setLabel(`OPENING`)
-      .setPlaceholder(`Input numbers only EG. 325 | 325.53`)
       .setStyle(TextInputStyle.Short)
       .setRequired(true);
+
+    const openingLabel = new LabelBuilder()
+      .setLabel('Opening PCF Expected')
+      .setTextInputComponent(opening);
 
     const expected = new TextInputBuilder()
       .setCustomId(`closingExpected`)
-      .setLabel(`EXPECTED`)
-      .setPlaceholder(`Input numbers only EG. 325 | 325.53`)
       .setStyle(TextInputStyle.Short)
       .setRequired(true);
+
+    const expectedLabel = new LabelBuilder()
+      .setLabel('Closing PCF Expected')
+      .setTextInputComponent(expected);
 
     const counted = new TextInputBuilder()
       .setCustomId(`closingCounted`)
-      .setLabel(`COUNTED`)
-      .setPlaceholder(`Input numbers only EG. 325 | 325.53`)
       .setStyle(TextInputStyle.Short)
       .setRequired(true);
 
-    const firstRow = new ActionRowBuilder().addComponents(opening);
-    const secondRow = new ActionRowBuilder().addComponents(expected);
-    const thirdRow = new ActionRowBuilder().addComponents(counted);
+    const countedLabel = new LabelBuilder()
+      .setLabel('Closing PCF Counted')
+      .setTextInputComponent(counted);
 
-    modal.addComponents(firstRow, secondRow, thirdRow);
+    modal
+      .addTextDisplayComponents(textDisplay)
+      .addLabelComponents(openingLabel, expectedLabel, countedLabel);
     await interaction.showModal(modal);
 
     const modalResponse = await interaction.awaitModalSubmit({
       filter: async (i) => {
-        const f =
-          i.customId === `pcfInput_${interaction.id}` &&
-          i.user.id === interaction.user.id;
+        const f = i.customId === `pcfInput_${interaction.id}` && i.user.id === interaction.user.id;
 
         if (f) {
           await i.deferUpdate();
@@ -137,22 +128,15 @@ module.exports = {
 
     try {
       if (modalResponse.isModalSubmit()) {
-        const opening =
-          modalResponse.fields.getTextInputValue("openingExpected");
-        const expected =
-          modalResponse.fields.getTextInputValue("closingExpected");
-        const counted =
-          modalResponse.fields.getTextInputValue("closingCounted");
+        const opening = modalResponse.fields.getTextInputValue('openingExpected');
+        const expected = modalResponse.fields.getTextInputValue('closingExpected');
+        const counted = modalResponse.fields.getTextInputValue('closingCounted');
 
         const openingParsed = parseFloat(opening);
         const expectedParsed = parseFloat(expected);
         const countedParsed = parseFloat(counted);
 
-        if (
-          isNaN(openingParsed) ||
-          isNaN(expectedParsed) ||
-          isNaN(countedParsed)
-        ) {
+        if (isNaN(openingParsed) || isNaN(expectedParsed) || isNaN(countedParsed)) {
           return await modalResponse.followUp({
             content: `🔴 ERROR: Please make sure to only input numbers without letters in the input fields.`,
             flags: MessageFlags.Ephemeral,
@@ -180,26 +164,20 @@ module.exports = {
         differenceField.value = pesoDifference;
 
         messageEmbed.data.footer = {
-          text: `Input By: ${interaction.member.nickname.replace(
-            /^[🔴🟢]\s*/,
-            ""
-          )}\n\u200b`,
+          text: `Input By: ${interaction.member.nickname.replace(/^[🔴🟢]\s*/, '')}\n\u200b`,
         };
 
         const confirm = new ButtonBuilder()
-          .setCustomId("posOrderVerificationConfirm")
-          .setLabel("Confirm")
+          .setCustomId('posOrderVerificationConfirm')
+          .setLabel('Confirm')
           .setStyle(ButtonStyle.Success);
 
         const inputButton = new ButtonBuilder()
-          .setCustomId("posPcfInput")
-          .setLabel("Edit Input")
+          .setCustomId('posPcfInput')
+          .setLabel('Edit Input')
           .setStyle(ButtonStyle.Secondary);
 
-        const buttonRow = new ActionRowBuilder().addComponents(
-          confirm,
-          inputButton
-        );
+        const buttonRow = new ActionRowBuilder().addComponents(confirm, inputButton);
 
         await interaction.message.edit({
           embeds: [messageEmbed],

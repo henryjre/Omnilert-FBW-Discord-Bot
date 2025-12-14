@@ -1,10 +1,10 @@
 const {
-  ActionRowBuilder,
   MessageFlags,
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
-} = require("discord.js");
+  LabelBuilder,
+} = require('discord.js');
 
 module.exports = {
   data: {
@@ -25,9 +25,7 @@ module.exports = {
     }
 
     if (mentionedRole) {
-      const doesNotHaveRole = !interaction.member.roles.cache.has(
-        mentionedRole.id
-      );
+      const doesNotHaveRole = !interaction.member.roles.cache.has(mentionedRole.id);
       if (doesNotHaveRole) {
         return await interaction.reply({
           content: `🔴 ERROR: You cannot use this button.`,
@@ -36,22 +34,21 @@ module.exports = {
       }
     }
 
-    const modal = new ModalBuilder()
-      .setCustomId("endShiftConfirmation")
-      .setTitle("CONFIRMATION");
+    const modal = new ModalBuilder().setCustomId('endShiftConfirmation').setTitle('CONFIRMATION');
 
     const firstInput = new TextInputBuilder()
-      .setCustomId("endShiftInput")
-      .setLabel(`Confirm end of duty?.`)
+      .setCustomId('endShiftInput')
       .setStyle(TextInputStyle.Short)
       .setPlaceholder("Type 'end' to confirm end of duty.")
-      .setValue("end")
+      .setValue('end')
       .setMaxLength(3)
       .setRequired(true);
 
-    const firstActionRow = new ActionRowBuilder().addComponents(firstInput);
+    const firstLabel = new LabelBuilder()
+      .setLabel('Confirm end of duty?')
+      .setTextInputComponent(firstInput);
 
-    modal.addComponents(firstActionRow);
+    modal.addLabelComponents(firstLabel);
 
     await interaction.showModal(modal);
   },

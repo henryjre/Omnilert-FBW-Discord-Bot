@@ -1,38 +1,36 @@
 const {
   SlashCommandBuilder,
   ModalBuilder,
-  ActionRowBuilder,
   TextInputBuilder,
   TextInputStyle,
   EmbedBuilder,
   MessageFlags,
-} = require("discord.js");
+  LabelBuilder,
+} = require('discord.js');
 
 const requestType = [
   {
-    name: "💳 PAYMENT",
-    value: "payment",
-    color: "#000eff",
+    name: '💳 PAYMENT',
+    value: 'payment',
+    color: '#000eff',
   },
   {
-    name: "💰 REPLENISHMENT",
-    value: "replenishment",
-    color: "#ffb700",
+    name: '💰 REPLENISHMENT',
+    value: 'replenishment',
+    color: '#ffb700',
   },
 ];
 
-const financeRole = "1314815202679590984";
+const financeRole = '1314815202679590984';
 
 module.exports = {
-  data: new SlashCommandBuilder().setName("finance_request"),
+  data: new SlashCommandBuilder().setName('finance_request'),
   pushToArray: false,
   async execute(interaction, client, option) {
     if (!interaction.member.roles.cache.has(financeRole)) {
       const replyEmbed = new EmbedBuilder()
-        .setDescription(
-          `🔴 ERROR: Only <@&1314815202679590984> can use this command.`
-        )
-        .setColor("Red");
+        .setDescription(`🔴 ERROR: Only <@&1314815202679590984> can use this command.`)
+        .setColor('Red');
 
       return await interaction.reply({
         embeds: [replyEmbed],
@@ -61,13 +59,13 @@ module.exports = {
     try {
       if (modalResponse.isModalSubmit()) {
         return await client.commands
-          .get("finance_request_data")
+          .get('finance_request_data')
           .execute(interaction, client, type, modalResponse);
       }
     } catch (error) {
       console.log(error);
       await interaction.followUp({
-        content: "❌ An error occurred while processing your request.",
+        content: '❌ An error occurred while processing your request.',
         flags: MessageFlags.Ephemeral,
       });
     }
@@ -81,56 +79,59 @@ async function buildModal(interaction, type) {
 
   const firstInput = new TextInputBuilder()
     .setCustomId(`referenceNumber`)
-    .setLabel(`🔗 Reference Number`)
     .setStyle(TextInputStyle.Short)
-    .setPlaceholder("Enter the reference number/digits.")
     .setRequired(true)
     .setMaxLength(100);
 
+  const firstLabel = new LabelBuilder()
+    .setLabel('🔗 Reference Number')
+    .setDescription('Enter the reference number/digits.')
+    .setTextInputComponent(firstInput);
+
   const secondInput = new TextInputBuilder()
     .setCustomId(`requestedAmount`)
-    .setLabel(`💲 Requested Amount`)
     .setStyle(TextInputStyle.Short)
     .setMaxLength(100)
-    .setPlaceholder("Enter the amount requested.")
     .setRequired(true);
+
+  const secondLabel = new LabelBuilder()
+    .setLabel('💲 Requested Amount')
+    .setDescription('Enter the amount requested.')
+    .setTextInputComponent(secondInput);
 
   const thirdInput = new TextInputBuilder()
     .setCustomId(`bankNameInput`)
-    .setLabel(`🏛️ Bank Name`)
     .setStyle(TextInputStyle.Short)
     .setMaxLength(100)
-    .setPlaceholder("Enter the name of the bank.")
     .setRequired(true);
+
+  const thirdLabel = new LabelBuilder()
+    .setLabel('🏛️ Bank Name')
+    .setDescription('Enter the name of the bank.')
+    .setTextInputComponent(thirdInput);
 
   const fourthInput = new TextInputBuilder()
     .setCustomId(`accountNameInput`)
-    .setLabel(`👤 Account Name`)
     .setStyle(TextInputStyle.Short)
     .setMaxLength(100)
-    .setPlaceholder("Enter the name of the bank account.")
     .setRequired(true);
+
+  const fourthLabel = new LabelBuilder()
+    .setLabel('👤 Account Name')
+    .setDescription('Enter the name of the bank account.')
+    .setTextInputComponent(fourthInput);
 
   const fifthInput = new TextInputBuilder()
     .setCustomId(`accountNumberInput`)
-    .setLabel(`🔢 Account Number`)
     .setStyle(TextInputStyle.Short)
     .setMaxLength(100)
-    .setPlaceholder("Enter the account number of the bank account.")
     .setRequired(true);
 
-  const firstActionRow = new ActionRowBuilder().addComponents(firstInput);
-  const secondActionRow = new ActionRowBuilder().addComponents(secondInput);
-  const thirdActionRow = new ActionRowBuilder().addComponents(thirdInput);
-  const fourthActionRow = new ActionRowBuilder().addComponents(fourthInput);
-  const fifthActionRow = new ActionRowBuilder().addComponents(fifthInput);
+  const fifthLabel = new LabelBuilder()
+    .setLabel('🔢 Account Number')
+    .setDescription('Enter the account number of the bank account.')
+    .setTextInputComponent(fifthInput);
 
-  modal.addComponents(
-    firstActionRow,
-    secondActionRow,
-    thirdActionRow,
-    fourthActionRow,
-    fifthActionRow
-  );
+  modal.addLabelComponents(firstLabel, secondLabel, thirdLabel, fourthLabel, fifthLabel);
   return modal;
 }

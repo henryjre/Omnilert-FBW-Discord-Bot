@@ -5,10 +5,9 @@ const {
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
-  ButtonBuilder,
-  ButtonStyle,
   StringSelectMenuBuilder,
-  StringSelectMenuOptionBuilder
+  StringSelectMenuOptionBuilder,
+  LabelBuilder,
 } = require('discord.js');
 
 const departments = require('../../../config/departments.json');
@@ -17,7 +16,7 @@ const managementRole = '1314413671245676685';
 
 module.exports = {
   data: {
-    name: `posOrderVerificationReject`
+    name: `posOrderVerificationReject`,
   },
   async execute(interaction, client) {
     let allEmbeds = interaction.message.embeds;
@@ -39,7 +38,7 @@ module.exports = {
 
         return await interaction.reply({
           embeds: [replyEmbed],
-          flags: MessageFlags.Ephemeral
+          flags: MessageFlags.Ephemeral,
         });
       }
     } else if (mentionedRole) {
@@ -51,7 +50,7 @@ module.exports = {
 
         return await interaction.reply({
           embeds: [replyEmbed],
-          flags: MessageFlags.Ephemeral
+          flags: MessageFlags.Ephemeral,
         });
       }
     }
@@ -62,14 +61,16 @@ module.exports = {
 
     const details = new TextInputBuilder()
       .setCustomId(`rejectReason`)
-      .setLabel(`Reason for Rejection`)
-      .setPlaceholder(`Insert the reason for rejection here.`)
       .setMaxLength(1000)
       .setStyle(TextInputStyle.Paragraph)
       .setRequired(true);
 
-    const firstRow = new ActionRowBuilder().addComponents(details);
-    modal.addComponents(firstRow);
+    const label = new LabelBuilder()
+      .setLabel(`Reason for Rejection`)
+      .setDescription(`What is your reason for rejecting this?.`)
+      .setTextInputComponent(details);
+
+    modal.addLabelComponents(label);
     await interaction.showModal(modal);
 
     const modalResponse = await interaction.awaitModalSubmit({
@@ -82,7 +83,7 @@ module.exports = {
         }
         return f;
       },
-      time: 300000
+      time: 300000,
     });
 
     try {
@@ -106,7 +107,7 @@ module.exports = {
         if (!posThread) {
           return await modalResponse.followUp({
             content: `🔴 ERROR: No thread found.`,
-            flags: MessageFlags.Ephemeral
+            flags: MessageFlags.Ephemeral,
           });
         }
 
@@ -116,11 +117,11 @@ module.exports = {
 
         messageEmbed.data.fields.push({
           name: 'Rejected By',
-          value: interaction.user.toString()
+          value: interaction.user.toString(),
         });
 
         messageEmbed.data.footer = {
-          text: ``
+          text: ``,
         };
 
         const auditRatingMenu = new StringSelectMenuBuilder()
@@ -130,7 +131,7 @@ module.exports = {
             new StringSelectMenuOptionBuilder().setLabel('⭐⭐').setValue('⭐⭐'),
             new StringSelectMenuOptionBuilder().setLabel('⭐⭐⭐').setValue('⭐⭐⭐'),
             new StringSelectMenuOptionBuilder().setLabel('⭐⭐⭐⭐').setValue('⭐⭐⭐⭐'),
-            new StringSelectMenuOptionBuilder().setLabel('⭐⭐⭐⭐⭐').setValue('⭐⭐⭐⭐⭐')
+            new StringSelectMenuOptionBuilder().setLabel('⭐⭐⭐⭐⭐').setValue('⭐⭐⭐⭐⭐'),
           ])
           .setMinValues(1)
           .setMaxValues(1)
@@ -147,7 +148,7 @@ module.exports = {
         await posThread.send({
           content: `<@&${managementRole}>`,
           embeds: allEmbeds,
-          components: [menuRow]
+          components: [menuRow],
         });
 
         try {
@@ -160,7 +161,7 @@ module.exports = {
           console.error('Error deleting messages:', error);
           await interaction.followUp({
             content: '🔴 ERROR: Failed to clean up messages. Please contact an administrator.',
-            flags: MessageFlags.Ephemeral
+            flags: MessageFlags.Ephemeral,
           });
         }
       }
@@ -168,8 +169,8 @@ module.exports = {
       console.log(error);
       await modalResponse.followUp({
         content: `🔴 ERROR: An error occurred while creating your signature request. Please try again.`,
-        flags: MessageFlags.Ephemeral
+        flags: MessageFlags.Ephemeral,
       });
     }
-  }
+  },
 };

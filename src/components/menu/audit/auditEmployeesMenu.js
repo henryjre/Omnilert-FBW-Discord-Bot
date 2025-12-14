@@ -1,15 +1,14 @@
 const {
-  EmbedBuilder,
   MessageFlags,
   ButtonBuilder,
   ActionRowBuilder,
   ButtonStyle,
-  StringSelectMenuBuilder
+  StringSelectMenuBuilder,
 } = require('discord.js');
 
 module.exports = {
   data: {
-    name: `auditEmployeesMenu`
+    name: `auditEmployeesMenu`,
   },
   async execute(interaction, client) {
     const mentionedUser = interaction.message.mentions?.users?.first() || null;
@@ -20,7 +19,7 @@ module.exports = {
       if (isNotMentionedUser) {
         return await interaction.reply({
           content: `🔴 ERROR: You cannot use this menu.`,
-          flags: MessageFlags.Ephemeral
+          flags: MessageFlags.Ephemeral,
         });
       }
     }
@@ -30,7 +29,7 @@ module.exports = {
       if (doesNotHaveRole) {
         return await interaction.reply({
           content: `🔴 ERROR: You cannot use this menu.`,
-          flags: MessageFlags.Ephemeral
+          flags: MessageFlags.Ephemeral,
         });
       }
     }
@@ -51,7 +50,7 @@ module.exports = {
     } else {
       messageEmbed.data.fields.push({
         name: 'Employees On Duty',
-        value: formattedEmployees || 'No employees selected'
+        value: formattedEmployees || 'No employees selected',
       });
     }
 
@@ -62,7 +61,7 @@ module.exports = {
         { label: '⭐⭐', value: '⭐⭐' },
         { label: '⭐⭐⭐', value: '⭐⭐⭐' },
         { label: '⭐⭐⭐⭐', value: '⭐⭐⭐⭐' },
-        { label: '⭐⭐⭐⭐⭐', value: '⭐⭐⭐⭐⭐' }
+        { label: '⭐⭐⭐⭐⭐', value: '⭐⭐⭐⭐⭐' },
       ])
       .setMinValues(1)
       .setMaxValues(1)
@@ -100,14 +99,14 @@ module.exports = {
     try {
       await interaction.message.edit({
         embeds: allEmbeds,
-        components: messageComponents
+        components: messageComponents,
       });
     } catch (error) {
       console.log(error);
       await interaction.followUp({
         content: `🔴 ERROR: An error occurred while selecting employees on duty. Please try again.`,
-        flags: MessageFlags.Ephemeral
+        flags: MessageFlags.Ephemeral,
       });
     }
-  }
+  },
 };

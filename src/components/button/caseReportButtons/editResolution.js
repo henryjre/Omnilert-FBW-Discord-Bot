@@ -1,17 +1,17 @@
 const {
-  ActionRowBuilder,
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
   MessageFlags,
-} = require("discord.js");
+  LabelBuilder,
+} = require('discord.js');
 
 module.exports = {
   data: {
     name: `editResolutionButton`,
   },
   async execute(interaction, client) {
-    const permissionRole = "1314413671245676685";
+    const permissionRole = '1314413671245676685';
 
     if (!interaction.member.roles.cache.has(permissionRole)) {
       await interaction.reply({
@@ -26,8 +26,8 @@ module.exports = {
 
     let fieldValue = resolutionField.value;
 
-    if (fieldValue === "To be added") {
-      fieldValue = "";
+    if (fieldValue === 'To be added') {
+      fieldValue = '';
     }
 
     const modal = buildEditModal();
@@ -35,20 +35,22 @@ module.exports = {
 
     function buildEditModal() {
       const modal = new ModalBuilder()
-        .setCustomId("editResolutionModal")
+        .setCustomId('editResolutionModal')
         .setTitle(`Edit the Resolution`);
 
       const firstInput = new TextInputBuilder()
         .setCustomId(`resolutionInput`)
-        .setLabel(`RESOLUTION`)
         .setStyle(TextInputStyle.Paragraph)
         .setValue(fieldValue)
         .setMaxLength(1000)
         .setRequired(true);
 
-      const firstActionRow = new ActionRowBuilder().addComponents(firstInput);
+      const firstLabel = new LabelBuilder()
+        .setLabel('Resolution')
+        .setDescription('Add the resolution details.')
+        .setTextInputComponent(firstInput);
 
-      modal.addComponents(firstActionRow);
+      modal.addLabelComponents(firstLabel);
 
       return modal;
     }

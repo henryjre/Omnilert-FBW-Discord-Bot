@@ -1,10 +1,10 @@
 const {
-  ActionRowBuilder,
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
   MessageFlags,
-} = require("discord.js");
+  LabelBuilder,
+} = require('discord.js');
 
 module.exports = {
   data: {
@@ -25,9 +25,7 @@ module.exports = {
     }
 
     if (mentionedRole) {
-      const doesNotHaveRole = !interaction.member.roles.cache.has(
-        mentionedRole.id
-      );
+      const doesNotHaveRole = !interaction.member.roles.cache.has(mentionedRole.id);
       if (doesNotHaveRole) {
         return await interaction.reply({
           content: `🔴 ERROR: You cannot use this button.`,
@@ -37,52 +35,55 @@ module.exports = {
     }
 
     const modal = new ModalBuilder()
-      .setCustomId("attendanceInterimModal")
+      .setCustomId('attendanceInterimModal')
       .setTitle(`INTERIM DUTY FORM DETAILS`);
 
     const firstInput = new TextInputBuilder()
       .setCustomId(`shiftCoverageInput`)
-      .setLabel(`⏱️ Shift Coverage`)
       .setStyle(TextInputStyle.Short)
       .setMaxLength(200)
-      .setPlaceholder("Enter the shift coverage.")
       .setRequired(true);
+
+    const firstLabel = new LabelBuilder()
+      .setLabel('Shift Coverage')
+      .setDescription('Enter the shift coverage.')
+      .setTextInputComponent(firstInput);
 
     const secondInput = new TextInputBuilder()
       .setCustomId(`scopeOfWorkIput`)
-      .setLabel(`🎯 Scope of Work`)
       .setStyle(TextInputStyle.Short)
       .setMaxLength(200)
-      .setPlaceholder("Enter the shift coverage.")
       .setRequired(true);
+
+    const secondLabel = new LabelBuilder()
+      .setLabel('Scope of Work')
+      .setDescription('Enter the scope of work.')
+      .setTextInputComponent(secondInput);
 
     const thirdInput = new TextInputBuilder()
       .setCustomId(`assignedByInput`)
-      .setLabel(`🤝 Assigned By`)
       .setStyle(TextInputStyle.Short)
       .setMaxLength(200)
-      .setPlaceholder("Enter who assigned the duty.")
       .setRequired(true);
+
+    const thirdLabel = new LabelBuilder()
+      .setLabel('Assigned By')
+      .setDescription('Enter who assigned the duty.')
+      .setTextInputComponent(thirdInput);
 
     const fourthInput = new TextInputBuilder()
       .setCustomId(`messageId`)
-      .setLabel(`Message ID (DO NOT CHANGE)`)
       .setStyle(TextInputStyle.Short)
       .setMaxLength(100)
       .setValue(interaction.message.id)
       .setRequired(true);
 
-    const firstActionRow = new ActionRowBuilder().addComponents(firstInput);
-    const secondActionRow = new ActionRowBuilder().addComponents(secondInput);
-    const thirdActionRow = new ActionRowBuilder().addComponents(thirdInput);
-    const fourthActionRow = new ActionRowBuilder().addComponents(fourthInput);
+    const fourthLabel = new LabelBuilder()
+      .setLabel('Message ID')
+      .setDescription('DO NOT CHANGE THIS')
+      .setTextInputComponent(fourthInput);
 
-    modal.addComponents(
-      firstActionRow,
-      secondActionRow,
-      thirdActionRow,
-      fourthActionRow
-    );
+    modal.addLabelComponents(firstLabel, secondLabel, thirdLabel, fourthLabel);
     await interaction.showModal(modal);
   },
 };

@@ -5,38 +5,36 @@ const {
   TextInputBuilder,
   TextInputStyle,
   EmbedBuilder,
-  ActionRowBuilder,
-} = require("discord.js");
+  LabelBuilder,
+} = require('discord.js');
 
-const commandsChannel = "1372559141071228998";
-
-const managementRoleId = "1314413671245676685";
+const managementRoleId = '1314413671245676685';
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName("create")
-    .setDescription("Create something...")
+    .setName('create')
+    .setDescription('Create something...')
     .addSubcommand((subcommand) =>
       subcommand
-        .setName("meeting")
-        .setDescription("Create a scheduled meeting event.")
+        .setName('meeting')
+        .setDescription('Create a scheduled meeting event.')
         .addStringOption((option) =>
           option
-            .setName("type")
-            .setDescription("Select the meeting type.")
+            .setName('type')
+            .setDescription('Select the meeting type.')
             .setRequired(true)
             .setChoices([
               {
-                name: "General Meeting",
-                value: "general",
+                name: 'General Meeting',
+                value: 'general',
               },
               {
-                name: "Management Meeting",
-                value: "management",
+                name: 'Management Meeting',
+                value: 'management',
               },
               {
-                name: "Service Crew Meeting",
-                value: "service_crew",
+                name: 'Service Crew Meeting',
+                value: 'service_crew',
               },
             ])
         )
@@ -53,7 +51,7 @@ module.exports = {
     const subcommand = interaction.options.getSubcommand();
 
     switch (subcommand) {
-      case "meeting":
+      case 'meeting':
         await runCreateMeetingCommand(interaction, client);
         break;
 
@@ -75,22 +73,22 @@ async function runCreateMeetingCommand(interaction, client) {
     return;
   }
 
-  const type = interaction.options.getString("type");
+  const type = interaction.options.getString('type');
 
   let modalId;
   let modalTitle;
   switch (type) {
-    case "general":
-      modalId = "generalMeetingModal";
-      modalTitle = "GENERAL MEETING";
+    case 'general':
+      modalId = 'generalMeetingModal';
+      modalTitle = 'GENERAL MEETING';
       break;
-    case "management":
-      modalId = "managementMeetingModal";
-      modalTitle = "MANAGEMENT MEETING";
+    case 'management':
+      modalId = 'managementMeetingModal';
+      modalTitle = 'MANAGEMENT MEETING';
       break;
-    case "service_crew":
-      modalId = "serviceCrewMeetingModal";
-      modalTitle = "SERVICE CREW MEETING";
+    case 'service_crew':
+      modalId = 'serviceCrewMeetingModal';
+      modalTitle = 'SERVICE CREW MEETING';
       break;
   }
 
@@ -98,30 +96,35 @@ async function runCreateMeetingCommand(interaction, client) {
 
   const firstInput = new TextInputBuilder()
     .setCustomId(`meetingAgenda`)
-    .setLabel(`Meeting Agenda`)
     .setStyle(TextInputStyle.Paragraph)
-    .setPlaceholder("The agenda for the meeting.")
     .setRequired(true);
+
+  const firstLabel = new LabelBuilder()
+    .setLabel('Meeting Agenda')
+    .setDescription('The agenda for the meeting.')
+    .setTextInputComponent(firstInput);
 
   const secondInput = new TextInputBuilder()
     .setCustomId(`startDate`)
-    .setLabel(`Meeting Start Date`)
     .setStyle(TextInputStyle.Short)
-    .setPlaceholder("E.G: September 8, 2025. (Leave blank for today's date)")
     .setRequired(false);
+
+  const secondLabel = new LabelBuilder()
+    .setLabel('Meeting Start Date')
+    .setDescription("Example: September 8, 2025. (Leave blank for today's date)")
+    .setTextInputComponent(secondInput);
 
   const thirdInput = new TextInputBuilder()
     .setCustomId(`startTime`)
-    .setLabel(`Meeting Start Time`)
     .setStyle(TextInputStyle.Short)
-    .setPlaceholder("E.G: 1:00 PM / 10:35 AM")
     .setRequired(false);
 
-  const firstActionRow = new ActionRowBuilder().addComponents(firstInput);
-  const secondActionRow = new ActionRowBuilder().addComponents(secondInput);
-  const thirdActionRow = new ActionRowBuilder().addComponents(thirdInput);
+  const thirdLabel = new LabelBuilder()
+    .setLabel('Meeting Start Time')
+    .setDescription('Example: 1:00 PM / 10:35 AM')
+    .setTextInputComponent(thirdInput);
 
-  modal.addComponents(firstActionRow, secondActionRow, thirdActionRow);
+  modal.addLabelComponents(firstLabel, secondLabel, thirdLabel);
 
   await interaction.showModal(modal);
 }

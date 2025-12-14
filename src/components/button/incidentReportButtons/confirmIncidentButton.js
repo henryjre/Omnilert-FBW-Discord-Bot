@@ -1,13 +1,6 @@
-const {
-  ActionRowBuilder,
-  MessageFlags,
-  EmbedBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  ThreadAutoArchiveDuration,
-} = require("discord.js");
+const { MessageFlags, EmbedBuilder, ThreadAutoArchiveDuration } = require('discord.js');
 
-const destinationChannelId = "1346829261985681418";
+const destinationChannelId = '1346829261985681418';
 
 module.exports = {
   data: {
@@ -20,14 +13,10 @@ module.exports = {
 
     let messageEmbed = interaction.message.embeds[0];
 
-    const ownerField = messageEmbed.data.fields.find(
-      (f) => f.name === "Reported By"
-    );
+    const ownerField = messageEmbed.data.fields.find((f) => f.name === 'Reported By');
 
     if (!ownerField.value.includes(interaction.user.id)) {
-      replyEmbed
-        .setDescription(`🔴 ERROR: You cannot use this button.`)
-        .setColor("Red");
+      replyEmbed.setDescription(`🔴 ERROR: You cannot use this button.`).setColor('Red');
 
       return await interaction.reply({
         embeds: [replyEmbed],
@@ -35,7 +24,7 @@ module.exports = {
       });
     }
 
-    messageEmbed.data.description = "";
+    messageEmbed.data.description = '';
 
     const sentMessage = await targetChannel.send({ embeds: [messageEmbed] });
 
@@ -51,8 +40,8 @@ module.exports = {
       const mediaMessages = oldMessages.filter((msg) =>
         msg.attachments.some(
           (attachment) =>
-            attachment.contentType?.startsWith("image/") ||
-            attachment.contentType?.startsWith("video/")
+            attachment.contentType?.startsWith('image/') ||
+            attachment.contentType?.startsWith('video/')
         )
       );
 
@@ -69,8 +58,8 @@ module.exports = {
       for (const [, msg] of mediaMessages) {
         for (const [, attachment] of msg.attachments) {
           if (
-            attachment.contentType?.startsWith("image/") ||
-            attachment.contentType?.startsWith("video/")
+            attachment.contentType?.startsWith('image/') ||
+            attachment.contentType?.startsWith('video/')
           ) {
             await newThread.send({ files: [attachment.url] });
           }
@@ -78,7 +67,7 @@ module.exports = {
       }
 
       newMessageEmbed.data.fields.find(
-        (f) => f.name === "Images/Video Proof"
+        (f) => f.name === 'Images/Video Proof'
       ).value = `📸 | ${newThread.id}`;
 
       await sentMessage.edit({ embeds: [newMessageEmbed] });
@@ -89,10 +78,8 @@ module.exports = {
     await interaction.message.delete();
 
     const replyEmbed = new EmbedBuilder()
-      .setDescription(
-        `You have confirmed the report. It was moved to ${targetChannel}.`
-      )
-      .setColor("Green");
+      .setDescription(`You have confirmed the report. It was moved to ${targetChannel}.`)
+      .setColor('Green');
 
     await interaction.editReply({ embeds: [replyEmbed] });
   },

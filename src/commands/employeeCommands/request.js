@@ -1,40 +1,36 @@
-const {
-  SlashCommandBuilder,
-  EmbedBuilder,
-  MessageFlags,
-} = require("discord.js");
+const { SlashCommandBuilder, MessageFlags } = require('discord.js');
 
-const commandsChannel = "1372559141071228998";
+const commandsChannel = '1372559141071228998';
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName("request")
-    .setDescription("Request something...")
+    .setName('request')
+    .setDescription('Request something...')
     .addSubcommand((subcommand) =>
       subcommand
-        .setName("authorization")
-        .setDescription("Request an authorization from the management.")
+        .setName('authorization')
+        .setDescription('Request an authorization from the management.')
         .addStringOption((option) =>
           option
-            .setName("option")
-            .setDescription("Select the request option.")
+            .setName('option')
+            .setDescription('Select the request option.')
             .setRequired(true)
             .setChoices([
               {
-                name: "⌛ Interim Duty Form",
-                value: "new_interim",
+                name: '⌛ Interim Duty Form',
+                value: 'new_interim',
               },
               {
-                name: "🔄 Shift Exchange Request",
-                value: "shift_xchange",
+                name: '🔄 Shift Exchange Request',
+                value: 'shift_xchange',
               },
               // {
               //   name: "🕙 Overtime Claim",
               //   value: "overtime",
               // },
               {
-                name: "🤧 Absence Authorization Request",
-                value: "absence",
+                name: '🤧 Absence Authorization Request',
+                value: 'absence',
               },
               // {
               //   name: "⏰ Tardiness Authorization Request",
@@ -45,69 +41,66 @@ module.exports = {
               //   value: "undertime",
               // },
               {
-                name: "💳 Payment",
-                value: "payment",
+                name: '💳 Payment',
+                value: 'payment',
               },
               {
-                name: "💰 Replenishment",
-                value: "replenishment",
+                name: '💰 Replenishment',
+                value: 'replenishment',
               },
             ])
         )
     )
     .addSubcommand((subcommand) =>
       subcommand
-        .setName("cash")
-        .setDescription("Request cash from Finance Department.")
+        .setName('cash')
+        .setDescription('Request cash from Finance Department.')
         .addStringOption((option) =>
           option
-            .setName("option")
-            .setDescription("Select the request option.")
+            .setName('option')
+            .setDescription('Select the request option.')
             .setRequired(true)
             .setChoices([
               {
-                name: "💸 Salaries and Wages",
-                value: "salaries_wages",
+                name: '💸 Salaries and Wages',
+                value: 'salaries_wages',
               },
               {
-                name: "💵 Cash Advance",
-                value: "cash_advance",
+                name: '💵 Cash Advance',
+                value: 'cash_advance',
               },
               {
-                name: "💳 Expense Reimbursement",
-                value: "expense_reimbursement",
+                name: '💳 Expense Reimbursement',
+                value: 'expense_reimbursement',
               },
               {
-                name: "💰 Training Allowance",
-                value: "training_allowance",
+                name: '💰 Training Allowance',
+                value: 'training_allowance',
               },
               {
-                name: "🚌 Transport Allowance",
-                value: "transport_allowance",
+                name: '🚌 Transport Allowance',
+                value: 'transport_allowance',
               },
               {
-                name: "📥 Cash Deposit",
-                value: "cash_deposit",
+                name: '📥 Cash Deposit',
+                value: 'cash_deposit',
               },
             ])
         )
         .addAttachmentOption((option) =>
           option
-            .setName("attachment")
-            .setDescription("Add some optional attachment.")
+            .setName('attachment')
+            .setDescription('Add some optional attachment.')
             .setRequired(false)
         )
     )
     .addSubcommand((subcommand) =>
-      subcommand
-        .setName("signatories")
-        .setDescription("Request a signatories from the management.")
+      subcommand.setName('signatories').setDescription('Request a signatories from the management.')
     ),
   async execute(interaction, client) {
     if (interaction.channel.id !== commandsChannel) {
       return await interaction.reply({
-        content:
-          "This command can only be used in the <#1372559141071228998> channel.",
+        content: 'This command can only be used in the <#1372559141071228998> channel.',
         flags: MessageFlags.Ephemeral,
       });
     }
@@ -115,16 +108,16 @@ module.exports = {
     const subcommand = interaction.options.getSubcommand();
 
     switch (subcommand) {
-      case "authorization":
-        const authOptions = interaction.options.getString("option");
+      case 'authorization':
+        const authOptions = interaction.options.getString('option');
         await runAuthorizationsCommand(interaction, client, authOptions);
         break;
 
-      case "cash":
+      case 'cash':
         await runCashRequestsCommand(interaction, client);
         break;
 
-      case "signatories":
+      case 'signatories':
         await runSignatoriesCommand(interaction, client);
         break;
 
@@ -135,39 +128,31 @@ module.exports = {
 };
 
 async function runAuthorizationsCommand(interaction, client, option) {
-  const authRequests = ["absence", "tardiness", "undertime"];
-  const financeRequests = ["payment", "replenishment"];
+  const authRequests = ['absence', 'tardiness', 'undertime'];
+  const financeRequests = ['payment', 'replenishment'];
 
   if (financeRequests.includes(option)) {
-    return await client.commands
-      .get("finance_request")
-      .execute(interaction, client, option);
+    return await client.commands.get('finance_request').execute(interaction, client, option);
   } else if (authRequests.includes(option)) {
-    return await client.commands
-      .get("auth_request")
-      .execute(interaction, client, option);
+    return await client.commands.get('auth_request').execute(interaction, client, option);
   } else {
     return await client.commands.get(option)?.execute(interaction, client);
   }
 }
 
 async function runCashRequestsCommand(interaction, client) {
-  const opt = interaction.options.getString("option");
-  const attachment = interaction.options.getAttachment("attachment");
+  const opt = interaction.options.getString('option');
+  const attachment = interaction.options.getAttachment('attachment');
 
-  if (opt === "cash_deposit") {
+  if (opt === 'cash_deposit') {
     return await client.commands
-      .get("cash_deposit_request")
+      .get('cash_deposit_request')
       .execute(interaction, client, attachment);
   } else {
-    return await client.commands
-      .get("cash_request")
-      .execute(interaction, client, attachment);
+    return await client.commands.get('cash_request').execute(interaction, client, attachment);
   }
 }
 
 async function runSignatoriesCommand(interaction, client) {
-  return await client.commands
-    .get("signatories_request")
-    .execute(interaction, client);
+  return await client.commands.get('signatories_request').execute(interaction, client);
 }

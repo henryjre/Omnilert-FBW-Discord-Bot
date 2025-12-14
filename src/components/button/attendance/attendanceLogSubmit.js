@@ -1,11 +1,6 @@
-const {
-  ActionRowBuilder,
-  MessageFlags,
-  ButtonBuilder,
-  ButtonStyle,
-} = require("discord.js");
+const { ActionRowBuilder, MessageFlags, ButtonBuilder, ButtonStyle } = require('discord.js');
 
-const hrRoleId = "1314815153421680640";
+const hrRoleId = '1314815153421680640';
 
 module.exports = {
   data: {
@@ -26,9 +21,7 @@ module.exports = {
     }
 
     if (mentionedRole) {
-      const doesNotHaveRole = !interaction.member.roles.cache.has(
-        mentionedRole.id
-      );
+      const doesNotHaveRole = !interaction.member.roles.cache.has(mentionedRole.id);
       if (doesNotHaveRole) {
         return await interaction.reply({
           content: `🔴 ERROR: You cannot use this button.`,
@@ -42,13 +35,13 @@ module.exports = {
     const messageEmbed = interaction.message.embeds[0];
 
     const approve = new ButtonBuilder()
-      .setCustomId("attendanceLogApprove")
-      .setLabel("Approve")
+      .setCustomId('attendanceLogApprove')
+      .setLabel('Approve')
       .setStyle(ButtonStyle.Success);
 
     const reject = new ButtonBuilder()
-      .setCustomId("attendanceLogReject")
-      .setLabel("Reject")
+      .setCustomId('attendanceLogReject')
+      .setLabel('Reject')
       .setStyle(ButtonStyle.Danger);
 
     const buttonRow = new ActionRowBuilder().addComponents(approve, reject);

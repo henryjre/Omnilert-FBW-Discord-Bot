@@ -1,10 +1,4 @@
-const {
-  ActionRowBuilder,
-  MessageFlags,
-  EmbedBuilder,
-  ButtonStyle,
-  ButtonBuilder,
-} = require("discord.js");
+const { MessageFlags, EmbedBuilder } = require('discord.js');
 
 module.exports = {
   data: {
@@ -15,24 +9,20 @@ module.exports = {
     let messageEmbed = interaction.message.embeds[0];
 
     const ownerFieldNames = [
-      "Assigned Name",
-      "Employee Name",
-      "Notification By",
-      "Reported By",
-      "Requested By",
-      "Submitted By",
+      'Assigned Name',
+      'Employee Name',
+      'Notification By',
+      'Reported By',
+      'Requested By',
+      'Submitted By',
     ];
 
-    const ownerField = messageEmbed.data.fields.find((f) =>
-      ownerFieldNames.includes(f.name)
-    );
+    const ownerField = messageEmbed.data.fields.find((f) => ownerFieldNames.includes(f.name));
 
     const replyEmbed = new EmbedBuilder();
 
     if (!ownerField.value.includes(interaction.user.id)) {
-      replyEmbed
-        .setDescription(`🔴 ERROR: You cannot use this button.`)
-        .setColor("Red");
+      replyEmbed.setDescription(`🔴 ERROR: You cannot use this button.`).setColor('Red');
 
       return await interaction.editReply({
         embeds: [replyEmbed],
@@ -47,7 +37,7 @@ module.exports = {
 
     await interaction.message.delete();
 
-    replyEmbed.setDescription(`You cancelled the request.`).setColor("Red");
+    replyEmbed.setDescription(`You cancelled the request.`).setColor('Red');
 
     await interaction.editReply({ embeds: [replyEmbed] });
   },

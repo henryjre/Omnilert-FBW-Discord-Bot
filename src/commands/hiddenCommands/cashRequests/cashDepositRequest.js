@@ -1,14 +1,14 @@
 const {
   SlashCommandBuilder,
   ModalBuilder,
-  ActionRowBuilder,
   TextInputBuilder,
   TextInputStyle,
   MessageFlags,
-} = require("discord.js");
+  LabelBuilder,
+} = require('discord.js');
 
 module.exports = {
-  data: new SlashCommandBuilder().setName("cash_deposit_request"),
+  data: new SlashCommandBuilder().setName('cash_deposit_request'),
   pushToArray: false,
   async execute(interaction, client, attachmentFile) {
     const modal = await buildModal(interaction);
@@ -17,8 +17,7 @@ module.exports = {
     const modalResponse = await interaction.awaitModalSubmit({
       filter: async (i) => {
         const isValid =
-          i.customId === `cdrModal_${interaction.id}` &&
-          i.user.id === interaction.user.id;
+          i.customId === `cdrModal_${interaction.id}` && i.user.id === interaction.user.id;
 
         if (!isValid) return false;
 
@@ -31,13 +30,13 @@ module.exports = {
     try {
       if (modalResponse.isModalSubmit()) {
         return await client.commands
-          .get("cdr_data")
+          .get('cdr_data')
           .execute(interaction, client, modalResponse, attachmentFile);
       }
     } catch (error) {
       console.log(error);
       await interaction.followUp({
-        content: "❌ An error occurred while processing your request.",
+        content: '❌ An error occurred while processing your request.',
         flags: MessageFlags.Ephemeral,
       });
     }
@@ -51,56 +50,59 @@ async function buildModal(interaction) {
 
   const firstInput = new TextInputBuilder()
     .setCustomId(`dateInput`)
-    .setLabel(`📆 Date`)
     .setStyle(TextInputStyle.Short)
-    .setPlaceholder("Enter the date of the request.")
     .setRequired(true)
     .setMaxLength(100);
 
+  const firstLabel = new LabelBuilder()
+    .setLabel('📆 Date')
+    .setDescription('Enter the date of the request.')
+    .setTextInputComponent(firstInput);
+
   const secondInput = new TextInputBuilder()
     .setCustomId(`branchInput`)
-    .setLabel(`🛒 Branch`)
     .setStyle(TextInputStyle.Short)
     .setMaxLength(100)
-    .setPlaceholder("Enter the store branch.")
     .setRequired(true);
+
+  const secondLabel = new LabelBuilder()
+    .setLabel('🛒 Branch')
+    .setDescription('Enter the store branch.')
+    .setTextInputComponent(secondInput);
 
   const thirdInput = new TextInputBuilder()
     .setCustomId(`employeesInput`)
-    .setLabel(`👤 Employees on Duty`)
     .setStyle(TextInputStyle.Paragraph)
     .setMaxLength(1000)
-    .setPlaceholder("Enter the name of the employees on duty.")
     .setRequired(true);
+
+  const thirdLabel = new LabelBuilder()
+    .setLabel('👤 Employees on Duty')
+    .setDescription('Enter the name of the employees on duty.')
+    .setTextInputComponent(thirdInput);
 
   const fourthInput = new TextInputBuilder()
     .setCustomId(`reasonInput`)
-    .setLabel(`❓ Reason`)
     .setStyle(TextInputStyle.Paragraph)
     .setMaxLength(1000)
-    .setPlaceholder("Enter the reason for the deposit request.")
     .setRequired(true);
+
+  const fourthLabel = new LabelBuilder()
+    .setLabel('❓ Reason')
+    .setDescription('Enter the reason for the deposit request.')
+    .setTextInputComponent(fourthInput);
 
   const fifthInput = new TextInputBuilder()
     .setCustomId(`amountInput`)
-    .setLabel(`💵 Amount`)
     .setStyle(TextInputStyle.Short)
     .setMaxLength(100)
-    .setPlaceholder("Enter the requested deposit amount.")
     .setRequired(true);
 
-  const firstActionRow = new ActionRowBuilder().addComponents(firstInput);
-  const secondActionRow = new ActionRowBuilder().addComponents(secondInput);
-  const thirdActionRow = new ActionRowBuilder().addComponents(fifthInput);
-  const fourthActionRow = new ActionRowBuilder().addComponents(thirdInput);
-  const fifthActionRow = new ActionRowBuilder().addComponents(fourthInput);
+  const fifthLabel = new LabelBuilder()
+    .setLabel('💵 Amount')
+    .setDescription('Enter the requested deposit amount.')
+    .setTextInputComponent(fifthInput);
 
-  modal.addComponents(
-    firstActionRow,
-    secondActionRow,
-    thirdActionRow,
-    fourthActionRow,
-    fifthActionRow
-  );
+  modal.addLabelComponents(firstLabel, secondLabel, thirdLabel, fourthLabel, fifthLabel);
   return modal;
 }

@@ -1,11 +1,4 @@
-const {
-  ActionRowBuilder,
-  MessageFlags,
-  ChannelType,
-  ButtonBuilder,
-  ButtonStyle,
-  EmbedBuilder
-} = require('discord.js');
+const { MessageFlags, EmbedBuilder } = require('discord.js');
 
 const vnrCompletedChannelId = '1424951554204635237';
 
@@ -13,7 +6,7 @@ const { editVnrStatus } = require('../../../functions/code/repeatFunctions.js');
 
 module.exports = {
   data: {
-    name: `vnrCompleted`
+    name: `vnrCompleted`,
   },
   async execute(interaction, client) {
     const mentionedUser = interaction.message.mentions?.users?.first() || null;
@@ -24,7 +17,7 @@ module.exports = {
       if (isNotMentionedUser) {
         return await interaction.reply({
           content: `🔴 ERROR: You cannot use this button.`,
-          flags: MessageFlags.Ephemeral
+          flags: MessageFlags.Ephemeral,
         });
       }
     }
@@ -34,7 +27,7 @@ module.exports = {
       if (doesNotHaveRole) {
         return await interaction.reply({
           content: `🔴 ERROR: You cannot use this button.`,
-          flags: MessageFlags.Ephemeral
+          flags: MessageFlags.Ephemeral,
         });
       }
     }
@@ -54,12 +47,12 @@ module.exports = {
     messageEmbed.data.footer.text += `\nCompleted By: ${confirmedBy}`;
     messageEmbed.data.fields.push({
       name: 'Disciplinary Meeting Thread',
-      value: interaction.channel.toString()
+      value: interaction.channel.toString(),
     });
 
     const vnrThreadMessage = await vnrCompletedChannel.send({
       embeds: allEmbeds,
-      files: messageAttachments
+      files: messageAttachments,
     });
 
     await editVnrStatus(messageEmbed, '✅ Completed', vnrThreadMessage.url, client);
@@ -70,11 +63,11 @@ module.exports = {
 
     await interaction.message.edit({
       content: '',
-      components: []
+      components: [],
     });
 
     await interaction.editReply({
-      embeds: [replyEmbed]
+      embeds: [replyEmbed],
     });
 
     if (interaction.channel.isThread()) {
@@ -90,5 +83,5 @@ module.exports = {
         console.log('Error deleting thread or starter message:', threadError);
       }
     }
-  }
+  },
 };

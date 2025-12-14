@@ -1,9 +1,9 @@
 const {
-  ActionRowBuilder,
   MessageFlags,
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
+  LabelBuilder,
 } = require('discord.js');
 
 module.exports = {
@@ -25,24 +25,28 @@ module.exports = {
 
     const firstInput = new TextInputBuilder()
       .setCustomId('vnrDescriptionInput')
-      .setLabel(`Brief Description`)
       .setStyle(TextInputStyle.Paragraph)
-      .setPlaceholder('Explain the description of the violation.')
       .setMaxLength(1000)
       .setRequired(true);
 
+    const firstLabel = new LabelBuilder()
+      .setLabel('Brief Description')
+      .setDescription('Explain the description of the violation.')
+      .setTextInputComponent(firstInput);
+
     const secondInput = new TextInputBuilder()
       .setCustomId('messageIdInput')
-      .setLabel(`Message ID (DO NOT CHANGE)`)
       .setStyle(TextInputStyle.Short)
       .setMaxLength(100)
       .setValue(interaction.message.id)
       .setRequired(true);
 
-    const firstActionRow = new ActionRowBuilder().addComponents(firstInput);
-    const secondActionRow = new ActionRowBuilder().addComponents(secondInput);
+    const secondLabel = new LabelBuilder()
+      .setLabel('Message ID')
+      .setDescription('DO NOT CHANGE THIS')
+      .setTextInputComponent(secondInput);
 
-    modal.addComponents(firstActionRow, secondActionRow);
+    modal.addLabelComponents(firstLabel, secondLabel);
 
     await interaction.showModal(modal);
   },

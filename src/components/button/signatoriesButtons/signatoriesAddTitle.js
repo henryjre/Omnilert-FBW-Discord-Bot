@@ -9,7 +9,8 @@ const {
   ButtonBuilder,
   ButtonStyle,
   MessageFlags,
-} = require("discord.js");
+  LabelBuilder,
+} = require('discord.js');
 
 module.exports = {
   data: {
@@ -23,12 +24,10 @@ module.exports = {
 
     if (
       !messageEmbed.data.fields
-        .find((f) => f.name === "Prepared By")
+        .find((f) => f.name === 'Prepared By')
         .value.includes(interaction.user.id)
     ) {
-      replyEmbed
-        .setDescription(`🔴 ERROR: You cannot use this menu.`)
-        .setColor("Red");
+      replyEmbed.setDescription(`🔴 ERROR: You cannot use this menu.`).setColor('Red');
 
       return await interaction.editReply({ embeds: [replyEmbed] });
     }
@@ -39,14 +38,16 @@ module.exports = {
 
     const details = new TextInputBuilder()
       .setCustomId(`signatoriesTitleInput`)
-      .setLabel(`Signatory Title`)
-      .setPlaceholder(`Insert the signatory title.`)
       .setMaxLength(100)
       .setStyle(TextInputStyle.Short)
       .setRequired(true);
 
-    const firstRow = new ActionRowBuilder().addComponents(details);
-    modal.addComponents(firstRow);
+    const label = new LabelBuilder()
+      .setLabel('Signatory Title')
+      .setDescription('Insert the signatory title here.')
+      .setTextInputComponent(details);
+
+    modal.addLabelComponents(label);
     await interaction.showModal(modal);
 
     const modalResponse = await interaction.awaitModalSubmit({
@@ -65,9 +66,7 @@ module.exports = {
 
     try {
       if (modalResponse.isModalSubmit()) {
-        const signatoryTitle = modalResponse.fields.getTextInputValue(
-          "signatoriesTitleInput"
-        );
+        const signatoryTitle = modalResponse.fields.getTextInputValue('signatoriesTitleInput');
 
         messageEmbed.data.description = `## ${signatoryTitle}`;
 
@@ -76,20 +75,16 @@ module.exports = {
         const embedFields = messageEmbed.data.fields;
         if (embedFields.length > 1) {
           const submitButtonRow = messageComponents.find((row) =>
-            row.components.some(
-              (component) => component.customId === "signatoriesSubmit"
-            )
+            row.components.some((component) => component.customId === 'signatoriesSubmit')
           );
 
           if (submitButtonRow) {
             const submitButtonIndex = submitButtonRow.components.findIndex(
-              (component) => component.customId === "signatoriesSubmit"
+              (component) => component.customId === 'signatoriesSubmit'
             );
 
             if (submitButtonIndex !== -1) {
-              submitButtonRow.components[
-                submitButtonIndex
-              ].data.disabled = false;
+              submitButtonRow.components[submitButtonIndex].data.disabled = false;
             }
           }
         }

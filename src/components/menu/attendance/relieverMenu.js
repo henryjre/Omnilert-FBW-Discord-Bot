@@ -1,15 +1,8 @@
-const {
-  EmbedBuilder,
-  MessageFlags,
-  ButtonBuilder,
-  ActionRowBuilder,
-  ButtonStyle,
-  StringSelectMenuBuilder
-} = require('discord.js');
+const { MessageFlags, ButtonBuilder, ActionRowBuilder, ButtonStyle } = require('discord.js');
 
 module.exports = {
   data: {
-    name: `relieverMenu`
+    name: `relieverMenu`,
   },
   async execute(interaction, client) {
     const mentionedUser = interaction.message.mentions?.users?.first() || null;
@@ -20,7 +13,7 @@ module.exports = {
       if (isNotMentionedUser) {
         return await interaction.reply({
           content: `🔴 ERROR: You cannot use this menu.`,
-          flags: MessageFlags.Ephemeral
+          flags: MessageFlags.Ephemeral,
         });
       }
     }
@@ -30,7 +23,7 @@ module.exports = {
       if (doesNotHaveRole) {
         return await interaction.reply({
           content: `🔴 ERROR: You cannot use this menu.`,
-          flags: MessageFlags.Ephemeral
+          flags: MessageFlags.Ephemeral,
         });
       }
     }
@@ -45,7 +38,7 @@ module.exports = {
     if (selectedEmployee === interaction.user.id) {
       return await interaction.followUp({
         content: `🔴 ERROR: You cannot select yourself as the reliever.`,
-        flags: MessageFlags.Ephemeral
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -58,7 +51,7 @@ module.exports = {
     } else {
       messageEmbed.data.fields.push({
         name: 'Reliever',
-        value: `🤝 | ${formattedEmployee}`
+        value: `🤝 | ${formattedEmployee}`,
       });
     }
 
@@ -83,14 +76,14 @@ module.exports = {
       await interaction.message.edit({
         content: `${interaction.user.toString()}, reliever selected. Click the **Notify Reliever** button to notify the reliever.`,
         embeds: allEmbeds,
-        components: messageComponents
+        components: messageComponents,
       });
     } catch (error) {
       console.log(error);
       await interaction.followUp({
         content: `🔴 ERROR: An error occurred while selecting employees on duty. Please try again.`,
-        flags: MessageFlags.Ephemeral
+        flags: MessageFlags.Ephemeral,
       });
     }
-  }
+  },
 };

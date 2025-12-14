@@ -5,9 +5,10 @@ const {
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
-} = require("discord.js");
+  LabelBuilder,
+} = require('discord.js');
 
-const signatoriesChannel = "1392386510858227884";
+const signatoriesChannel = '1392386510858227884';
 
 module.exports = {
   data: {
@@ -21,43 +22,30 @@ module.exports = {
 
     const files = interaction.message.attachments.map((a) => a.url);
 
-    const mentionable = messageEmbed.data.fields.find((f) =>
-      f.name.includes("Prepared By")
-    );
+    const mentionable = messageEmbed.data.fields.find((f) => f.name.includes('Prepared By'));
 
-    const signingUser = messageEmbed.data.fields.find((f) =>
-      f.value.includes("⌛")
-    );
+    const signingUser = messageEmbed.data.fields.find((f) => f.value.includes('⌛'));
 
-    if (signingUser.value.includes("To be signed")) {
-      const fieldValue = signingUser.value.split(" - ");
+    if (signingUser.value.includes('To be signed')) {
+      const fieldValue = signingUser.value.split(' - ');
 
       const roleMention = fieldValue[1];
-      const roleId = roleMention.replace(/[<@&>]/g, "");
+      const roleId = roleMention.replace(/[<@&>]/g, '');
 
-      if (
-        !interaction.guild.members.cache
-          .get(interaction.user.id)
-          .roles.cache.has(roleId)
-      ) {
-        replyEmbed
-          .setDescription(`🔴 ERROR: You cannot sign this request.`)
-          .setColor("Red");
+      if (!interaction.guild.members.cache.get(interaction.user.id).roles.cache.has(roleId)) {
+        replyEmbed.setDescription(`🔴 ERROR: You cannot sign this request.`).setColor('Red');
 
         return await interaction.editReply({ embeds: [replyEmbed] });
       }
     } else {
       if (!signingUser.value.includes(interaction.user.id)) {
-        replyEmbed
-          .setDescription(`🔴 ERROR: You cannot sign this request.`)
-          .setColor("Red");
+        replyEmbed.setDescription(`🔴 ERROR: You cannot sign this request.`).setColor('Red');
 
         return await interaction.editReply({ embeds: [replyEmbed] });
       }
     }
 
-    const signedUser =
-      interaction.member.nickname.replace(/^[🔴🟢]\s*/, "") + " - Rejected ❌";
+    const signedUser = interaction.member.nickname.replace(/^[🔴🟢]\s*/, '') + ' - Rejected ❌';
     signingUser.value = signedUser;
 
     const modal = new ModalBuilder()
@@ -66,21 +54,22 @@ module.exports = {
 
     const details = new TextInputBuilder()
       .setCustomId(`additionalNotes`)
-      .setLabel(`Reason for Rejection`)
-      .setPlaceholder(`Insert the rejection details here.`)
       .setMaxLength(1000)
       .setStyle(TextInputStyle.Paragraph)
       .setRequired(true);
 
-    const firstRow = new ActionRowBuilder().addComponents(details);
-    modal.addComponents(firstRow);
+    const label = new LabelBuilder()
+      .setLabel('Reason for Rejection')
+      .setDescription('Insert the rejection details here.')
+      .setTextInputComponent(details);
+
+    modal.addLabelComponents(label);
     await interaction.showModal(modal);
 
     const modalResponse = await interaction.awaitModalSubmit({
       filter: async (i) => {
         const f =
-          i.customId === `rejectRequest_${interaction.id}` &&
-          i.user.id === interaction.user.id;
+          i.customId === `rejectRequest_${interaction.id}` && i.user.id === interaction.user.id;
 
         if (f) {
           await i.deferUpdate();
@@ -92,13 +81,12 @@ module.exports = {
 
     try {
       if (modalResponse.isModalSubmit()) {
-        const details =
-          modalResponse.fields.getTextInputValue("additionalNotes");
+        const details = modalResponse.fields.getTextInputValue('additionalNotes');
 
         messageEmbed.data.footer = {
           text: `Returned By: ${interaction.member.nickname.replace(
             /^[🔴🟢]\s*/,
-            ""
+            ''
           )}\nReason: ${details}`,
         };
 
@@ -107,7 +95,7 @@ module.exports = {
         await client.channels.cache
           .get(signatoriesChannel)
           .send({
-            content: mentionable.value.replace(/(\n|\u200b)/g, ""),
+            content: mentionable.value.replace(/(\n|\u200b)/g, ''),
             embeds: allEmbeds,
             files: files,
           })

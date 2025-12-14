@@ -5,9 +5,9 @@ const {
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
-} = require("discord.js");
+} = require('discord.js');
 
-const managementRole = "1314413671245676685";
+const managementRole = '1314413671245676685';
 
 module.exports = {
   data: {
@@ -20,9 +20,7 @@ module.exports = {
     const replyEmbed = new EmbedBuilder();
 
     if (!interaction.member.roles.cache.has(managementRole)) {
-      replyEmbed
-        .setDescription(`🔴 ERROR: You cannot use this button.`)
-        .setColor("Red");
+      replyEmbed.setDescription(`🔴 ERROR: You cannot use this button.`).setColor('Red');
 
       return await interaction.reply({
         embeds: [replyEmbed],
@@ -36,21 +34,20 @@ module.exports = {
 
     const details = new TextInputBuilder()
       .setCustomId(`auditReason`)
-      .setLabel(`Audit Opinion`)
       .setPlaceholder(`Insert the audit opinion here.`)
       .setMaxLength(1000)
       .setStyle(TextInputStyle.Paragraph)
       .setRequired(true);
 
-    const firstRow = new ActionRowBuilder().addComponents(details);
-    modal.addComponents(firstRow);
+    const label = new LabelBuilder().setLabel(`Audit Opinion`).setTextInputComponent(details);
+
+    modal.addLabelComponents(label);
     await interaction.showModal(modal);
 
     const modalResponse = await interaction.awaitModalSubmit({
       filter: async (i) => {
         const f =
-          i.customId === `orderAudit_${interaction.id}` &&
-          i.user.id === interaction.user.id;
+          i.customId === `orderAudit_${interaction.id}` && i.user.id === interaction.user.id;
 
         if (f) {
           await i.deferUpdate();
@@ -62,9 +59,9 @@ module.exports = {
 
     try {
       if (modalResponse.isModalSubmit()) {
-        const details = modalResponse.fields.getTextInputValue("auditReason");
+        const details = modalResponse.fields.getTextInputValue('auditReason');
 
-        const auditor = interaction.member.nickname.replace(/^[🔴🟢]\s*/, "");
+        const auditor = interaction.member.nickname.replace(/^[🔴🟢]\s*/, '');
 
         if (messageEmbed.data.footer) {
           messageEmbed.data.footer = {

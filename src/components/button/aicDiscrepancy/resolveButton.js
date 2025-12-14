@@ -1,13 +1,13 @@
 const {
-  ActionRowBuilder,
   MessageFlags,
   EmbedBuilder,
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
-} = require("discord.js");
+  LabelBuilder,
+} = require('discord.js');
 
-const inventoryRole = "1336990783341068348";
+const inventoryRole = '1336990783341068348';
 
 module.exports = {
   data: {
@@ -19,9 +19,7 @@ module.exports = {
     const replyEmbed = new EmbedBuilder();
 
     if (!interaction.member.roles.cache.has(inventoryRole)) {
-      replyEmbed
-        .setDescription(`🔴 ERROR: You cannot use this button.`)
-        .setColor("Red");
+      replyEmbed.setDescription(`🔴 ERROR: You cannot use this button.`).setColor('Red');
 
       return await interaction.reply({
         embeds: [replyEmbed],
@@ -35,21 +33,22 @@ module.exports = {
 
     const details = new TextInputBuilder()
       .setCustomId(`resolution`)
-      .setLabel(`Resolution`)
-      .setPlaceholder(`Add the resolution details.`)
       .setMaxLength(1000)
       .setStyle(TextInputStyle.Paragraph)
       .setRequired(true);
 
-    const firstRow = new ActionRowBuilder().addComponents(details);
-    modal.addComponents(firstRow);
+    const detailsLabel = new LabelBuilder()
+      .setLabel('Resolution')
+      .setDescription('Add the resolution details.')
+      .setTextInputComponent(details);
+
+    modal.addLabelComponents(detailsLabel);
     await interaction.showModal(modal);
 
     const modalResponse = await interaction.awaitModalSubmit({
       filter: async (i) => {
         const f =
-          i.customId === `aicResolution_${interaction.id}` &&
-          i.user.id === interaction.user.id;
+          i.customId === `aicResolution_${interaction.id}` && i.user.id === interaction.user.id;
 
         if (f) {
           await i.deferUpdate();
@@ -61,18 +60,17 @@ module.exports = {
 
     try {
       if (modalResponse.isModalSubmit()) {
-        const details = modalResponse.fields.getTextInputValue("resolution");
+        const details = modalResponse.fields.getTextInputValue('resolution');
 
         messageEmbed.data.fields.push({
-          name: "Resolution",
+          name: 'Resolution',
           value: `*${details}*`,
         });
 
         messageEmbed.data.footer = {
           icon_url: interaction.user.displayAvatarURL(),
           text: `Resolved By: ${
-            interaction.member?.nickname.replace(/^[🔴🟢]\s*/, "") ||
-            interaction.user.globalName
+            interaction.member?.nickname.replace(/^[🔴🟢]\s*/, '') || interaction.user.globalName
           }`,
         };
 
