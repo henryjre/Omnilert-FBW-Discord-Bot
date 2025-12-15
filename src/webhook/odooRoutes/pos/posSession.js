@@ -5,7 +5,7 @@ const {
   ButtonStyle,
   ActionRowBuilder,
   StringSelectMenuBuilder,
-  StringSelectMenuOptionBuilder
+  StringSelectMenuOptionBuilder,
 } = require('discord.js');
 const moment = require('moment-timezone');
 
@@ -15,7 +15,7 @@ const pesoFormatter = new Intl.NumberFormat('en-PH', {
   style: 'currency',
   currency: 'PHP',
   maximumFractionDigits: 2,
-  minimumFractionDigits: 2
+  minimumFractionDigits: 2,
 });
 
 const { updateClosingPcfBalance } = require('../../../odooRpc.js');
@@ -31,7 +31,7 @@ const sessionOpen = async (req, res) => {
     opening_notes,
     x_company_name,
     company_id,
-    x_closing_pcf = 0
+    x_closing_pcf = 0,
   } = req.body;
 
   console.log(req.body);
@@ -62,13 +62,13 @@ const sessionOpen = async (req, res) => {
   // sending the session name as a message content
   const sessionMessage = await sessionChannel.send({
     content: `# ${threadName}`,
-    components: [auditButtonRow]
+    components: [auditButtonRow],
   });
 
   // creating a thread for the opened session
   const sessionThread = await sessionMessage.startThread({
     name: threadName,
-    type: ChannelType.PublicThread
+    type: ChannelType.PublicThread,
   });
 
   //creating an embed for the session
@@ -78,22 +78,22 @@ const sessionOpen = async (req, res) => {
     { name: 'Opening Date', value: getCurrentFormattedDate() },
     {
       name: 'Opening Cash Counted (ODOO)',
-      value: pesoStartBal
+      value: pesoStartBal,
     },
     {
       name: 'Opening Cash Expected (ODOO)',
-      value: pesoEndBal
+      value: pesoEndBal,
     },
     {
       name: 'Opening Cash Difference (ODOO)',
-      value: cashDiffBal
-    }
+      value: cashDiffBal,
+    },
   ];
 
   if (opening_notes && opening_notes.length > 0) {
     fields.push({
       name: 'Opening Notes',
-      value: `*${opening_notes}*`
+      value: `*${opening_notes}*`,
     });
   }
 
@@ -108,23 +108,23 @@ const sessionOpen = async (req, res) => {
     { name: 'Session Name', value: display_name },
     {
       name: 'Opening Cash Expected (ODOO)',
-      value: pesoEndBal
+      value: pesoEndBal,
     },
     {
       name: 'Opening Cash Counted (Discord)',
-      value: '₱0.00'
+      value: '₱0.00',
     },
     {
       name: 'Opening Cash Difference (Discord)',
-      value: pesoFormatter.format(0 - cash_register_balance_end)
-    }
+      value: pesoFormatter.format(0 - cash_register_balance_end),
+    },
   ];
 
   const openingcashEmbed = new EmbedBuilder()
     .setDescription(`## 📝 Opening Change Fund Breakdown`)
     .setColor('Green')
     .setFooter({
-      text: 'Add change fund breakdown details by selecting the denomination below and inputting the amount.'
+      text: 'Add change fund breakdown details by selecting the denomination below and inputting the amount.',
     })
     .addFields(openingCashFields);
 
@@ -132,21 +132,21 @@ const sessionOpen = async (req, res) => {
     .setDescription(`## 💰 Opening PCF Breakdown`)
     .setColor('DarkGreen')
     .setFooter({
-      text: 'Add PCF breakdown details by selecting the denomination below and inputting the amount.'
+      text: 'Add PCF breakdown details by selecting the denomination below and inputting the amount.',
     })
     .addFields(
       { name: 'Session Name', value: display_name },
       {
         name: 'Opening PCF Expected',
-        value: pesoFormatter.format(x_closing_pcf)
+        value: pesoFormatter.format(x_closing_pcf),
       },
       {
         name: 'Opening PCF Counted',
-        value: '₱0.00'
+        value: '₱0.00',
       },
       {
         name: 'Opening PCF Difference',
-        value: pesoFormatter.format(0 - x_closing_pcf)
+        value: pesoFormatter.format(0 - x_closing_pcf),
       }
     );
 
@@ -172,7 +172,7 @@ const sessionOpen = async (req, res) => {
     { label: '₱20', id: '20' },
     { label: '₱10', id: '10' },
     { label: '₱5', id: '5' },
-    { label: '₱1', id: '1' }
+    { label: '₱1', id: '1' },
   ];
 
   const denomButtonRows = [];
@@ -194,31 +194,31 @@ const sessionOpen = async (req, res) => {
   const message = await verificationChannel.send({
     content: `<@&${department.role}>`,
     embeds: [openingcashEmbed],
-    components: [...denomButtonRows, buttonRow]
+    components: [...denomButtonRows, buttonRow],
   });
 
   const proofThread = await message.startThread({
     name: `CF Breakdown Proof - ${message.id}`,
-    type: ChannelType.PublicThread // Set to 'GuildPrivateThread' if only the user should see it
+    type: ChannelType.PublicThread, // Set to 'GuildPrivateThread' if only the user should see it
   });
 
   await proofThread.send({
-    content: `📸 **${department.role}, please upload the picture of the opening cash as proof here.**`
+    content: `## 📸 Upload the picture of the opening cash as proof here`,
   });
 
   const pcfMessage = await verificationChannel.send({
     content: `<@&${department.role}>`,
     embeds: [openingPcfEmbed],
-    components: [...denomButtonRows, buttonRow]
+    components: [...denomButtonRows, buttonRow],
   });
 
   const pcfProofThread = await pcfMessage.startThread({
     name: `PCF Breakdown Proof - ${pcfMessage.id}`,
-    type: ChannelType.PublicThread // Set to 'GuildPrivateThread' if only the user should see it
+    type: ChannelType.PublicThread, // Set to 'GuildPrivateThread' if only the user should see it
   });
 
   await pcfProofThread.send({
-    content: `📸 **${department.role}, please upload the picture of the opening PCF as proof here.**`
+    content: `## 📸 Upload the picture of the opening PCF as proof here`,
   });
 
   return res.status(200).json({ ok: true, message: 'Webhook received' });
@@ -247,7 +247,7 @@ const sessionClose = async (req, res) => {
       x_statement_lines,
       closing_notes,
       x_ispe_total = 0,
-      x_opening_pcf = 0
+      x_opening_pcf = 0,
     } = req.body;
 
     const department = departments.find((d) => d.id === company_id);
@@ -287,7 +287,7 @@ const sessionClose = async (req, res) => {
             acc[key] = {
               id: key,
               name: item.product_name,
-              amount: 0
+              amount: 0,
             };
           }
           acc[key].amount += Math.abs(item.price_unit);
@@ -338,53 +338,53 @@ const sessionClose = async (req, res) => {
       { name: 'Closing Date', value: getCurrentFormattedDate() },
       {
         name: 'Closing Cash Counted',
-        value: pesoEndBalReal
+        value: pesoEndBalReal,
       },
       {
         name: 'Closing Cash Expected',
-        value: pesoEndBal
+        value: pesoEndBal,
       },
       {
         name: 'Closing Cash Difference',
-        value: cashDiffBal
-      }
+        value: cashDiffBal,
+      },
     ];
 
     const salesReportFields = [
       {
         name: 'Gross Sales',
-        value: pesoFormatter.format(grossSales)
+        value: pesoFormatter.format(grossSales),
       },
       {
         name: 'PWD and Senior Discount',
-        value: pwdDiscount ? pesoFormatter.format(pwdDiscount.amount) : pesoFormatter.format(0)
+        value: pwdDiscount ? pesoFormatter.format(pwdDiscount.amount) : pesoFormatter.format(0),
       },
       {
         name: 'XOPB',
-        value: xopb ? pesoFormatter.format(xopb.amount) : pesoFormatter.format(0)
+        value: xopb ? pesoFormatter.format(xopb.amount) : pesoFormatter.format(0),
       },
       {
         name: 'GC100',
-        value: gc100 ? pesoFormatter.format(gc100.amount) : pesoFormatter.format(0)
+        value: gc100 ? pesoFormatter.format(gc100.amount) : pesoFormatter.format(0),
       },
       {
         name: 'Free Chocolate Coupon',
         value: freeChocoCoupon
           ? pesoFormatter.format(freeChocoCoupon.amount)
-          : pesoFormatter.format(0)
+          : pesoFormatter.format(0),
       },
       {
         name: 'Token Pay',
-        value: tokenPay ? pesoFormatter.format(tokenPay.amount) : pesoFormatter.format(0)
+        value: tokenPay ? pesoFormatter.format(tokenPay.amount) : pesoFormatter.format(0),
       },
       {
         name: 'Refund Claims',
-        value: pesoFormatter.format(totalRefunds)
+        value: pesoFormatter.format(totalRefunds),
       },
       {
         name: 'Net Sales',
-        value: pesoFormatter.format(netSales)
-      }
+        value: pesoFormatter.format(netSales),
+      },
     ];
 
     const nonCashReportFields =
@@ -392,12 +392,12 @@ const sessionClose = async (req, res) => {
         ? [
             ...otherPayments.map((item) => ({
               name: item.payment_method_name,
-              value: pesoFormatter.format(item.amount)
+              value: pesoFormatter.format(item.amount),
             })),
             {
               name: 'Total Non-Cash Payments',
-              value: pesoFormatter.format(totalOtherPayments)
-            }
+              value: pesoFormatter.format(totalOtherPayments),
+            },
           ]
         : [];
 
@@ -409,7 +409,7 @@ const sessionClose = async (req, res) => {
             ? cashInOut.in
                 .map((item) => `> **${item.name}:** ${pesoFormatter.format(item.amount)}`)
                 .join('\n')
-            : 'No cash in found.'
+            : 'No cash in found.',
       },
       {
         name: 'Cash Out',
@@ -418,12 +418,12 @@ const sessionClose = async (req, res) => {
             ? cashInOut.out
                 .map((item) => `> **${item.name}:** ${pesoFormatter.format(item.amount)}`)
                 .join('\n')
-            : 'No cash out found.'
+            : 'No cash out found.',
       },
       {
         name: 'Cash Payments',
-        value: cashPayments ? pesoFormatter.format(cashPayments.amount) : pesoFormatter.format(0)
-      }
+        value: cashPayments ? pesoFormatter.format(cashPayments.amount) : pesoFormatter.format(0),
+      },
     ];
 
     const salesReportEmbed = new EmbedBuilder()
@@ -457,7 +457,7 @@ const sessionClose = async (req, res) => {
         new StringSelectMenuOptionBuilder().setLabel('⭐⭐').setValue('⭐⭐'),
         new StringSelectMenuOptionBuilder().setLabel('⭐⭐⭐').setValue('⭐⭐⭐'),
         new StringSelectMenuOptionBuilder().setLabel('⭐⭐⭐⭐').setValue('⭐⭐⭐⭐'),
-        new StringSelectMenuOptionBuilder().setLabel('⭐⭐⭐⭐⭐').setValue('⭐⭐⭐⭐⭐')
+        new StringSelectMenuOptionBuilder().setLabel('⭐⭐⭐⭐⭐').setValue('⭐⭐⭐⭐⭐'),
       ])
       .setMinValues(1)
       .setMaxValues(1)
@@ -473,19 +473,19 @@ const sessionClose = async (req, res) => {
 
     await posThread.send({
       embeds: [salesReportEmbed],
-      components: [menuRow]
+      components: [menuRow],
     });
     await posThread.send({
       embeds: [nonCashReportEmbed],
-      components: [menuRow]
+      components: [menuRow],
     });
     await posThread.send({
       embeds: [cashReportEmbed],
-      components: [menuRow]
+      components: [menuRow],
     });
     await posThread.send({
       embeds: [closingEmbed],
-      components: [menuRow]
+      components: [menuRow],
     });
 
     const totalPCfTopUp = netPcfTotal(cashInOut);
@@ -498,24 +498,24 @@ const sessionClose = async (req, res) => {
       .addFields([
         {
           name: 'Session Name',
-          value: display_name
+          value: display_name,
         },
         {
           name: 'Opening PCF Expected',
-          value: pesoFormatter.format(x_opening_pcf)
+          value: pesoFormatter.format(x_opening_pcf),
         },
         {
           name: 'Closing PCF Expected',
-          value: pesoFormatter.format(closingPcfExpected)
+          value: pesoFormatter.format(closingPcfExpected),
         },
         {
           name: 'Closing PCF Counted',
-          value: pesoFormatter.format(0)
+          value: pesoFormatter.format(0),
         },
         {
           name: 'Closing PCF Difference',
-          value: pesoFormatter.format(0 - closingPcfExpected)
-        }
+          value: pesoFormatter.format(0 - closingPcfExpected),
+        },
       ]);
 
     const denominations = [
@@ -527,7 +527,7 @@ const sessionClose = async (req, res) => {
       { label: '₱20', id: '20' },
       { label: '₱10', id: '10' },
       { label: '₱5', id: '5' },
-      { label: '₱1', id: '1' }
+      { label: '₱1', id: '1' },
     ];
 
     const denomButtonRows = [];
@@ -561,16 +561,16 @@ const sessionClose = async (req, res) => {
     const pcfMessage = await verificationChannel.send({
       content: `<@&${department.role}>`,
       embeds: [pcfEmbed],
-      components: [...denomButtonRows, pcfButtonRow]
+      components: [...denomButtonRows, pcfButtonRow],
     });
 
     const pcfThread = await pcfMessage.startThread({
       name: `PCF Report Proof - ${pcfMessage.id}`,
-      type: ChannelType.PublicThread
+      type: ChannelType.PublicThread,
     });
 
     await pcfThread.send({
-      content: `📸 **<@&${department.role}>, please upload the picture of the closing PCF here.**`
+      content: `📸 **<@&${department.role}>, please upload the picture of the closing PCF here.**`,
     });
 
     return res.status(200).json({ ok: true, message: 'Webhook received' });
@@ -590,7 +590,7 @@ const discountOrder = async (req, res) => {
     x_discord_id,
     x_order_lines,
     x_session_name,
-    company_id
+    company_id,
   } = req.body;
 
   const targetProductIds = [1032, 1033, 1034, 1353];
@@ -634,20 +634,20 @@ const discountOrder = async (req, res) => {
     { name: 'Order Date', value: orderDate },
     {
       name: 'Cashier',
-      value: cashier
+      value: cashier,
     },
     {
       name: 'Discord User',
-      value: x_discord_id ? `<@${x_discord_id}>` : 'No user found'
+      value: x_discord_id ? `<@${x_discord_id}>` : 'No user found',
     },
     {
       name: 'Products',
-      value: orderLinesMessage
+      value: orderLinesMessage,
     },
     {
       name: 'Order Total',
-      value: pesoFormatter.format(amount_total)
-    }
+      value: pesoFormatter.format(amount_total),
+    },
   ];
 
   const orderEmbed = new EmbedBuilder()
@@ -655,7 +655,7 @@ const discountOrder = async (req, res) => {
     .setColor('Yellow')
     .addFields(fields)
     .setFooter({
-      text: `Please send a photo as proof in the thread below this message and click "Confirm" to verify.`
+      text: `Please send a photo as proof in the thread below this message and click "Confirm" to verify.`,
     });
 
   const confirm = new ButtonBuilder()
@@ -673,16 +673,16 @@ const discountOrder = async (req, res) => {
   const orderDiscordMessage = await verificationChannel.send({
     content: mentionable,
     embeds: [orderEmbed],
-    components: [buttonRow]
+    components: [buttonRow],
   });
 
   const proofThread = await orderDiscordMessage.startThread({
     name: `Discount Proof - ${orderDiscordMessage.id}`,
-    type: ChannelType.PublicThread // Set to 'GuildPrivateThread' if only the user should see it
+    type: ChannelType.PublicThread, // Set to 'GuildPrivateThread' if only the user should see it
   });
 
   await proofThread.send({
-    content: `📸 **${mentionable}, please upload the PWD ID or captured image here as proof.**`
+    content: `📸 **${mentionable}, please upload the PWD ID or captured image here as proof.**`,
   });
 
   return res.status(200).json({ ok: true, message: 'Webhook received' });
@@ -699,7 +699,7 @@ const nonCashOrder = async (req, res) => {
     x_order_lines,
     x_session_name,
     company_id,
-    x_payments
+    x_payments,
   } = req.body;
 
   const payments = x_payments.filter((p) => p.name !== 'Cash');
@@ -745,24 +745,24 @@ const nonCashOrder = async (req, res) => {
     { name: 'Order Date', value: orderDate },
     {
       name: 'Cashier',
-      value: cashier
+      value: cashier,
     },
     {
       name: 'Discord User',
-      value: x_discord_id ? `<@${x_discord_id}>` : 'No user found'
+      value: x_discord_id ? `<@${x_discord_id}>` : 'No user found',
     },
     {
       name: 'Products',
-      value: orderLinesMessage
+      value: orderLinesMessage,
     },
     {
       name: 'Payments',
-      value: paymentMessage
+      value: paymentMessage,
     },
     {
       name: 'Order Total',
-      value: pesoFormatter.format(amount_total)
-    }
+      value: pesoFormatter.format(amount_total),
+    },
   ];
 
   const orderEmbed = new EmbedBuilder()
@@ -770,7 +770,7 @@ const nonCashOrder = async (req, res) => {
     .setColor('Grey')
     .addFields(fields)
     .setFooter({
-      text: `Please send the receipt in the thread below this message and click "Confirm" to verify.`
+      text: `Please send the receipt in the thread below this message and click "Confirm" to verify.`,
     });
 
   const confirm = new ButtonBuilder()
@@ -788,16 +788,16 @@ const nonCashOrder = async (req, res) => {
   const orderDiscordMessage = await verificationChannel.send({
     content: mentionable,
     embeds: [orderEmbed],
-    components: [buttonRow]
+    components: [buttonRow],
   });
 
   const proofThread = await orderDiscordMessage.startThread({
     name: `Receipt Proof - ${orderDiscordMessage.id}`,
-    type: ChannelType.PublicThread // Set to 'GuildPrivateThread' if only the user should see it
+    type: ChannelType.PublicThread, // Set to 'GuildPrivateThread' if only the user should see it
   });
 
   await proofThread.send({
-    content: `📸 **${mentionable}, please upload the PWD ID or captured image here as proof.**`
+    content: `📸 **${mentionable}, please upload the PWD ID or captured image here as proof.**`,
   });
 
   return res.status(200).json({ ok: true, message: 'Webhook received' });
@@ -813,7 +813,7 @@ const refundOrder = async (req, res) => {
     x_discord_id,
     x_order_lines,
     x_session_name,
-    company_id
+    company_id,
   } = req.body;
 
   const department = departments.find((d) => d.id === company_id);
@@ -850,20 +850,20 @@ const refundOrder = async (req, res) => {
     { name: 'Order Date', value: orderDate },
     {
       name: 'Cashier',
-      value: cashier
+      value: cashier,
     },
     {
       name: 'Discord User',
-      value: x_discord_id ? `<@${x_discord_id}>` : 'No user found'
+      value: x_discord_id ? `<@${x_discord_id}>` : 'No user found',
     },
     {
       name: 'Products',
-      value: orderLinesMessage
+      value: orderLinesMessage,
     },
     {
       name: 'Order Total',
-      value: pesoFormatter.format(amount_total)
-    }
+      value: pesoFormatter.format(amount_total),
+    },
   ];
 
   const orderEmbed = new EmbedBuilder()
@@ -871,7 +871,7 @@ const refundOrder = async (req, res) => {
     .setColor('Blue')
     .addFields(fields)
     .setFooter({
-      text: `Click the "Add Reason" button and explain the reason for refund.`
+      text: `Click the "Add Reason" button and explain the reason for refund.`,
     });
 
   const addReason = new ButtonBuilder()
@@ -884,7 +884,7 @@ const refundOrder = async (req, res) => {
   const orderDiscordMessage = await verificationChannel.send({
     content: mentionable,
     embeds: [orderEmbed],
-    components: [buttonRow]
+    components: [buttonRow],
   });
 
   return res.status(200).json({ ok: true, message: 'Webhook received' });
@@ -901,7 +901,7 @@ const tokenPayOrder = async (req, res) => {
     x_customer_discord_id,
     x_order_lines,
     x_session_name,
-    company_id
+    company_id,
   } = req.body;
 
   const department = departments.find((d) => d.id === company_id);
@@ -940,20 +940,20 @@ const tokenPayOrder = async (req, res) => {
     { name: 'Order Date', value: orderDate },
     {
       name: 'Cashier',
-      value: cashier
+      value: cashier,
     },
     {
       name: 'Customer',
-      value: x_customer_discord_id ? `<@${x_customer_discord_id}>` : 'No user found'
+      value: x_customer_discord_id ? `<@${x_customer_discord_id}>` : 'No user found',
     },
     {
       name: 'Products',
-      value: orderLinesMessage
+      value: orderLinesMessage,
     },
     {
       name: 'Order Total',
-      value: pesoFormatter.format(amount_total)
-    }
+      value: pesoFormatter.format(amount_total),
+    },
   ];
 
   const orderEmbed = new EmbedBuilder()
@@ -961,7 +961,7 @@ const tokenPayOrder = async (req, res) => {
     .setColor('Orange')
     .addFields(fields)
     .setFooter({
-      text: `Please send a photo as proof in the thread below this message and click "Confirm" to verify.`
+      text: `Please send a photo as proof in the thread below this message and click "Confirm" to verify.`,
     });
 
   const confirm = new ButtonBuilder()
@@ -978,16 +978,16 @@ const tokenPayOrder = async (req, res) => {
   const orderDiscordMessage = await verificationChannel.send({
     content: mentionable,
     embeds: [orderEmbed],
-    components: [buttonRow]
+    components: [buttonRow],
   });
 
   const proofThread = await orderDiscordMessage.startThread({
     name: `Token Pay Proof - ${orderDiscordMessage.id}`,
-    type: ChannelType.PublicThread // Set to 'GuildPrivateThread' if only the user should see it
+    type: ChannelType.PublicThread, // Set to 'GuildPrivateThread' if only the user should see it
   });
 
   await proofThread.send({
-    content: `📸 **${mentionable}, please upload the captured picture of ${customerMentionable} ordering here as proof.**`
+    content: `📸 **${mentionable}, please upload the captured picture of ${customerMentionable} ordering here as proof.**`,
   });
 
   return res.status(200).json({ ok: true, message: 'Webhook received' });
@@ -1001,7 +1001,7 @@ const ispeOrder = async (req, res) => {
     x_pos_session,
     company_id,
     x_order_line_details,
-    date_approve
+    date_approve,
   } = req.body;
 
   const department = departments.find((d) => d.id === company_id);
@@ -1033,12 +1033,12 @@ const ispeOrder = async (req, res) => {
     { name: 'Confirmation Date', value: orderDate },
     {
       name: 'Products',
-      value: orderLinesMessage
+      value: orderLinesMessage,
     },
     {
       name: 'Amount Total',
-      value: pesoFormatter.format(amount_total)
-    }
+      value: pesoFormatter.format(amount_total),
+    },
   ];
 
   const orderEmbed = new EmbedBuilder()
@@ -1047,7 +1047,7 @@ const ispeOrder = async (req, res) => {
     .setColor('White')
     .addFields(fields)
     .setFooter({
-      text: `Please send the receipts as proof in the thread below this message and click "Confirm" to verify.`
+      text: `Please send the receipts as proof in the thread below this message and click "Confirm" to verify.`,
     });
 
   const confirm = new ButtonBuilder()
@@ -1064,16 +1064,16 @@ const ispeOrder = async (req, res) => {
   const orderDiscordMessage = await verificationChannel.send({
     content: mentionable,
     embeds: [orderEmbed],
-    components: [buttonRow]
+    components: [buttonRow],
   });
 
   const proofThread = await orderDiscordMessage.startThread({
     name: `ISPE Receipts Proof - ${orderDiscordMessage.id}`,
-    type: ChannelType.PublicThread // Set to 'GuildPrivateThread' if only the user should see it
+    type: ChannelType.PublicThread, // Set to 'GuildPrivateThread' if only the user should see it
   });
 
   await proofThread.send({
-    content: `📸 **${mentionable}, please upload the receipts here as proof.**`
+    content: `📸 **${mentionable}, please upload the receipts here as proof.**`,
   });
 
   return res.status(200).json({ ok: true, message: 'Webhook received' });
@@ -1107,25 +1107,25 @@ const posCashOutCashIn = async (req, res) => {
     .addFields([
       {
         name: 'Session Name',
-        value: sessionName
+        value: sessionName,
       },
       {
         name: `${type === 'out' ? 'Cash Out' : 'Cash In'} Date`,
-        value: orderDate
+        value: orderDate,
       },
       {
         name: 'Total Amount',
-        value: pesoFormatter.format(amount_total)
+        value: pesoFormatter.format(amount_total),
       },
       {
         name: `${type === 'out' ? 'Cash Out' : 'Cash In'} Reason`,
-        value: cashOutReason
-      }
+        value: cashOutReason,
+      },
     ])
     .setFooter({
       text: `Please send the image of the ${
         type === 'out' ? 'cash out' : 'cash in'
-      } money as proof in the thread below this message and click "Confirm" to verify.`
+      } money as proof in the thread below this message and click "Confirm" to verify.`,
     });
 
   const confirm = new ButtonBuilder()
@@ -1143,18 +1143,18 @@ const posCashOutCashIn = async (req, res) => {
   const orderDiscordMessage = await verificationChannel.send({
     content: `<@&${department.role}>`,
     embeds: [pcfEmbed],
-    components: [buttonRow]
+    components: [buttonRow],
   });
 
   const proofThread = await orderDiscordMessage.startThread({
     name: `${type === 'out' ? 'Cash Out' : 'Cash In'} Proof - ${orderDiscordMessage.id}`,
-    type: ChannelType.PublicThread // Set to 'GuildPrivateThread' if only the user should see it
+    type: ChannelType.PublicThread, // Set to 'GuildPrivateThread' if only the user should see it
   });
 
   await proofThread.send({
     content: `📸 **${department.role}, please upload the image of the ${
       type === 'out' ? 'cash out' : 'cash in'
-    } money here as proof.**`
+    } money here as proof.**`,
   });
 
   return res.status(200).json({ ok: true, message: 'Webhook received' });
@@ -1168,7 +1168,7 @@ module.exports = {
   tokenPayOrder,
   nonCashOrder,
   ispeOrder,
-  posCashOutCashIn
+  posCashOutCashIn,
 };
 
 ////////////////////////// HELPER FUNCTIONS /////////////////////////////////////////
