@@ -1,4 +1,10 @@
-const { ModalBuilder, TextInputBuilder, TextInputStyle, MessageFlags } = require('discord.js');
+const {
+  ModalBuilder,
+  TextInputBuilder,
+  TextInputStyle,
+  MessageFlags,
+  LabelBuilder,
+} = require('discord.js');
 
 module.exports = {
   data: {
