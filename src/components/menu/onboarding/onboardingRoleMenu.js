@@ -8,9 +8,15 @@ const {
   FileUploadBuilder,
 } = require('discord.js');
 
+const onboardingRole = '1451964458791604244';
+
+const managementRole = '1314413671245676685';
+const temporaryRole = '1449677551365521419';
+const serviceCrewRole = '1314413960274907238';
+
 module.exports = {
   data: {
-    name: `onboardingRoleMenuu`,
+    name: `onboardingRoleMenu`,
   },
   async execute(interaction, client) {
     const channelName = interaction.message.channel.name;
@@ -24,16 +30,16 @@ module.exports = {
       });
     }
 
-    // const hasAnyRole = interaction.member && interaction.member.roles.cache.size > 1;
+    const notValidRoles = [managementRole, temporaryRole, serviceCrewRole];
 
-    // if (hasAnyRole) {
-    //   return await interaction.reply({
-    //     content: `You cannot use this menu.`,
-    //     flags: MessageFlags.Ephemeral,
-    //   });
-    // }
+    if (interaction.member.roles.cache.some((role) => notValidRoles.includes(role.id))) {
+      return await interaction.reply({
+        content: `You cannot use this menu.`,
+        flags: MessageFlags.Ephemeral,
+      });
+    }
 
-    if (channelName.startsWith('⏳')) {
+    if (interaction.member.roles.cache.has(onboardingRole)) {
       return await interaction.reply({
         content: `You already have a pending request. Please wait for the request to be confirmed.`,
         flags: MessageFlags.Ephemeral,
@@ -45,6 +51,26 @@ module.exports = {
     const textDisplay = new TextDisplayBuilder().setContent(
       `## Confirm your selection.\nThis will request the **HR Department** to grant you the <@&${selectedRole}> role. If this is correct, please submit your confirmation.`
     );
+
+    const nameInput = new TextInputBuilder()
+      .setCustomId(`nameInput`)
+      .setStyle(TextInputStyle.Short)
+      .setRequired(true);
+
+    const nameInputLabel = new LabelBuilder()
+      .setLabel(`Name`)
+      .setDescription(`Enter your first and last name.`)
+      .setTextInputComponent(nameInput);
+
+    const emailInput = new TextInputBuilder()
+      .setCustomId(`emailInput`)
+      .setStyle(TextInputStyle.Short)
+      .setRequired(true);
+
+    const emailInputLabel = new LabelBuilder()
+      .setLabel(`Email`)
+      .setDescription(`Enter your valid email address.`)
+      .setTextInputComponent(emailInput);
 
     const fileUpload = new FileUploadBuilder()
       .setCustomId(`fileUpload`)
@@ -70,6 +96,8 @@ module.exports = {
       .setCustomId(`onboardingConfirmationModal`)
       .setTitle(`CONFIRMATION`)
       .addTextDisplayComponents(textDisplay)
+      .addLabelComponents(nameInputLabel)
+      .addLabelComponents(emailInputLabel)
       .addLabelComponents(fileUploadLabel)
       .addLabelComponents(confirmationLabel);
 
