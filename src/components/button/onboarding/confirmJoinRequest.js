@@ -4,6 +4,8 @@ const hrRole = '1314815153421680640';
 
 const techRole = '1314815091908022373';
 
+const onboardingRole = '1451964458791604244';
+
 module.exports = {
   data: {
     name: `confirmJoinRequest`,
@@ -93,15 +95,9 @@ module.exports = {
     });
 
     try {
-      if (interaction.channel && interaction.channel.manageable) {
-        const currentName = interaction.channel.name;
-        if (currentName.startsWith('⏳')) {
-          const newName = currentName.replace(/^⏳/, '✅');
-          await interaction.channel.setName(newName.trim());
-        }
-      }
+      await interaction.member.roles.remove(onboardingRole);
     } catch (error) {
-      console.error('Error changing channel name:', error);
+      console.error('Error removing onboarding role:', error);
     }
   },
 };
