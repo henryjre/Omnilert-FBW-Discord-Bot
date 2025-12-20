@@ -10,7 +10,7 @@ const {
 
 module.exports = {
   data: {
-    name: `onboardingRoleMenu`,
+    name: `onboardingRoleMenuu`,
   },
   async execute(interaction, client) {
     const channelName = interaction.message.channel.name;
