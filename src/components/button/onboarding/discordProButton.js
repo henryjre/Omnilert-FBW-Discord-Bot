@@ -10,6 +10,10 @@ const {
 const hrRole = '1314815153421680640';
 const techRole = '1314815091908022373';
 
+const managementRole = '1314413671245676685';
+const temporaryRole = '1449677551365521419';
+const serviceCrewRole = '1314413960274907238';
+
 module.exports = {
   data: {
     name: `discordProButton`,
@@ -17,10 +21,10 @@ module.exports = {
   async execute(interaction, client) {
     await interaction.deferUpdate();
 
-    const hasAnyRole = interaction.member && interaction.member.roles.cache.size > 1;
+    const notValidRoles = [managementRole, temporaryRole, serviceCrewRole];
 
-    if (!hasAnyRole) {
-      return await interaction.followUp({
+    if (interaction.member.roles.cache.some((role) => notValidRoles.includes(role.id))) {
+      return await interaction.reply({
         content: `You cannot use this button.`,
         flags: MessageFlags.Ephemeral,
       });
@@ -46,7 +50,7 @@ module.exports = {
     const onboardingContainer = new ContainerBuilder()
       .addTextDisplayComponents((textDisplay) =>
         textDisplay.setContent(
-          `||${interaction.user.toString()} <@&${techRole}>||\n# Select employee role.`
+          `||${interaction.user.toString()} <@&${techRole}> <@&${hrRole}>||\n# Select employee role.`
         )
       )
       .addSectionComponents((section) =>
