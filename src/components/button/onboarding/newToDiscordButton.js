@@ -17,14 +17,14 @@ module.exports = {
   async execute(interaction, client) {
     await interaction.deferUpdate();
 
-    // const hasAnyRole = interaction.member && interaction.member.roles.cache.size > 1;
+    const hasAnyRole = interaction.member && interaction.member.roles.cache.size > 1;
 
-    // if (hasAnyRole) {
-    //   return await interaction.followUp({
-    //     content: `You cannot use this button.`,
-    //     flags: MessageFlags.Ephemeral,
-    //   });
-    // }
+    if (hasAnyRole) {
+      return await interaction.followUp({
+        content: `You cannot use this button.`,
+        flags: MessageFlags.Ephemeral,
+      });
+    }
 
     const hasChannel = await interaction.channel.threads.cache.find((thread) =>
       thread.name.includes(`Onboarding - ${interaction.user.username}`)
