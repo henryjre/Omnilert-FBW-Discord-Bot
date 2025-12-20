@@ -4,7 +4,7 @@ const techRole = '1314815091908022373';
 
 module.exports = {
   data: {
-    name: 'onboardingConfirmationModal',
+    name: 'onboardingConfirmationModall',
   },
   async execute(interaction, client) {
     await interaction.deferUpdate();
