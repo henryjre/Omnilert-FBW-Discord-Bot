@@ -1,15 +1,18 @@
 const { ButtonBuilder, ButtonStyle, MessageFlags, ContainerBuilder } = require('discord.js');
 
-const techRole = '1314815091908022373';
+const hrRole = '1314815153421680640';
+const onboardingRole = '1451964458791604244';
 
 module.exports = {
   data: {
-    name: 'onboardingConfirmationModall',
+    name: 'onboardingConfirmationModal',
   },
   async execute(interaction, client) {
     await interaction.deferUpdate();
 
     const confirmationRoleInput = interaction.fields.getTextInputValue('confirmationRoleInput');
+    const nameInput = interaction.fields.getTextInputValue('nameInput');
+    const emailInput = interaction.fields.getTextInputValue('emailInput');
     const fileUpload = interaction.fields.getUploadedFiles('fileUpload');
 
     const confirmationRole = await interaction.guild.roles.cache.get(confirmationRoleInput);
@@ -32,17 +35,6 @@ module.exports = {
       });
     }
 
-    try {
-      if (interaction.channel && interaction.channel.manageable) {
-        const currentName = interaction.channel.name;
-        if (!currentName.startsWith('⏳')) {
-          await interaction.channel.setName(`⏳ ${currentName}`);
-        }
-      }
-    } catch (error) {
-      console.error('Error changing channel name:', error);
-    }
-
     const containerComponent = new ContainerBuilder()
       .setAccentColor(confirmationRole.color)
       .addMediaGalleryComponents((mediaGallery) =>
@@ -50,13 +42,13 @@ module.exports = {
       )
       .addTextDisplayComponents((textDisplay) =>
         textDisplay.setContent(
-          `## Join Request\n<@&${techRole}>, ${
+          `## Join Request\n<@&${hrRole}>, ${
             interaction.member.nickname || interaction.user.username
           } has requested to join.\n\nRole: **${confirmationRole.name}**\nRole ID: **${
             confirmationRole.id
           }**\nUser ID: **${
             interaction.user.id
-          }**\n\nIf this is correct, please confirm the request.`
+          }**\n\nName: **${nameInput}**\nEmail: **${emailInput}**\n\nIf this is correct, please confirm the request.`
         )
       )
       .addSeparatorComponents((separator) => separator)
@@ -77,5 +69,7 @@ module.exports = {
       components: [containerComponent],
       flags: MessageFlags.IsComponentsV2,
     });
+
+    await interaction.member.roles.add(onboardingRole);
   },
 };
