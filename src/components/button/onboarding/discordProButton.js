@@ -7,6 +7,9 @@ const {
   StringSelectMenuOptionBuilder,
 } = require('discord.js');
 
+const hrRole = '1314815153421680640';
+const techRole = '1314815091908022373';
+
 module.exports = {
   data: {
     name: `discordProButton`,
@@ -14,14 +17,14 @@ module.exports = {
   async execute(interaction, client) {
     await interaction.deferUpdate();
 
-    const hasAnyRole = interaction.member && interaction.member.roles.cache.size > 1;
+    // const hasAnyRole = interaction.member && interaction.member.roles.cache.size > 1;
 
-    if (!hasAnyRole) {
-      return await interaction.followUp({
-        content: `You cannot use this button.`,
-        flags: MessageFlags.Ephemeral,
-      });
-    }
+    // if (!hasAnyRole) {
+    //   return await interaction.followUp({
+    //     content: `You cannot use this button.`,
+    //     flags: MessageFlags.Ephemeral,
+    //   });
+    // }
 
     const hasChannel = await interaction.channel.threads.cache.find((thread) =>
       thread.name.includes(`Onboarding - ${interaction.user.username}`)
@@ -42,7 +45,9 @@ module.exports = {
 
     const onboardingContainer = new ContainerBuilder()
       .addTextDisplayComponents((textDisplay) =>
-        textDisplay.setContent(`||${interaction.user.toString()}||\n# Select employee role.`)
+        textDisplay.setContent(
+          `||${interaction.user.toString()} <@&${techRole}>||\n# Select employee role.`
+        )
       )
       .addSectionComponents((section) =>
         section
