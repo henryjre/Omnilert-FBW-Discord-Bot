@@ -24,14 +24,14 @@ module.exports = {
       });
     }
 
-    const hasAnyRole = interaction.member && interaction.member.roles.cache.size > 1;
+    // const hasAnyRole = interaction.member && interaction.member.roles.cache.size > 1;
 
-    if (hasAnyRole) {
-      return await interaction.reply({
-        content: `You cannot use this button.`,
-        flags: MessageFlags.Ephemeral,
-      });
-    }
+    // if (hasAnyRole) {
+    //   return await interaction.reply({
+    //     content: `You cannot use this menu.`,
+    //     flags: MessageFlags.Ephemeral,
+    //   });
+    // }
 
     if (channelName.startsWith('⏳')) {
       return await interaction.reply({
