@@ -1,46 +1,46 @@
 // Bring in our dependencies
-const express = require("express");
-const crypto = require("crypto");
-const { exec } = require("child_process");
+const express = require('express');
+const crypto = require('crypto');
+const { exec } = require('child_process');
 // const helmet = require('helmet');
 const app = express();
 // const routes = require("./routes");
-const odooRoutes = require("./odooRoutes");
+const odooRoutes = require('./odooRoutes');
 const PORT = process.env.PORT || 3000;
 const SECRET = process.env.githubSecret;
 
-const authenticate = require("./auth");
+const authenticate = require('./auth');
 
 // app.use(helmet());
 
 app.use(express.json());
 
-app.use("/odoo", odooRoutes);
+app.use('/odoo', odooRoutes);
 // app.use("/api", authenticate, routes);
 
-app.post("/github-webhook", (req, res) => {
+app.post('/github-webhook', (req, res) => {
   const signature = `sha256=${crypto
-    .createHmac("sha256", SECRET)
+    .createHmac('sha256', SECRET)
     .update(JSON.stringify(req.body))
-    .digest("hex")}`;
+    .digest('hex')}`;
 
-  const isAllowed = req.headers["x-hub-signature-256"] === signature;
+  const isAllowed = req.headers['x-hub-signature-256'] === signature;
 
   if (!isAllowed) {
-    return res.status(401).send("Unauthorized");
+    return res.status(401).send('Unauthorized');
   }
 
-  console.log("Received push event from GitHub. Pulling latest changes...");
+  console.log('Received push event from GitHub. Pulling latest changes...');
 
   exec(
-    "cd /opt/omnilert-bot && git pull origin main && npm install && pm2 restart discord-bot",
+    'cd /root/omnilert-discord-bot && git pull origin main && npm install && pm2 restart discord-bot',
     (err, stdout, stderr) => {
       if (err) {
         console.error(`Error: ${stderr}`);
-        return res.status(500).send("Deployment failed.");
+        return res.status(500).send('Deployment failed.');
       }
       console.log(`Deployment output: ${stdout}`);
-      res.status(200).send("Deployed successfully!");
+      res.status(200).send('Deployed successfully!');
     }
   );
 });
