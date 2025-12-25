@@ -9,9 +9,7 @@ const odooRoutes = require('./odooRoutes');
 const PORT = process.env.PORT || 3000;
 const SECRET = process.env.githubSecret;
 
-const authenticate = require('./auth');
-
-// app.use(helmet());
+// const authenticate = require('./auth');
 
 app.use(express.json());
 
