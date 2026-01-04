@@ -268,8 +268,6 @@ const employeeCheckIn = async (req, res) => {
       x_prev_attendance_id,
     } = req.body;
 
-    console.log(req.body);
-
     if (!x_planning_slot_id)
       throw new Error('Planning slot not found for employee: ' + x_employee_contact_name);
 
@@ -291,9 +289,10 @@ const employeeCheckIn = async (req, res) => {
     const channelMessages = await attendanceLogChannel.messages.fetch({
       limit: 100,
     });
-    const attendanceMessage = channelMessages.find((msg) =>
-      msg.content.includes(x_planning_slot_id)
-    );
+
+    const messageContent = `${shift_start_date} | ${x_planning_slot_id}`;
+
+    const attendanceMessage = channelMessages.find((msg) => msg.content.includes(messageContent));
 
     if (!attendanceMessage) throw new Error('Attendance message not found');
 
