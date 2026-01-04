@@ -3,7 +3,7 @@ const {
   ChannelType,
   ButtonBuilder,
   ButtonStyle,
-  ActionRowBuilder
+  ActionRowBuilder,
 } = require('discord.js');
 const moment = require('moment-timezone');
 
@@ -120,7 +120,7 @@ const managementCheckIn = async (req, res) => {
       x_employee_avatar,
       x_employee_contact_name,
       x_prev_attendance_id,
-      x_minutes_delta
+      x_minutes_delta,
     } = req.body;
 
     const department = departments.find((d) => d.id === x_company_id);
@@ -140,16 +140,16 @@ const managementCheckIn = async (req, res) => {
           { name: 'Employee', value: `🪪 | ${employeeName}` },
           {
             name: 'Discord User',
-            value: `👤 | ${x_discord_id ? `<@${x_discord_id}>` : 'N/A'}`
+            value: `👤 | ${x_discord_id ? `<@${x_discord_id}>` : 'N/A'}`,
           },
           { name: 'Branch', value: `🛒 | ${department?.name || 'Omnilert'}` },
           {
             name: 'Total Working Time',
-            value: `🕒 | Currently Working`
+            value: `🕒 | Currently Working`,
           },
           {
             name: 'Check-In',
-            value: `⏱️ | ${checkInTime}`
+            value: `⏱️ | ${checkInTime}`,
           }
         )
         .setColor('Green');
@@ -160,13 +160,13 @@ const managementCheckIn = async (req, res) => {
 
       const messagePayload = {
         content: `Attendance ID: ${id}`,
-        embeds: [embed]
+        embeds: [embed],
       };
 
       const logMessage = await attendanceLogChannel.send(messagePayload);
     } else {
       const channelMessages = await attendanceLogChannel.messages.fetch({
-        limit: 100
+        limit: 100,
       });
 
       const attendanceMessage = channelMessages.find((msg) =>
@@ -188,7 +188,7 @@ const managementCheckIn = async (req, res) => {
 
         await attendanceMessage.edit({
           content: `Attendance ID: ${id}`,
-          embeds: [newMessageEmbed]
+          embeds: [newMessageEmbed],
         });
       }
     }
@@ -207,7 +207,7 @@ const managementCheckOut = async (req, res) => {
       check_out,
       id: attendanceId,
       x_cumulative_minutes,
-      x_company_id
+      x_company_id,
     } = req.body;
 
     const department = departments.find((d) => d.id === x_company_id);
@@ -220,7 +220,7 @@ const managementCheckOut = async (req, res) => {
     const attendanceLogChannel = client.channels.cache.get(managementAttendanceLogChannelId);
 
     const channelMessages = await attendanceLogChannel.messages.fetch({
-      limit: 100
+      limit: 100,
     });
 
     const attendanceMessage = channelMessages.find((msg) => msg.content.includes(attendanceId));
@@ -233,7 +233,7 @@ const managementCheckOut = async (req, res) => {
 
     messageEmbed.data.fields.push({
       name: 'Check-Out',
-      value: `⏱️ | ${check_out_time}`
+      value: `⏱️ | ${check_out_time}`,
     });
 
     messageEmbed.data.color = 9807270;
@@ -265,8 +265,10 @@ const employeeCheckIn = async (req, res) => {
       x_shift_start,
       x_shift_end,
       x_minutes_delta,
-      x_prev_attendance_id
+      x_prev_attendance_id,
     } = req.body;
+
+    console.log(req.body);
 
     if (!x_planning_slot_id)
       throw new Error('Planning slot not found for employee: ' + x_employee_contact_name);
@@ -287,7 +289,7 @@ const employeeCheckIn = async (req, res) => {
     if (!attendanceLogChannel) throw new Error('Attendance channel not found');
 
     const channelMessages = await attendanceLogChannel.messages.fetch({
-      limit: 100
+      limit: 100,
     });
     const attendanceMessage = channelMessages.find((msg) =>
       msg.content.includes(x_planning_slot_id)
@@ -302,7 +304,7 @@ const employeeCheckIn = async (req, res) => {
     if (!hasTotalWorkedTime) {
       messageEmbed.data.fields.push({
         name: 'Total Worked Time',
-        value: `⏱️ | Currently Working`
+        value: `⏱️ | Currently Working`,
       });
     }
 
@@ -315,7 +317,7 @@ const employeeCheckIn = async (req, res) => {
       thread = await attendanceMessage.startThread({
         name: `${shift_start_date} | ${employeeName} | ${x_planning_slot_id}`,
         type: ChannelType.PublicThread,
-        autoArchiveDuration: 1440
+        autoArchiveDuration: 1440,
       });
     }
 
@@ -345,31 +347,31 @@ const employeeCheckIn = async (req, res) => {
         { name: 'Attendance ID', value: `🆔 | ${id}` },
         {
           name: 'Date',
-          value: `📆 | ${moment().format('MMMM DD, YYYY')}`
+          value: `📆 | ${moment().format('MMMM DD, YYYY')}`,
         },
         { name: 'Employee', value: `🪪 | ${employeeName}` },
         {
           name: 'Discord User',
-          value: `👤 | ${x_discord_id ? `<@${x_discord_id}>` : 'N/A'}`
+          value: `👤 | ${x_discord_id ? `<@${x_discord_id}>` : 'N/A'}`,
         },
         {
           name: 'Branch',
-          value: `🛒 | ${department?.name || 'Omnilert'}`
+          value: `🛒 | ${department?.name || 'Omnilert'}`,
         },
         {
           name: 'Shift Start Date',
-          value: `📅 | ${shift_start_time}`
+          value: `📅 | ${shift_start_time}`,
         },
         {
           name: 'Shift End Date',
-          value: `📅 | ${shift_end_time}`
+          value: `📅 | ${shift_end_time}`,
         },
         { name: fieldName, value: `⏱️ | ${punctuality.readable}` }
       )
       .setColor(color);
 
     const messagePayload = {
-      embeds: [embed]
+      embeds: [embed],
     };
 
     const submit = new ButtonBuilder()
@@ -427,7 +429,7 @@ const employeeCheckOut = async (req, res) => {
       x_employee_contact_name,
       x_checkout_notified,
       x_shift_start,
-      x_shift_end
+      x_shift_end,
     } = req.body;
 
     if (!x_planning_slot_id)
@@ -451,7 +453,7 @@ const employeeCheckOut = async (req, res) => {
     if (!attendanceLogChannel) throw new Error('Attendance channel not found');
 
     const channelMessages = await attendanceLogChannel.messages.fetch({
-      limit: 100
+      limit: 100,
     });
 
     const attendanceMessage = channelMessages.find((msg) => msg.content.includes(messageContent));
@@ -464,7 +466,7 @@ const employeeCheckOut = async (req, res) => {
     if (!hasTotalWorkedTime) {
       messageEmbed.data.fields.push({
         name: 'Total Worked Time',
-        value: `⏱️ | ${cumulative_minutes}`
+        value: `⏱️ | ${cumulative_minutes}`,
       });
     } else {
       hasTotalWorkedTime.value = `⏱️ | ${cumulative_minutes}`;
@@ -477,7 +479,7 @@ const employeeCheckOut = async (req, res) => {
       thread = await attendanceMessage.startThread({
         name: `${shift_start_date} | ${employeeName} | ${x_planning_slot_id}`,
         type: ChannelType.PublicThread,
-        autoArchiveDuration: 1440
+        autoArchiveDuration: 1440,
       });
     }
 
@@ -487,36 +489,36 @@ const employeeCheckOut = async (req, res) => {
         .addFields([
           {
             name: 'Branch',
-            value: `🛒 | ${department?.name || 'Omnilert'}`
+            value: `🛒 | ${department?.name || 'Omnilert'}`,
           },
           {
             name: 'Attendance ID',
-            value: `🆔 | ${attendanceId}`
+            value: `🆔 | ${attendanceId}`,
           },
           {
             name: 'Interim Duty Date',
-            value: `📆 | ${shift_start_date}`
+            value: `📆 | ${shift_start_date}`,
           },
           {
             name: 'Shift Start Time',
-            value: `⏰ | ${check_in_time}`
+            value: `⏰ | ${check_in_time}`,
           },
           {
             name: 'Shift End Time',
-            value: `⏰ | ${check_out_time}`
+            value: `⏰ | ${check_out_time}`,
           },
           {
             name: 'Shift Coverage',
-            value: `🎯 | Attendance Interim`
+            value: `🎯 | Attendance Interim`,
           },
           {
             name: 'Interim Duty Reason',
-            value: `❓ | There was no planning schedule for this employee.`
+            value: `❓ | There was no planning schedule for this employee.`,
           },
           {
             name: 'Employee',
-            value: `👤 | <@${x_discord_id}>`
-          }
+            value: `👤 | <@${x_discord_id}>`,
+          },
         ])
         .setColor('#f3ff00');
 
@@ -568,7 +570,7 @@ const employeeCheckOut = async (req, res) => {
         const messagePayload = {
           content: `<@&${hrRoleId}>`,
           embeds: [authRequestEmbed],
-          components: [interimButtonRow]
+          components: [interimButtonRow],
         };
 
         await client.channels.cache.get(hrDepartmentChannelId).send(messagePayload);
@@ -607,7 +609,7 @@ const employeeCheckOut = async (req, res) => {
         x_discord_id ? `<@${x_discord_id}>` : department?.role
       }, maglagay ng reason para sa check-out. Kung tapos ka na mag duty, i-click ang **End Shift** button.`,
       embeds: [attendanceLogEmbed],
-      components: [buttonRow]
+      components: [buttonRow],
     });
 
     return res.status(200).json({ ok: true, message: 'Checkout logged' });
@@ -709,7 +711,7 @@ function evaluatePunctuality(checkIn, shiftStart, tz = 'Asia/Manila') {
     secondsDelta,
     readable,
     checkInLocal: mIn.format(fmt),
-    shiftStartLocal: mStart.format(fmt)
+    shiftStartLocal: mStart.format(fmt),
   };
 }
 
