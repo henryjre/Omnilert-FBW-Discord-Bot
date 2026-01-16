@@ -232,6 +232,7 @@ const getAttendance = async (req, res) => {
       fields: [
         "employee_id",
         "department_id",
+        "x_company_id",
         "check_in",
         "check_out",
         "worked_hours",
