@@ -268,31 +268,35 @@ const getAttendance = async (req, res) => {
     }
 
     const groupedData = request.result.reduce((acc, curr) => {
-      const departmentId = curr.department_id[0];
-      if (!acc[departmentId]) {
-        acc[departmentId] = {
-          department_name: curr.department_id[1],
-          company_id: curr.x_company_id[0],
+      const companyId = curr.x_company_id[0];
+    
+      if (!acc[companyId]) {
+        acc[companyId] = {
+          company_name: curr.x_company_id[1],
+          company_id: companyId,
           employees: [],
         };
       }
+    
       // Format the dates
       curr.check_in = moment(curr.check_in)
         .tz("Asia/Manila")
         .format("MMMM DD, YYYY h:mm A");
+    
       curr.check_out = moment(curr.check_out)
         .tz("Asia/Manila")
         .format("MMMM DD, YYYY h:mm A");
-
-      acc[departmentId].employees.push({
+    
+      acc[companyId].employees.push({
         id: curr.id,
         employee: curr.employee_id[1],
         check_in: curr.check_in,
         check_out: curr.check_out,
         worked_hours: parseFloat(curr.worked_hours.toFixed(2)),
       });
+    
       return acc;
-    }, {});
+    }, {});    
 
     const result = Object.values(groupedData);
 
