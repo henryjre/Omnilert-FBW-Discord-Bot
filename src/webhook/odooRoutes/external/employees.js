@@ -237,6 +237,7 @@ const getAttendance = async (req, res) => {
         "check_out",
         "worked_hours",
         "x_rank",
+        "x_main_contact_id",
       ], //discount mode: per_order, per_point, percent
       offset: null,
       limit: null,
@@ -291,7 +292,8 @@ const getAttendance = async (req, res) => {
       acc[companyId].employees.push({
         id: curr.id,
         employee: curr.employee_id[1],
-        slRank: curr.x_rank,
+        sl_rank: curr.x_rank,
+        contact_id: curr.x_main_contact_id[0],
         check_in: curr.check_in,
         check_out: curr.check_out,
         worked_hours: parseFloat(curr.worked_hours.toFixed(2)),
