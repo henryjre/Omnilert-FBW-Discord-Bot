@@ -272,6 +272,7 @@ const getAttendance = async (req, res) => {
       if (!acc[departmentId]) {
         acc[departmentId] = {
           department_name: curr.department_id[1],
+          company_id: curr.x_company_id[0],
           employees: [],
         };
       }
