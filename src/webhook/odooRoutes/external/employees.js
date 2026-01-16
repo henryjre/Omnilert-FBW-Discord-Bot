@@ -227,7 +227,7 @@ const getAttendance = async (req, res) => {
         // ["check_in", ">=", start_date],
         ["check_in", ">=", start_date],
         ["check_in", "<=", end_date],
-        ["department_id", "in", [1, 4, 5, 7]],
+        ["x_company_id", "in", [2, 3, 4, 5]],
       ],
       fields: [
         "employee_id",
