@@ -56,8 +56,13 @@ app.post("/github-webhook", express.raw({ type: "*/*" }), (req, res) => {
 app.use("/iclock", express.text({ type: "*/*" }));
 
 app.all("/iclock/cdata", (req, res) => {
-  console.log("cdata query:", req.query);
-  console.log("cdata body:\n", req.body);
+  console.log("METHOD:", req.method);
+  console.log("HEADERS content-type:", req.headers["content-type"]);
+  console.log("QUERY:", req.query);
+  console.log("BODY TYPE:", typeof req.body);
+  console.log("BODY RAW:", req.body);     // should be a string
+  console.log("BODY LEN:", req.body?.length);
+
   res.type("text/plain").send("OK");
 });
 
