@@ -11,48 +11,43 @@ const SECRET = process.env.githubSecret;
 
 // const authenticate = require('./auth');
 
-app.use(express.json());
+// 1) JSON only for routes that need JSON
+app.use("/odoo", express.json(), odooRoutes);
 
-app.use('/odoo', odooRoutes);
-// app.use("/api", authenticate, routes);
-
-app.post('/github-webhook', express.raw({ type: '*/*' }), (req, res) => {
+// 2) GitHub webhook must be RAW (Buffer) for signature verification
+app.post("/github-webhook", express.raw({ type: "*/*" }), (req, res) => {
   try {
-    const sig256 = req.get('x-hub-signature-256') || '';
+    const sig256 = req.get("x-hub-signature-256") || "";
     const body = req.body; // Buffer
 
-    if (!SECRET) {
-      return res.status(500).send('Server misconfigured: githubSecret is missing.');
-    }
+    if (!SECRET) return res.status(500).send("Server misconfigured: githubSecret is missing.");
 
-    const hmac = crypto.createHmac('sha256', SECRET).update(body).digest('hex');
+    const hmac = crypto.createHmac("sha256", SECRET).update(body).digest("hex");
     const expected = `sha256=${hmac}`;
 
     const valid =
       sig256.length === expected.length &&
       crypto.timingSafeEqual(Buffer.from(sig256), Buffer.from(expected));
 
-    if (!valid) {
-      return res.status(401).send('Unauthorized');
-    }
+    if (!valid) return res.status(401).send("Unauthorized");
 
-    res.status(200).send('OK');
+    res.type("text/plain").send("OK");
 
-    console.log('GitHub webhook verified. Pulling latest changes...');
+    console.log("GitHub webhook verified. Pulling latest changes...");
 
     exec(
-      'cd /root/omnilert-discord-bot && git pull origin main && npm install && pm2 restart discord-bot',
+      "cd /root/omnilert-discord-bot && git pull origin main && npm install && pm2 restart discord-bot",
       (err, stdout, stderr) => {
         if (err) {
-          console.error('Deployment failed:', stderr || err.message);
+          console.error("Deployment failed:", stderr || err.message);
           return;
         }
-        console.log('Deployment output:', stdout);
+        console.log("Deployment output:", stdout);
       }
     );
   } catch (e) {
-    console.error('Webhook error:', e);
-    if (!res.headersSent) res.status(500).send('Server error');
+    console.error("Webhook error:", e);
+    if (!res.headersSent) res.status(500).send("Server error");
   }
 });
 
