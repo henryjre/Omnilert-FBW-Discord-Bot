@@ -63,31 +63,51 @@ app.use((req, res, next) => {
 app.use("/iclock", express.text({ type: "*/*" }));
 
 app.all("/iclock/cdata", (req, res) => {
-  const { options, SN } = req.query;
+  const { options, type } = req.query;
 
-  // Device is requesting PushOptions configuration
+  // 1) PushOptions negotiation (already correct)
   if (options === "all") {
-    // Tell device what to push + how often to poll
-    // These keys are what many ZKTeco firmwares expect (BioTime-like).
-    const pushOptions =
-      "GET OPTION FROM: " + SN + "\n" +
-      "Stamp=9999\n" +
-      "ErrorDelay=30\n" +
-      "Delay=10\n" +
-      "TransTimes=00:00;23:59\n" +
-      "TransInterval=1\n" +
-      "TransFlag=1111111111\n" +
-      "Realtime=1\n" +
-      "Encrypt=0\n";
-
     res.set("Content-Type", "text/plain");
-    return res.send(pushOptions);
+    return res.send(
+      "GET OPTION FROM: " + (req.query.SN || "") + "\r\n" +
+      "Stamp=0\r\n" +
+      "OpStamp=0\r\n" +
+      "PhotoStamp=0\r\n" +
+      "ErrorDelay=60\r\n" +
+      "Delay=30\r\n" +
+      "TransTimes=00:00;23:59\r\n" +
+      "TransInterval=1\r\n" +
+      "TransFlag=1111000000\r\n" +
+      "Realtime=1\r\n" +
+      "Encrypt=0\r\n" +
+      "TimeZone=+08:00\r\n" +
+      "Timeout=60\r\n" +
+      "SyncTime=1\r\n"
+    );
   }
 
-  console.log("CDATA query:", req.query);
-  console.log("CDATA body:", req.body);
+  // 2) Time sync request (THIS is what you're missing)
+  if (type === "time") {
+    const now = new Date();
+
+    // Format: YYYY-MM-DDTHH:mm:ss+08:00
+    const pad = (n) => String(n).padStart(2, "0");
+    const tz = "+08:00"; // adjust if needed
+
+    const timeStr =
+      `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}` +
+      `T${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}${tz}`;
+
+    res.set("Content-Type", "text/plain");
+    return res.send(`Time=${timeStr}`);
+  }
+
+  // 3) Everything else (logs, heartbeat, etc.)
+  console.log("CDATA:", req.query);
+  console.log("BODY:", req.body);
   res.type("text/plain").send("OK");
 });
+
 
 app.post("/iclock/registry", (req, res) => {
   console.log("REGISTRY query:", req.query);
