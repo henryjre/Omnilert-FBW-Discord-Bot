@@ -60,11 +60,21 @@ app.use((req, res, next) => {
 
 
 // 3) ZKTeco ADMS: parse as TEXT ONLY under /iclock
+// Middleware to handle plain text bodies
 app.use("/iclock", express.text({ type: "*/*" }));
+
+// Helper to send "Dumb" HTTP responses (No Chunking)
+function sendStrictResponse(res, content) {
+  res.set({
+    "Content-Type": "text/plain",
+    "Content-Length": Buffer.byteLength(content), // <--- CRITICAL: Disables Chunking
+    "Connection": "close" // Tells device to close socket immediately
+  });
+  res.send(content);
+}
 
 function pushOptionsResponse(sn) {
   const safeSN = sn || "";
-  
   const options = [
     `GET OPTION FROM: ${safeSN}`,
     `Stamp=0`,
@@ -77,13 +87,12 @@ function pushOptionsResponse(sn) {
     `TransFlag=1111000000`,
     `Realtime=1`,
     `Encrypt=0`,
-    `TimeZone=8`,            
-    `ServerVer=3.4.1`,       
-    `ATTLOGStamp=0`,         
-    `OPERLOGStamp=0`,        
-    `ATTPHOTOStamp=0`        
+    `TimeZone=8`, // Philippines TimeZone
+    `ServerVer=3.4.1`, 
+    `ATTLOGStamp=0`,
+    `OPERLOGStamp=0`,
+    `ATTPHOTOStamp=0`
   ];
-
   return options.join("\r\n");
 }
 
@@ -93,32 +102,29 @@ app.all("/iclock/cdata", (req, res) => {
   // 1. HANDSHAKE: Device asks for configuration
   if (options === "all") {
     console.log(`[HANDSHAKE] Device ${SN} is asking for options.`);
-    res.set("Content-Type", "text/plain");
-    return res.send(pushOptionsResponse(SN || ""));
+    const responseData = pushOptionsResponse(SN);
+    return sendStrictResponse(res, responseData);
   }
 
   // 2. RECEIVING LOGS: Device POSTs attendance data
   if (req.method === 'POST' && !options) {
     console.log(`[DATA RECEIVED] from ${SN}`);
-    console.log(req.body); 
-    
-    // Acknowledge receipt so device stops sending the same logs
-    res.set("Content-Type", "text/plain");
-    return res.send("OK");
+    console.log("Body:", req.body); 
+    return sendStrictResponse(res, "OK");
   }
 
-  return res.type("text/plain").send("OK");
+  return sendStrictResponse(res, "OK");
 });
 
 app.post("/iclock/registry", (req, res) => {
   console.log(`[REGISTRY] Device ${req.query.SN} is registering.`);
-  res.set("Content-Type", "text/plain");
-  res.send("Registry=OK");
+  // Registry also needs strict headers
+  sendStrictResponse(res, "Registry=OK");
 });
 
-// Keep these as they are strictly required for connectivity checks
-app.get("/iclock/getrequest", (req, res) => res.type("text/plain").send("OK"));
-app.get("/iclock/devicecmd", (req, res) => res.type("text/plain").send("OK"));
+// Required strict responses for connectivity checks
+app.get("/iclock/getrequest", (req, res) => sendStrictResponse(res, "OK"));
+app.get("/iclock/devicecmd", (req, res) => sendStrictResponse(res, "OK"));
 
 // Turn on that server!
 app.listen(PORT, () => {
