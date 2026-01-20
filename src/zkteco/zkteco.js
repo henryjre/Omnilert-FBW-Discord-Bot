@@ -1,4 +1,4 @@
-const { ZKLib } = require("node-zklib");
+const ZKLib = require("node-zklib");
 
 // Device config
 const DEVICE_IP = process.env.ZKTECO_DEVICE_IP;
