@@ -63,24 +63,29 @@ app.use((req, res, next) => {
 app.use("/iclock", express.text({ type: "*/*" }));
 
 app.all("/iclock/cdata", (req, res) => {
-  const { options } = req.query;
+  const { options, SN } = req.query;
 
   if (options === "all") {
-    res.type("text/plain").send(
-      "Stamp=9999\n" +
-      "ErrorDelay=30\n" +
-      "Delay=10\n" +
-      "TransTimes=00:00;23:59\n" +
-      "TransInterval=1\n" +
-      "TransFlag=1111111111\n" +
-      "Realtime=1\n"
-    );
-    return;
+    const body =
+      `GET OPTION FROM: ${SN}\r\n` +
+      `Stamp=9999\r\n` +
+      `ErrorDelay=30\r\n` +
+      `Delay=10\r\n` +
+      `TransTimes=00:00;23:59\r\n` +
+      `TransInterval=1\r\n` +
+      `TransFlag=1111111111\r\n` +
+      `Realtime=1\r\n` +
+      `Encrypt=0\r\n` +
+      `\r\n`;
+
+    return res.status(200).type("text/plain").send(body);
   }
 
-  console.log("CDATA:", req.query, req.body);
-  res.type("text/plain").send("OK");
+  console.log("CDATA:", req.query);
+  console.log("CDATA BODY:\n", req.body);
+  return res.status(200).type("text/plain").send("OK");
 });
+
 
 app.post("/iclock/registry", (req, res) => {
   console.log(`[REGISTRY] Device ${req.query.SN} is registering.`);
