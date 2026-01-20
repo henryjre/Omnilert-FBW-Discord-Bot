@@ -62,51 +62,60 @@ app.use((req, res, next) => {
 // 3) ZKTeco ADMS: parse as TEXT ONLY under /iclock
 app.use("/iclock", express.text({ type: "*/*" }));
 
-app.all("/iclock/cdata", (req, res) => {
-  const { options, type } = req.query;
+function pushOptionsResponse(sn) {
+  const tz = "+08:00"; // Philippines
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  const stampTime =
+    `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}` +
+    `T${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
 
-  // 1) PushOptions negotiation (already correct)
+  return (
+    `GET OPTION FROM: ${sn}\r\n` +
+    `ErrorDelay=60\r\n` +
+    `Delay=30\r\n` +
+    `TransTimes=00:00;23:59\r\n` +
+    `TransInterval=1\r\n` +
+    `TransFlag=AttLog\tOpLog\tAttPhoto\tEnrollUser\tChgUser\tEnrollFP\tChgFP\r\n` +
+    `Realtime=1\r\n` +
+    `Encrypt=0\r\n` +
+    `TimeZone=${tz}\r\n` +
+    `Timeout=60\r\n` +
+    `SyncTime=3600\r\n` +
+    `ServerVer=1.0\r\n` +
+    `ATTLOGStamp=${stampTime}\r\n` +
+    `OPERLOGStamp=${stampTime}\r\n` +
+    `ATTPHOTOStamp=${stampTime}\r\n`
+  );
+}
+
+app.all("/iclock/cdata", (req, res) => {
+  const { options, SN } = req.query;
+
   if (options === "all") {
-    res.set("Content-Type", "text/plain");
-    return res.send(
-      "GET OPTION FROM: " + (req.query.SN || "") + "\r\n" +
-      "Stamp=0\r\n" +
-      "OpStamp=0\r\n" +
-      "PhotoStamp=0\r\n" +
-      "ErrorDelay=60\r\n" +
-      "Delay=30\r\n" +
-      "TransTimes=00:00;23:59\r\n" +
-      "TransInterval=1\r\n" +
-      "TransFlag=1111000000\r\n" +
-      "Realtime=1\r\n" +
-      "Encrypt=0\r\n" +
-      "TimeZone=+08:00\r\n" +
-      "Timeout=60\r\n" +
-      "SyncTime=1\r\n"
-    );
+    res.set("Content-Type", "text/plain; charset=utf-8");
+    return res.send(pushOptionsResponse(SN || ""));
   }
 
-  // 2) Time sync request (THIS is what you're missing)
-  if (type === "time") {
+  // time sync request from device
+  if (req.query.type === "time") {
+    // If device asks for time, respond Time=...
+    // (We can keep this too, many firmwares do it.)
     const now = new Date();
-
-    // Format: YYYY-MM-DDTHH:mm:ss+08:00
     const pad = (n) => String(n).padStart(2, "0");
-    const tz = "+08:00"; // adjust if needed
-
     const timeStr =
-      `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}` +
-      `T${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}${tz}`;
+      `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}` +
+      `T${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}+08:00`;
 
-    res.set("Content-Type", "text/plain");
+    res.set("Content-Type", "text/plain; charset=utf-8");
     return res.send(`Time=${timeStr}`);
   }
 
-  // 3) Everything else (logs, heartbeat, etc.)
-  console.log("CDATA:", req.query);
-  console.log("BODY:", req.body);
-  res.type("text/plain").send("OK");
+  console.log("CDATA query:", req.query);
+  console.log("CDATA body:", req.body);
+  return res.type("text/plain").send("OK");
 });
+
 
 
 app.post("/iclock/registry", (req, res) => {
