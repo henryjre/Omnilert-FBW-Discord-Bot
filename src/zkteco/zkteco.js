@@ -23,42 +23,42 @@ function normalizeRtEvent(raw) {
 async function start() {
     const zk = new ZKLib(DEVICE_IP, DEVICE_PORT, IN_PORT, TIMEOUT);
 
-    while (true) {
+    // while (true) {
+    try {
+        console.log("Connecting to device...");
+        await zk.createSocket();
+        console.log("Connected. Now testing...");
+
+
         try {
-            console.log("Connecting to device...");
-            await zk.createSocket();
-            console.log("Connected. Now testing...");
-
-
-            try {
-                const info = await zk.getInfo?.();
-                if (info) console.log("Device info:", info);
-            } catch {
-                console.error("Failed to get device info");
-            }
-
-            try {
-                await zk.setTime?.(new Date());
-                console.log("Time sync ok");
-            } catch {
-                console.error("Failed to set time");
-            }
-
-            console.log("Listening for realtime events on UDP port", IN_PORT);
-
-            await zk.getRealTimeLogs(async (raw) => {
-                const evt = normalizeRtEvent(raw);
-                console.log("RT EVENT:", evt);
-
-                // TODO: Save to DB, push to Discord, send to Odoo, etc.
-                // Important: dedupe using (pin + ts + eventType) or a logId if provided
-            });
-        } catch (err) {
-            console.error("Device loop error:", err?.message || err);
+            const info = await zk.getInfo?.();
+            if (info) console.log("Device info:", info);
+        } catch {
+            console.error("Failed to get device info");
         }
 
-        await new Promise((r) => setTimeout(r, 2000));
+        try {
+            await zk.setTime?.(new Date());
+            console.log("Time sync ok");
+        } catch {
+            console.error("Failed to set time");
+        }
+
+        console.log("Listening for realtime events on UDP port", IN_PORT);
+
+        await zk.getRealTimeLogs(async (raw) => {
+            const evt = normalizeRtEvent(raw);
+            console.log("RT EVENT:", evt);
+
+            // TODO: Save to DB, push to Discord, send to Odoo, etc.
+            // Important: dedupe using (pin + ts + eventType) or a logId if provided
+        });
+    } catch (err) {
+        console.error("Device loop error:", err?.message || err);
     }
+
+    // await new Promise((r) => setTimeout(r, 2000));
+    // }
 }
 
 start().catch(console.error);
