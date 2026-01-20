@@ -31,12 +31,16 @@ async function start() {
       try {
         const info = await zk.getInfo?.();
         if (info) console.log("Device info:", info);
-      } catch {}
+      } catch {
+        console.error("Failed to get device info");
+      }
 
       try {
         await zk.setTime?.(new Date());
         console.log("Time sync ok");
-      } catch {}
+      } catch {
+        console.error("Failed to set time");
+      }
 
       console.log("Listening for realtime events on UDP port", IN_PORT);
 
