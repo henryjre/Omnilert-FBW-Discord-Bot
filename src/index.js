@@ -48,6 +48,6 @@ module.exports = client;
 if (process.env.node_env === 'prod') {
   require('./webhook/app.js');
 }
-require('./zkteco/zkteco.js');
 require('./sqliteConnection.js');
+require('./zkteco/zkteco.js');
 
