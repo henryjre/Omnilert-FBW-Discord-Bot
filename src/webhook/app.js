@@ -63,76 +63,48 @@ app.use((req, res, next) => {
 app.use("/iclock", express.text({ type: "*/*" }));
 
 function pushOptionsResponse(sn) {
-  const tz = "+08:00"; // Philippines
-  const now = new Date();
-  const pad = (n) => String(n).padStart(2, "0");
-  const stampTime =
-    `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}` +
-    `T${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
 
   return (
     `GET OPTION FROM: ${sn}\r\n` +
-    `ErrorDelay=60\r\n` +
-    `Delay=30\r\n` +
-    `TransTimes=00:00;23:59\r\n` +
+    `Stamp=0\r\n` +
+    `OpStamp=0\r\n` +
+    `PhotoStamp=0\r\n` +
+    `ErrorDelay=30\r\n` +
+    `Delay=10\r\n` +
+    `TransTimes=00:00;14:05\r\n` +
     `TransInterval=1\r\n` +
-    `TransFlag=AttLog\tOpLog\tAttPhoto\tEnrollUser\tChgUser\tEnrollFP\tChgFP\r\n` +
+    `TransFlag=1111000000\r\n` +
     `Realtime=1\r\n` +
-    `Encrypt=0\r\n` +
-    `TimeZone=${tz}\r\n` +
-    `Timeout=60\r\n` +
-    `SyncTime=3600\r\n` +
-    `ServerVer=1.0\r\n` +
-    `ATTLOGStamp=${stampTime}\r\n` +
-    `OPERLOGStamp=${stampTime}\r\n` +
-    `ATTPHOTOStamp=${stampTime}\r\n`
+    `Encrypt=0\r\n`
   );
 }
 
 app.all("/iclock/cdata", (req, res) => {
   const { options, SN } = req.query;
-
   if (options === "all") {
-    res.set("Content-Type", "text/plain; charset=utf-8");
+    console.log(`[HANDSHAKE] Device ${SN} is asking for options.`);
+    res.set("Content-Type", "text/plain");
     return res.send(pushOptionsResponse(SN || ""));
   }
-
-  // time sync request from device
-  if (req.query.type === "time") {
-    // If device asks for time, respond Time=...
-    // (We can keep this too, many firmwares do it.)
-    const now = new Date();
-    const pad = (n) => String(n).padStart(2, "0");
-    const timeStr =
-      `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}` +
-      `T${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}+08:00`;
-
-    res.set("Content-Type", "text/plain; charset=utf-8");
-    return res.send(`Time=${timeStr}`);
+  if (req.method === 'POST' && !options) {
+    console.log(`[DATA RECEIVED] from ${SN}`);
+    console.log("Body Content:", req.body);
+    res.set("Content-Type", "text/plain");
+    return res.send("OK");
   }
 
-  console.log("CDATA query:", req.query);
-  console.log("CDATA body:", req.body);
   return res.type("text/plain").send("OK");
 });
 
-
-
 app.post("/iclock/registry", (req, res) => {
-  console.log("REGISTRY query:", req.query);
-  console.log("REGISTRY body:", req.body);
-  res.type("text/plain").send("OK");
+  console.log(`[REGISTRY] Device ${req.query.SN} is registering.`);
+  res.set("Content-Type", "text/plain");
+  res.send("Registry=OK");
 });
 
-app.get("/iclock/getrequest", (req, res) => {
-  console.log("getrequest query:", req.query);
-  res.type("text/plain").send("OK");
-});
-
-app.get("/iclock/devicecmd", (req, res) => {
-  console.log("devicecmd query:", req.query);
-  res.type("text/plain").send("OK");
-});
+// Keep these as they are strictly required for connectivity checks
+app.get("/iclock/getrequest", (req, res) => res.type("text/plain").send("OK"));
+app.get("/iclock/devicecmd", (req, res) => res.type("text/plain").send("OK"));
 
 // Turn on that server!
 app.listen(PORT, () => {
