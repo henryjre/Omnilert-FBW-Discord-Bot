@@ -63,13 +63,29 @@ app.use((req, res, next) => {
 app.use("/iclock", express.text({ type: "*/*" }));
 
 app.all("/iclock/cdata", (req, res) => {
-  console.log("METHOD:", req.method);
-  console.log("HEADERS content-type:", req.headers["content-type"]);
-  console.log("QUERY:", req.query);
-  console.log("BODY TYPE:", typeof req.body);
-  console.log("BODY RAW:", req.body);     // should be a string
-  console.log("BODY LEN:", req.body?.length);
+  const { options, SN } = req.query;
 
+  // Device is requesting PushOptions configuration
+  if (options === "all") {
+    // Tell device what to push + how often to poll
+    // These keys are what many ZKTeco firmwares expect (BioTime-like).
+    const pushOptions =
+      "GET OPTION FROM: " + SN + "\n" +
+      "Stamp=9999\n" +
+      "ErrorDelay=30\n" +
+      "Delay=10\n" +
+      "TransTimes=00:00;23:59\n" +
+      "TransInterval=1\n" +
+      "TransFlag=1111111111\n" +
+      "Realtime=1\n" +
+      "Encrypt=0\n";
+
+    res.set("Content-Type", "text/plain");
+    return res.send(pushOptions);
+  }
+
+  console.log("CDATA query:", req.query);
+  console.log("CDATA body:", req.body);
   res.type("text/plain").send("OK");
 });
 
