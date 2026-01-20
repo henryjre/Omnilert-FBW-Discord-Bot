@@ -57,13 +57,23 @@ app.post('/github-webhook', express.raw({ type: '*/*' }), (req, res) => {
 });
 
 
-app.use(express.text({ type: "*/*" }));
+// 3) ZKTeco ADMS: parse as TEXT ONLY under /iclock
+app.use("/iclock", express.text({ type: "*/*" }));
 
 app.all("/iclock/cdata", (req, res) => {
   console.log("cdata query:", req.query);
   console.log("cdata body:\n", req.body);
+  res.type("text/plain").send("OK");
+});
 
-  res.send("OK");
+app.get("/iclock/getrequest", (req, res) => {
+  console.log("getrequest query:", req.query);
+  res.type("text/plain").send("OK");
+});
+
+app.get("/iclock/devicecmd", (req, res) => {
+  console.log("devicecmd query:", req.query);
+  res.type("text/plain").send("OK");
 });
 
 // Turn on that server!
