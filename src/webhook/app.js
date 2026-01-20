@@ -63,32 +63,38 @@ app.use((req, res, next) => {
 app.use("/iclock", express.text({ type: "*/*" }));
 
 function pushOptionsResponse(sn) {
+  const options = [
+    `Stamp=0`,            
+    `OpStamp=0`,           
+    `PhotoStamp=0`,        
+    `ErrorDelay=30`,
+    `Delay=30`,
+    `TransTimes=00:00;23:59`,
+    `TransInterval=1`,
+    `TransFlag=1111000000`,
+    `Realtime=1`,
+    `Encrypt=0`,
+  ];
 
-  return (
-    `GET OPTION FROM: ${sn}\r\n` +
-    `Stamp=0\r\n` +
-    `OpStamp=0\r\n` +
-    `PhotoStamp=0\r\n` +
-    `ErrorDelay=30\r\n` +
-    `Delay=10\r\n` +
-    `TransTimes=00:00;14:05\r\n` +
-    `TransInterval=1\r\n` +
-    `TransFlag=1111000000\r\n` +
-    `Realtime=1\r\n` +
-    `Encrypt=0\r\n`
-  );
+  return options.join("\r\n");
 }
 
 app.all("/iclock/cdata", (req, res) => {
   const { options, SN } = req.query;
+
+  // 1. HANDSHAKE: Device asks for configuration
   if (options === "all") {
     console.log(`[HANDSHAKE] Device ${SN} is asking for options.`);
     res.set("Content-Type", "text/plain");
     return res.send(pushOptionsResponse(SN || ""));
   }
+
+  // 2. RECEIVING LOGS: Device POSTs attendance data
   if (req.method === 'POST' && !options) {
     console.log(`[DATA RECEIVED] from ${SN}`);
-    console.log("Body Content:", req.body);
+    console.log(req.body); 
+    
+    // Acknowledge receipt so device stops sending the same logs
     res.set("Content-Type", "text/plain");
     return res.send("OK");
   }
