@@ -2,11 +2,10 @@ const ZKLib = require("zklib-js");
 
 // Device config
 const DEVICE_IP = process.env.ZKTECO_DEVICE_IP;
-const DEVICE_PORT = process.env.ZKTECO_DEVICE_PORT || 4370;
-const IN_PORT = process.env.ZKTECO_SERVER_PORT;
+const DEVICE_PORT = Number(process.env.ZK_PORT || 4370);
+const IN_PORT = Number(process.env.ZK_IN_PORT || 5200);
+const TIMEOUT = Number(process.env.ZK_TIMEOUT || 5000);
 
-// Timeouts (ms)
-const TIMEOUT = 5000;
 
 // Normalize whatever the library returns into your own event shape
 function normalizeRtEvent(raw) {
