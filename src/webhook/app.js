@@ -63,10 +63,13 @@ app.use((req, res, next) => {
 app.use("/iclock", express.text({ type: "*/*" }));
 
 function pushOptionsResponse(sn) {
+  const safeSN = sn || "";
+  
   const options = [
-    `Stamp=0`,            
-    `OpStamp=0`,           
-    `PhotoStamp=0`,        
+    `GET OPTION FROM: ${safeSN}`,
+    `Stamp=0`,
+    `OpStamp=0`,
+    `PhotoStamp=0`,
     `ErrorDelay=30`,
     `Delay=30`,
     `TransTimes=00:00;23:59`,
@@ -74,6 +77,11 @@ function pushOptionsResponse(sn) {
     `TransFlag=1111000000`,
     `Realtime=1`,
     `Encrypt=0`,
+    `TimeZone=8`,            
+    `ServerVer=3.4.1`,       
+    `ATTLOGStamp=0`,         
+    `OPERLOGStamp=0`,        
+    `ATTPHOTOStamp=0`        
   ];
 
   return options.join("\r\n");
