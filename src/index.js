@@ -49,5 +49,4 @@ if (process.env.node_env === 'prod') {
   require('./webhook/app.js');
 }
 require('./sqliteConnection.js');
-require('./zkteco/zkteco.js');
 
