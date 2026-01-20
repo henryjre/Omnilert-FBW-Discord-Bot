@@ -58,6 +58,40 @@ app.use((req, res, next) => {
   next();
 });
 
+
+// 3) ZKTeco ADMS: parse as TEXT ONLY under /iclock
+app.use("/iclock", express.text({ type: "*/*" }));
+
+app.all("/iclock/cdata", (req, res) => {
+  const { options } = req.query;
+
+  if (options === "all") {
+    res.type("text/plain").send(
+      "Stamp=9999\n" +
+      "ErrorDelay=30\n" +
+      "Delay=10\n" +
+      "TransTimes=00:00;23:59\n" +
+      "TransInterval=1\n" +
+      "TransFlag=1111111111\n" +
+      "Realtime=1\n"
+    );
+    return;
+  }
+
+  console.log("CDATA:", req.query, req.body);
+  res.type("text/plain").send("OK");
+});
+
+app.post("/iclock/registry", (req, res) => {
+  console.log(`[REGISTRY] Device ${req.query.SN} is registering.`);
+  res.set("Content-Type", "text/plain");
+  res.send("Registry=OK");
+});
+
+// Keep these as they are strictly required for connectivity checks
+app.get("/iclock/getrequest", (req, res) => res.type("text/plain").send("OK"));
+app.get("/iclock/devicecmd", (req, res) => res.type("text/plain").send("OK"));
+
 // Turn on that server!
 app.listen(PORT, () => {
   console.log(`App listening on port ${PORT}`);
