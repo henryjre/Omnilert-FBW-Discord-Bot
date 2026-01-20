@@ -73,6 +73,12 @@ app.all("/iclock/cdata", (req, res) => {
   res.type("text/plain").send("OK");
 });
 
+app.post("/iclock/registry", (req, res) => {
+  console.log("REGISTRY query:", req.query);
+  console.log("REGISTRY body:", req.body);
+  res.type("text/plain").send("OK");
+});
+
 app.get("/iclock/getrequest", (req, res) => {
   console.log("getrequest query:", req.query);
   res.type("text/plain").send("OK");
