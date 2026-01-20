@@ -52,6 +52,13 @@ app.post("/github-webhook", express.raw({ type: "*/*" }), (req, res) => {
 });
 
 
+
+app.use((req, res, next) => {
+  console.log("INCOMING:", req.method, req.originalUrl);
+  next();
+});
+
+
 // 3) ZKTeco ADMS: parse as TEXT ONLY under /iclock
 app.use("/iclock", express.text({ type: "*/*" }));
 
