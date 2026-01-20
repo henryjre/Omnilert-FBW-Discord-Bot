@@ -7,58 +7,61 @@ const IN_PORT = Number(process.env.ZK_IN_PORT || 5200);
 const TIMEOUT = Number(process.env.ZK_TIMEOUT || 5000);
 
 
-// Normalize whatever the library returns into your own event shape
-function normalizeRtEvent(raw) {
-    return {
-        deviceIp: DEVICE_IP,
-        ts: raw?.time || raw?.timestamp || new Date().toISOString(),
-        pin: raw?.userId || raw?.uid || raw?.pin || raw?.id || null,
-        verifyType: raw?.verifyType ?? null,
-        eventType: raw?.eventType ?? "EVENTLOG",
-        inOut: raw?.inOut ?? raw?.state ?? null,
-        raw,
-    };
+function sleep(ms) {
+    return new Promise((r) => setTimeout(r, ms));
 }
 
-async function start() {
-    const zk = new ZKLib(DEVICE_IP, DEVICE_PORT, IN_PORT, TIMEOUT);
+function normalizeLog(row) {
+    // Different builds return different field names; keep raw.
+    const pin = row.userId ?? row.uid ?? row.pin ?? row.id ?? null;
+    const ts = row.timestamp ?? row.time ?? row.datetime ?? null;
+    const state = row.state ?? row.status ?? row.inOut ?? null;
 
-    // while (true) {
-    try {
-        console.log("Connecting to device...");
-        await zk.createSocket();
-        console.log("Connected. Now testing...");
+    return { pin, ts, state, raw: row };
+}
 
+async function run() {
+    const zk = new ZKLib(DEVICE_IP, DEVICE_PORT, TIMEOUT, IN_PORT);
+    console.log("Connecting...");
+    await zk.createSocket();
+    console.log("Connected.");
 
+    // optional time sync
+    try { await zk.setTime(new Date()); } catch { }
+
+    let lastSeen = null;
+
+    zk.getRealTimeLogs((log) => console.log("RT:", log));
+
+    while (true) {
         try {
-            const info = await zk.getInfo?.();
-            if (info) console.log("Device info:", info);
-        } catch {
-            console.error("Failed to get device info");
+            const resp = await zk.getAttendances();
+            const logs = resp?.data ?? resp ?? [];
+
+            // Oldest → newest
+            logs.sort((a, b) => {
+                const ta = new Date(a.timestamp || a.time || 0).getTime();
+                const tb = new Date(b.timestamp || b.time || 0).getTime();
+                return ta - tb;
+            });
+
+            for (const row of logs) {
+                const e = normalizeLog(row);
+                const key = `${e.pin}|${e.ts}|${e.state}`;
+                if (!e.pin || !e.ts) continue;
+                if (lastSeen === key) continue;
+
+                console.log("EVENT:", e);
+                lastSeen = key;
+            }
+        } catch (e) {
+            console.error("poll error:", e?.message || e);
+            try { await zk.disconnect(); } catch { }
+            try { await zk.createSocket(); } catch { }
         }
 
-        try {
-            await zk.setTime?.(new Date());
-            console.log("Time sync ok");
-        } catch {
-            console.error("Failed to set time");
-        }
-
-        console.log("Listening for realtime events on UDP port", IN_PORT);
-
-        await zk.getRealTimeLogs(async (raw) => {
-            const evt = normalizeRtEvent(raw);
-            console.log("RT EVENT:", evt);
-
-            // TODO: Save to DB, push to Discord, send to Odoo, etc.
-            // Important: dedupe using (pin + ts + eventType) or a logId if provided
-        });
-    } catch (err) {
-        console.error("Device loop error:", err?.message || err);
+        await sleep(1500);
     }
-
-    // await new Promise((r) => setTimeout(r, 2000));
-    // }
 }
 
-start().catch(console.error);
+run().catch(console.error);
