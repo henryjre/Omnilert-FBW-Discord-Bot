@@ -56,6 +56,16 @@ app.post('/github-webhook', express.raw({ type: '*/*' }), (req, res) => {
   }
 });
 
+
+app.use(express.text({ type: "*/*" }));
+
+app.all("/iclock/cdata", (req, res) => {
+  console.log("cdata query:", req.query);
+  console.log("cdata body:\n", req.body);
+
+  res.send("OK");
+});
+
 // Turn on that server!
 app.listen(PORT, () => {
   console.log(`App listening on port ${PORT}`);
