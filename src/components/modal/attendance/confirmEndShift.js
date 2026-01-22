@@ -33,8 +33,18 @@ module.exports = {
     const threadChannel = interaction.channel;
     const originalMessage = await threadChannel.fetchStarterMessage();
 
+    // Remove only the shift exchange button, keep current approvals button
+    const updatedComponents = originalMessage.components.map(row => {
+      const newRow = ActionRowBuilder.from(row);
+      const filteredButtons = newRow.components.filter(button =>
+        button.data.custom_id !== 'shiftExchangeButton'
+      );
+      newRow.setComponents(filteredButtons);
+      return newRow;
+    });
+
     await originalMessage.edit({
-      components: []
+      components: updatedComponents
     });
 
     const checkoutMessageEmbed = interaction.message.embeds[0];
