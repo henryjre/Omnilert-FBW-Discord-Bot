@@ -50,3 +50,18 @@ if (process.env.node_env === 'prod') {
 }
 require('./sqliteConnection.js');
 
+// Graceful shutdown for BullMQ
+const { closeQueue } = require('./queue/earlyAttendanceQueue');
+
+process.on('SIGTERM', async () => {
+  console.log('SIGTERM received, closing queue...');
+  await closeQueue();
+  process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+  console.log('SIGINT received, closing queue...');
+  await closeQueue();
+  process.exit(0);
+});
+
