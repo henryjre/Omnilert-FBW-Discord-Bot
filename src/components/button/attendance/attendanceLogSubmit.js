@@ -1,4 +1,6 @@
 const { ActionRowBuilder, MessageFlags, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { incrementThreadApprovals, getThreadApprovals } = require('../../../sqliteFunctions');
+const { isScheduleChannel, updateStarterMessageApprovals } = require('../../../functions/helpers/approvalCounterUtils');
 
 const hrRoleId = '1314815153421680640';
 
@@ -46,11 +48,29 @@ module.exports = {
 
     const buttonRow = new ActionRowBuilder().addComponents(approve, reject);
 
-    await interaction.channel.send({
+    const sentMessage = await interaction.channel.send({
       content: `<@&${hrRoleId}>`,
       embeds: [messageEmbed],
       components: [buttonRow],
     });
+
+    // Track approval count if in a schedule channel
+    if (interaction.channel.isThread() && isScheduleChannel(interaction.channel.parentId)) {
+      try {
+        const starterMessage = await interaction.channel.fetchStarterMessage();
+
+        // Increment approval count in database
+        incrementThreadApprovals(interaction.channel.id, interaction.channel.parentId, starterMessage.id);
+
+        // Get updated count
+        const { current_approvals } = getThreadApprovals(interaction.channel.id);
+
+        // Update starter message button
+        await updateStarterMessageApprovals(interaction.channel, current_approvals);
+      } catch (error) {
+        console.error('Error tracking approval count:', error.message);
+      }
+    }
 
     await interaction.message.delete();
   },

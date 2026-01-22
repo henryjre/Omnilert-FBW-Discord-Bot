@@ -60,4 +60,14 @@ db.exec(`
   )
 `);
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS thread_approvals (
+    thread_id TEXT PRIMARY KEY,
+    parent_channel_id TEXT NOT NULL,
+    starter_message_id TEXT NOT NULL,
+    current_approvals INTEGER DEFAULT 0,
+    last_updated DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
 module.exports = db;

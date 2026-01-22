@@ -10,6 +10,8 @@ const moment = require('moment-timezone');
 
 const { getAttendanceById } = require('../../../odooRpc.js');
 const workEntryTypes = require('../../../config/work_entry_types.json');
+const { incrementThreadApprovals, getThreadApprovals } = require('../../../sqliteFunctions');
+const { isScheduleChannel, updateStarterMessageApprovals } = require('../../../functions/helpers/approvalCounterUtils');
 
 const hrRoleId = '1314815153421680640';
 
@@ -180,11 +182,29 @@ module.exports = {
         )
         .setColor('Red');
 
-      await threadChannel.send({
+      const sentMessage = await threadChannel.send({
         content: `<@&${hrRoleId}>`,
         embeds: [embed],
         components: [buttonRow]
       });
+
+      // Track approval count if in a schedule channel
+      if (threadChannel.isThread() && isScheduleChannel(threadChannel.parentId)) {
+        try {
+          const starterMsg = await threadChannel.fetchStarterMessage();
+
+          // Increment approval count in database
+          incrementThreadApprovals(threadChannel.id, threadChannel.parentId, starterMsg.id);
+
+          // Get updated count
+          const { current_approvals } = getThreadApprovals(threadChannel.id);
+
+          // Update starter message button
+          await updateStarterMessageApprovals(threadChannel, current_approvals);
+        } catch (error) {
+          console.error('Error tracking approval count (late checkout):', error.message);
+        }
+      }
     }
     const attendance = await getAttendanceById(attendanceId);
 
@@ -250,11 +270,29 @@ module.exports = {
       )
       .setColor(workEntryTypes.find((type) => type.id === 118).color_hex);
 
-    await threadChannel.send({
+    const otMessage = await threadChannel.send({
       content: `<@&${hrRoleId}>`,
       embeds: [otPremiumEmbed],
       components: [buttonRow]
     });
+
+    // Track approval count if in a schedule channel
+    if (threadChannel.isThread() && isScheduleChannel(threadChannel.parentId)) {
+      try {
+        const starterMsg = await threadChannel.fetchStarterMessage();
+
+        // Increment approval count in database
+        incrementThreadApprovals(threadChannel.id, threadChannel.parentId, starterMsg.id);
+
+        // Get updated count
+        const { current_approvals } = getThreadApprovals(threadChannel.id);
+
+        // Update starter message button
+        await updateStarterMessageApprovals(threadChannel, current_approvals);
+      } catch (error) {
+        console.error('Error tracking approval count (OT premium):', error.message);
+      }
+    }
 
     await interaction.editReply({ content: `Checkout status updated.` });
   }

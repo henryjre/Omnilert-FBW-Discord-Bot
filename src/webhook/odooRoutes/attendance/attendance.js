@@ -12,6 +12,8 @@ const workEntryTypes = require('../../../config/work_entry_types.json');
 const client = require('../../../index');
 const { searchActiveAttendance, editAttendance } = require('../../../odooRpc.js');
 const { earlyAttendanceQueue } = require('../../../queue/earlyAttendanceQueue');
+const { incrementThreadApprovals, getThreadApprovals } = require('../../../sqliteFunctions');
+const { isScheduleChannel, updateStarterMessageApprovals } = require('../../../functions/helpers/approvalCounterUtils');
 
 const managementAttendanceLogChannelId = '1314413190074994690';
 const hrRoleId = '1314815153421680640';
@@ -403,7 +405,25 @@ const employeeCheckIn = async (req, res) => {
       messagePayload.content = `${x_discord_id ? `<@${x_discord_id}>` : department?.role}`;
 
       // Send tardiness message immediately
-      await thread.send(messagePayload);
+      const tardinessMessage = await thread.send(messagePayload);
+
+      // Track approval count if in a schedule channel
+      if (thread.isThread() && isScheduleChannel(thread.parentId)) {
+        try {
+          const starterMsg = await thread.fetchStarterMessage();
+
+          // Increment approval count in database
+          incrementThreadApprovals(thread.id, thread.parentId, starterMsg.id);
+
+          // Get updated count
+          const { current_approvals } = getThreadApprovals(thread.id);
+
+          // Update starter message button
+          await updateStarterMessageApprovals(thread, current_approvals);
+        } catch (error) {
+          console.error('Error tracking approval count (tardiness):', error.message);
+        }
+      }
     } else {
       // Early attendance - schedule for 3 minutes after shift start
       messagePayload.components = [earlyAttendanceRow];
@@ -439,7 +459,25 @@ const employeeCheckIn = async (req, res) => {
       } else {
         // Employee checked in after shift start + 3 minutes, send immediately
         console.log(`Sending early attendance message immediately for ${employeeName} (check-in was after shift start + 3 min)`);
-        await thread.send(messagePayload);
+        const earlyMessage = await thread.send(messagePayload);
+
+        // Track approval count if in a schedule channel
+        if (thread.isThread() && isScheduleChannel(thread.parentId)) {
+          try {
+            const starterMsg = await thread.fetchStarterMessage();
+
+            // Increment approval count in database
+            incrementThreadApprovals(thread.id, thread.parentId, starterMsg.id);
+
+            // Get updated count
+            const { current_approvals } = getThreadApprovals(thread.id);
+
+            // Update starter message button
+            await updateStarterMessageApprovals(thread, current_approvals);
+          } catch (error) {
+            console.error('Error tracking approval count (early attendance):', error.message);
+          }
+        }
       }
     }
 

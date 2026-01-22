@@ -4,6 +4,8 @@ const { google } = require("googleapis");
 const moment = require("moment-timezone");
 
 const { editAttendance, createWorkEntry } = require("../../../odooRpc.js");
+const { decrementThreadApprovals, getThreadApprovals } = require("../../../sqliteFunctions");
+const { isScheduleChannel, updateStarterMessageApprovals } = require("../../../functions/helpers/approvalCounterUtils");
 
 const credentials = JSON.parse(
   Buffer.from(process.env.googleServiceAccountKey, "base64").toString("utf8")
@@ -107,6 +109,22 @@ module.exports = {
       }
 
       await interaction.message.edit(messagePayload);
+
+      // Decrement approval count if in a schedule channel
+      if (interaction.channel.isThread() && isScheduleChannel(interaction.channel.parentId)) {
+        try {
+          // Decrement approval count in database
+          decrementThreadApprovals(interaction.channel.id);
+
+          // Get updated count
+          const { current_approvals } = getThreadApprovals(interaction.channel.id);
+
+          // Update starter message button
+          await updateStarterMessageApprovals(interaction.channel, current_approvals);
+        } catch (error) {
+          console.error('Error tracking approval count (approve):', error.message);
+        }
+      }
 
       await interaction.channel.send({
         content: discordUser,

@@ -87,10 +87,52 @@ const getAttendanceRecords = db.transaction((discordId) => {
   }
 });
 
+////////////////////////////////////////////////////////////
+// Thread Approvals Tracking
+////////////////////////////////////////////////////////////
+
+const incrementThreadApprovals = db.transaction((threadId, parentChannelId, starterMessageId) => {
+  const upsertStmt = db.prepare(`
+    INSERT INTO thread_approvals (thread_id, parent_channel_id, starter_message_id, current_approvals)
+    VALUES (?, ?, ?, 1)
+    ON CONFLICT(thread_id)
+    DO UPDATE SET
+      current_approvals = current_approvals + 1,
+      last_updated = CURRENT_TIMESTAMP
+  `);
+
+  upsertStmt.run(threadId, parentChannelId, starterMessageId);
+});
+
+const decrementThreadApprovals = db.transaction((threadId) => {
+  const updateStmt = db.prepare(`
+    UPDATE thread_approvals
+    SET current_approvals = MAX(current_approvals - 1, 0),
+        last_updated = CURRENT_TIMESTAMP
+    WHERE thread_id = ?
+  `);
+
+  updateStmt.run(threadId);
+});
+
+const getThreadApprovals = db.transaction((threadId) => {
+  const selectStmt = db.prepare(`
+    SELECT current_approvals, parent_channel_id, starter_message_id
+    FROM thread_approvals
+    WHERE thread_id = ?
+  `);
+
+  const row = selectStmt.get(threadId);
+  return row || { current_approvals: 0, parent_channel_id: null, starter_message_id: null };
+});
+
 module.exports = {
   getNextAuditId,
   saveAuditRatings,
   getAuditRatings,
   saveAttendanceRecords,
   getAttendanceRecords,
+  incrementThreadApprovals,
+  decrementThreadApprovals,
+  getThreadApprovals,
 };

@@ -1,5 +1,7 @@
 const { Queue, Worker } = require('bullmq');
 const IORedis = require('ioredis');
+const { incrementThreadApprovals, getThreadApprovals } = require('../sqliteFunctions');
+const { isScheduleChannel, updateStarterMessageApprovals } = require('../functions/helpers/approvalCounterUtils');
 
 // Create Valkey connection with simplified configuration
 const connection = new IORedis({
@@ -90,6 +92,24 @@ function initializeWorker(client) {
         await thread.send(messagePayload);
 
         console.log(`✓ Early attendance message sent for ${employeeName} (Attendance ID: ${attendanceId})`);
+
+        // Track approval count if in a schedule channel
+        if (thread.isThread() && isScheduleChannel(thread.parentId)) {
+          try {
+            const starterMsg = await thread.fetchStarterMessage();
+
+            // Increment approval count in database
+            incrementThreadApprovals(thread.id, thread.parentId, starterMsg.id);
+
+            // Get updated count
+            const { current_approvals } = getThreadApprovals(thread.id);
+
+            // Update starter message button
+            await updateStarterMessageApprovals(thread, current_approvals);
+          } catch (error) {
+            console.error('Error tracking approval count (scheduled early attendance):', error.message);
+          }
+        }
 
         return { success: true, employeeName, attendanceId };
       } catch (error) {
