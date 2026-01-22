@@ -11,6 +11,7 @@ const departments = require('../../../config/departments.json');
 const workEntryTypes = require('../../../config/work_entry_types.json');
 const client = require('../../../index');
 const { searchActiveAttendance, editAttendance } = require('../../../odooRpc.js');
+const { earlyAttendanceQueue } = require('../../../queue/earlyAttendanceQueue');
 
 const managementAttendanceLogChannelId = '1314413190074994690';
 const hrRoleId = '1314815153421680640';
@@ -400,12 +401,47 @@ const employeeCheckIn = async (req, res) => {
     if (punctuality.status === 'late') {
       messagePayload.components = [tardinessRow];
       messagePayload.content = `${x_discord_id ? `<@${x_discord_id}>` : department?.role}`;
+
+      // Send tardiness message immediately
+      await thread.send(messagePayload);
     } else {
+      // Early attendance - schedule for 3 minutes after shift start
       messagePayload.components = [earlyAttendanceRow];
       messagePayload.content = `<@&${hrRoleId}>`;
-    }
 
-    await thread.send(messagePayload);
+      let timing;
+      try {
+        timing = calculateEarlyAttendanceMessageTime(x_shift_start);
+      } catch (error) {
+        console.error(`Error calculating early attendance message time for ${employeeName}:`, error.message);
+        timing = { shouldSchedule: false }; // Fallback to immediate send
+      }
+
+      if (timing.shouldSchedule) {
+        // Schedule message for future delivery using BullMQ
+        console.log(`Scheduling early attendance message for ${employeeName} to send at ${timing.targetTime} (in ${Math.round(timing.delayMs / 1000)}s)`);
+
+        await earlyAttendanceQueue.add(
+          'send-early-attendance-approval',
+          {
+            threadId: thread.id,
+            messagePayload,
+            employeeName,
+            attendanceId: id,
+          },
+          {
+            delay: timing.delayMs,
+            jobId: `attendance-${id}-${Date.now()}`, // Unique job ID
+          }
+        );
+
+        console.log(`✓ Job queued for ${employeeName} (Attendance ID: ${id})`);
+      } else {
+        // Employee checked in after shift start + 3 minutes, send immediately
+        console.log(`Sending early attendance message immediately for ${employeeName} (check-in was after shift start + 3 min)`);
+        await thread.send(messagePayload);
+      }
+    }
 
     return res.status(200).json({ ok: true, message: 'Attendance logged' });
   } catch (error) {
@@ -711,6 +747,31 @@ function evaluatePunctuality(checkIn, shiftStart, tz = 'Asia/Manila') {
     readable,
     checkInLocal: mIn.format(fmt),
     shiftStartLocal: mStart.format(fmt),
+  };
+}
+
+function calculateEarlyAttendanceMessageTime(shiftStart, tz = 'Asia/Manila') {
+  const fmt = 'YYYY-MM-DD HH:mm:ss';
+
+  // Parse shift start time from UTC (e.g., "2026-01-22 01:00:00" UTC)
+  // Convert to Asia/Manila timezone (e.g., "2026-01-22 09:00:00" Manila)
+  // This matches the pattern used in formatTime() at line 627
+  const shiftStartMoment = moment.tz(shiftStart, fmt, 'UTC').tz(tz);
+
+  // Add 1 minute to get target send time
+  // Example: 9:00 AM shift start → 9:01 AM target send time
+  const targetTime = shiftStartMoment.clone().add(1, 'minutes');
+
+  // Get current time in Asia/Manila timezone
+  const now = moment().tz(tz);
+
+  // Calculate delay in milliseconds (0 if in the past)
+  const delayMs = Math.max(0, targetTime.diff(now));
+
+  return {
+    targetTime: targetTime.format('YYYY-MM-DD HH:mm:ss'),
+    delayMs,
+    shouldSchedule: delayMs > 0
   };
 }
 
