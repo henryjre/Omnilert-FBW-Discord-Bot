@@ -176,7 +176,14 @@ const processPublishedShift = async (payload) => {
       .setEmoji('🔄')
       .setStyle(ButtonStyle.Primary);
 
-    const buttonRow = new ActionRowBuilder().addComponents(shiftExchangeButton);
+    const currentApprovalsButton = new ButtonBuilder()
+      .setCustomId('currentApprovalsButton')
+      .setLabel('Current Approvals')
+      .setEmoji('0️⃣')
+      .setDisabled(true)
+      .setStyle(ButtonStyle.Secondary);
+
+    const buttonRow = new ActionRowBuilder().addComponents(shiftExchangeButton, currentApprovalsButton);
 
     const shiftMessagePayload = {
       content: `# ${startDate} | ${id}\n<@${x_discord_id}>`,
@@ -520,8 +527,7 @@ function calculateTimeAllocation(startTime, endTime) {
   } else {
     const hours = Math.floor(diffHours);
     const minutes = diffMinutes % 60;
-    return `${hours} hour${hours !== 1 ? 's' : ''}${
-      minutes > 0 ? ` and ${minutes} minute${minutes !== 1 ? 's' : ''}` : ''
-    }`;
+    return `${hours} hour${hours !== 1 ? 's' : ''}${minutes > 0 ? ` and ${minutes} minute${minutes !== 1 ? 's' : ''}` : ''
+      }`;
   }
 }
