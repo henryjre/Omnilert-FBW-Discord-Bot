@@ -405,25 +405,8 @@ const employeeCheckIn = async (req, res) => {
       messagePayload.content = `${x_discord_id ? `<@${x_discord_id}>` : department?.role}`;
 
       // Send tardiness message immediately
-      const tardinessMessage = await thread.send(messagePayload);
-
-      // Track approval count if in a schedule channel
-      if (thread.isThread() && isScheduleChannel(thread.parentId)) {
-        try {
-          const starterMsg = await thread.fetchStarterMessage();
-
-          // Increment approval count in database
-          incrementThreadApprovals(thread.id, thread.parentId, starterMsg.id);
-
-          // Get updated count
-          const { current_approvals } = getThreadApprovals(thread.id);
-
-          // Update starter message button
-          await updateStarterMessageApprovals(thread, current_approvals);
-        } catch (error) {
-          console.error('Error tracking approval count (tardiness):', error.message);
-        }
-      }
+      // Note: Approval count is tracked when user clicks attendanceLogSubmit, not here
+      await thread.send(messagePayload);
     } else {
       // Early attendance - schedule for 3 minutes after shift start
       messagePayload.components = [earlyAttendanceRow];
