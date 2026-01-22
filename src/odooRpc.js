@@ -501,6 +501,7 @@ module.exports = {
   getEmployeeAuditRatings,
   getEmployeePayslipData,
   createViewOnlyPayslip,
+  toggleAttendance,
 };
 
 async function callOdooRpc(model, method, domain = [], fields = [], options = {}) {
@@ -586,4 +587,70 @@ function currentSemiMonthRangeUTC8() {
   return day <= 15
     ? { date_from: first, date_to: fifteenth }
     : { date_from: sixteenth, date_to: end };
+}
+
+/**
+ * Search for open attendance by employee ID
+ * @param {number} employeeId - Odoo employee ID (same as ZKTeco PIN)
+ * @returns {Promise<Object|null>} - Open attendance record or null
+ */
+async function searchOpenAttendanceByEmployeeId(employeeId) {
+  const domain = [
+    ['employee_id', '=', parseInt(employeeId)],
+    ['check_out', '=', false]
+  ];
+  const fields = ['id', 'employee_id', 'check_in'];
+  const result = await callOdooRpc('hr.attendance', 'search_read', domain, fields, { limit: 1 });
+  return result?.length ? result[0] : null;
+}
+
+/**
+ * Toggle attendance (check-in or check-out) based on employee ID
+ * @param {string|number} employeeId - Odoo employee ID (same as ZKTeco PIN)
+ * @param {string} timestamp - Optional timestamp (defaults to now)
+ * @returns {Promise<Object>} - Result with action taken and attendance details
+ */
+async function toggleAttendance(employeeId, timestamp = null) {
+  const empId = parseInt(employeeId);
+  if (isNaN(empId) || empId <= 0) {
+    throw new Error(`Invalid employee ID: ${employeeId}`);
+  }
+
+  // 1. Search for open attendance
+  const openAttendance = await searchOpenAttendanceByEmployeeId(empId);
+
+  // 2. Convert timestamp to UTC (ZKTeco sends local time in UTC+8)
+  let checkTime;
+  if (timestamp) {
+    // Parse local time and convert to UTC by subtracting 8 hours
+    const localDate = new Date(timestamp.replace(' ', 'T') + '+08:00');
+    checkTime = localDate.toISOString().replace('T', ' ').split('.')[0];
+  } else {
+    checkTime = new Date().toISOString().replace('T', ' ').split('.')[0];
+  }
+
+  // 3. Check out if open attendance exists, otherwise check in
+  if (openAttendance) {
+    // Check out
+    await callOdooKw('hr.attendance', 'write', [[openAttendance.id], { check_out: checkTime }]);
+    return {
+      action: 'check_out',
+      employeeId: empId,
+      attendanceId: openAttendance.id,
+      checkIn: openAttendance.check_in,
+      checkOut: checkTime
+    };
+  } else {
+    // Check in
+    const attendanceId = await callOdooKw('hr.attendance', 'create', [{
+      employee_id: empId,
+      check_in: checkTime
+    }]);
+    return {
+      action: 'check_in',
+      employeeId: empId,
+      attendanceId: attendanceId,
+      checkIn: checkTime
+    };
+  }
 }
