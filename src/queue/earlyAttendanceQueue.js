@@ -1,26 +1,25 @@
 const { Queue, Worker } = require('bullmq');
 const IORedis = require('ioredis');
 
-// Create Valkey connection with retry logic
+// Create Valkey connection with simplified configuration
 const connection = new IORedis({
   host: process.env.VALKEY_HOST || '127.0.0.1',
   port: parseInt(process.env.VALKEY_PORT || '6379'),
   password: process.env.VALKEY_PASSWORD || undefined,
   maxRetriesPerRequest: null,
-  enableReadyCheck: false,
+  enableReadyCheck: true, // Changed to true for better connection validation
   lazyConnect: false,
+  connectTimeout: 10000,
+  keepAlive: 30000,
+  family: 4, // Force IPv4
   retryStrategy(times) {
-    if (times > 10) {
-      console.error('Failed to connect to Valkey after 10 attempts. Giving up.');
-      return null; // Stop retrying after 10 attempts
+    if (times > 5) {
+      console.error('Failed to connect to Valkey after 5 attempts. Stopping retries.');
+      return null;
     }
-    const delay = Math.min(times * 100, 2000);
-    console.log(`Retrying Valkey connection (attempt ${times}) in ${delay}ms...`);
+    const delay = Math.min(times * 500, 3000);
+    console.log(`Retrying Valkey connection (attempt ${times}/${5}) in ${delay}ms...`);
     return delay;
-  },
-  reconnectOnError(err) {
-    console.log('Reconnect on error triggered:', err.message);
-    return true; // Always attempt to reconnect on errors
   },
 });
 
@@ -104,7 +103,10 @@ function initializeWorker(client) {
         port: parseInt(process.env.VALKEY_PORT || '6379'),
         password: process.env.VALKEY_PASSWORD || undefined,
         maxRetriesPerRequest: null,
-        enableReadyCheck: false,
+        enableReadyCheck: true,
+        connectTimeout: 10000,
+        keepAlive: 30000,
+        family: 4, // Force IPv4
       }),
       concurrency: 5, // Process up to 5 jobs concurrently
     }
