@@ -25,11 +25,23 @@ const connection = new IORedis({
 });
 
 connection.on('connect', () => {
-  console.log('Connected to Valkey for early attendance queue');
+  console.log('✓ Connected to Valkey for early attendance queue');
+});
+
+connection.on('ready', () => {
+  console.log('✓ Valkey connection is ready');
 });
 
 connection.on('error', (err) => {
-  console.error('Valkey connection error:', err.message);
+  console.error('✗ Valkey connection error:', err.message);
+});
+
+connection.on('close', () => {
+  console.log('⚠ Valkey connection closed');
+});
+
+connection.on('reconnecting', () => {
+  console.log('⟳ Reconnecting to Valkey...');
 });
 
 // Create queue for early attendance messages
@@ -87,7 +99,13 @@ function initializeWorker(client) {
       }
     },
     {
-      connection: connection.duplicate(),
+      connection: new IORedis({
+        host: process.env.VALKEY_HOST || '127.0.0.1',
+        port: parseInt(process.env.VALKEY_PORT || '6379'),
+        password: process.env.VALKEY_PASSWORD || undefined,
+        maxRetriesPerRequest: null,
+        enableReadyCheck: false,
+      }),
       concurrency: 5, // Process up to 5 jobs concurrently
     }
   );
