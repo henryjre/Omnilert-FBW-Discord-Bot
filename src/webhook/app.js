@@ -2,17 +2,18 @@
 const express = require('express');
 const crypto = require('crypto');
 const { exec } = require('child_process');
-// const helmet = require('helmet');
 const app = express();
-// const routes = require("./routes");
+
+// Routes
 const odooRoutes = require('./odooRoutes');
+const zktecoRoutes = require('./zkteco/routes');
+
 const PORT = process.env.PORT || 3000;
 const SECRET = process.env.githubSecret;
 
-// const authenticate = require('./auth');
-
-// 1) JSON only for routes that need JSON
+// Mount routes
 app.use("/odoo", express.json(), odooRoutes);
+app.use("/iclock", zktecoRoutes);
 
 // 2) GitHub webhook must be RAW (Buffer) for signature verification
 app.post("/github-webhook", express.raw({ type: "*/*" }), (req, res) => {
@@ -52,52 +53,7 @@ app.post("/github-webhook", express.raw({ type: "*/*" }), (req, res) => {
 });
 
 
-
-app.use((req, res, next) => {
-  console.log("INCOMING:", req.method, req.originalUrl);
-  next();
-});
-
-
-// 3) ZKTeco ADMS: parse as TEXT ONLY under /iclock
-app.use("/iclock", express.text({ type: "*/*" }));
-
-app.all("/iclock/cdata", (req, res) => {
-  const { options, SN } = req.query;
-
-  if (options === "all") {
-    const body =
-      `GET OPTION FROM: ${SN}\r\n` +
-      `Stamp=9999\r\n` +
-      `ErrorDelay=30\r\n` +
-      `Delay=10\r\n` +
-      `TransTimes=00:00;23:59\r\n` +
-      `TransInterval=1\r\n` +
-      `TransFlag=1111111111\r\n` +
-      `Realtime=1\r\n` +
-      `Encrypt=0\r\n` +
-      `\r\n`;
-
-    return res.status(200).type("text/plain").send(body);
-  }
-
-  console.log("CDATA:", req.query);
-  console.log("CDATA BODY:\n", req.body);
-  return res.status(200).type("text/plain").send("OK");
-});
-
-
-app.post("/iclock/registry", (req, res) => {
-  console.log(`[REGISTRY] Device ${req.query.SN} is registering.`);
-  res.set("Content-Type", "text/plain");
-  res.send("Registry=OK");
-});
-
-// Keep these as they are strictly required for connectivity checks
-app.get("/iclock/getrequest", (req, res) => res.type("text/plain").send("OK"));
-app.get("/iclock/devicecmd", (req, res) => res.type("text/plain").send("OK"));
-
 // Turn on that server!
 app.listen(PORT, () => {
-  console.log(`App listening on port ${PORT}`);
+  console.log(`App listening on port ${PORT} `);
 });
