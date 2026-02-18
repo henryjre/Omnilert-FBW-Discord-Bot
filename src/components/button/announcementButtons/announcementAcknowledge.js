@@ -59,7 +59,7 @@ module.exports = {
         const timestamp = moment().tz('Asia/Manila').format('MMMM D, YYYY [at] h:mm A');
 
         const ackEmbed = new EmbedBuilder()
-          .setTitle('✅ Acknowledged')
+          .setDescription(`## ✅ Acknowledged`)
           .setDescription(`${interaction.user} • ${timestamp}`)
           .setColor(0x00FF00) // Green
           .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }));
