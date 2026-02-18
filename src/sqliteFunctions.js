@@ -126,6 +126,83 @@ const getThreadApprovals = db.transaction((threadId) => {
   return row || { current_approvals: 0, parent_channel_id: null, starter_message_id: null };
 });
 
+////////////////////////////////////////////////////////////
+// Announcement Acknowledgment Tracking
+////////////////////////////////////////////////////////////
+
+const createAnnouncementTracking = db.transaction((announcementId, channelId, threadId, expectedUsers, timeoutMinutes = 5) => {
+  const insertStmt = db.prepare(`
+    INSERT INTO announcement_acknowledgments (announcement_id, channel_id, thread_id, expected_users, timeout_minutes)
+    VALUES (?, ?, ?, ?, ?)
+  `);
+
+  insertStmt.run(announcementId, channelId, threadId, JSON.stringify(expectedUsers), timeoutMinutes);
+});
+
+const addAcknowledgment = db.transaction((announcementId, userId) => {
+  const selectStmt = db.prepare(`
+    SELECT acknowledged_users FROM announcement_acknowledgments WHERE announcement_id = ?
+  `);
+
+  const row = selectStmt.get(announcementId);
+  if (!row) return { alreadyAcknowledged: false, notFound: true };
+
+  const acknowledgedUsers = JSON.parse(row.acknowledged_users);
+
+  if (acknowledgedUsers.includes(userId)) {
+    return { alreadyAcknowledged: true };
+  }
+
+  acknowledgedUsers.push(userId);
+
+  const updateStmt = db.prepare(`
+    UPDATE announcement_acknowledgments
+    SET acknowledged_users = ?
+    WHERE announcement_id = ?
+  `);
+
+  updateStmt.run(JSON.stringify(acknowledgedUsers), announcementId);
+
+  return { alreadyAcknowledged: false };
+});
+
+const getAnnouncementTracking = db.transaction((announcementId) => {
+  const selectStmt = db.prepare(`
+    SELECT * FROM announcement_acknowledgments WHERE announcement_id = ?
+  `);
+
+  const row = selectStmt.get(announcementId);
+  if (!row) return null;
+
+  return {
+    ...row,
+    expected_users: JSON.parse(row.expected_users),
+    acknowledged_users: JSON.parse(row.acknowledged_users),
+  };
+});
+
+const getNonAcknowledgers = db.transaction((announcementId) => {
+  const selectStmt = db.prepare(`
+    SELECT expected_users, acknowledged_users FROM announcement_acknowledgments WHERE announcement_id = ?
+  `);
+
+  const row = selectStmt.get(announcementId);
+  if (!row) return [];
+
+  const expectedUsers = JSON.parse(row.expected_users);
+  const acknowledgedUsers = JSON.parse(row.acknowledged_users);
+
+  return expectedUsers.filter(userId => !acknowledgedUsers.includes(userId));
+});
+
+const deleteAnnouncementTracking = db.transaction((announcementId) => {
+  const deleteStmt = db.prepare(`
+    DELETE FROM announcement_acknowledgments WHERE announcement_id = ?
+  `);
+
+  deleteStmt.run(announcementId);
+});
+
 module.exports = {
   getNextAuditId,
   saveAuditRatings,
@@ -135,4 +212,9 @@ module.exports = {
   incrementThreadApprovals,
   decrementThreadApprovals,
   getThreadApprovals,
+  createAnnouncementTracking,
+  addAcknowledgment,
+  getAnnouncementTracking,
+  getNonAcknowledgers,
+  deleteAnnouncementTracking,
 };
