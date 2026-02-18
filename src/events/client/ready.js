@@ -1,5 +1,6 @@
 const chalk = require('chalk');
 const { initializeWorker } = require('../../queue/earlyAttendanceQueue');
+const { initializeAnnouncementAckWorker } = require('../../queue/announcementAckQueue');
 
 module.exports = {
   name: 'clientReady',
@@ -13,5 +14,9 @@ module.exports = {
     // Initialize early attendance queue worker
     initializeWorker(client);
     console.log(chalk.blue('📋 Early attendance queue worker started'));
+
+    // Initialize announcement acknowledgment queue worker
+    initializeAnnouncementAckWorker(client);
+    console.log(chalk.blue('📋 Announcement acknowledgment queue worker started'));
   },
 };
