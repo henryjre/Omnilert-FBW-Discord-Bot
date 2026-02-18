@@ -70,4 +70,16 @@ db.exec(`
   )
 `);
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS announcement_acknowledgments (
+    announcement_id TEXT PRIMARY KEY,
+    channel_id TEXT NOT NULL,
+    thread_id TEXT NOT NULL,
+    expected_users TEXT NOT NULL,
+    acknowledged_users TEXT DEFAULT '[]',
+    timeout_minutes INTEGER DEFAULT 5,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
 module.exports = db;
