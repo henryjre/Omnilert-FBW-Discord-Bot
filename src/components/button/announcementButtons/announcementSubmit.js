@@ -101,6 +101,19 @@ module.exports = {
       });
     }
 
+    // Extract preparer ID from owner field and exclude them from acknowledgment tracking
+    const preparerIdMatch = ownerField.value.match(/<@(\d+)>/);
+    const preparerId = preparerIdMatch ? preparerIdMatch[1] : null;
+
+    // Filter out the preparer from expected users (they don't need to acknowledge their own announcement)
+    if (preparerId) {
+      const originalCount = expectedUsers.length;
+      expectedUsers = expectedUsers.filter(userId => userId !== preparerId);
+      if (originalCount > expectedUsers.length) {
+        console.log(`✓ Excluded preparer ${preparerId} from acknowledgment tracking (${originalCount - expectedUsers.length} user filtered)`);
+      }
+    }
+
     // Store tracking data in SQLite
     if (expectedUsers.length > 0) {
       createAnnouncementTracking(
