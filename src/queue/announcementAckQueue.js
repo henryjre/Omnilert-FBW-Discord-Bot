@@ -1,6 +1,6 @@
 const { Queue, Worker } = require('bullmq');
 const IORedis = require('ioredis');
-const { EmbedBuilder } = require('discord.js');
+const { ContainerBuilder, MessageFlags } = require('discord.js');
 const { getNonAcknowledgers, deleteAnnouncementTracking } = require('../sqliteFunctions');
 
 // Create Valkey connection
@@ -87,14 +87,30 @@ function initializeAnnouncementAckWorker(client) {
         // Create summary embed for non-acknowledgers
         const mentionList = nonAcknowledgers.map(userId => `<@${userId}>`).join('\n');
 
-        const summaryEmbed = new EmbedBuilder()
-          .setTitle('⚠️ Pending Acknowledgments')
-          .setDescription(`The following users have not acknowledged this announcement:\n\n${mentionList}`)
-          .addFields({ name: 'Total', value: `${nonAcknowledgers.length} user(s)`, inline: true })
-          .setColor(0xFFA500) // Orange/Warning color
-          .setTimestamp();
+        const summaryContainer = new ContainerBuilder()
+          .setAccentColor(0xFF0000)
+          .addTextDisplayComponents((textDisplay) =>
+            textDisplay.setContent(
+              `## ⛔ NO ACKNOWLEDGEMENTS`
+            )
+          )
+          .addSeparatorComponents((separator) => separator)
+          .addTextDisplayComponents((textDisplay) =>
+            textDisplay.setContent(
+              `The following users have not acknowledged this announcement:\n\n${mentionList}`
+            )
+          )
+          .addSeparatorComponents((separator) => separator)
+          .addTextDisplayComponents((textDisplay) =>
+            textDisplay.setContent(
+              `**Total:** ${nonAcknowledgers.length} user(s)`
+            )
+          );
 
-        await thread.send({ embeds: [summaryEmbed] });
+        await thread.send({
+          components: [summaryContainer],
+          flags: MessageFlags.IsComponentsV2,
+        });
 
         console.log(`✓ Sent non-acknowledger summary for announcement ${announcementId} (${nonAcknowledgers.length} users)`);
 
