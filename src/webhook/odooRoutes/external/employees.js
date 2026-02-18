@@ -302,7 +302,7 @@ const getAttendance = async (req, res) => {
       });
     
       return acc;
-    }, {});    
+    }, {});
 
     const result = Object.values(groupedData);
 
