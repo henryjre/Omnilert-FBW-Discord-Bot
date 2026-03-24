@@ -320,12 +320,12 @@ const getAttendance = async (req, res) => {
 function getStartAndEndOfDay(dateString) {
   const date = new Date(dateString);
   // Use moment to parse the input date and set the time zone to Philippine Time (Asia/Manila)
-  let startOfDay = moment(date).tz("Asia/Manila").startOf("day"); // Set to 12:00:00 AM
-  let endOfDay = moment(date).tz("Asia/Manila").endOf("day"); // Set to 11:59:59 PM
+  let startOfDay = moment(date).tz("Asia/Manila").startOf("day").utc();; // Set to 12:00:00 AM
+  let endOfDay = moment(date).tz("Asia/Manila").endOf("day").utc();; // Set to 11:59:59 PM
 
   return {
-    start_date: startOfDay.toISOString(),
-    end_date: endOfDay.toISOString(),
+    start_date: startOfDay.format("YYYY-MM-DD HH:mm:ss"),
+    end_date: endOfDay.format("YYYY-MM-DD HH:mm:ss"),
   };
 }
 
