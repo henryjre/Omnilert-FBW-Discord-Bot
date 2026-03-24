@@ -1,4 +1,5 @@
 const { ButtonBuilder, ButtonStyle, ActionRowBuilder } = require("discord.js");
+const { DISCORD_MAX_FILE_SIZE_BYTES } = require("../../utils/imageCompression");
 
 module.exports = {
   name: "incidentProofUpload",
@@ -12,6 +13,18 @@ module.exports = {
     );
 
     if (mediaAttachments.size <= 0) return;
+
+    const oversizedAttachments = mediaAttachments.filter(
+      (attachment) =>
+        Number.isInteger(attachment.size) && attachment.size > DISCORD_MAX_FILE_SIZE_BYTES
+    );
+
+    if (oversizedAttachments.size > 0) {
+      await thread.send({
+        content:
+          "⚠️ One or more uploads are above Discord's 10MB limit and may fail when forwarded. Please upload smaller files.",
+      });
+    }
 
     const originalMessage = await thread.fetchStarterMessage();
 

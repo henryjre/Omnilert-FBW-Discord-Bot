@@ -1,4 +1,85 @@
 const cdnChannel = "1384688917155938354";
+const {
+  DISCORD_MAX_FILE_SIZE_BYTES,
+  compressBufferToLimit,
+} = require("../../utils/imageCompression");
+
+const DOWNLOAD_TIMEOUT_MS = 20_000;
+const MAX_DOWNLOAD_BYTES = 35 * 1024 * 1024;
+
+/**
+ * Downloads an image attachment and validates response size.
+ *
+ * @param {string} url The source URL from Discord CDN.
+ * @returns {Promise<Buffer>}
+ */
+async function downloadAttachmentBuffer(url) {
+  const response = await fetch(url, {
+    signal: AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Image download failed with HTTP ${response.status}.`);
+  }
+
+  const contentLengthHeader = response.headers.get("content-length");
+  const contentLength =
+    contentLengthHeader !== null ? Number.parseInt(contentLengthHeader, 10) : null;
+
+  if (Number.isInteger(contentLength) && contentLength > MAX_DOWNLOAD_BYTES) {
+    throw new Error("Image is too large to process safely.");
+  }
+
+  const imageArrayBuffer = await response.arrayBuffer();
+  const imageBuffer = Buffer.from(imageArrayBuffer);
+
+  if (imageBuffer.length > MAX_DOWNLOAD_BYTES) {
+    throw new Error("Image is too large to process safely.");
+  }
+
+  return imageBuffer;
+}
+
+/**
+ * Builds upload entries for image attachments.
+ * Compresses each oversized image before upload when possible.
+ *
+ * @param {import("discord.js").Collection<string, import("discord.js").Attachment>} mediaAttachments Image attachments.
+ * @returns {Promise<Array<string | {attachment: Buffer, name: string}>>}
+ */
+async function buildUploadFiles(mediaAttachments) {
+  const uploadFiles = [];
+
+  for (const [, attachment] of mediaAttachments) {
+    if (!attachment?.url) {
+      continue;
+    }
+
+    const hasKnownSize = Number.isInteger(attachment.size) && attachment.size > 0;
+    const shouldCompress = hasKnownSize && attachment.size > DISCORD_MAX_FILE_SIZE_BYTES;
+
+    if (!shouldCompress) {
+      uploadFiles.push(attachment.url);
+      continue;
+    }
+
+    const downloadedBuffer = await downloadAttachmentBuffer(attachment.url);
+    const compressionResult = await compressBufferToLimit(downloadedBuffer, {
+      maxBytes: DISCORD_MAX_FILE_SIZE_BYTES,
+    });
+
+    if (!compressionResult) {
+      throw new Error("Unable to compress one or more images under Discord limit.");
+    }
+
+    uploadFiles.push({
+      attachment: compressionResult.outputBuffer,
+      name: `ispe-proof-compressed-${attachment.id}.${compressionResult.extension}`,
+    });
+  }
+
+  return uploadFiles;
+}
 
 module.exports = {
   name: "ispeOrderProof",
@@ -11,29 +92,49 @@ module.exports = {
 
     if (mediaAttachments.size <= 0) return;
 
-    const urlsArray = mediaAttachments.map((attachment) => attachment.url);
+    const cdnTargetChannel = client.channels.cache.get(cdnChannel);
+    if (!cdnTargetChannel) {
+      console.error(`Channel ${cdnChannel} not found in cache.`);
+      return;
+    }
+
+    let uploadFiles = null;
+    try {
+      uploadFiles = await buildUploadFiles(mediaAttachments);
+    } catch (error) {
+      console.error("Image preparation failed:", error);
+      await cdnTargetChannel.send({
+        content:
+          "❌ Failed to process one or more images for upload. Please send smaller or less complex images.",
+      });
+      return;
+    }
+
+    if (!Array.isArray(uploadFiles) || uploadFiles.length === 0) {
+      return;
+    }
 
     let cdnMessage = null;
     try {
-      cdnMessage = await client.channels.cache.get(cdnChannel).send({
+      cdnMessage = await cdnTargetChannel.send({
         content: `Sent by ${message.author.toString()}\nTimestamp: ${message.createdAt.toLocaleString(
           "en-US",
           {
             timeZone: "Asia/Manila",
           }
         )}`,
-        files: urlsArray,
+        files: uploadFiles,
       });
     } catch (err) {
       if (err.status === 413) {
         // File too large → send error message in Discord
-        await client.channels.cache.get(cdnChannel).send({
-          content: `❌ Failed to upload file — the file is too large to send.`,
+        await cdnTargetChannel.send({
+          content: "❌ Failed to upload file — one or more files are still too large to send.",
         });
       } else {
         console.error("Unexpected send error:", err);
-        await client.channels.cache.get(cdnChannel).send({
-          content: `⚠️ An unexpected error occurred while trying to upload a file.`,
+        await cdnTargetChannel.send({
+          content: "⚠️ An unexpected error occurred while trying to upload a file.",
         });
       }
     }
