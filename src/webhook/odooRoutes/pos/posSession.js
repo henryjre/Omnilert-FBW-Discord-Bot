@@ -661,6 +661,7 @@ const discountOrder = async (req, res) => {
   const confirm = new ButtonBuilder()
     .setCustomId('posOrderVerificationConfirm')
     .setLabel('Confirm')
+    .setDisabled(true)
     .setStyle(ButtonStyle.Success);
 
   const reject = new ButtonBuilder()

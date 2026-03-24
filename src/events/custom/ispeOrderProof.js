@@ -152,6 +152,7 @@ module.exports = {
     let messageEmbed = originalMessage.embeds[0];
 
     const messageEmbedsArray = originalMessage.embeds;
+    const messageComponents = originalMessage.components;
 
     const cashierField = messageEmbed.data.fields.find(
       (field) => field.name === "Cashier"
@@ -175,8 +176,25 @@ module.exports = {
       messageEmbedsArray.push(attachmentEmbed);
     }
 
+    const confirmButtonRow = messageComponents.find((row) =>
+      row.components.some(
+        (component) => component.customId === "posOrderVerificationConfirm"
+      )
+    );
+
+    if (confirmButtonRow) {
+      const confirmButtonIndex = confirmButtonRow.components.findIndex(
+        (component) => component.customId === "posOrderVerificationConfirm"
+      );
+
+      if (confirmButtonIndex !== -1) {
+        confirmButtonRow.components[confirmButtonIndex].data.disabled = false;
+      }
+    }
+
     await originalMessage.edit({
       embeds: messageEmbedsArray,
+      components: messageComponents,
     });
   },
 };

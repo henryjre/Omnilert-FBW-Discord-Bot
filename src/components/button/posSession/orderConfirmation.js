@@ -24,7 +24,6 @@ module.exports = {
       const sessionField = messageEmbed.data.fields.find((f) => f.name === 'Session Name');
 
       const image = messageEmbed.data.image;
-      const url = messageEmbed.data.url;
 
       const mentionedUser = interaction.message.mentions.users.first();
       const mentionedRole = interaction.message.mentions.roles.first();
@@ -57,7 +56,7 @@ module.exports = {
 
       await interaction.deferUpdate();
 
-      if (!image && !url) {
+      if (!image?.url) {
         return await interaction.followUp({
           content: `🔴 ERROR: No proof of order found. Please send a photo as proof in the thread below and click "Confirm" to verify.`,
           flags: MessageFlags.Ephemeral
