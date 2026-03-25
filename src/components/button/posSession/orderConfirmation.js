@@ -10,6 +10,20 @@ const {
 
 const departments = require('../../../config/departments.json');
 
+/**
+ * Returns whether any message embed carries an image (proof).
+ * ISPE and similar flows attach proof on extra embeds, not always embeds[0].
+ *
+ * @param {import("discord.js").Embed[]} embeds
+ * @returns {boolean}
+ */
+function messageHasProofImage(embeds) {
+  return embeds.some((embed) => {
+    const imageUrl = embed.data?.image?.url ?? embed.image?.url;
+    return typeof imageUrl === 'string' && imageUrl.length > 0;
+  });
+}
+
 module.exports = {
   data: {
     name: `posOrderVerificationConfirm`
@@ -22,8 +36,6 @@ module.exports = {
       const replyEmbed = new EmbedBuilder();
 
       const sessionField = messageEmbed.data.fields.find((f) => f.name === 'Session Name');
-
-      const image = messageEmbed.data.image;
 
       const mentionedUser = interaction.message.mentions.users.first();
       const mentionedRole = interaction.message.mentions.roles.first();
@@ -56,7 +68,7 @@ module.exports = {
 
       await interaction.deferUpdate();
 
-      if (!image?.url) {
+      if (!messageHasProofImage(allEmbeds)) {
         return await interaction.followUp({
           content: `🔴 ERROR: No proof of order found. Please send a photo as proof in the thread below and click "Confirm" to verify.`,
           flags: MessageFlags.Ephemeral
