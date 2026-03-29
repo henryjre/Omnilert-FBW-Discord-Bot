@@ -27,7 +27,7 @@ const receiveValuation = (req, res) => {
     create_date,
     reference,
     x_uom_name,
-    product_tmpl_id,
+    x_product_tmpl_id,
     quantity,
     x_company_name,
     x_product_name,
@@ -41,7 +41,7 @@ const receiveValuation = (req, res) => {
     create_date,
     reference, // Using `_id` as `reference`
     x_uom_name,
-    product_tmpl_id,
+    x_product_tmpl_id,
     quantity,
     x_company_name,
     x_product_name,
@@ -63,7 +63,7 @@ const processBatch = async () => {
 
     for (const webhook of webhookBatch) {
       const product_data = threshold_data.find(
-        (d) => d.id === webhook.product_tmpl_id
+        (d) => d.id === webhook.x_product_tmpl_id
       );
 
       if (!product_data) continue;
