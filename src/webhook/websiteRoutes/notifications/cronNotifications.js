@@ -69,10 +69,12 @@ function formatTimestamp(value, timezone = DEFAULT_TIMEZONE) {
   return parsed.tz(timezone).format(TIMESTAMP_OUTPUT_FORMAT);
 }
 
-function buildCronNotificationContainer(payload) {
+function buildCronNotificationContainer(payload, options = {}) {
   const isErrorStatus = toDisplay(payload.result?.status).toLowerCase() !== 'success';
   const accentColor = isErrorStatus ? 0xed4245 : 0x57f287;
   const timezone = toDisplay(payload.meta?.timezone) === 'N/A' ? DEFAULT_TIMEZONE : toDisplay(payload.meta?.timezone);
+  const mentionUserId = options.mentionUserId || null;
+  const mentionBlock = mentionUserId ? `## <@${mentionUserId}>` : null;
 
   const headerBlock = [
     '## Cron Job Notification',
@@ -118,8 +120,15 @@ function buildCronNotificationContainer(payload) {
     `- **Timezone:** ${toDisplay(payload.meta?.timezone)}`,
   ].join('\n');
 
-  return new ContainerBuilder()
-    .setAccentColor(accentColor)
+  const container = new ContainerBuilder().setAccentColor(accentColor);
+
+  if (mentionBlock) {
+    container
+      .addTextDisplayComponents((textDisplay) => textDisplay.setContent(mentionBlock))
+      .addSeparatorComponents((separator) => separator);
+  }
+
+  return container
     .addTextDisplayComponents((textDisplay) => textDisplay.setContent(headerBlock))
     .addSeparatorComponents((separator) => separator)
     .addTextDisplayComponents((textDisplay) => textDisplay.setContent(jobBlock))
@@ -167,7 +176,9 @@ function createCronNotificationHandler({
       const targetChannel = await resolveChannel(resolvedClient, channelId);
 
       const isErrorStatus = toDisplay(req.body.result?.status).toLowerCase() !== 'success';
-      const cronContainer = buildCronNotificationContainer(req.body);
+      const cronContainer = buildCronNotificationContainer(req.body, {
+        mentionUserId: isErrorStatus ? ERROR_MENTION_USER_ID : null,
+      });
 
       const messagePayload = {
         components: [cronContainer],
@@ -175,7 +186,6 @@ function createCronNotificationHandler({
       };
 
       if (isErrorStatus) {
-        messagePayload.content = `<@${ERROR_MENTION_USER_ID}>`;
         messagePayload.allowedMentions = {
           users: [ERROR_MENTION_USER_ID],
           parse: [],

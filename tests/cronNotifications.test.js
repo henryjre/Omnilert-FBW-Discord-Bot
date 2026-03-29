@@ -197,11 +197,19 @@ test('handler sends mention when status is non-success', async () => {
 
   assert.equal(res.statusCode, 200);
   assert.equal(sentMessages.length, 1);
-  assert.equal(sentMessages[0].content, '<@748568303219245117>');
+  assert.equal(sentMessages[0].content, undefined);
   assert.deepEqual(sentMessages[0].allowedMentions, {
     users: ['748568303219245117'],
     parse: [],
   });
+
+  const containerJson = sentMessages[0].components[0].toJSON();
+  const allTextContent = containerJson.components
+    .filter((component) => component.type === 10)
+    .map((component) => component.content)
+    .join('\n');
+
+  assert.match(allTextContent, /<@748568303219245117>/);
 });
 
 test('handler returns 500 when send fails', async () => {
