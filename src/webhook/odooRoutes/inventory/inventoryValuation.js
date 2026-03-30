@@ -37,8 +37,6 @@ const receiveValuation = (req, res) => {
     return res.status(200).json({ ok: false, message: "Invalid reference" });
   }
 
-  console.log(req.body);
-
   webhookBatch.push({
     create_date,
     reference,
