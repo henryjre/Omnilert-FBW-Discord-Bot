@@ -93,7 +93,7 @@ const processBatch = async () => {
       .addFields(
         { name: "Date", value: `📅 | ${formattedTime}` },
         { name: "AIC Reference", value: `📦 | ${lastEntry.reference}` },
-        { name: "Branch", value: `🏢 | ${lastEntry.x_company_name}` }
+        { name: "Branch", value: `🛒 | ${lastEntry.x_company_name}` }
       )
       .setColor("Red");
 
