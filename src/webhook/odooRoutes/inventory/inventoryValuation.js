@@ -9,7 +9,7 @@ const moment = require("moment-timezone");
 const fs = require("fs");
 const path = require("path");
 
-const client = require("../../../index");
+let client = null;
 
 // const config = {
 //   columns: {
@@ -32,14 +32,18 @@ const receiveValuation = (req, res) => {
     x_company_name,
     x_product_name,
   } = req.body;
-  
+
+  if (typeof reference !== "string") {
+    return res.status(400).json({ ok: false, message: "Invalid reference" });
+  }
+
   if (reference.startsWith("UB/")) {
     return res.status(200).json({ ok: false, message: "Invalid reference" });
   }
 
   webhookBatch.push({
     create_date,
-    reference, // Using `_id` as `reference`
+    reference, 
     x_uom_name,
     x_product_tmpl_id,
     quantity,
@@ -58,13 +62,14 @@ const processBatch = async () => {
   try {
     const filePath = path.resolve(__dirname, "../../../config/products.json");
     const threshold_data = JSON.parse(fs.readFileSync(filePath, "utf8"));
+    const productById = new Map(
+      threshold_data.map((product) => [Number(product.id), product])
+    );
 
     const flaggedProducts = [];
 
     for (const webhook of webhookBatch) {
-      const product_data = threshold_data.find(
-        (d) => d.id === webhook.x_product_tmpl_id
-      );
+      const product_data = productById.get(Number(webhook.x_product_tmpl_id));
 
       if (!product_data) continue;
 
@@ -75,25 +80,30 @@ const processBatch = async () => {
 
       if (!isFlagged) continue;
 
-      flaggedProducts.push(webhook);
+      flaggedProducts.push(normalizeFlaggedProduct(webhook, product_data));
     }
 
-    if (flaggedProducts.length === 0) return;
+    const uniqueFlaggedProducts = dedupeFlaggedProducts(flaggedProducts);
 
-    const lastEntry = flaggedProducts.at(-1);
+    if (uniqueFlaggedProducts.length === 0) return;
+
+    const lastEntry = uniqueFlaggedProducts.at(-1);
 
     const formattedTime = formatTime(lastEntry.create_date);
     // const timestampId = formatTimestamp(lastEntry.create_date);
 
-    const targetChannel = client.channels.cache.get("1350859218474897468");
+    const targetChannel = getClient().channels.cache.get("1350859218474897468");
     if (!targetChannel) throw new Error("AIC discrepancy channel not found");
 
     // const newTable = generateTable(tableData);
 
     let description = "## 🚩 UNUSUAL DISCREPANCY DETECTED\n\u200b\n";
-    for (const webhook of flaggedProducts) {
+    for (const webhook of uniqueFlaggedProducts) {
       description += `> **Product:** ${webhook.x_product_name}\n`;
-      description += `> **Quantity:** ${webhook.quantity} ${webhook.x_uom_name}`;
+      description += `> **Quantity:** ${formatQuantityLine(
+        webhook.quantity,
+        webhook.x_uom_name
+      )}`;
       description += `\n\u200b\n`;
     }
 
@@ -138,7 +148,19 @@ const processBatch = async () => {
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 
-module.exports = { receiveValuation };
+module.exports = {
+  receiveValuation,
+  normalizeFlaggedProduct,
+  dedupeFlaggedProducts,
+};
+
+function getClient() {
+  if (!client) {
+    client = require("../../../index");
+  }
+
+  return client;
+}
 
 // ✅ Time Formatting Helper
 function formatTime(rawTime) {
@@ -171,6 +193,58 @@ function checkThreshold(value, threshold) {
   }
 
   return false; // Default case if threshold format is unknown
+}
+
+function toDisplayValue(value, fallback = "N/A") {
+  if (value === false || value === null || value === undefined) return fallback;
+
+  const stringValue = String(value).trim();
+  if (stringValue.length === 0) return fallback;
+  if (stringValue.toLowerCase() === "false") return fallback;
+
+  return stringValue;
+}
+
+function normalizeFlaggedProduct(webhook, productData = {}) {
+  const productNameFallback = toDisplayValue(productData.name, "Unknown Product");
+  const uomFallback = toDisplayValue(productData.uom_name, "N/A");
+
+  return {
+    ...webhook,
+    x_product_name: toDisplayValue(webhook.x_product_name, productNameFallback),
+    x_uom_name: toDisplayValue(webhook.x_uom_name, uomFallback),
+    quantity: toDisplayValue(webhook.quantity, "N/A"),
+  };
+}
+
+function buildDedupKey(webhook) {
+  return [
+    toDisplayValue(webhook.reference, "N/A"),
+    toDisplayValue(webhook.create_date, "N/A"),
+    toDisplayValue(webhook.x_company_name, "N/A"),
+    toDisplayValue(webhook.x_product_tmpl_id, "N/A"),
+    toDisplayValue(webhook.quantity, "N/A"),
+  ].join("|");
+}
+
+function dedupeFlaggedProducts(flaggedProducts = []) {
+  const uniqueProducts = new Map();
+
+  for (const webhook of flaggedProducts) {
+    const dedupeKey = buildDedupKey(webhook);
+    if (uniqueProducts.has(dedupeKey)) continue;
+
+    uniqueProducts.set(dedupeKey, webhook);
+  }
+
+  return Array.from(uniqueProducts.values());
+}
+
+function formatQuantityLine(quantity, uomName) {
+  const normalizedQuantity = toDisplayValue(quantity, "N/A");
+  const normalizedUom = toDisplayValue(uomName, "");
+
+  return normalizedUom ? `${normalizedQuantity} ${normalizedUom}` : normalizedQuantity;
 }
 
 // function generateTable(data) {
