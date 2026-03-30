@@ -13,6 +13,7 @@ let client = null;
 let webhookBatch = []; // Store incoming webhooks
 let timer = null;
 const TIMEOUT = 3000; // 3 seconds delay
+const INVENTORY_ADJUSTMENT_LOCATION = "virtual locations/inventory adjustment";
 const AIC_DISCREPANCY_CHANNEL_ID = "1350859218474897468";
 const AIC_DISCREPANCY_ROLE_ID = "1336990783341068348";
 
@@ -186,19 +187,19 @@ function toDisplayValue(value, fallback = "N/A") {
   return stringValue;
 }
 
-function hasDisplayValue(value) {
-  return toDisplayValue(value, "") !== "";
+function isInventoryAdjustmentLocation(locationName) {
+  return (
+    toDisplayValue(locationName, "").toLowerCase() ===
+    INVENTORY_ADJUSTMENT_LOCATION
+  );
 }
 
 function resolveDiscrepancyDirection(webhook) {
-  const hasDestination = hasDisplayValue(webhook.x_destination_name);
-  const hasSource = hasDisplayValue(webhook.x_source_name);
+  const destinationName = toDisplayValue(webhook.x_destination_name, "");
+  const sourceName = toDisplayValue(webhook.x_source_name, "");
 
-  if (hasSource && !hasDestination) return "positive";
-  if (hasDestination && !hasSource) return "negative";
-
-  if (hasSource) return "positive";
-  if (hasDestination) return "negative";
+  if (isInventoryAdjustmentLocation(destinationName)) return "negative";
+  if (isInventoryAdjustmentLocation(sourceName)) return "positive";
 
   const numericQuantity = Number(webhook.quantity);
   if (Number.isFinite(numericQuantity)) {

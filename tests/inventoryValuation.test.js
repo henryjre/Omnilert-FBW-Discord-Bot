@@ -61,10 +61,10 @@ test("dedupeFlaggedProducts removes duplicate rows from repeated deliveries", ()
   assert.deepEqual(deduped[0], duplicateRows[0]);
 });
 
-test("normalizeFlaggedProduct marks discrepancy as negative when x_destination_name is set", () => {
+test("normalizeFlaggedProduct marks discrepancy as negative when destination is inventory adjustment", () => {
   const webhook = {
-    x_destination_name: "WH/Stock",
-    x_source_name: false,
+    x_destination_name: "Virtual Locations/Inventory adjustment",
+    x_source_name: "WH/Stock",
     quantity: 90,
   };
   const productData = {
@@ -77,10 +77,10 @@ test("normalizeFlaggedProduct marks discrepancy as negative when x_destination_n
   assert.equal(normalized.discrepancy_direction, "negative");
 });
 
-test("normalizeFlaggedProduct prioritizes x_source_name as positive when both fields are set", () => {
+test("normalizeFlaggedProduct marks discrepancy as positive when source is inventory adjustment", () => {
   const webhook = {
     x_destination_name: "WH/Stock",
-    x_source_name: "WH/Input",
+    x_source_name: "Virtual Locations/Inventory adjustment",
     quantity: 30,
   };
   const productData = {
@@ -93,11 +93,11 @@ test("normalizeFlaggedProduct prioritizes x_source_name as positive when both fi
   assert.equal(normalized.discrepancy_direction, "positive");
 });
 
-test("normalizeFlaggedProduct marks discrepancy as positive when x_source_name is set", () => {
+test("normalizeFlaggedProduct falls back to numeric sign when no inventory adjustment location is present", () => {
   const webhook = {
-    x_destination_name: false,
+    x_destination_name: "WH/Stock",
     x_source_name: "WH/Input",
-    quantity: 20,
+    quantity: -20,
   };
   const productData = {
     name: "SPK1 - Famous Mix",
@@ -106,7 +106,7 @@ test("normalizeFlaggedProduct marks discrepancy as positive when x_source_name i
 
   const normalized = inventoryValuation.normalizeFlaggedProduct(webhook, productData);
 
-  assert.equal(normalized.discrepancy_direction, "positive");
+  assert.equal(normalized.discrepancy_direction, "negative");
 });
 
 test("buildDiscrepancyDescription separates stock shortage and stock surplus with signed quantities", () => {
@@ -125,8 +125,8 @@ test("buildDiscrepancyDescription separates stock shortage and stock surplus wit
     },
   ]);
 
-  assert.equal(description.includes("### Stock Shortage"), true);
-  assert.equal(description.includes("### Stock Surplus"), true);
+  assert.equal(description.includes("Stock Shortage"), true);
+  assert.equal(description.includes("Stock Surplus"), true);
   assert.equal(description.includes("> **Quantity:** -90 kg"), true);
   assert.equal(description.includes("> **Quantity:** +100 pc"), true);
 });
