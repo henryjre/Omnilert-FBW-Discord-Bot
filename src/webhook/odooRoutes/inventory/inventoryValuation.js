@@ -92,9 +92,9 @@ const processBatch = async () => {
     const embed = new EmbedBuilder()
       .setDescription(description)
       .addFields(
-        { name: "Date", value: `| ${formattedTime}` },
-        { name: "AIC Reference", value: `| ${lastEntry.reference}` },
-        { name: "Branch", value: `| ${lastEntry.x_company_name}` }
+        { name: "Date", value: `📅 | ${formattedTime}` },
+        { name: "AIC Reference", value: `📦 | ${lastEntry.reference}` },
+        { name: "Branch", value: `🏢 | ${lastEntry.x_company_name}` }
       )
       .setColor("Red");
 
@@ -313,10 +313,10 @@ function buildDiscrepancySection(title, products, direction) {
 
 function buildDiscrepancyDescription(flaggedProducts = []) {
   const { shortages, surpluses } = groupDiscrepancyProducts(flaggedProducts);
-  let description = "## UNUSUAL DISCREPANCY DETECTED\n\u200b\n";
+  let description = "## 🚩 UNUSUAL DISCREPANCY DETECTED\n\u200b\n";
 
-  description += buildDiscrepancySection("Stock Shortage", shortages, "negative");
-  description += buildDiscrepancySection("Stock Surplus", surpluses, "positive");
+  description += buildDiscrepancySection("🔴 Stock Shortage", shortages, "negative");
+  description += buildDiscrepancySection("🟢 Stock Surplus", surpluses, "positive");
 
   return description;
 }
