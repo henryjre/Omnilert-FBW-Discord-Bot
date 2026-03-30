@@ -60,3 +60,73 @@ test("dedupeFlaggedProducts removes duplicate rows from repeated deliveries", ()
   assert.equal(deduped.length, 1);
   assert.deepEqual(deduped[0], duplicateRows[0]);
 });
+
+test("normalizeFlaggedProduct marks discrepancy as negative when x_destination_name is set", () => {
+  const webhook = {
+    x_destination_name: "WH/Stock",
+    x_source_name: false,
+    quantity: 90,
+  };
+  const productData = {
+    name: "SPK1 - Famous Mix",
+    uom_name: "kg",
+  };
+
+  const normalized = inventoryValuation.normalizeFlaggedProduct(webhook, productData);
+
+  assert.equal(normalized.discrepancy_direction, "negative");
+});
+
+test("normalizeFlaggedProduct prioritizes x_source_name as positive when both fields are set", () => {
+  const webhook = {
+    x_destination_name: "WH/Stock",
+    x_source_name: "WH/Input",
+    quantity: 30,
+  };
+  const productData = {
+    name: "SPK1 - Famous Mix",
+    uom_name: "kg",
+  };
+
+  const normalized = inventoryValuation.normalizeFlaggedProduct(webhook, productData);
+
+  assert.equal(normalized.discrepancy_direction, "positive");
+});
+
+test("normalizeFlaggedProduct marks discrepancy as positive when x_source_name is set", () => {
+  const webhook = {
+    x_destination_name: false,
+    x_source_name: "WH/Input",
+    quantity: 20,
+  };
+  const productData = {
+    name: "SPK1 - Famous Mix",
+    uom_name: "kg",
+  };
+
+  const normalized = inventoryValuation.normalizeFlaggedProduct(webhook, productData);
+
+  assert.equal(normalized.discrepancy_direction, "positive");
+});
+
+test("buildDiscrepancyDescription separates stock shortage and stock surplus with signed quantities", () => {
+  const description = inventoryValuation.buildDiscrepancyDescription([
+    {
+      x_product_name: "SPK1 - Famous Mix",
+      quantity: "90",
+      x_uom_name: "kg",
+      discrepancy_direction: "negative",
+    },
+    {
+      x_product_name: "SPK1 - Famous Brown Bag #4",
+      quantity: "100",
+      x_uom_name: "pc",
+      discrepancy_direction: "positive",
+    },
+  ]);
+
+  assert.equal(description.includes("### Stock Shortage"), true);
+  assert.equal(description.includes("### Stock Surplus"), true);
+  assert.equal(description.includes("> **Quantity:** -90 kg"), true);
+  assert.equal(description.includes("> **Quantity:** +100 pc"), true);
+});
