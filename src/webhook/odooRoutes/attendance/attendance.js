@@ -55,8 +55,6 @@ const attendanceCheckIn = async (req, res) => {
 
     if (department.id === 1) {
       return await managementCheckIn(req, res);
-    } else {
-      return await employeeCheckIn(req, res);
     }
   } catch (error) {
     console.error('Schedule Error:', error);
@@ -97,8 +95,6 @@ const attendanceCheckOut = async (req, res) => {
 
     if (department.id === 1) {
       return await managementCheckOut(req, res);
-    } else {
-      return await employeeCheckOut(req, res);
     }
   } catch (error) {
     console.error('Attendance Check-Out Error:', error);
