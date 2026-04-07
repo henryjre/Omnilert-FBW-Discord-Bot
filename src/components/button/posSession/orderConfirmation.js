@@ -9,6 +9,7 @@ const {
 } = require('discord.js');
 
 const departments = require('../../../config/departments.json');
+const { updateClosingPcfBalance } = require('../../../odooRpc.js');
 
 /**
  * Returns whether any message embed carries an image (proof).
@@ -89,11 +90,22 @@ module.exports = {
 
       const posThread = await sessionMessage.thread;
 
+      const pcfUpdate = getPcfUpdate(messageEmbed, department.id);
+
       if (!posThread) {
         return await interaction.followUp({
           content: `🔴 ERROR: No thread found.`,
           flags: MessageFlags.Ephemeral
         });
+      }
+
+      if (pcfUpdate) {
+        await updateClosingPcfBalance(
+          pcfUpdate.balance,
+          pcfUpdate.companyId,
+          pcfUpdate.sessionId,
+          pcfUpdate.type
+        );
       }
 
       messageEmbed.data.fields.push({
@@ -185,3 +197,40 @@ module.exports = {
     }
   }
 };
+
+function getPcfUpdate(messageEmbed, departmentId) {
+  const embedDescription = messageEmbed.data?.description || '';
+  const isOpeningPcf = embedDescription.includes('Opening PCF');
+  const isClosingPcf =
+    embedDescription.includes('Closing PCF') || embedDescription.includes('PCF Report');
+
+  if (!isOpeningPcf && !isClosingPcf) {
+    return null;
+  }
+
+  const sessionField = messageEmbed.data?.fields?.find((f) => f.name === 'Session Name');
+  const countedFieldName = isOpeningPcf ? 'Opening PCF Counted' : 'Closing PCF Counted';
+  const countedField = messageEmbed.data?.fields?.find((f) => f.name === countedFieldName);
+
+  if (!sessionField || !countedField) {
+    throw new Error('PCF confirmation is missing required fields.');
+  }
+
+  return {
+    balance: extractPesoValue(countedField.value),
+    companyId: departmentId,
+    sessionId: sessionField.value,
+    type: isOpeningPcf ? 'opening' : 'closing'
+  };
+}
+
+function extractPesoValue(currencyStr) {
+  const numericStr = currencyStr.replace('₱', '').replace(/,/g, '').trim();
+  const value = parseFloat(numericStr);
+
+  if (isNaN(value)) {
+    throw new Error(`Invalid currency string: "${currencyStr}"`);
+  }
+
+  return value;
+}

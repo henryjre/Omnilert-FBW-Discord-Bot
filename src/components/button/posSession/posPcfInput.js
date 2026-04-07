@@ -5,6 +5,7 @@ const {
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
+  LabelBuilder,
   ButtonBuilder,
   ButtonStyle,
   TextDisplayBuilder,
@@ -17,10 +18,6 @@ const pesoFormatter = new Intl.NumberFormat('en-PH', {
   minimumFractionDigits: 2,
 });
 
-const { updateClosingPcfBalance } = require('../../../odooRpc.js');
-
-const departments = require('../../../config/departments.json');
-
 module.exports = {
   data: {
     name: `posPcfInput`,
@@ -28,15 +25,7 @@ module.exports = {
   async execute(interaction, client) {
     let messageEmbed = interaction.message.embeds[0];
 
-    const department = departments.find(
-      (d) => d.verificationChannel === interaction.message.channelId
-    );
-
-    const departmentId = department.id;
-
     const replyEmbed = new EmbedBuilder();
-
-    const sessionField = messageEmbed.data.fields.find((f) => f.name === 'Session Name');
 
     const openingField = messageEmbed.data.fields.find((f) => f.name === 'Opening PCF Expected');
     const expectedField = messageEmbed.data.fields.find((f) => f.name === 'Closing PCF Expected');
@@ -156,8 +145,6 @@ module.exports = {
           pesoDifference = `+${pesoFormatter.format(difference)}`;
         }
 
-        const sessionName = sessionField.value;
-
         openingField.value = pesoOpening;
         expectedField.value = pesoExpected;
         countedField.value = pesoCounted;
@@ -183,8 +170,6 @@ module.exports = {
           embeds: [messageEmbed],
           components: [buttonRow],
         });
-
-        await updateClosingPcfBalance(countedParsed, departmentId, sessionName);
       }
     } catch (error) {
       console.log(error);

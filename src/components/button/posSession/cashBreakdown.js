@@ -14,9 +14,6 @@ const pesoFormatter = new Intl.NumberFormat('en-PH', {
   minimumFractionDigits: 2,
 });
 
-const departments = require('../../../config/departments.json');
-const { updateClosingPcfBalance } = require('../../../odooRpc.js');
-
 module.exports = {
   data: {
     name: `cashBreakdown`,
@@ -31,13 +28,6 @@ module.exports = {
     const embed = EmbedBuilder.from(interaction.message.embeds[0]);
 
     const embedDescription = embed.data.description;
-    const sessionField = embed.data.fields.find((f) => f.name.includes('Session Name'));
-
-    const department = departments.find(
-      (d) => d.verificationChannel === interaction.message.channelId
-    );
-
-    const departmentId = department.id;
 
     let staticHeader;
     if (embedDescription.includes('Opening PCF')) {
@@ -201,15 +191,6 @@ module.exports = {
           embeds: [embed],
           components: interaction.message.components,
         });
-
-        if (embedDescription.includes('Opening PCF')) {
-          await updateClosingPcfBalance(total, departmentId, sessionField.value, 'opening');
-        } else if (
-          embedDescription.includes('Closing PCF') ||
-          embedDescription.includes('PCF Report')
-        ) {
-          await updateClosingPcfBalance(total, departmentId, sessionField.value, 'closing');
-        }
       }
     } catch (error) {
       console.log(error);
