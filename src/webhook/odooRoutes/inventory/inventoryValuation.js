@@ -5,8 +5,6 @@ const {
   ActionRowBuilder,
 } = require("discord.js");
 const moment = require("moment-timezone");
-const fs = require("fs");
-const path = require("path");
 
 let client = null;
 
@@ -16,6 +14,11 @@ const TIMEOUT = 3000; // 3 seconds delay
 const INVENTORY_ADJUSTMENT_LOCATION = "virtual locations/inventory adjustment";
 const AIC_DISCREPANCY_CHANNEL_ID = "1350859218474897468";
 const AIC_DISCREPANCY_ROLE_ID = "1336990783341068348";
+const THRESHOLD_STATUS = {
+  NORMAL: "normal",
+  THRESHOLD_VIOLATION: "threshold_violation",
+  INVALID: "invalid_threshold",
+};
 
 const receiveValuation = (req, res) => {
   const {
@@ -28,6 +31,7 @@ const receiveValuation = (req, res) => {
     x_product_name,
     x_destination_name,
     x_source_name,
+    x_aic_threshold,
   } = req.body;
 
   if (typeof reference !== "string") {
@@ -48,6 +52,7 @@ const receiveValuation = (req, res) => {
     x_product_name,
     x_destination_name,
     x_source_name,
+    x_aic_threshold,
   });
 
   resetTimer(); // Reset the timer
@@ -59,22 +64,20 @@ const processBatch = async () => {
   if (webhookBatch.length === 0) return;
 
   try {
-    const filePath = path.resolve(__dirname, "../../../config/products.json");
-    const thresholdData = JSON.parse(fs.readFileSync(filePath, "utf8"));
-    const productById = new Map(
-      thresholdData.map((product) => [Number(product.id), product])
-    );
-
     const flaggedProducts = [];
 
     for (const webhook of webhookBatch) {
-      const productData = productById.get(Number(webhook.x_product_tmpl_id));
-      if (!productData) continue;
+      const thresholdEvaluation = evaluateThreshold(
+        webhook.quantity,
+        webhook.x_aic_threshold
+      );
+      if (thresholdEvaluation.status === THRESHOLD_STATUS.NORMAL) continue;
 
-      const isFlagged = checkThreshold(webhook.quantity, productData.threshold_value);
-      if (!isFlagged) continue;
-
-      flaggedProducts.push(normalizeFlaggedProduct(webhook, productData));
+      flaggedProducts.push(
+        normalizeFlaggedProduct(webhook, {
+          threshold_status: thresholdEvaluation.status,
+        })
+      );
     }
 
     const uniqueFlaggedProducts = dedupeFlaggedProducts(flaggedProducts);
@@ -129,6 +132,7 @@ const processBatch = async () => {
 
 module.exports = {
   receiveValuation,
+  evaluateThreshold,
   normalizeFlaggedProduct,
   dedupeFlaggedProducts,
   buildDiscrepancyDescription,
@@ -145,36 +149,23 @@ function getClient() {
 // Time formatting helper
 function formatTime(rawTime) {
   return moment
-    .tz(rawTime, "YYYY-MM-DD HH:mm:ss", "UTC")
+    .tz(
+      rawTime,
+      ["YYYY-MM-DD HH:mm:ss.SSSSSS", "YYYY-MM-DD HH:mm:ss"],
+      "UTC"
+    )
     .tz("Asia/Manila")
     .format("MMMM D, YYYY [at] h:mm A");
 }
 
 function formatTimestamp(rawTime) {
   return moment
-    .tz(rawTime, "YYYY-MM-DD HH:mm:ss.SSSSSS", "Asia/Manila")
+    .tz(
+      rawTime,
+      ["YYYY-MM-DD HH:mm:ss.SSSSSS", "YYYY-MM-DD HH:mm:ss"],
+      "Asia/Manila"
+    )
     .valueOf();
-}
-
-function checkThreshold(value, threshold) {
-  if (typeof threshold === "string") {
-    const numericValue = parseInt(threshold, 10);
-
-    if (threshold.endsWith("+")) {
-      // Example: "800+" means value must be between [0, 800]
-      return value < 0 || value > numericValue;
-    }
-
-    if (threshold.endsWith("-")) {
-      // Example: "800-" means value must be between [-800, 0]
-      return value < numericValue || value > 0;
-    }
-  } else if (typeof threshold === "number") {
-    // Example: 800 means symmetric threshold [-800, 800]
-    return Math.abs(value) > threshold;
-  }
-
-  return false; // Default case if threshold format is unknown
 }
 
 function toDisplayValue(value, fallback = "N/A") {
@@ -185,6 +176,92 @@ function toDisplayValue(value, fallback = "N/A") {
   if (stringValue.toLowerCase() === "false") return fallback;
 
   return stringValue;
+}
+
+function toThresholdDisplayValue(value) {
+  return toDisplayValue(value, "0");
+}
+
+function parseThreshold(threshold) {
+  const normalizedThreshold = toThresholdDisplayValue(threshold);
+
+  if (/^\d+(?:\.\d+)?$/.test(normalizedThreshold)) {
+    return {
+      status: "valid",
+      mode: "symmetric",
+      numericValue: Number(normalizedThreshold),
+      displayValue: normalizedThreshold,
+    };
+  }
+
+  if (/^\+\d+(?:\.\d+)?$/.test(normalizedThreshold)) {
+    return {
+      status: "valid",
+      mode: "positive",
+      numericValue: Number(normalizedThreshold.slice(1)),
+      displayValue: normalizedThreshold,
+    };
+  }
+
+  if (/^-\d+(?:\.\d+)?$/.test(normalizedThreshold)) {
+    return {
+      status: "valid",
+      mode: "negative",
+      numericValue: Number(normalizedThreshold.slice(1)),
+      displayValue: normalizedThreshold,
+    };
+  }
+
+  return {
+    status: THRESHOLD_STATUS.INVALID,
+    displayValue: normalizedThreshold,
+  };
+}
+
+function evaluateThreshold(value, threshold) {
+  const parsedThreshold = parseThreshold(threshold);
+  if (parsedThreshold.status === THRESHOLD_STATUS.INVALID) {
+    return {
+      status: THRESHOLD_STATUS.INVALID,
+      thresholdValue: parsedThreshold.displayValue,
+    };
+  }
+
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) {
+    return {
+      status: THRESHOLD_STATUS.NORMAL,
+      thresholdValue: toThresholdDisplayValue(threshold),
+    };
+  }
+
+  if (parsedThreshold.mode === "positive") {
+    return {
+      status:
+        numericValue < 0 || numericValue > parsedThreshold.numericValue
+          ? THRESHOLD_STATUS.THRESHOLD_VIOLATION
+          : THRESHOLD_STATUS.NORMAL,
+      thresholdValue: parsedThreshold.displayValue,
+    };
+  }
+
+  if (parsedThreshold.mode === "negative") {
+    return {
+      status:
+        numericValue < -parsedThreshold.numericValue || numericValue > 0
+          ? THRESHOLD_STATUS.THRESHOLD_VIOLATION
+          : THRESHOLD_STATUS.NORMAL,
+      thresholdValue: parsedThreshold.displayValue,
+    };
+  }
+
+  return {
+    status:
+      Math.abs(numericValue) > parsedThreshold.numericValue
+        ? THRESHOLD_STATUS.THRESHOLD_VIOLATION
+        : THRESHOLD_STATUS.NORMAL,
+    thresholdValue: parsedThreshold.displayValue,
+  };
 }
 
 function isInventoryAdjustmentLocation(locationName) {
@@ -210,19 +287,22 @@ function resolveDiscrepancyDirection(webhook) {
   return "neutral";
 }
 
-function normalizeFlaggedProduct(webhook, productData = {}) {
-  const productNameFallback = toDisplayValue(productData.name, "Unknown Product");
-  const uomFallback = toDisplayValue(productData.uom_name, "N/A");
+function normalizeFlaggedProduct(webhook, options = {}) {
   const destinationName = toDisplayValue(webhook.x_destination_name, "");
   const sourceName = toDisplayValue(webhook.x_source_name, "");
 
   return {
     ...webhook,
-    x_product_name: toDisplayValue(webhook.x_product_name, productNameFallback),
-    x_uom_name: toDisplayValue(webhook.x_uom_name, uomFallback),
+    x_product_name: toDisplayValue(webhook.x_product_name, "Unknown Product"),
+    x_uom_name: toDisplayValue(webhook.x_uom_name, "N/A"),
+    x_aic_threshold: toThresholdDisplayValue(webhook.x_aic_threshold),
     quantity: toDisplayValue(webhook.quantity, "N/A"),
     x_destination_name: destinationName,
     x_source_name: sourceName,
+    threshold_status: toDisplayValue(
+      options.threshold_status,
+      THRESHOLD_STATUS.THRESHOLD_VIOLATION
+    ),
     discrepancy_direction: resolveDiscrepancyDirection({
       ...webhook,
       x_destination_name: destinationName,
@@ -239,6 +319,8 @@ function buildDedupKey(webhook) {
     toDisplayValue(webhook.x_product_tmpl_id, "N/A"),
     toDisplayValue(webhook.quantity, "N/A"),
     toDisplayValue(webhook.discrepancy_direction, "neutral"),
+    toDisplayValue(webhook.threshold_status, THRESHOLD_STATUS.THRESHOLD_VIOLATION),
+    toThresholdDisplayValue(webhook.x_aic_threshold),
   ].join("|");
 }
 
@@ -258,8 +340,14 @@ function dedupeFlaggedProducts(flaggedProducts = []) {
 function groupDiscrepancyProducts(flaggedProducts = []) {
   const shortages = [];
   const surpluses = [];
+  const invalidThresholds = [];
 
   for (const webhook of flaggedProducts) {
+    if (webhook.threshold_status === THRESHOLD_STATUS.INVALID) {
+      invalidThresholds.push(webhook);
+      continue;
+    }
+
     if (webhook.discrepancy_direction === "negative") {
       shortages.push(webhook);
       continue;
@@ -270,7 +358,7 @@ function groupDiscrepancyProducts(flaggedProducts = []) {
     }
   }
 
-  return { shortages, surpluses };
+  return { shortages, surpluses, invalidThresholds };
 }
 
 function formatQuantityLine(quantity, uomName, direction = "neutral") {
@@ -310,12 +398,33 @@ function buildDiscrepancySection(title, products, direction) {
   return section;
 }
 
+function buildInvalidThresholdSection(products = []) {
+  if (products.length === 0) return "";
+
+  let section = "### 🟡 Invalid Threshold\n";
+
+  for (const webhook of products) {
+    section += `> **Product:** ${webhook.x_product_name}\n`;
+    section += `> **Quantity:** ${formatQuantityLine(
+      webhook.quantity,
+      webhook.x_uom_name,
+      webhook.discrepancy_direction
+    )}\n`;
+    section += `> **Threshold:** ${webhook.x_aic_threshold}\n`;
+    section += "\u200b\n";
+  }
+
+  return section;
+}
+
 function buildDiscrepancyDescription(flaggedProducts = []) {
-  const { shortages, surpluses } = groupDiscrepancyProducts(flaggedProducts);
+  const { shortages, surpluses, invalidThresholds } =
+    groupDiscrepancyProducts(flaggedProducts);
   let description = "## 🚩 UNUSUAL DISCREPANCY DETECTED\n\u200b\n";
 
   description += buildDiscrepancySection("🔴 Stock Shortage", shortages, "negative");
   description += buildDiscrepancySection("🟢 Stock Surplus", surpluses, "positive");
+  description += buildInvalidThresholdSection(invalidThresholds);
 
   return description;
 }
