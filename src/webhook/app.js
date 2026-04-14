@@ -39,7 +39,7 @@ app.post("/github-webhook", express.raw({ type: "*/*" }), (req, res) => {
     console.log("GitHub webhook verified. Pulling latest changes...");
 
     exec(
-      "cd /root/omnilert-discord-bot && git pull origin main && npm install && pm2 restart discord-bot",
+      "cd /root/omnilert-discord-bot && git pull origin main && pnpm install && pm2 restart discord-bot",
       (err, stdout, stderr) => {
         if (err) {
           console.error("Deployment failed:", stderr || err.message);
