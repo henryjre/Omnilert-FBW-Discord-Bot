@@ -8,6 +8,7 @@ const {
 const {
   buildApprovedContainer,
   buildDiscordThreadUrl,
+  buildNoRegistrationRecordContainer,
   buildPendingContainer,
   buildRetryVerificationContainer,
   getUserRolesFromLookup,
@@ -27,6 +28,14 @@ module.exports = {
     const threadUrl = buildDiscordThreadUrl(interaction.guild.id, interaction.channel.id);
 
     try {
+      if (interaction.message?.deletable) {
+        try {
+          await interaction.message.delete();
+        } catch (error) {
+          console.error('Failed to delete verification prompt:', error.message);
+        }
+      }
+
       const statusResponse = await getRegistrationStatus(email);
       const status = normalizeRegistrationStatus(statusResponse);
 
@@ -57,6 +66,13 @@ module.exports = {
         await syncApprovedDiscordRoles(interaction.member, getUserRolesFromLookup(lookupResponse));
         await scheduleOnboardingRoleRemoval(interaction.guild.id, interaction.user.id);
         return;
+      }
+
+      if (status === 'not_found') {
+        return await interaction.channel.send({
+          components: [buildNoRegistrationRecordContainer(email, threadUrl)],
+          flags: MessageFlags.IsComponentsV2,
+        });
       }
 
       return await interaction.channel.send({

@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const {
   ONBOARDING_ROLE_REMOVAL_DELAY_MS,
   buildDiscordThreadUrl,
+  buildNoRegistrationRecordContainer,
   buildOnboardingRoleRemovalJobOptions,
   buildRegisterUrl,
   getUserRolesFromLookup,
@@ -48,6 +49,21 @@ test('normalizeRegistrationStatus maps registration API responses', () => {
     }),
     'not_found'
   );
+});
+
+test('buildNoRegistrationRecordContainer includes submitted email and retry action', () => {
+  const containerJson = buildNoRegistrationRecordContainer(
+    'person@example.com',
+    'https://discord.com/channels/guild123/thread456'
+  ).toJSON();
+  const textContent = containerJson.components
+    .filter((component) => component.type === 10)
+    .map((component) => component.content)
+    .join('\n');
+
+  assert.match(textContent, /## No registration record found/);
+  assert.match(textContent, /\*\*person@example\.com\*\*/);
+  assert.match(textContent, /select \*\*Verify\*\* again/i);
 });
 
 test('getUserRolesFromLookup returns only roles with discord_role_id', () => {

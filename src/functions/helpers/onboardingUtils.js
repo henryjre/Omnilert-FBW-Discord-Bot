@@ -57,13 +57,14 @@ function getUserRolesFromLookup(responseBody) {
 
 function buildVerificationContainer(threadUrl, options = {}) {
   const registerUrl = buildRegisterUrl(threadUrl);
+  const title = options.title || 'Verify website registration';
   const intro =
     options.message ||
     'Have you completed your Omnilert website registration? If you have not registered yet, select **Register** and complete the onboarding form on the website. Once finished, return to this thread and select **Verify**.';
 
   return new ContainerBuilder()
     .addTextDisplayComponents((textDisplay) =>
-      textDisplay.setContent(`## Verify website registration\n${intro}`)
+      textDisplay.setContent(`## ${title}\n${intro}`)
     )
     .addSeparatorComponents((separator) =>
       separator.setDivider(false).setSpacing(SeparatorSpacingSize.Large)
@@ -121,6 +122,13 @@ function buildRetryVerificationContainer(threadUrl) {
   });
 }
 
+function buildNoRegistrationRecordContainer(email, threadUrl) {
+  return buildVerificationContainer(threadUrl, {
+    title: 'No registration record found',
+    message: `There was no registration record found for the email:\n\n**${email}**\n\nIs the email correct? Please select **Verify** again and use the email address you entered during website registration.`,
+  });
+}
+
 async function sendVerificationPrompt(channel, threadUrl) {
   return channel.send({
     components: [buildVerificationContainer(threadUrl)],
@@ -174,6 +182,7 @@ const onboardingUtils = {
   buildDiscordThreadUrl,
   buildOnboardingRoleRemovalJobOptions,
   buildOnboardingThreadName,
+  buildNoRegistrationRecordContainer,
   buildPendingContainer,
   buildRegisterUrl,
   buildRetryVerificationContainer,
