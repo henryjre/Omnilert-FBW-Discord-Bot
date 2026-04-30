@@ -1,6 +1,7 @@
 const chalk = require('chalk');
 const { initializeWorker } = require('../../queue/earlyAttendanceQueue');
 const { initializeAnnouncementAckWorker } = require('../../queue/announcementAckQueue');
+const { initializeOnboardingRoleRemovalWorker } = require('../../queue/onboardingRoleRemovalQueue');
 
 module.exports = {
   name: 'clientReady',
@@ -18,5 +19,8 @@ module.exports = {
     // Initialize announcement acknowledgment queue worker
     initializeAnnouncementAckWorker(client);
     console.log(chalk.blue('📋 Announcement acknowledgment queue worker started'));
+
+    initializeOnboardingRoleRemovalWorker(client);
+    console.log(chalk.blue('📋 Onboarding role removal queue worker started'));
   },
 };

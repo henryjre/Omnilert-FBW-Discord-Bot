@@ -1,9 +1,8 @@
+const { MessageFlags } = require('discord.js');
 const {
-  MessageFlags,
-  ContainerBuilder,
-  StringSelectMenuBuilder,
-  StringSelectMenuOptionBuilder,
-} = require('discord.js');
+  buildDiscordThreadUrl,
+  sendVerificationPrompt,
+} = require('../../../functions/helpers/onboardingUtils');
 
 module.exports = {
   data: {
@@ -29,38 +28,9 @@ module.exports = {
       flags: MessageFlags.IsComponentsV2,
     });
 
-    const onboardingContainer = new ContainerBuilder()
-      .addTextDisplayComponents((textDisplay) =>
-        textDisplay.setContent(
-          `# Select employee role.\nPlease select your employee type in the dropdown below.`
-        )
-      )
-      .addSeparatorComponents((separator) => separator)
-      .addActionRowComponents((actionRow) =>
-        actionRow.setComponents(
-          new StringSelectMenuBuilder()
-            .setCustomId('onboardingRoleMenu')
-            .setPlaceholder('Select here.')
-            .setOptions([
-              new StringSelectMenuOptionBuilder()
-                .setLabel('Management')
-                .setDescription('Join the Omnilert management team.')
-                .setValue('1314413671245676685'),
-              new StringSelectMenuOptionBuilder()
-                .setLabel('Service Crew')
-                .setDescription('Join as a service crew.')
-                .setValue('1314413960274907238'),
-              new StringSelectMenuOptionBuilder()
-                .setLabel('Others')
-                .setDescription('Select this if you are not part of the Omnilert organization.')
-                .setValue('1449677551365521419'), //Temporary role
-            ])
-        )
-      );
-
-    await interaction.channel.send({
-      components: [onboardingContainer],
-      flags: MessageFlags.IsComponentsV2,
-    });
+    await sendVerificationPrompt(
+      interaction.channel,
+      buildDiscordThreadUrl(interaction.guild.id, interaction.channel.id)
+    );
   },
 };

@@ -52,16 +52,22 @@ require('./sqliteConnection.js');
 
 // Graceful shutdown for BullMQ
 const { closeQueue } = require('./queue/earlyAttendanceQueue');
+const { closeOnboardingRoleRemovalQueue } = require('./queue/onboardingRoleRemovalQueue');
+
+async function closeQueues() {
+  await closeQueue();
+  await closeOnboardingRoleRemovalQueue();
+}
 
 process.on('SIGTERM', async () => {
-  console.log('SIGTERM received, closing queue...');
-  await closeQueue();
+  console.log('SIGTERM received, closing queues...');
+  await closeQueues();
   process.exit(0);
 });
 
 process.on('SIGINT', async () => {
-  console.log('SIGINT received, closing queue...');
-  await closeQueue();
+  console.log('SIGINT received, closing queues...');
+  await closeQueues();
   process.exit(0);
 });
 

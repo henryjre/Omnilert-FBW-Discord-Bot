@@ -6,13 +6,13 @@ const {
   SeparatorSpacingSize,
   ChannelType,
 } = require('discord.js');
-
-const hrRole = '1314815153421680640';
-const techRole = '1314815091908022373';
-
-const managementRole = '1314413671245676685';
-const temporaryRole = '1449677551365521419';
-const serviceCrewRole = '1314413960274907238';
+const {
+  BLOCKED_ONBOARDING_ROLE_IDS,
+  HR_ROLE_ID,
+  TECH_ROLE_ID,
+  addOnboardingRole,
+  buildOnboardingThreadName,
+} = require('../../../functions/helpers/onboardingUtils');
 
 module.exports = {
   data: {
@@ -21,17 +21,15 @@ module.exports = {
   async execute(interaction, client) {
     await interaction.deferUpdate();
 
-    const notValidRoles = [managementRole, temporaryRole, serviceCrewRole];
-
-    if (interaction.member.roles.cache.some((role) => notValidRoles.includes(role.id))) {
-      return await interaction.reply({
+    if (interaction.member.roles.cache.some((role) => BLOCKED_ONBOARDING_ROLE_IDS.includes(role.id))) {
+      return await interaction.followUp({
         content: `You cannot use this button.`,
         flags: MessageFlags.Ephemeral,
       });
     }
 
     const hasChannel = await interaction.channel.threads.cache.find((thread) =>
-      thread.name.includes(`Onboarding - ${interaction.user.username}`)
+      thread.name.includes(`Onboarding | ${interaction.user.id} |`)
     );
 
     if (hasChannel) {
@@ -42,15 +40,17 @@ module.exports = {
     }
 
     const privateThread = await interaction.channel.threads.create({
-      name: `Onboarding - ${interaction.user.username}`,
+      name: buildOnboardingThreadName(interaction.user),
       autoArchiveDuration: 1440,
       type: ChannelType.PrivateThread,
     });
 
+    await addOnboardingRole(interaction.member);
+
     const onboardingContainer = new ContainerBuilder()
       .addTextDisplayComponents((textDisplay) =>
         textDisplay.setContent(
-          `||${interaction.user.toString()} <@&${techRole}> <@&${hrRole}>||\n### For our employees who are new to Discord, below are the guides that you may need to familiarize yourself with the Discord application.`
+          `||${interaction.user.toString()} <@&${TECH_ROLE_ID}> <@&${HR_ROLE_ID}>||\n### For our employees who are new to Discord, below are the guides that you may need to familiarize yourself with the Discord application.`
         )
       )
       .addSeparatorComponents((separator) =>
