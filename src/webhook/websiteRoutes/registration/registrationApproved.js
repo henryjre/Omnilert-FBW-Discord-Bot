@@ -5,10 +5,13 @@ const {
   buildCompletedOnboardingThreadName,
   syncApprovedDiscordRoles,
 } = require('../../../functions/helpers/onboardingUtils');
+const { lookupApprovedUser } = require('../../../functions/helpers/onboardingApi');
 const { extractBearerToken } = require('../notifications/cronNotifications');
 
 const router = express.Router();
 const ONBOARDING_PARENT_CHANNEL_ID = '1314413190074994689';
+const MANAGEMENT_ROLE_ID = '1314413671245676685';
+const SERVICE_CREW_ROLE_ID = '1314413960274907238';
 
 function isNonEmptyString(value) {
   return typeof value === 'string' && value.trim().length > 0;
@@ -57,6 +60,47 @@ async function resolveGuildMember(guild, userId) {
   }
 
   return member || null;
+}
+
+function getFirstNameFromUser(user) {
+  const rawName = user?.first_name || user?.firstName || user?.name || user?.email?.split('@')[0];
+  if (!isNonEmptyString(rawName)) return null;
+
+  return rawName.trim().split(/\s+/)[0];
+}
+
+function getRoleLabelForMember(member, roles = []) {
+  const hasRole = (roleId) =>
+    member.roles?.cache?.has?.(roleId) || roles.some((role) => role.discord_role_id === roleId);
+
+  if (hasRole(SERVICE_CREW_ROLE_ID)) return 'Service Crew';
+  if (hasRole(MANAGEMENT_ROLE_ID)) return 'Management';
+  return null;
+}
+
+function buildApprovedMemberNickname(user, member, roles = []) {
+  const firstName = getFirstNameFromUser(user);
+  const roleLabel = getRoleLabelForMember(member, roles);
+
+  if (!firstName || !roleLabel) return null;
+  return `${firstName} - ${roleLabel}`;
+}
+
+async function renameApprovedMember(member, user, roles = []) {
+  const nickname = buildApprovedMemberNickname(user, member, roles);
+  if (!nickname || typeof member.setNickname !== 'function') {
+    return { updated: false, nickname: null };
+  }
+
+  await member.setNickname(nickname);
+  return { updated: true, nickname };
+}
+
+async function lookupApprovedUserForNickname(email, approvedUserLookup = lookupApprovedUser) {
+  if (!isNonEmptyString(email) || typeof approvedUserLookup !== 'function') return null;
+
+  const lookupResponse = await approvedUserLookup(email);
+  return lookupResponse?.data?.user || null;
 }
 
 async function resolveChannel(clientInstance, channelId) {
@@ -185,6 +229,7 @@ async function completeOnboardingThread(clientInstance, channelId, discordUserId
 
 function createRegistrationApprovedHandler({
   clientInstance,
+  approvedUserLookup = lookupApprovedUser,
   expectedToken = process.env.prodToken,
   guildId = resolveConfiguredGuildId(),
   onboardingParentChannelId = ONBOARDING_PARENT_CHANNEL_ID,
@@ -216,11 +261,19 @@ function createRegistrationApprovedHandler({
       }
 
       const syncResult = await syncApprovedDiscordRoles(member, req.body.roles);
+      let nicknameResult = { updated: false, nickname: null };
       let onboardingThreadResult = {
         marked: false,
         approvedMessageSent: false,
         removedPromptCount: 0,
       };
+
+      try {
+        const lookupUser = await lookupApprovedUserForNickname(req.body.user.email, approvedUserLookup);
+        nicknameResult = await renameApprovedMember(member, lookupUser || req.body.user, req.body.roles);
+      } catch (error) {
+        console.error('Failed to rename approved registration member:', error.message);
+      }
 
       try {
         onboardingThreadResult = await completeOnboardingThread(
@@ -238,6 +291,8 @@ function createRegistrationApprovedHandler({
         discord_user_id: req.body.discord_user_id,
         added_role_ids: syncResult.addedRoleIds,
         skipped_role_ids: syncResult.skippedRoleIds,
+        nickname_updated: nicknameResult.updated,
+        nickname: nicknameResult.nickname,
         onboarding_thread_marked: onboardingThreadResult.marked,
         approved_message_sent: onboardingThreadResult.approvedMessageSent,
         removed_verification_prompt_count: onboardingThreadResult.removedPromptCount,
@@ -253,10 +308,15 @@ router.post('/approved', createRegistrationApprovedHandler());
 
 module.exports = router;
 module.exports.completeOnboardingThread = completeOnboardingThread;
+module.exports.buildApprovedMemberNickname = buildApprovedMemberNickname;
 module.exports.componentHasVerificationAction = componentHasVerificationAction;
 module.exports.createRegistrationApprovedHandler = createRegistrationApprovedHandler;
 module.exports.findOnboardingThread = findOnboardingThread;
+module.exports.getFirstNameFromUser = getFirstNameFromUser;
+module.exports.getRoleLabelForMember = getRoleLabelForMember;
 module.exports.isValidRegistrationApprovedPayload = isValidRegistrationApprovedPayload;
+module.exports.lookupApprovedUserForNickname = lookupApprovedUserForNickname;
 module.exports.markOnboardingThreadCompleted = markOnboardingThreadCompleted;
 module.exports.messageHasVerificationActions = messageHasVerificationActions;
+module.exports.renameApprovedMember = renameApprovedMember;
 module.exports.removeVerificationPromptMessages = removeVerificationPromptMessages;

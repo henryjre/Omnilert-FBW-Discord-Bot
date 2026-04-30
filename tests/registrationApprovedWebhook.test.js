@@ -2,14 +2,22 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const {
+  buildApprovedMemberNickname,
   completeOnboardingThread,
   createRegistrationApprovedHandler,
   findOnboardingThread,
+  getFirstNameFromUser,
+  getRoleLabelForMember,
   isValidRegistrationApprovedPayload,
+  lookupApprovedUserForNickname,
   markOnboardingThreadCompleted,
   messageHasVerificationActions,
+  renameApprovedMember,
   removeVerificationPromptMessages,
 } = require('../src/webhook/websiteRoutes/registration/registrationApproved');
+
+const MANAGEMENT_ROLE_ID = '1314413671245676685';
+const SERVICE_CREW_ROLE_ID = '1314413960274907238';
 
 function buildPayload(overrides = {}) {
   const payload = {
@@ -121,6 +129,7 @@ test('registration approved handler returns 400 when payload is invalid', async 
 
 test('registration approved handler adds roles to discord_user_id member', async () => {
   const addedRoleIds = [];
+  const renamedNicknames = [];
   const existingRoleIds = new Set();
   const role = { id: '987654321098765432' };
   const member = {
@@ -135,11 +144,15 @@ test('registration approved handler adds roles to discord_user_id member', async
         existingRoleIds.add(roleToAdd.id);
       },
     },
+    setNickname: async (nickname) => {
+      renamedNicknames.push(nickname);
+    },
   };
   const clientInstance = createMockClient({ member, role });
   member.guild = clientInstance.guilds.cache.get('guild123');
 
   const handler = createRegistrationApprovedHandler({
+    approvedUserLookup: async () => ({ success: true, data: { user: null } }),
     clientInstance,
     expectedToken: 'expected-token',
     guildId: 'guild123',
@@ -160,9 +173,131 @@ test('registration approved handler adds roles to discord_user_id member', async
     discord_user_id: '123456789012345678',
     added_role_ids: ['987654321098765432'],
     skipped_role_ids: [],
+    nickname_updated: false,
+    nickname: null,
     onboarding_thread_marked: false,
     approved_message_sent: false,
     removed_verification_prompt_count: 0,
+  });
+  assert.deepEqual(renamedNicknames, []);
+});
+
+test('registration approved handler renames user after adding service crew role', async () => {
+  const addedRoleIds = [];
+  const renamedNicknames = [];
+  const role = { id: SERVICE_CREW_ROLE_ID };
+  const member = {
+    id: '123456789012345678',
+    guild: null,
+    roles: {
+      cache: {
+        has: () => false,
+      },
+      add: async (roleToAdd) => {
+        addedRoleIds.push(roleToAdd.id);
+      },
+    },
+    setNickname: async (nickname) => {
+      renamedNicknames.push(nickname);
+    },
+  };
+  const clientInstance = createMockClient({ member, role });
+  member.guild = clientInstance.guilds.cache.get('guild123');
+
+  const handler = createRegistrationApprovedHandler({
+    approvedUserLookup: async () => ({
+      success: true,
+      data: {
+        user: {
+          first_name: 'Juan',
+        },
+      },
+    }),
+    clientInstance,
+    expectedToken: 'expected-token',
+    guildId: 'guild123',
+  });
+  const req = {
+    headers: { authorization: 'Bearer expected-token' },
+    body: buildPayload({
+      user: { first_name: 'Ojie' },
+      roles: [
+        {
+          id: 'role-uuid',
+          name: 'Service Crew',
+          discord_role_id: SERVICE_CREW_ROLE_ID,
+        },
+      ],
+    }),
+  };
+  const res = createMockRes();
+
+  await handler(req, res);
+
+  assert.equal(res.statusCode, 200);
+  assert.deepEqual(addedRoleIds, [SERVICE_CREW_ROLE_ID]);
+  assert.deepEqual(renamedNicknames, ['Juan - Service Crew']);
+  assert.equal(res.body.nickname_updated, true);
+  assert.equal(res.body.nickname, 'Juan - Service Crew');
+});
+
+test('getFirstNameFromUser prefers first name fields and falls back to email prefix', () => {
+  assert.equal(getFirstNameFromUser({ first_name: 'Jane Marie', email: 'fallback@example.com' }), 'Jane');
+  assert.equal(getFirstNameFromUser({ firstName: 'John Paul', email: 'fallback@example.com' }), 'John');
+  assert.equal(getFirstNameFromUser({ name: 'Alex Smith', email: 'fallback@example.com' }), 'Alex');
+  assert.equal(getFirstNameFromUser({ email: 'ojiechan@example.com' }), 'ojiechan');
+});
+
+test('buildApprovedMemberNickname uses Service Crew when both role labels apply', () => {
+  const member = {
+    roles: {
+      cache: {
+        has: (roleId) => roleId === MANAGEMENT_ROLE_ID,
+      },
+    },
+  };
+  const nickname = buildApprovedMemberNickname(
+    { first_name: 'Ojie' },
+    member,
+    [{ discord_role_id: SERVICE_CREW_ROLE_ID }]
+  );
+
+  assert.equal(nickname, 'Ojie - Service Crew');
+});
+
+test('renameApprovedMember renames management and service crew users', async () => {
+  const nicknames = [];
+  const member = {
+    roles: {
+      cache: {
+        has: (roleId) => roleId === MANAGEMENT_ROLE_ID,
+      },
+    },
+    setNickname: async (nickname) => {
+      nicknames.push(nickname);
+    },
+  };
+
+  const result = await renameApprovedMember(member, { first_name: 'Mara' }, []);
+
+  assert.deepEqual(result, { updated: true, nickname: 'Mara - Management' });
+  assert.deepEqual(nicknames, ['Mara - Management']);
+});
+
+test('lookupApprovedUserForNickname returns user from approved user lookup', async () => {
+  const user = await lookupApprovedUserForNickname('person@example.com', async (email) => ({
+    success: true,
+    data: {
+      user: {
+        email,
+        first_name: 'Juan',
+      },
+    },
+  }));
+
+  assert.deepEqual(user, {
+    email: 'person@example.com',
+    first_name: 'Juan',
   });
 });
 
@@ -307,6 +442,7 @@ test('completeOnboardingThread marks thread, sends approved message, and removes
 
 test('registration approved handler completes onboarding thread after syncing roles', async () => {
   const addedRoleIds = [];
+  const renamedNicknames = [];
   const role = { id: '987654321098765432' };
   const sentMessages = [];
   const deletedMessageIds = [];
@@ -347,11 +483,15 @@ test('registration approved handler completes onboarding thread after syncing ro
         addedRoleIds.push(roleToAdd.id);
       },
     },
+    setNickname: async (nickname) => {
+      renamedNicknames.push(nickname);
+    },
   };
   const clientInstance = createMockClient({ member, role, onboardingChannel });
   member.guild = clientInstance.guilds.cache.get('guild123');
 
   const handler = createRegistrationApprovedHandler({
+    approvedUserLookup: async () => ({ success: true, data: { user: null } }),
     clientInstance,
     expectedToken: 'expected-token',
     guildId: 'guild123',
@@ -367,6 +507,7 @@ test('registration approved handler completes onboarding thread after syncing ro
 
   assert.equal(res.statusCode, 200);
   assert.deepEqual(addedRoleIds, ['987654321098765432']);
+  assert.deepEqual(renamedNicknames, []);
   assert.equal(thread.name, '✅ Onboarding | 123456789012345678 | ojiechan');
   assert.equal(res.body.onboarding_thread_marked, true);
   assert.equal(res.body.approved_message_sent, true);

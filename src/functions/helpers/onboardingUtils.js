@@ -62,7 +62,7 @@ function getUserRolesFromLookup(responseBody) {
 }
 
 function getUserDiscordIdFromLookup(responseBody) {
-  return responseBody?.data?.user?.discord_id || null;
+  return responseBody?.data?.user?.discord_user_id || responseBody?.data?.user?.discord_id || null;
 }
 
 function buildVerificationContainer(threadUrl, options = {}) {

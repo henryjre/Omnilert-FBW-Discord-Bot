@@ -135,11 +135,22 @@ test('getUserDiscordIdFromLookup returns linked Discord ID', () => {
       success: true,
       data: {
         user: {
-          discord_id: '1234567890',
+          discord_user_id: '1234567890',
         },
       },
     }),
     '1234567890'
+  );
+  assert.equal(
+    getUserDiscordIdFromLookup({
+      success: true,
+      data: {
+        user: {
+          discord_id: '0987654321',
+        },
+      },
+    }),
+    '0987654321'
   );
   assert.equal(getUserDiscordIdFromLookup({ success: true, data: { user: {} } }), null);
 });
