@@ -7,6 +7,7 @@ const {
 } = require('../../../functions/helpers/onboardingApi');
 const {
   buildApprovedContainer,
+  buildCompletedOnboardingThreadName,
   buildDiscordAlreadyLinkedContainer,
   buildDiscordThreadUrl,
   buildNoRegistrationRecordContainer,
@@ -87,6 +88,14 @@ module.exports = {
 
         await syncApprovedDiscordRoles(approvedMember, getUserRolesFromLookup(lookupResponse));
         await scheduleOnboardingRoleRemoval(interaction.guild.id, approvedDiscordId);
+
+        if (interaction.channel?.setName && interaction.channel?.name) {
+          try {
+            await interaction.channel.setName(buildCompletedOnboardingThreadName(interaction.channel.name));
+          } catch (error) {
+            console.error('Failed to mark onboarding thread as completed:', error.message);
+          }
+        }
 
         if (discordAlreadyLinked) {
           await interaction.channel.send({

@@ -23,6 +23,12 @@ function buildOnboardingThreadName(user) {
   return `Onboarding | ${user.id} | ${user.username}`;
 }
 
+function buildCompletedOnboardingThreadName(threadName) {
+  const completedPrefix = '✅ ';
+  if (threadName.startsWith(completedPrefix)) return threadName;
+  return `${completedPrefix}${threadName}`;
+}
+
 function buildDiscordThreadUrl(guildId, threadId) {
   return `https://discord.com/channels/${guildId}/${threadId}`;
 }
@@ -202,6 +208,7 @@ const onboardingUtils = {
   TECH_ROLE_ID,
   addOnboardingRole,
   buildApprovedContainer,
+  buildCompletedOnboardingThreadName,
   buildDiscordAlreadyLinkedContainer,
   buildDiscordThreadUrl,
   buildOnboardingRoleRemovalJobOptions,

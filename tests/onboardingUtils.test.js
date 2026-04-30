@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 
 const {
   ONBOARDING_ROLE_REMOVAL_DELAY_MS,
+  buildCompletedOnboardingThreadName,
   buildDiscordAlreadyLinkedContainer,
   buildDiscordThreadUrl,
   buildNoRegistrationRecordContainer,
@@ -51,6 +52,17 @@ test('normalizeRegistrationStatus maps registration API responses', () => {
       data: { registration: { exists: false, status: null } },
     }),
     'not_found'
+  );
+});
+
+test('buildCompletedOnboardingThreadName prefixes green check once', () => {
+  assert.equal(
+    buildCompletedOnboardingThreadName('Onboarding | 123 | person'),
+    '✅ Onboarding | 123 | person'
+  );
+  assert.equal(
+    buildCompletedOnboardingThreadName('✅ Onboarding | 123 | person'),
+    '✅ Onboarding | 123 | person'
   );
 });
 
