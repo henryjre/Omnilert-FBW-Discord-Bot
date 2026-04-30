@@ -55,6 +55,10 @@ function getUserRolesFromLookup(responseBody) {
   return roles.filter((role) => role?.discord_role_id);
 }
 
+function getUserDiscordIdFromLookup(responseBody) {
+  return responseBody?.data?.user?.discord_id || null;
+}
+
 function buildVerificationContainer(threadUrl, options = {}) {
   const registerUrl = buildRegisterUrl(threadUrl);
   const title = options.title || '🔎 Verify website registration';
@@ -134,6 +138,20 @@ function buildNoRegistrationRecordContainer(email, threadUrl) {
   });
 }
 
+function buildDiscordAlreadyLinkedContainer(email) {
+  return new ContainerBuilder()
+    .setAccentColor(0xf1c40f)
+    .addTextDisplayComponents((textDisplay) =>
+      textDisplay.setContent(
+        `## ⚠️ Discord account already linked\nThis Discord account is already linked on the Omnilert website, so we skipped linking it again and continued onboarding for:\n\n**${email}**`
+      )
+    );
+}
+
+function isDiscordAlreadyLinkedResponse(responseBody) {
+  return responseBody?.success === false && /discord id is already linked/i.test(responseBody?.error || '');
+}
+
 async function sendVerificationPrompt(channel, threadUrl) {
   return channel.send({
     components: [buildVerificationContainer(threadUrl)],
@@ -184,6 +202,7 @@ const onboardingUtils = {
   TECH_ROLE_ID,
   addOnboardingRole,
   buildApprovedContainer,
+  buildDiscordAlreadyLinkedContainer,
   buildDiscordThreadUrl,
   buildOnboardingRoleRemovalJobOptions,
   buildOnboardingThreadName,
@@ -192,7 +211,9 @@ const onboardingUtils = {
   buildRegisterUrl,
   buildRetryVerificationContainer,
   buildVerificationContainer,
+  getUserDiscordIdFromLookup,
   getUserRolesFromLookup,
+  isDiscordAlreadyLinkedResponse,
   normalizeRegistrationStatus,
   sendVerificationPrompt,
   syncApprovedDiscordRoles,

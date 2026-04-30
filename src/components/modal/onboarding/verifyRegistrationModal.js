@@ -7,11 +7,14 @@ const {
 } = require('../../../functions/helpers/onboardingApi');
 const {
   buildApprovedContainer,
+  buildDiscordAlreadyLinkedContainer,
   buildDiscordThreadUrl,
   buildNoRegistrationRecordContainer,
   buildPendingContainer,
   buildRetryVerificationContainer,
+  getUserDiscordIdFromLookup,
   getUserRolesFromLookup,
+  isDiscordAlreadyLinkedResponse,
   normalizeRegistrationStatus,
   syncApprovedDiscordRoles,
 } = require('../../../functions/helpers/onboardingUtils');
@@ -41,19 +44,32 @@ module.exports = {
 
       if (status === 'pending') {
         const linkResponse = await linkRegistrationRequestDiscordId(email, interaction.user.id);
-        if (!linkResponse?.success) {
+        const discordAlreadyLinked = isDiscordAlreadyLinkedResponse(linkResponse);
+
+        if (!linkResponse?.success && !discordAlreadyLinked) {
           throw new Error('Registration request Discord ID link failed');
         }
 
-        return await interaction.channel.send({
+        await interaction.channel.send({
           components: [buildPendingContainer()],
           flags: MessageFlags.IsComponentsV2,
         });
+
+        if (discordAlreadyLinked) {
+          await interaction.channel.send({
+            components: [buildDiscordAlreadyLinkedContainer(email, threadUrl)],
+            flags: MessageFlags.IsComponentsV2,
+          });
+        }
+
+        return;
       }
 
       if (status === 'approved') {
         const linkResponse = await linkApprovedUserDiscordId(email, interaction.user.id);
-        if (!linkResponse?.success) {
+        const discordAlreadyLinked = isDiscordAlreadyLinkedResponse(linkResponse);
+
+        if (!linkResponse?.success && !discordAlreadyLinked) {
           throw new Error('Approved user Discord ID link failed');
         }
 
@@ -63,8 +79,22 @@ module.exports = {
         });
 
         const lookupResponse = await lookupApprovedUser(email);
-        await syncApprovedDiscordRoles(interaction.member, getUserRolesFromLookup(lookupResponse));
-        await scheduleOnboardingRoleRemoval(interaction.guild.id, interaction.user.id);
+        const approvedDiscordId = getUserDiscordIdFromLookup(lookupResponse) || interaction.user.id;
+        const approvedMember =
+          approvedDiscordId === interaction.user.id
+            ? interaction.member
+            : await interaction.guild.members.fetch(approvedDiscordId);
+
+        await syncApprovedDiscordRoles(approvedMember, getUserRolesFromLookup(lookupResponse));
+        await scheduleOnboardingRoleRemoval(interaction.guild.id, approvedDiscordId);
+
+        if (discordAlreadyLinked) {
+          await interaction.channel.send({
+            components: [buildDiscordAlreadyLinkedContainer(email, threadUrl)],
+            flags: MessageFlags.IsComponentsV2,
+          });
+        }
+
         return;
       }
 

@@ -3,11 +3,14 @@ const assert = require('node:assert/strict');
 
 const {
   ONBOARDING_ROLE_REMOVAL_DELAY_MS,
+  buildDiscordAlreadyLinkedContainer,
   buildDiscordThreadUrl,
   buildNoRegistrationRecordContainer,
   buildOnboardingRoleRemovalJobOptions,
   buildRegisterUrl,
+  getUserDiscordIdFromLookup,
   getUserRolesFromLookup,
+  isDiscordAlreadyLinkedResponse,
   normalizeRegistrationStatus,
   syncApprovedDiscordRoles,
 } = require('../src/functions/helpers/onboardingUtils');
@@ -66,6 +69,33 @@ test('buildNoRegistrationRecordContainer includes submitted email and retry acti
   assert.match(textContent, /select \*\*Verify\*\* again/i);
 });
 
+test('buildDiscordAlreadyLinkedContainer explains linked Discord ID response', () => {
+  const containerJson = buildDiscordAlreadyLinkedContainer(
+    'person@example.com',
+    'https://discord.com/channels/guild123/thread456'
+  ).toJSON();
+  const textContent = containerJson.components
+    .filter((component) => component.type === 10)
+    .map((component) => component.content)
+    .join('\n');
+
+  assert.match(textContent, /## ⚠️ Discord account already linked/);
+  assert.match(textContent, /\*\*person@example\.com\*\*/);
+  assert.match(textContent, /skipped linking it again/i);
+});
+
+test('isDiscordAlreadyLinkedResponse detects API conflict response', () => {
+  assert.equal(
+    isDiscordAlreadyLinkedResponse({
+      success: false,
+      error: 'Discord ID is already linked to another user',
+    }),
+    true
+  );
+  assert.equal(isDiscordAlreadyLinkedResponse({ success: false, error: 'Other error' }), false);
+  assert.equal(isDiscordAlreadyLinkedResponse({ success: true }), false);
+});
+
 test('getUserRolesFromLookup returns only roles with discord_role_id', () => {
   const roles = getUserRolesFromLookup({
     success: true,
@@ -85,6 +115,21 @@ test('getUserRolesFromLookup returns only roles with discord_role_id', () => {
     roles.map((role) => role.discord_role_id),
     ['111', '444']
   );
+});
+
+test('getUserDiscordIdFromLookup returns linked Discord ID', () => {
+  assert.equal(
+    getUserDiscordIdFromLookup({
+      success: true,
+      data: {
+        user: {
+          discord_id: '1234567890',
+        },
+      },
+    }),
+    '1234567890'
+  );
+  assert.equal(getUserDiscordIdFromLookup({ success: true, data: { user: {} } }), null);
 });
 
 test('syncApprovedDiscordRoles skips missing roles and adds valid roles', async () => {
