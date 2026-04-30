@@ -43,6 +43,9 @@ module.exports = {
 
     await privateThread.members.add(interaction.user.id);
     await addOnboardingRole(interaction.member);
+    await privateThread.send({
+      content: interaction.user.toString(),
+    });
     await sendVerificationPrompt(
       privateThread,
       buildDiscordThreadUrl(interaction.guild.id, privateThread.id)
