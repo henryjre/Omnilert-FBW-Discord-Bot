@@ -162,7 +162,7 @@ async function syncApprovedDiscordRoles(member, roles) {
   return { addedRoleIds, skippedRoleIds };
 }
 
-module.exports = {
+const onboardingUtils = {
   BLOCKED_ONBOARDING_ROLE_IDS,
   HR_ROLE_ID,
   ONBOARDING_ROLE_ID,
@@ -183,3 +183,5 @@ module.exports = {
   sendVerificationPrompt,
   syncApprovedDiscordRoles,
 };
+
+module.exports = Object.assign(() => onboardingUtils, onboardingUtils);

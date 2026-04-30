@@ -55,9 +55,11 @@ async function lookupApprovedUser(email) {
   return response.data;
 }
 
-module.exports = {
+const onboardingApi = {
   getRegistrationStatus,
   linkApprovedUserDiscordId,
   linkRegistrationRequestDiscordId,
   lookupApprovedUser,
 };
+
+module.exports = Object.assign(() => onboardingApi, onboardingApi);
