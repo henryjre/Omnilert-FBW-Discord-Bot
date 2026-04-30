@@ -61,7 +61,7 @@ test('buildNoRegistrationRecordContainer includes submitted email and retry acti
     .map((component) => component.content)
     .join('\n');
 
-  assert.match(textContent, /## No registration record found/);
+  assert.match(textContent, /## 🔍 No registration record found/);
   assert.match(textContent, /\*\*person@example\.com\*\*/);
   assert.match(textContent, /select \*\*Verify\*\* again/i);
 });

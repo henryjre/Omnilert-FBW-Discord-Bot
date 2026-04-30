@@ -57,7 +57,7 @@ function getUserRolesFromLookup(responseBody) {
 
 function buildVerificationContainer(threadUrl, options = {}) {
   const registerUrl = buildRegisterUrl(threadUrl);
-  const title = options.title || 'Verify website registration';
+  const title = options.title || '🔎 Verify website registration';
   const intro =
     options.message ||
     'Have you completed your Omnilert website registration? If you have not registered yet, select **Register** and complete the onboarding form on the website. Once finished, return to this thread and select **Verify**.';
@@ -74,8 +74,13 @@ function buildVerificationContainer(threadUrl, options = {}) {
         new ButtonBuilder()
           .setCustomId('verifyRegistrationButton')
           .setLabel('Verify')
+          .setEmoji({ name: '✅' })
           .setStyle(ButtonStyle.Success),
-        new ButtonBuilder().setLabel('Register').setStyle(ButtonStyle.Link).setURL(registerUrl),
+        new ButtonBuilder()
+          .setLabel('Register')
+          .setEmoji({ name: '📝' })
+          .setStyle(ButtonStyle.Link)
+          .setURL(registerUrl),
         new ButtonBuilder()
           .setCustomId('requestHelpButton')
           .setLabel('Need help?')
@@ -99,7 +104,7 @@ function buildApprovedContainer() {
   return new ContainerBuilder()
     .setAccentColor(0x2ecc71)
     .addTextDisplayComponents((textDisplay) =>
-      textDisplay.setContent('## Registration approved\nYour registration has been approved. Welcome to Omnilert!')
+      textDisplay.setContent('## 🎉 Registration approved\nYour registration has been approved. Welcome to Omnilert!')
     )
     .addSeparatorComponents((separator) => separator)
     .addTextDisplayComponents((textDisplay) =>
@@ -124,7 +129,7 @@ function buildRetryVerificationContainer(threadUrl) {
 
 function buildNoRegistrationRecordContainer(email, threadUrl) {
   return buildVerificationContainer(threadUrl, {
-    title: 'No registration record found',
+    title: '🔍 No registration record found',
     message: `There was no registration record found for the email:\n\n**${email}**\n\nIs the email correct? Please select **Verify** again and use the email address you entered during website registration.`,
   });
 }
