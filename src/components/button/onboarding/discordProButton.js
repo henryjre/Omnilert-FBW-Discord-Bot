@@ -41,10 +41,16 @@ module.exports = {
       type: ChannelType.PrivateThread,
     });
 
+    await privateThread.members.add(interaction.user.id);
     await addOnboardingRole(interaction.member);
     await sendVerificationPrompt(
       privateThread,
       buildDiscordThreadUrl(interaction.guild.id, privateThread.id)
     );
+
+    return await interaction.followUp({
+      content: `Your onboarding thread is ready: ${privateThread.toString()}`,
+      flags: MessageFlags.Ephemeral,
+    });
   },
 };
