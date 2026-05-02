@@ -2,6 +2,10 @@ const { Queue, Worker } = require('bullmq');
 const IORedis = require('ioredis');
 const { ContainerBuilder, MessageFlags } = require('discord.js');
 const { getNonAcknowledgers, deleteAnnouncementTracking } = require('../sqliteFunctions');
+const {
+  buildAcknowledgmentDeductionReason,
+  sendAcknowledgmentDeduction,
+} = require('../functions/helpers/announcementAdjustments');
 
 // Create Valkey connection
 const connection = new IORedis({
@@ -77,6 +81,15 @@ function initializeAnnouncementAckWorker(client) {
           return { success: true, announcementId, allAcknowledged: true };
         }
 
+        const announcementChannel = await client.channels.fetch(channelId);
+        const announcementMessage = await announcementChannel.messages.fetch(announcementId);
+        const announcementDescription = announcementMessage.embeds?.[0]?.description;
+        const deductionReason = buildAcknowledgmentDeductionReason({
+          description: announcementDescription,
+          announcementId,
+          messageUrl: announcementMessage.url,
+        });
+
         // Fetch the acknowledgements thread
         const thread = await client.channels.fetch(threadId);
 
@@ -115,16 +128,13 @@ function initializeAnnouncementAckWorker(client) {
         console.log(`✓ Sent non-acknowledger summary for announcement ${announcementId} (${nonAcknowledgers.length} users)`);
 
         // Remove acknowledge button from the original announcement message
-        try {
-          const announcementChannel = await client.channels.fetch(channelId);
-          const announcementMessage = await announcementChannel.messages.fetch(announcementId);
-          if (announcementMessage.components.length > 0) {
-            await announcementMessage.edit({ components: [] });
-            console.log(`✓ Removed acknowledge button from announcement ${announcementId}`);
-          }
-        } catch (error) {
-          console.error("Error removing acknowledge button:", error.message);
+        if (announcementMessage.components.length > 0) {
+          await announcementMessage.edit({ components: [] });
+          console.log(`✓ Removed acknowledge button from announcement ${announcementId}`);
         }
+
+        await sendAcknowledgmentDeduction(nonAcknowledgers, deductionReason);
+        console.log(`✓ Sent EPI deduction adjustment for announcement ${announcementId} (${nonAcknowledgers.length} users)`);
 
         // Clean up database record
         deleteAnnouncementTracking(announcementId);
