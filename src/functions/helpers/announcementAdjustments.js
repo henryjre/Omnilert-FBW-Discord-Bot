@@ -42,10 +42,12 @@ async function sendAcknowledgmentDeduction(discordIds, reason, token = process.e
   return response.data;
 }
 
-module.exports = {
+const announcementAdjustments = {
   ANNOUNCEMENT_ADJUSTMENTS_URL,
   buildAcknowledgmentDeductionPayload,
   buildAcknowledgmentDeductionReason,
   extractAnnouncementTitle,
   sendAcknowledgmentDeduction,
 };
+
+module.exports = Object.assign(() => announcementAdjustments, announcementAdjustments);
