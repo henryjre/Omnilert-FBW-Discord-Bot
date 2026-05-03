@@ -20,6 +20,9 @@ const pesoFormatter = new Intl.NumberFormat('en-PH', {
 
 const departments = require('../../../config/departments.json');
 
+const MAX_EMBED_FIELD_VALUE_LENGTH = 1024;
+const MAX_PRODUCT_EMBED_FIELDS = 5;
+
 // ✅ Employee Check-In
 const sessionOpen = async (req, res) => {
   const {
@@ -615,14 +618,7 @@ const discountOrder = async (req, res) => {
     mentionable = `<@&${department.role}>`;
   }
 
-  let orderLinesMessage = '';
-
-  for (const order of x_order_lines) {
-    orderLinesMessage += `> **Name:** ${order.product_name}\n`;
-    orderLinesMessage += `> **Quantity:** ${order.qty} ${order.uom_name}\n`;
-    orderLinesMessage += `> **Unit Price:** ${pesoFormatter.format(order.price_unit)}`;
-    orderLinesMessage += `\n\n`;
-  }
+  const productFields = buildProductEmbedFields(x_order_lines);
 
   //creating an embed for the session
   const fields = [
@@ -638,10 +634,7 @@ const discountOrder = async (req, res) => {
       name: 'Discord User',
       value: x_discord_id ? `<@${x_discord_id}>` : 'No user found',
     },
-    {
-      name: 'Products',
-      value: orderLinesMessage,
-    },
+    ...productFields,
     {
       name: 'Order Total',
       value: pesoFormatter.format(amount_total),
@@ -723,14 +716,7 @@ const nonCashOrder = async (req, res) => {
     mentionable = `<@&${department.role}>`;
   }
 
-  let orderLinesMessage = '';
-
-  for (const order of x_order_lines) {
-    orderLinesMessage += `> **Name:** ${order.product_name}\n`;
-    orderLinesMessage += `> **Quantity:** ${order.qty} ${order.uom_name}\n`;
-    orderLinesMessage += `> **Unit Price:** ${pesoFormatter.format(order.price_unit)}`;
-    orderLinesMessage += `\n\n`;
-  }
+  const productFields = buildProductEmbedFields(x_order_lines);
 
   let paymentMessage = x_payments
     ? x_payments.map((p) => `> **${p.name}:** ${pesoFormatter.format(p.amount)}`).join('\n')
@@ -750,10 +736,7 @@ const nonCashOrder = async (req, res) => {
       name: 'Discord User',
       value: x_discord_id ? `<@${x_discord_id}>` : 'No user found',
     },
-    {
-      name: 'Products',
-      value: orderLinesMessage,
-    },
+    ...productFields,
     {
       name: 'Payments',
       value: paymentMessage,
@@ -832,14 +815,7 @@ const refundOrder = async (req, res) => {
     mentionable = `<@&${department.role}>`;
   }
 
-  let orderLinesMessage = '';
-
-  for (const order of x_order_lines) {
-    orderLinesMessage += `> **Name:** ${order.product_name}\n`;
-    orderLinesMessage += `> **Quantity:** ${order.qty} ${order.uom_name}\n`;
-    orderLinesMessage += `> **Unit Price:** ${pesoFormatter.format(order.price_unit)}`;
-    orderLinesMessage += `\n\n`;
-  }
+  const productFields = buildProductEmbedFields(x_order_lines);
 
   //creating an embed for the session
   const fields = [
@@ -855,10 +831,7 @@ const refundOrder = async (req, res) => {
       name: 'Discord User',
       value: x_discord_id ? `<@${x_discord_id}>` : 'No user found',
     },
-    {
-      name: 'Products',
-      value: orderLinesMessage,
-    },
+    ...productFields,
     {
       name: 'Order Total',
       value: pesoFormatter.format(amount_total),
@@ -922,14 +895,7 @@ const tokenPayOrder = async (req, res) => {
     customerMentionable = `the crew customer`;
   }
 
-  let orderLinesMessage = '';
-
-  for (const order of x_order_lines) {
-    orderLinesMessage += `> **Name:** ${order.product_name}\n`;
-    orderLinesMessage += `> **Quantity:** ${order.qty} ${order.uom_name}\n`;
-    orderLinesMessage += `> **Unit Price:** ${pesoFormatter.format(order.price_unit)}`;
-    orderLinesMessage += `\n\n`;
-  }
+  const productFields = buildProductEmbedFields(x_order_lines);
 
   //creating an embed for the session
   const fields = [
@@ -945,10 +911,7 @@ const tokenPayOrder = async (req, res) => {
       name: 'Customer',
       value: x_customer_discord_id ? `<@${x_customer_discord_id}>` : 'No user found',
     },
-    {
-      name: 'Products',
-      value: orderLinesMessage,
-    },
+    ...productFields,
     {
       name: 'Order Total',
       value: pesoFormatter.format(amount_total),
@@ -1015,14 +978,10 @@ const ispeOrder = async (req, res) => {
 
   const orderDate = formatDateTime(date_approve);
 
-  let orderLinesMessage = '';
-
-  for (const order of x_order_line_details) {
-    orderLinesMessage += `> **Name:** ${order.product_name || 'No Product Name'}\n`;
-    orderLinesMessage += `> **Quantity:** ${order.quantity || 'N/A'} ${order.uom_name || 'N/A'}\n`;
-    orderLinesMessage += `> **Unit Price:** ${pesoFormatter.format(order.price_unit || 'N/A')}`;
-    orderLinesMessage += `\n\n`;
-  }
+  const productFields = buildProductEmbedFields(x_order_line_details, {
+    quantityKey: 'quantity',
+    productNameFallback: 'No Product Name',
+  });
 
   const fields = [
     { name: 'Session Name', value: x_pos_session },
@@ -1030,10 +989,7 @@ const ispeOrder = async (req, res) => {
     { name: 'Vendor Reference', value: partner_ref || 'N/A' },
     { name: 'Branch', value: departmentName },
     { name: 'Confirmation Date', value: orderDate },
-    {
-      name: 'Products',
-      value: orderLinesMessage,
-    },
+    ...productFields,
     {
       name: 'Amount Total',
       value: pesoFormatter.format(amount_total),
@@ -1187,6 +1143,97 @@ function formatDateTime(datetime) {
 
   // Parse the datetime and add 8 hours to adjust for Manila time (UTC+8)
   return moment(datetime).add(8, 'hours').format('MMMM DD, YYYY [at] h:mm A');
+}
+
+function buildProductEmbedFields(
+  orderLines = [],
+  { quantityKey = 'qty', productNameFallback = 'N/A' } = {},
+) {
+  if (!Array.isArray(orderLines) || orderLines.length === 0) {
+    return [{ name: 'Products', value: 'No products found' }];
+  }
+
+  const productBlocks = orderLines.map((order) =>
+    formatProductBlock(order, quantityKey, productNameFallback),
+  );
+  const fields = [];
+  let currentValue = '';
+  let displayedProductCount = 0;
+
+  for (const productBlock of productBlocks) {
+    const nextValue = currentValue ? `${currentValue}\n\n${productBlock}` : productBlock;
+
+    if (nextValue.length <= MAX_EMBED_FIELD_VALUE_LENGTH) {
+      currentValue = nextValue;
+      displayedProductCount += 1;
+      continue;
+    }
+
+    if (currentValue) {
+      fields.push({
+        name: fields.length === 0 ? 'Products' : 'Products (continued)',
+        value: currentValue,
+      });
+    }
+
+    if (fields.length === MAX_PRODUCT_EMBED_FIELDS) {
+      break;
+    }
+
+    currentValue =
+      productBlock.length > MAX_EMBED_FIELD_VALUE_LENGTH
+        ? truncateEmbedFieldValue(productBlock)
+        : productBlock;
+    displayedProductCount += 1;
+  }
+
+  if (currentValue && fields.length < MAX_PRODUCT_EMBED_FIELDS) {
+    fields.push({
+      name: fields.length === 0 ? 'Products' : 'Products (continued)',
+      value: currentValue,
+    });
+  }
+
+  const hiddenProductCount = orderLines.length - displayedProductCount;
+
+  if (hiddenProductCount > 0) {
+    const overflowMessage = `\n\n> ...and ${hiddenProductCount} more product line${
+      hiddenProductCount === 1 ? '' : 's'
+    }.`;
+    const lastField = fields[fields.length - 1];
+    lastField.value = appendOrReplaceFieldSuffix(lastField.value, overflowMessage);
+  }
+
+  return fields;
+}
+
+function formatProductBlock(order, quantityKey, productNameFallback) {
+  const productName = order.product_name || productNameFallback;
+  const quantity = order[quantityKey] ?? 'N/A';
+  const uomName = order.uom_name || 'N/A';
+  const priceUnit = typeof order.price_unit === 'number' ? order.price_unit : 0;
+
+  return [
+    `> **Name:** ${productName}`,
+    `> **Quantity:** ${quantity} ${uomName}`,
+    `> **Unit Price:** ${pesoFormatter.format(priceUnit)}`,
+  ].join('\n');
+}
+
+function truncateEmbedFieldValue(value) {
+  if (value.length <= MAX_EMBED_FIELD_VALUE_LENGTH) {
+    return value;
+  }
+
+  return `${value.slice(0, MAX_EMBED_FIELD_VALUE_LENGTH - 3)}...`;
+}
+
+function appendOrReplaceFieldSuffix(value, suffix) {
+  if (`${value}${suffix}`.length <= MAX_EMBED_FIELD_VALUE_LENGTH) {
+    return `${value}${suffix}`;
+  }
+
+  return `${value.slice(0, MAX_EMBED_FIELD_VALUE_LENGTH - suffix.length)}${suffix}`;
 }
 
 function groupCashInOutByType(data) {
