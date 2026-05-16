@@ -1,6 +1,11 @@
 const express = require('express');
 const moment = require('moment-timezone');
-const { ContainerBuilder, MessageFlags } = require('discord.js');
+const {
+  ChannelType,
+  ContainerBuilder,
+  EmbedBuilder,
+  MessageFlags,
+} = require('discord.js');
 
 const router = express.Router();
 
@@ -8,6 +13,9 @@ const CRON_NOTIFICATION_CHANNEL_ID = '1487864900947542209';
 const ERROR_MENTION_USER_ID = '748568303219245117';
 const DEFAULT_TIMEZONE = 'Asia/Manila';
 const TIMESTAMP_OUTPUT_FORMAT = 'MMMM DD, YYYY [at] h:mm A';
+const CRON_FAILURE_THREAD_AUTO_ARCHIVE_MINUTES = 1440;
+const DISCORD_FIELD_VALUE_LIMIT = 1024;
+const DISCORD_THREAD_NAME_LIMIT = 100;
 
 function extractBearerToken(authorizationHeader) {
   if (typeof authorizationHeader !== 'string') return null;
@@ -48,6 +56,102 @@ function toDisplay(value) {
   return stringValue.length === 0 ? 'N/A' : stringValue;
 }
 
+function truncateDiscordText(value, maxLength = DISCORD_FIELD_VALUE_LIMIT) {
+  const text = toDisplay(value);
+  if (text.length <= maxLength) return text;
+
+  return `${text.slice(0, Math.max(0, maxLength - 3))}...`;
+}
+
+function normalizeFailureDetail(failure) {
+  if (!failure || typeof failure !== 'object') {
+    return {
+      entityType: 'cron_run',
+      entityId: null,
+      error: toDisplay(failure),
+    };
+  }
+
+  return {
+    entityType: toDisplay(failure.entityType),
+    entityId: failure.entityId === undefined ? null : failure.entityId,
+    error: toDisplay(failure.error),
+  };
+}
+
+function parseCronFailureDetails(errorMessage) {
+  const raw = typeof errorMessage === 'string' ? errorMessage.trim() : '';
+  if (!raw) {
+    return {
+      failed: 0,
+      failures: [],
+      parsed: false,
+    };
+  }
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (
+      parsed &&
+      typeof parsed === 'object' &&
+      Array.isArray(parsed.failures)
+    ) {
+      const failures = parsed.failures.map(normalizeFailureDetail);
+      const failed = Number.isFinite(parsed.failed) ? parsed.failed : failures.length;
+
+      return {
+        failed,
+        failures,
+        parsed: true,
+      };
+    }
+  } catch {
+    // Legacy plain-string payloads are handled below.
+  }
+
+  return {
+    failed: 1,
+    failures: [
+      {
+        entityType: 'cron_run',
+        entityId: null,
+        error: raw,
+      },
+    ],
+    parsed: false,
+  };
+}
+
+function getCronFailureDetails(payload) {
+  const details = parseCronFailureDetails(payload.result?.error_message);
+  if (details.failures.length > 0) return details;
+
+  const fallbackError = toDisplay(payload.result?.message);
+  if (fallbackError === 'N/A') return details;
+
+  return {
+    failed: 1,
+    failures: [
+      {
+        entityType: 'cron_run',
+        entityId: null,
+        error: fallbackError,
+      },
+    ],
+    parsed: false,
+  };
+}
+
+function buildFailureSummary(details) {
+  const count = Number.isFinite(details.failed)
+    ? details.failed
+    : details.failures.length;
+
+  if (count <= 0) return 'N/A';
+
+  return `${count} failure(s); see thread for details`;
+}
+
 function formatTimestamp(value, timezone = DEFAULT_TIMEZONE) {
   const rawValue = toDisplay(value);
   if (rawValue === 'N/A') return rawValue;
@@ -75,6 +179,7 @@ function buildCronNotificationContainer(payload, options = {}) {
   const timezone = toDisplay(payload.meta?.timezone) === 'N/A' ? DEFAULT_TIMEZONE : toDisplay(payload.meta?.timezone);
   const mentionUserId = options.mentionUserId || null;
   const mentionBlock = mentionUserId ? `## <@${mentionUserId}>` : null;
+  const errorMessageDisplay = options.errorMessageDisplay ?? toDisplay(payload.result?.error_message);
 
   const headerBlock = [
     '## Cron Job Notification',
@@ -108,7 +213,7 @@ function buildCronNotificationContainer(payload, options = {}) {
     '### Result',
     `- **Status:** ${toDisplay(payload.result?.status)}`,
     `- **Message:** ${toDisplay(payload.result?.message)}`,
-    `- **Error Message:** ${toDisplay(payload.result?.error_message)}`,
+    `- **Error Message:** ${errorMessageDisplay}`,
   ].join('\n');
 
   const statsMetaBlock = [
@@ -138,6 +243,75 @@ function buildCronNotificationContainer(payload, options = {}) {
     .addTextDisplayComponents((textDisplay) => textDisplay.setContent(resultBlock))
     .addSeparatorComponents((separator) => separator)
     .addTextDisplayComponents((textDisplay) => textDisplay.setContent(statsMetaBlock));
+}
+
+function buildCronFailureThreadName(payload) {
+  const baseName = `Cron Failure | ${toDisplay(payload.job?.name)} | ${toDisplay(payload.run?.id)}`;
+
+  if (baseName.length <= DISCORD_THREAD_NAME_LIMIT) return baseName;
+
+  return baseName.slice(0, DISCORD_THREAD_NAME_LIMIT);
+}
+
+function buildCronFailureEmbed(payload, failure, index) {
+  const timezone = toDisplay(payload.meta?.timezone) === 'N/A' ? DEFAULT_TIMEZONE : toDisplay(payload.meta?.timezone);
+
+  return new EmbedBuilder()
+    .setTitle(`Cron Failure #${index + 1}`)
+    .setColor(0xed4245)
+    .addFields(
+      {
+        name: 'Job',
+        value: truncateDiscordText(payload.job?.name),
+      },
+      {
+        name: 'Entity Type',
+        value: truncateDiscordText(failure.entityType),
+        inline: true,
+      },
+      {
+        name: 'Entity ID',
+        value: truncateDiscordText(failure.entityId),
+        inline: true,
+      },
+      {
+        name: 'Error',
+        value: truncateDiscordText(failure.error),
+      },
+      {
+        name: 'Run ID',
+        value: truncateDiscordText(payload.run?.id),
+      },
+      {
+        name: 'Started At',
+        value: truncateDiscordText(formatTimestamp(payload.run?.started_at, timezone)),
+        inline: true,
+      },
+      {
+        name: 'Finished At',
+        value: truncateDiscordText(formatTimestamp(payload.run?.finished_at, timezone)),
+        inline: true,
+      },
+    );
+}
+
+async function sendCronFailureThread(message, payload, details) {
+  if (!message || typeof message.startThread !== 'function') return null;
+  if (!details.failures.length) return null;
+
+  const thread = await message.startThread({
+    name: buildCronFailureThreadName(payload),
+    type: ChannelType.PublicThread,
+    autoArchiveDuration: CRON_FAILURE_THREAD_AUTO_ARCHIVE_MINUTES,
+  });
+
+  for (let index = 0; index < details.failures.length; index += 1) {
+    await thread.send({
+      embeds: [buildCronFailureEmbed(payload, details.failures[index], index)],
+    });
+  }
+
+  return thread;
 }
 
 async function resolveChannel(clientInstance, channelId) {
@@ -176,8 +350,12 @@ function createCronNotificationHandler({
       const targetChannel = await resolveChannel(resolvedClient, channelId);
 
       const isErrorStatus = toDisplay(req.body.result?.status).toLowerCase() !== 'success';
+      const failureDetails = isErrorStatus ? getCronFailureDetails(req.body) : null;
       const cronContainer = buildCronNotificationContainer(req.body, {
         mentionUserId: isErrorStatus ? ERROR_MENTION_USER_ID : null,
+        errorMessageDisplay: isErrorStatus && failureDetails
+          ? buildFailureSummary(failureDetails)
+          : undefined,
       });
 
       const messagePayload = {
@@ -192,7 +370,15 @@ function createCronNotificationHandler({
         };
       }
 
-      await targetChannel.send(messagePayload);
+      const sentMessage = await targetChannel.send(messagePayload);
+
+      if (isErrorStatus && failureDetails?.failures.length) {
+        try {
+          await sendCronFailureThread(sentMessage, req.body, failureDetails);
+        } catch (threadError) {
+          console.error('Failed to send cron failure thread:', threadError);
+        }
+      }
 
       return res.status(200).json({ ok: true, message: 'Cron notification sent' });
     } catch (error) {
@@ -209,3 +395,8 @@ module.exports.createCronNotificationHandler = createCronNotificationHandler;
 module.exports.extractBearerToken = extractBearerToken;
 module.exports.isValidCronPayload = isValidCronPayload;
 module.exports.buildCronNotificationContainer = buildCronNotificationContainer;
+module.exports.parseCronFailureDetails = parseCronFailureDetails;
+module.exports.getCronFailureDetails = getCronFailureDetails;
+module.exports.buildFailureSummary = buildFailureSummary;
+module.exports.buildCronFailureEmbed = buildCronFailureEmbed;
+module.exports.sendCronFailureThread = sendCronFailureThread;
