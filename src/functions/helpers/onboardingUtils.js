@@ -11,7 +11,7 @@ const HR_ROLE_ID = '1314815153421680640';
 const TECH_ROLE_ID = '1314815091908022373';
 const ONBOARDING_ROLE_REMOVAL_DELAY_MS = 24 * 60 * 60 * 1000;
 const REGISTRATION_URL = 'https://omnilert.app/register';
-const OMNILERT_API_BASE_URL = 'https://yevette-hydrotropic-pseudoeconomically.ngrok-free.dev/api/v1/integrations/discord';
+const OMNILERT_API_BASE_URL = 'https://omnilert.app/api/v1/integrations/discord';
 
 const BLOCKED_ONBOARDING_ROLE_IDS = [
   '1314413671245676685',
