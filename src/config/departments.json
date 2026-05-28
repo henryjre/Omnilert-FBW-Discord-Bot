@@ -46,5 +46,13 @@
     "posChannel": "1449651377012740166",
     "verificationChannel": "1449646897638801522",
     "scheduleChannel": "1449646921315782807"
+  },
+  {
+    "id": 53,
+    "name": "MS LRT Katipunan",
+    "role": "1509393430097170522",
+    "posChannel": "",
+    "verificationChannel": "",
+    "scheduleChannel": ""
   }
 ]
