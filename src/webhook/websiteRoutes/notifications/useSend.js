@@ -1,4 +1,5 @@
 const express = require('express');
+const crypto = require('crypto');
 const {
   ContainerBuilder,
   MessageFlags,
@@ -9,6 +10,7 @@ const router = express.Router();
 const USE_SEND_LOG_CHANNEL_ID = '1509933047074525265';
 const DISCORD_TEXT_DISPLAY_LIMIT = 4000;
 const JSON_CHUNK_SIZE = 3400;
+const USE_SEND_SIGNATURE_TOLERANCE_MS = 5 * 60 * 1000;
 
 function isNonEmptyString(value) {
   return typeof value === 'string' && value.trim().length > 0;
@@ -49,6 +51,57 @@ function splitText(text, chunkSize = JSON_CHUNK_SIZE) {
   }
 
   return chunks.length ? chunks : [''];
+}
+
+function getHeader(req, headerName) {
+  return req.get ? req.get(headerName) : req.headers?.[headerName.toLowerCase()];
+}
+
+function getRawBody(req) {
+  if (typeof req.rawBody === 'string') return req.rawBody;
+  if (Buffer.isBuffer(req.rawBody)) return req.rawBody.toString('utf8');
+
+  return null;
+}
+
+function hasFreshTimestamp(timestamp, now = Date.now()) {
+  if (!/^\d+$/.test(toDisplay(timestamp))) return false;
+
+  const timestampMs = Number(timestamp);
+  if (!Number.isFinite(timestampMs)) return false;
+
+  return Math.abs(now - timestampMs) <= USE_SEND_SIGNATURE_TOLERANCE_MS;
+}
+
+function timingSafeStringEqual(expected, received) {
+  const expectedBuffer = Buffer.from(expected, 'utf8');
+  const receivedBuffer = Buffer.from(received, 'utf8');
+
+  if (expectedBuffer.length !== receivedBuffer.length) return false;
+
+  return crypto.timingSafeEqual(expectedBuffer, receivedBuffer);
+}
+
+function verifyUseSendSignature({
+  rawBody,
+  signature,
+  signingSecret,
+  timestamp,
+  now = Date.now(),
+}) {
+  if (!isNonEmptyString(signingSecret)) return false;
+  if (!isNonEmptyString(rawBody)) return false;
+  if (!isNonEmptyString(signature)) return false;
+  if (!isNonEmptyString(timestamp)) return false;
+  if (!hasFreshTimestamp(timestamp, now)) return false;
+
+  const digest = crypto
+    .createHmac('sha256', signingSecret)
+    .update(`${timestamp}.${rawBody}`)
+    .digest('hex');
+  const expectedSignature = `v1=${digest}`;
+
+  return timingSafeStringEqual(expectedSignature, signature);
 }
 
 function buildUseSendWebhookContainer(payload) {
@@ -108,9 +161,26 @@ async function resolveChannel(clientInstance, channelId) {
 function createUseSendWebhookHandler({
   clientInstance,
   channelId = USE_SEND_LOG_CHANNEL_ID,
+  signingSecret = process.env.USESEND_SIGNING_SECRET,
+  now = Date.now,
 } = {}) {
   return async (req, res) => {
     try {
+      const rawBody = getRawBody(req);
+      const signature = getHeader(req, 'X-UseSend-Signature');
+      const timestamp = getHeader(req, 'X-UseSend-Timestamp');
+      const hasValidSignature = verifyUseSendSignature({
+        rawBody,
+        signature,
+        signingSecret,
+        timestamp,
+        now: now(),
+      });
+
+      if (!hasValidSignature) {
+        return res.status(401).json({ ok: false, message: 'Invalid signature' });
+      }
+
       if (!isValidUseSendPayload(req.body)) {
         return res.status(400).json({ ok: false, message: 'Invalid payload' });
       }
@@ -139,3 +209,4 @@ module.exports.USE_SEND_LOG_CHANNEL_ID = USE_SEND_LOG_CHANNEL_ID;
 module.exports.buildUseSendWebhookContainer = buildUseSendWebhookContainer;
 module.exports.createUseSendWebhookHandler = createUseSendWebhookHandler;
 module.exports.isValidUseSendPayload = isValidUseSendPayload;
+module.exports.verifyUseSendSignature = verifyUseSendSignature;

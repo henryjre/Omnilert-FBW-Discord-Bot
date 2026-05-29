@@ -12,10 +12,14 @@ const websiteRoutes = require('./websiteRoutes');
 const PORT = process.env.PORT || 3000;
 const SECRET = process.env.githubSecret;
 
+function captureRawBody(req, res, buf) {
+  req.rawBody = buf.toString('utf8');
+}
+
 // Mount routes
 app.use("/odoo", express.json(), odooRoutes);
 app.use("/iclock", zktecoRoutes);
-app.use("/website", express.json(), websiteRoutes);
+app.use("/website", express.json({ verify: captureRawBody }), websiteRoutes);
 
 // 2) GitHub webhook must be RAW (Buffer) for signature verification
 app.post("/github-webhook", express.raw({ type: "*/*" }), (req, res) => {
