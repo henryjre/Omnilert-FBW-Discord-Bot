@@ -284,6 +284,7 @@ function createPortalNotificationHandler({
       }
 
       const payload = req.body;
+      console.log('Portal notification payload received:', JSON.stringify(payload, null, 2));
       const resolvedClient = clientInstance || require('../../../index.js');
       const resolvedDb = db || require('../../../sqliteConnection.js');
       const notificationId = payload.notification.id;
