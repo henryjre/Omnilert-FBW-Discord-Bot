@@ -14,8 +14,10 @@ const router = express.Router();
 
 const PORTAL_DM_FALLBACK_CHANNEL_ID = '1513405109655175168';
 
-// Discord error code raised when a user has DMs disabled / blocks the bot.
-const DISCORD_CANNOT_DM_USER_CODE = 50007;
+// Discord error codes raised when the bot cannot DM the user:
+//   50007  - user has DMs disabled / blocks the bot
+//   50278  - no mutual guilds (DMs closed to non-mutual members)
+const DISCORD_CANNOT_DM_USER_CODES = [50007, 50278];
 
 // Accent colors used as the visual read/unread distinction.
 const COLOR_UNREAD = 0x5865f2; // blurple
@@ -207,8 +209,10 @@ async function deleteOnPortal(notificationId) {
 // ---------------------------------------------------------------------------
 
 function isCannotDmError(error) {
-  return Boolean(error) && (error.code === DISCORD_CANNOT_DM_USER_CODE
-    || error.rawError?.code === DISCORD_CANNOT_DM_USER_CODE);
+  if (!error) return false;
+
+  return DISCORD_CANNOT_DM_USER_CODES.includes(error.code)
+    || DISCORD_CANNOT_DM_USER_CODES.includes(error.rawError?.code);
 }
 
 function upsertNotificationRow(db, payload) {

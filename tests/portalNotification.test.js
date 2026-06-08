@@ -177,38 +177,40 @@ test('handler DMs the recipient when authorized with a valid payload', async () 
   assert.ok(Array.isArray(dmPayload.components) && dmPayload.components.length === 1);
 });
 
-test('handler posts a fallback channel notice when the user cannot be DMed', async () => {
-  let channelPayload = null;
-  const dmError = new Error('Cannot send messages to this user');
-  dmError.code = 50007;
+for (const code of [50007, 50278]) {
+  test(`handler posts a fallback channel notice when DM fails with code ${code}`, async () => {
+    let channelPayload = null;
+    const dmError = new Error('Cannot send messages to this user');
+    dmError.code = code;
 
-  const user = createMockUser({
-    send: async () => {
-      throw dmError;
-    },
+    const user = createMockUser({
+      send: async () => {
+        throw dmError;
+      },
+    });
+    const channel = {
+      send: async (payload) => {
+        channelPayload = payload;
+        return { id: 'fallback-message-id' };
+      },
+    };
+    const handler = createPortalNotificationHandler({
+      clientInstance: createMockClient({ user, channel }),
+      db: createMockDb(),
+      expectedToken: 'expected-token',
+    });
+    const res = createMockRes();
+
+    await handler(
+      { headers: { authorization: 'Bearer expected-token' }, body: buildPayload() },
+      res
+    );
+
+    assert.equal(res.statusCode, 200);
+    assert.ok(channelPayload, 'expected a fallback channel message');
+    assert.deepEqual(channelPayload.allowedMentions.users, ['123456789012345678']);
   });
-  const channel = {
-    send: async (payload) => {
-      channelPayload = payload;
-      return { id: 'fallback-message-id' };
-    },
-  };
-  const handler = createPortalNotificationHandler({
-    clientInstance: createMockClient({ user, channel }),
-    db: createMockDb(),
-    expectedToken: 'expected-token',
-  });
-  const res = createMockRes();
-
-  await handler(
-    { headers: { authorization: 'Bearer expected-token' }, body: buildPayload() },
-    res
-  );
-
-  assert.equal(res.statusCode, 200);
-  assert.ok(channelPayload, 'expected a fallback channel message');
-  assert.deepEqual(channelPayload.allowedMentions.users, ['123456789012345678']);
-});
+}
 
 test('handler returns 500 for unexpected DM errors', async () => {
   const user = createMockUser({
