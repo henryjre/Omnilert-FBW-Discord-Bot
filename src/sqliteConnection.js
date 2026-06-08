@@ -82,4 +82,21 @@ db.exec(`
   )
 `);
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS portal_notifications (
+    notification_id TEXT PRIMARY KEY,
+    recipient_user_id TEXT,
+    discord_user_id TEXT NOT NULL,
+    title TEXT,
+    message TEXT,
+    type TEXT,
+    link_url TEXT,
+    dm_channel_id TEXT,
+    message_id TEXT,
+    status TEXT DEFAULT 'unread',
+    created_at TEXT,
+    last_updated TEXT DEFAULT (datetime('now'))
+  )
+`);
+
 module.exports = db;
