@@ -90,7 +90,8 @@ function buildPortalNotificationContainer(payload, { status = 'unread' } = {}) {
     .setAccentColor(accentColor)
     .addTextDisplayComponents((textDisplay) =>
       textDisplay.setContent(bodyLines.join('\n'))
-    );
+    )
+    .addSeparatorComponents((separator) => separator);
 
   const actionButtons = [];
 
