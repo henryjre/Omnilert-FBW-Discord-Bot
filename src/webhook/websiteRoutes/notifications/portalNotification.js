@@ -1,7 +1,6 @@
 const express = require('express');
 const {
   ContainerBuilder,
-  SectionBuilder,
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
@@ -83,40 +82,28 @@ function buildPortalNotificationContainer(payload, { status = 'unread' } = {}) {
     '',
     toDisplay(notification.message),
     '',
-    `**Type:** \`${toDisplay(notification.type)}\``,
     `**Received:** ${timestampLine}`,
     `**Status:** ${isRead ? '⚪ Read' : '🔵 Unread'}`,
   ];
 
   const container = new ContainerBuilder()
     .setAccentColor(accentColor)
-    .addSectionComponents((section) =>
-      section
-        .addTextDisplayComponents((textDisplay) =>
-          textDisplay.setContent(bodyLines.join('\n'))
-        )
-        .setButtonAccessory((button) =>
-          button
-            .setLabel(isRead ? 'Read' : 'Unread')
-            .setStyle(isRead ? ButtonStyle.Secondary : ButtonStyle.Primary)
-            .setCustomId(`portalNotifStatus_${notification.id}`)
-            .setDisabled(true)
-        )
+    .addTextDisplayComponents((textDisplay) =>
+      textDisplay.setContent(bodyLines.join('\n'))
     );
+
+  const actionButtons = [];
 
   const linkUrl = notification.link_url;
   if (isValidHttpsUrl(linkUrl)) {
-    container.addActionRowComponents((row) =>
-      row.setComponents(
-        new ButtonBuilder()
-          .setLabel('Open in Portal')
-          .setStyle(ButtonStyle.Link)
-          .setURL(linkUrl)
-      )
+    actionButtons.push(
+      new ButtonBuilder()
+        .setLabel('Open in Portal')
+        .setStyle(ButtonStyle.Link)
+        .setURL(linkUrl)
     );
   }
 
-  const actionButtons = [];
   if (!isRead) {
     actionButtons.push(
       new ButtonBuilder()
@@ -125,6 +112,7 @@ function buildPortalNotificationContainer(payload, { status = 'unread' } = {}) {
         .setCustomId(`portalNotifRead_${notification.id}`)
     );
   }
+
   actionButtons.push(
     new ButtonBuilder()
       .setLabel('Delete')
