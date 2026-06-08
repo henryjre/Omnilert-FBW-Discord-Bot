@@ -11,7 +11,7 @@ const { extractBearerToken } = require("./cronNotifications");
 
 const router = express.Router();
 
-const PORTAL_DM_FALLBACK_CHANNEL_ID = "1513405109655175168";
+const PORTAL_DM_FALLBACK_CHANNEL_ID = "1337029532921888840";
 
 // Discord error codes raised when the bot cannot DM the user:
 //   50007  - user has DMs disabled / blocks the bot
@@ -142,8 +142,8 @@ function buildDmDisabledContainer(payload) {
   const steps = [
     `## 📬 You have a new Portal notification`,
     "",
-    `<@${discordUserId}>, we tried to DM you **"${toDisplay(notification.title)}"** ` +
-      `but your server **Allow Direct Messages** setting is turned off, so we couldn't reach you privately.`,
+    `<@${discordUserId}>, I tried to DM you **"${toDisplay(notification.title)}"** ` +
+      `but your server **Allow Direct Messages** setting is turned off, so I couldn't reach you privately.`,
     "",
     "### How to enable Direct Messages",
     "1. Click on the server name: **Omnilert**.",
