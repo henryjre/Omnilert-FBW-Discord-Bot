@@ -116,16 +116,12 @@ function buildPortalNotificationMessage(payload) {
     );
   }
 
-  actionButtons.push(
-    new ButtonBuilder()
-      .setLabel("Delete")
-      .setStyle(ButtonStyle.Danger)
-      .setCustomId(`portalNotifDelete_${notification.id}`),
-  );
+  const components =
+    actionButtons.length > 0
+      ? [new ActionRowBuilder().setComponents(...actionButtons)]
+      : [];
 
-  const row = new ActionRowBuilder().setComponents(...actionButtons);
-
-  return { embeds: [embed], components: [row] };
+  return { embeds: [embed], components };
 }
 
 function buildDmDisabledContainer(payload) {
