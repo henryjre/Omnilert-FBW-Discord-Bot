@@ -80,17 +80,6 @@ module.exports = {
       }
 
       // Handle dynamic portal notification buttons
-      if (customId.startsWith("portalNotifRead_")) {
-        const button = buttons.get("portalNotifRead");
-        if (!button) return new Error("No code for this button.");
-        try {
-          await button.execute(interaction, client);
-        } catch (error) {
-          console.error(error);
-        }
-        return;
-      }
-
       if (customId.startsWith("portalNotifDelete_")) {
         const button = buttons.get("portalNotifDelete");
         if (!button) return new Error("No code for this button.");

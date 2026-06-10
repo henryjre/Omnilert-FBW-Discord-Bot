@@ -18,9 +18,8 @@ const PORTAL_DM_FALLBACK_CHANNEL_ID = "1337029532921888840";
 //   50278  - no mutual guilds (DMs closed to non-mutual members)
 const DISCORD_CANNOT_DM_USER_CODES = [50007, 50278];
 
-// Accent colors used as the visual read/unread distinction.
-const COLOR_UNREAD = 0x5865f2; // blurple
-const COLOR_READ = 0x99aab5; // muted grey
+// Default accent color when the payload does not provide a valid one.
+const COLOR_DEFAULT = 0x5865f2; // blurple
 
 // SCREENSHOTS: drop image URLs here to render the "how to enable DMs" guide.
 // Leave empty until the screenshots are ready.
@@ -67,6 +66,17 @@ function isValidPortalNotificationPayload(payload) {
   return true;
 }
 
+// Parse a "#RRGGBB" hex string into an integer Discord accent color.
+// Falls back to COLOR_DEFAULT when the value is missing or malformed.
+function hexToInt(color) {
+  if (!isNonEmptyString(color)) return COLOR_DEFAULT;
+
+  const match = /^#?([0-9a-fA-F]{6})$/.exec(color.trim());
+  if (!match) return COLOR_DEFAULT;
+
+  return parseInt(match[1], 16);
+}
+
 function toUnixSeconds(isoString) {
   const ms = Date.parse(toDisplay(isoString));
   if (!Number.isFinite(ms)) return null;
@@ -74,10 +84,9 @@ function toUnixSeconds(isoString) {
   return Math.floor(ms / 1000);
 }
 
-function buildPortalNotificationContainer(payload, { status = "unread" } = {}) {
+function buildPortalNotificationContainer(payload) {
   const notification = payload.notification || {};
-  const isRead = status === "read";
-  const accentColor = isRead ? COLOR_READ : COLOR_UNREAD;
+  const accentColor = hexToInt(notification.color);
 
   const createdAtUnix = toUnixSeconds(notification.created_at);
   const timestampLine = createdAtUnix
@@ -86,11 +95,7 @@ function buildPortalNotificationContainer(payload, { status = "unread" } = {}) {
 
   const bodyLines = [
     `## 🔔 ${toDisplay(notification.title)}`,
-    "",
-    toDisplay(notification.message),
-    "",
     `**Received:** ${timestampLine}`,
-    `**Status:** ${isRead ? "⚪ Read" : "🔵 Unread"}`,
   ];
 
   const container = new ContainerBuilder()
@@ -109,15 +114,6 @@ function buildPortalNotificationContainer(payload, { status = "unread" } = {}) {
         .setLabel("Open in Portal")
         .setStyle(ButtonStyle.Link)
         .setURL(linkUrl),
-    );
-  }
-
-  if (!isRead) {
-    actionButtons.push(
-      new ButtonBuilder()
-        .setLabel("Mark as Read")
-        .setStyle(ButtonStyle.Secondary)
-        .setCustomId(`portalNotifRead_${notification.id}`),
     );
   }
 
@@ -152,7 +148,7 @@ function buildDmDisabledContainer(payload) {
   ];
 
   const container = new ContainerBuilder()
-    .setAccentColor(COLOR_UNREAD)
+    .setAccentColor(COLOR_DEFAULT)
     .addTextDisplayComponents((textDisplay) =>
       textDisplay.setContent(steps.join("\n")),
     );
@@ -223,10 +219,10 @@ function upsertNotificationRow(db, payload) {
     `
     INSERT INTO portal_notifications (
       notification_id, recipient_user_id, discord_user_id,
-      title, message, type, link_url, status, created_at, last_updated
+      title, message, type, color, link_url, status, created_at, last_updated
     ) VALUES (
       @notification_id, @recipient_user_id, @discord_user_id,
-      @title, @message, @type, @link_url, 'unread', @created_at, datetime('now')
+      @title, @message, @type, @color, @link_url, 'unread', @created_at, datetime('now')
     )
     ON CONFLICT(notification_id) DO UPDATE SET
       recipient_user_id = excluded.recipient_user_id,
@@ -234,6 +230,7 @@ function upsertNotificationRow(db, payload) {
       title = excluded.title,
       message = excluded.message,
       type = excluded.type,
+      color = excluded.color,
       link_url = excluded.link_url,
       status = 'unread',
       created_at = excluded.created_at,
@@ -246,6 +243,7 @@ function upsertNotificationRow(db, payload) {
     title: notification.title ?? null,
     message: notification.message ?? null,
     type: notification.type ?? null,
+    color: notification.color ?? null,
     link_url: isValidHttpsUrl(notification.link_url)
       ? notification.link_url
       : null,
@@ -308,13 +306,12 @@ function createPortalNotificationHandler({
 
       upsertNotificationRow(resolvedDb, payload);
 
-      const container = buildPortalNotificationContainer(payload, {
-        status: "unread",
-      });
+      const container = buildPortalNotificationContainer(payload);
 
       try {
         const user = await resolvedClient.users.fetch(discordUserId);
         const dm = await user.send({
+          content: toDisplay(payload.notification.message),
           components: [container],
           flags: MessageFlags.IsComponentsV2,
         });

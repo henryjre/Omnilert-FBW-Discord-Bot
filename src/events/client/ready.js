@@ -2,6 +2,7 @@ const chalk = require('chalk');
 const { initializeWorker } = require('../../queue/earlyAttendanceQueue');
 const { initializeAnnouncementAckWorker } = require('../../queue/announcementAckQueue');
 const { initializeOnboardingRoleRemovalWorker } = require('../../queue/onboardingRoleRemovalQueue');
+const { initializePortalNotificationCleanupWorker } = require('../../queue/portalNotificationCleanupQueue');
 
 module.exports = {
   name: 'clientReady',
@@ -22,5 +23,8 @@ module.exports = {
 
     initializeOnboardingRoleRemovalWorker(client);
     console.log(chalk.blue('📋 Onboarding role removal queue worker started'));
+
+    initializePortalNotificationCleanupWorker(client);
+    console.log(chalk.blue('📋 Portal notification cleanup queue worker started'));
   },
 };

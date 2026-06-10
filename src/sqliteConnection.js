@@ -90,6 +90,7 @@ db.exec(`
     title TEXT,
     message TEXT,
     type TEXT,
+    color TEXT,
     link_url TEXT,
     dm_channel_id TEXT,
     message_id TEXT,
@@ -98,5 +99,12 @@ db.exec(`
     last_updated TEXT DEFAULT (datetime('now'))
   )
 `);
+
+// Idempotent migration: add the color column to pre-existing tables.
+try {
+  db.exec(`ALTER TABLE portal_notifications ADD COLUMN color TEXT`);
+} catch (e) {
+  // Column already exists; ignore.
+}
 
 module.exports = db;
