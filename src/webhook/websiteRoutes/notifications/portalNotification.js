@@ -1,6 +1,7 @@
 const express = require("express");
 const {
   ContainerBuilder,
+  EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
@@ -84,7 +85,12 @@ function toUnixSeconds(isoString) {
   return Math.floor(ms / 1000);
 }
 
-function buildPortalNotificationContainer(payload) {
+// Builds the classic-embed portal notification message. The notification
+// message text is sent as the plain `content` by the caller; this returns the
+// embed (title + timestamp + accent color) and the action row (Open in Portal
+// + Delete). Classic embeds are used here so the message content can ride
+// alongside the embed (Components V2 forbids the `content` field).
+function buildPortalNotificationMessage(payload) {
   const notification = payload.notification || {};
   const accentColor = hexToInt(notification.color);
 
@@ -93,17 +99,10 @@ function buildPortalNotificationContainer(payload) {
     ? `<t:${createdAtUnix}:R>`
     : toDisplay(notification.created_at);
 
-  const bodyLines = [
-    `## 🔔 ${toDisplay(notification.title)}`,
-    `**Received:** ${timestampLine}`,
-  ];
-
-  const container = new ContainerBuilder()
-    .setAccentColor(accentColor)
-    .addTextDisplayComponents((textDisplay) =>
-      textDisplay.setContent(bodyLines.join("\n")),
-    )
-    .addSeparatorComponents((separator) => separator);
+  const embed = new EmbedBuilder()
+    .setColor(accentColor)
+    .setDescription(`## 🔔 ${toDisplay(notification.title)}`)
+    .addFields({ name: "Received", value: timestampLine });
 
   const actionButtons = [];
 
@@ -124,11 +123,9 @@ function buildPortalNotificationContainer(payload) {
       .setCustomId(`portalNotifDelete_${notification.id}`),
   );
 
-  container.addActionRowComponents((row) =>
-    row.setComponents(...actionButtons),
-  );
+  const row = new ActionRowBuilder().setComponents(...actionButtons);
 
-  return container;
+  return { embeds: [embed], components: [row] };
 }
 
 function buildDmDisabledContainer(payload) {
@@ -306,14 +303,13 @@ function createPortalNotificationHandler({
 
       upsertNotificationRow(resolvedDb, payload);
 
-      const container = buildPortalNotificationContainer(payload);
+      const notificationMessage = buildPortalNotificationMessage(payload);
 
       try {
         const user = await resolvedClient.users.fetch(discordUserId);
         const dm = await user.send({
           content: toDisplay(payload.notification.message),
-          components: [container],
-          flags: MessageFlags.IsComponentsV2,
+          ...notificationMessage,
         });
 
         setNotificationDelivery(resolvedDb, notificationId, {
@@ -357,8 +353,8 @@ module.exports.createPortalNotificationHandler =
   createPortalNotificationHandler;
 module.exports.isValidPortalNotificationPayload =
   isValidPortalNotificationPayload;
-module.exports.buildPortalNotificationContainer =
-  buildPortalNotificationContainer;
+module.exports.buildPortalNotificationMessage =
+  buildPortalNotificationMessage;
 module.exports.buildDmDisabledContainer = buildDmDisabledContainer;
 module.exports.sendDmDisabledFallback = sendDmDisabledFallback;
 module.exports.markReadOnPortal = markReadOnPortal;

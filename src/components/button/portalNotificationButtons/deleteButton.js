@@ -1,4 +1,4 @@
-const { ContainerBuilder, MessageFlags } = require('discord.js');
+const { EmbedBuilder } = require('discord.js');
 const db = require('../../../sqliteConnection.js');
 const {
   deleteOnPortal,
@@ -23,15 +23,14 @@ module.exports = {
       await interaction.message.delete();
     } catch (error) {
       // DM messages from the bot can normally be deleted, but fall back to a tombstone.
-      const tombstone = new ContainerBuilder()
-        .setAccentColor(0x99aab5)
-        .addTextDisplayComponents((textDisplay) =>
-          textDisplay.setContent('🗑️ This notification was deleted.')
-        );
+      const tombstone = new EmbedBuilder()
+        .setColor(0x99aab5)
+        .setDescription('🗑️ This notification was deleted.');
 
       await interaction.update({
-        components: [tombstone],
-        flags: MessageFlags.IsComponentsV2,
+        content: '',
+        embeds: [tombstone],
+        components: [],
       });
     }
   },
