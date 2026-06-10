@@ -3,8 +3,10 @@ const assert = require('node:assert/strict');
 
 const {
   createPortalNotificationHandler,
+  createPortalOpenHandler,
   isValidPortalNotificationPayload,
-  buildPortalNotificationContainer,
+  buildPortalNotificationMessage,
+  buildOpenInPortalUrl,
   isValidHttpsUrl,
 } = require('../src/webhook/websiteRoutes/notifications/portalNotification');
 
@@ -37,12 +39,22 @@ function createMockRes() {
   return {
     statusCode: 200,
     body: null,
+    redirectedTo: null,
     status(code) {
       this.statusCode = code;
       return this;
     },
     json(payload) {
       this.body = payload;
+      return this;
+    },
+    send(payload) {
+      this.body = payload;
+      return this;
+    },
+    redirect(code, url) {
+      this.statusCode = code;
+      this.redirectedTo = url;
       return this;
     },
   };
@@ -103,23 +115,55 @@ test('isValidHttpsUrl only accepts https urls', () => {
   assert.equal(isValidHttpsUrl(''), false);
 });
 
-test('container accent color distinguishes unread from read', () => {
-  const unread = buildPortalNotificationContainer(buildPayload(), { status: 'unread' }).toJSON();
-  const read = buildPortalNotificationContainer(buildPayload(), { status: 'read' }).toJSON();
-  assert.notEqual(unread.accent_color, read.accent_color);
+test('embed accent color distinguishes unread from read', () => {
+  const unread = buildPortalNotificationMessage(buildPayload(), {
+    status: 'unread',
+  }).embeds[0].toJSON();
+  const read = buildPortalNotificationMessage(buildPayload(), {
+    status: 'read',
+  }).embeds[0].toJSON();
+  assert.notEqual(unread.color, read.color);
 });
 
-test('container includes a link button only when link_url is a valid https url', () => {
-  const withLink = buildPortalNotificationContainer(buildPayload(), { status: 'unread' }).toJSON();
-  const withoutLink = buildPortalNotificationContainer(
+test('message includes a link button only when link_url is a valid https url', () => {
+  const withLink = buildPortalNotificationMessage(buildPayload(), {
+    status: 'unread',
+  });
+  const withoutLink = buildPortalNotificationMessage(
     buildPayload({ notification: { link_url: '/relative' } }),
     { status: 'unread' }
-  ).toJSON();
+  );
 
-  const linkButtons = (component) =>
-    JSON.stringify(component).match(/"style":5/g)?.length || 0;
+  const linkButtons = (msg) =>
+    JSON.stringify(msg.components).match(/"style":5/g)?.length || 0;
 
   assert.ok(linkButtons(withLink) > linkButtons(withoutLink));
+});
+
+test('buildOpenInPortalUrl routes through the base url when set', () => {
+  const url = buildOpenInPortalUrl(
+    { id: 'a2b3-uuid', link_url: 'https://app.omnilert.com/x' },
+    'https://bot.omnilert.app/'
+  );
+  assert.equal(
+    url,
+    'https://bot.omnilert.app/website/notifications/portal/open/a2b3-uuid'
+  );
+});
+
+test('buildOpenInPortalUrl falls back to the raw link when base url is unset', () => {
+  const url = buildOpenInPortalUrl(
+    { id: 'a2b3-uuid', link_url: 'https://app.omnilert.com/x' },
+    ''
+  );
+  assert.equal(url, 'https://app.omnilert.com/x');
+});
+
+test('buildOpenInPortalUrl returns null when link_url is not a valid https url', () => {
+  assert.equal(
+    buildOpenInPortalUrl({ id: 'x', link_url: '/relative' }, 'https://bot.app'),
+    null
+  );
 });
 
 test('handler returns 401 when authorization is missing or wrong', async () => {
@@ -231,4 +275,138 @@ test('handler returns 500 for unexpected DM errors', async () => {
   );
 
   assert.equal(res.statusCode, 500);
+});
+
+// --- Open-in-Portal redirect handler --------------------------------------
+
+function createOpenMockDb(row) {
+  const updates = [];
+  return {
+    updates,
+    prepare(sql) {
+      return {
+        get: () => (row ? { ...row } : undefined),
+        run: (...args) => {
+          updates.push({ sql, args });
+          return { changes: 1 };
+        },
+      };
+    },
+  };
+}
+
+function createOpenMockClient({ editedWith } = {}) {
+  const message = {
+    edit: async (payload) => {
+      if (editedWith) editedWith.payload = payload;
+      return message;
+    },
+  };
+  const channel = {
+    send: async () => ({}),
+    messages: { fetch: async () => message },
+  };
+  return {
+    channels: {
+      cache: new Map(),
+      fetch: async () => channel,
+    },
+  };
+}
+
+test('open handler recolors the message, marks read, and redirects', async () => {
+  const editedWith = {};
+  const db = createOpenMockDb({
+    notification_id: 'a2b3-uuid',
+    dm_channel_id: 'dm-channel-id',
+    message_id: 'dm-message-id',
+    status: 'unread',
+    title: 'New Task Assigned',
+    color: '#112233',
+    link_url: 'https://app.omnilert.com/case-reports?caseId=1',
+    created_at: '2026-06-08T03:21:00.000Z',
+  });
+  const handler = createPortalOpenHandler({
+    clientInstance: createOpenMockClient({ editedWith }),
+    db,
+  });
+  const res = createMockRes();
+
+  await handler({ params: { notificationId: 'a2b3-uuid' } }, res);
+
+  assert.equal(res.statusCode, 302);
+  assert.equal(res.redirectedTo, 'https://app.omnilert.com/case-reports?caseId=1');
+  assert.ok(editedWith.payload, 'expected the DM message to be edited');
+  // The rebuilt embed should carry the read (grey) color, not the original.
+  assert.equal(editedWith.payload.embeds[0].toJSON().color, 0x95a5a6);
+  // status was updated to read.
+  assert.ok(
+    db.updates.some((u) => u.args.some((a) => a && a.status === 'read')),
+    'expected a status=read update'
+  );
+});
+
+test('open handler skips re-editing when already read but still redirects', async () => {
+  const editedWith = {};
+  const db = createOpenMockDb({
+    notification_id: 'a2b3-uuid',
+    dm_channel_id: 'dm-channel-id',
+    message_id: 'dm-message-id',
+    status: 'read',
+    title: 'New Task Assigned',
+    color: '#112233',
+    link_url: 'https://app.omnilert.com/x',
+    created_at: '2026-06-08T03:21:00.000Z',
+  });
+  const handler = createPortalOpenHandler({
+    clientInstance: createOpenMockClient({ editedWith }),
+    db,
+  });
+  const res = createMockRes();
+
+  await handler({ params: { notificationId: 'a2b3-uuid' } }, res);
+
+  assert.equal(res.statusCode, 302);
+  assert.equal(res.redirectedTo, 'https://app.omnilert.com/x');
+  assert.equal(editedWith.payload, undefined, 'should not edit an already-read message');
+});
+
+test('open handler returns 404 for an unknown notification id', async () => {
+  const handler = createPortalOpenHandler({
+    clientInstance: createOpenMockClient(),
+    db: createOpenMockDb(null),
+  });
+  const res = createMockRes();
+
+  await handler({ params: { notificationId: 'missing' } }, res);
+
+  assert.equal(res.statusCode, 404);
+});
+
+test('open handler still redirects when the message edit fails', async () => {
+  const db = createOpenMockDb({
+    notification_id: 'a2b3-uuid',
+    dm_channel_id: 'dm-channel-id',
+    message_id: 'dm-message-id',
+    status: 'unread',
+    title: 'New Task Assigned',
+    color: '#112233',
+    link_url: 'https://app.omnilert.com/x',
+    created_at: '2026-06-08T03:21:00.000Z',
+  });
+  const brokenClient = {
+    channels: {
+      cache: new Map(),
+      fetch: async () => {
+        throw new Error('channel gone');
+      },
+    },
+  };
+  const handler = createPortalOpenHandler({ clientInstance: brokenClient, db });
+  const res = createMockRes();
+
+  await handler({ params: { notificationId: 'a2b3-uuid' } }, res);
+
+  assert.equal(res.statusCode, 302);
+  assert.equal(res.redirectedTo, 'https://app.omnilert.com/x');
 });

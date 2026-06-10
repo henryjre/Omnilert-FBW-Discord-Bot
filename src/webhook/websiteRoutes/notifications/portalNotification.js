@@ -22,6 +22,10 @@ const DISCORD_CANNOT_DM_USER_CODES = [50007, 50278];
 // Default accent color when the payload does not provide a valid one.
 const COLOR_DEFAULT = 0x5865f2; // blurple
 
+// Accent color applied to a notification once it has been read (the user
+// clicked "Open in Portal"). Greys the embed out to signal "seen".
+const COLOR_READ = 0x95a5a6; // muted grey
+
 // SCREENSHOTS: drop image URLs here to render the "how to enable DMs" guide.
 // Leave empty until the screenshots are ready.
 const DM_GUIDE_SCREENSHOT_URLS = [
@@ -85,14 +89,41 @@ function toUnixSeconds(isoString) {
   return Math.floor(ms / 1000);
 }
 
+// Builds the URL the "Open in Portal" button points at. When PUBLIC_BASE_URL
+// is configured, the button routes through our own server first
+// (`/website/notifications/portal/open/:id`) so we can mark the notification
+// read and recolor the embed before redirecting the user to the real portal
+// link. When the base URL is unset (local/dev), we fall back to linking the
+// raw portal URL directly so nothing breaks.
+function buildOpenInPortalUrl(notification, baseUrl) {
+  const linkUrl = notification.link_url;
+  if (!isValidHttpsUrl(linkUrl)) return null;
+
+  const trimmedBase = isNonEmptyString(baseUrl) ? baseUrl.trim() : "";
+  if (!trimmedBase) return linkUrl;
+
+  const base = trimmedBase.replace(/\/+$/, "");
+  return `${base}/website/notifications/portal/open/${encodeURIComponent(
+    notification.id,
+  )}`;
+}
+
 // Builds the classic-embed portal notification message. The notification
 // message text is sent as the plain `content` by the caller; this returns the
-// embed (title + timestamp + accent color) and the action row (Open in Portal
-// + Delete). Classic embeds are used here so the message content can ride
-// alongside the embed (Components V2 forbids the `content` field).
-function buildPortalNotificationMessage(payload) {
+// embed (title + timestamp + accent color) and the action row (Open in Portal).
+// Classic embeds are used here so the message content can ride alongside the
+// embed (Components V2 forbids the `content` field).
+//
+// `status` controls the accent color: a read notification is greyed out.
+// `baseUrl` routes the "Open in Portal" button through our server so the click
+// can mark the notification read (see buildOpenInPortalUrl).
+function buildPortalNotificationMessage(
+  payload,
+  { status = "unread", baseUrl = process.env.PUBLIC_BASE_URL } = {},
+) {
   const notification = payload.notification || {};
-  const accentColor = hexToInt(notification.color);
+  const accentColor =
+    status === "read" ? COLOR_READ : hexToInt(notification.color);
 
   const createdAtUnix = toUnixSeconds(notification.created_at);
   const timestampLine = createdAtUnix
@@ -106,13 +137,13 @@ function buildPortalNotificationMessage(payload) {
 
   const actionButtons = [];
 
-  const linkUrl = notification.link_url;
-  if (isValidHttpsUrl(linkUrl)) {
+  const openUrl = buildOpenInPortalUrl(notification, baseUrl);
+  if (openUrl) {
     actionButtons.push(
       new ButtonBuilder()
         .setLabel("Open in Portal")
         .setStyle(ButtonStyle.Link)
-        .setURL(linkUrl),
+        .setURL(openUrl),
     );
   }
 
@@ -266,6 +297,87 @@ function setNotificationDelivery(
   });
 }
 
+// Edits the already-sent DM message so its embed is recolored to the "read"
+// grey. Fetches the channel + message via the live client and edits in place —
+// editing the bot's own message needs no interaction. Best-effort: any failure
+// (message deleted, channel gone, etc.) is swallowed by the caller so the
+// redirect still succeeds.
+async function recolorMessageToRead(clientInstance, row) {
+  if (!isNonEmptyString(row.dm_channel_id) || !isNonEmptyString(row.message_id))
+    return;
+
+  const channel = await resolveChannel(clientInstance, row.dm_channel_id);
+  const message = await channel.messages.fetch(row.message_id);
+
+  // Reconstruct the payload shape buildPortalNotificationMessage expects from
+  // the stored row, then rebuild the message with read status (grey embed).
+  const rebuilt = buildPortalNotificationMessage(
+    {
+      notification: {
+        id: row.notification_id,
+        title: row.title,
+        color: row.color,
+        link_url: row.link_url,
+        created_at: row.created_at,
+      },
+    },
+    { status: "read" },
+  );
+
+  await message.edit({ embeds: rebuilt.embeds, components: rebuilt.components });
+}
+
+function createPortalOpenHandler({ clientInstance, db } = {}) {
+  return async (req, res) => {
+    const resolvedClient = clientInstance || require("../../../index.js");
+    const resolvedDb = db || require("../../../sqliteConnection.js");
+    const notificationId = req.params.notificationId;
+
+    let row;
+    try {
+      row = resolvedDb
+        .prepare(
+          `SELECT notification_id, dm_channel_id, message_id, status,
+                  title, color, link_url, created_at
+             FROM portal_notifications
+            WHERE notification_id = ?`,
+        )
+        .get(notificationId);
+    } catch (error) {
+      console.error("Portal open lookup error:", error);
+      row = null;
+    }
+
+    // Unknown id: nothing to redirect to. 404 rather than an open redirect.
+    if (!row) {
+      return res.status(404).send("Notification not found");
+    }
+
+    // Recolor + mark read only on the first open; subsequent clicks just
+    // redirect. Failures here must not block the redirect to the portal.
+    if (row.status !== "read") {
+      try {
+        await recolorMessageToRead(resolvedClient, row);
+        setNotificationDelivery(resolvedDb, notificationId, {
+          dmChannelId: row.dm_channel_id,
+          messageId: row.message_id,
+          status: "read",
+        });
+        await markReadOnPortal(notificationId);
+      } catch (error) {
+        console.error("Portal open recolor/mark-read error:", error);
+      }
+    }
+
+    if (isValidHttpsUrl(row.link_url)) {
+      return res.redirect(302, row.link_url);
+    }
+
+    // No valid portal link stored; acknowledge without redirecting.
+    return res.status(200).send("Notification marked as read");
+  };
+}
+
 function createPortalNotificationHandler({
   clientInstance,
   db,
@@ -342,11 +454,15 @@ function createPortalNotificationHandler({
 }
 
 router.post("/portal", createPortalNotificationHandler());
+router.get("/portal/open/:notificationId", createPortalOpenHandler());
 
 module.exports = router;
 module.exports.PORTAL_DM_FALLBACK_CHANNEL_ID = PORTAL_DM_FALLBACK_CHANNEL_ID;
 module.exports.createPortalNotificationHandler =
   createPortalNotificationHandler;
+module.exports.createPortalOpenHandler = createPortalOpenHandler;
+module.exports.recolorMessageToRead = recolorMessageToRead;
+module.exports.buildOpenInPortalUrl = buildOpenInPortalUrl;
 module.exports.isValidPortalNotificationPayload =
   isValidPortalNotificationPayload;
 module.exports.buildPortalNotificationMessage =
