@@ -4,6 +4,8 @@ const { announcementAckQueue } = require("../../../queue/announcementAckQueue");
 
 const generalChannel = "1314416941481328650";
 const managementChannel = "1314416207553761403";
+const imageCdnChannel = "1384688917155938354";
+const pdfCdnChannel = "1393578039471767612";
 
 // Default timeout in minutes (can be overridden via env)
 const ACK_TIMEOUT_MINUTES = parseInt(process.env.ANNOUNCEMENT_ACK_TIMEOUT_MINUTES || '5');
@@ -57,13 +59,47 @@ module.exports = {
 
     const buttonRow = new ActionRowBuilder().addComponents(acknowledgeButton);
 
+    // Re-upload media embeds to CDN for stable URLs
+    const draftEmbeds = interaction.message.embeds;
+    const mainEmbed = draftEmbeds[0];
+    const imageEmbeds = draftEmbeds.slice(1).filter((e) => e.data?.image?.url);
+
+    let finalEmbeds = [mainEmbed];
+
+    if (imageEmbeds.length > 0) {
+      const rawImageUrls = imageEmbeds.map((e) => e.data.image.url);
+      const cdnMessage = await client.channels.cache.get(imageCdnChannel).send({
+        content: `Message ID: ${interaction.message.id}\nSubmitted by ${interaction.user.toString()}`,
+        files: rawImageUrls,
+      });
+
+      const cdnUrls = cdnMessage.attachments.map((a) => a.proxyURL || a.url);
+      for (const cdnUrl of cdnUrls) {
+        finalEmbeds.push({ url: "https://omnilert.odoo.com/", image: { url: cdnUrl } });
+      }
+    }
+
+    // Re-upload PDF attachments to CDN for stable URLs
+    const draftPdfs = interaction.message.attachments?.filter(
+      (a) => a.contentType === "application/pdf"
+    );
+    const finalFiles = [];
+    if (draftPdfs?.size > 0) {
+      for (const pdf of draftPdfs.values()) {
+        const cdnMsg = await client.channels.cache.get(pdfCdnChannel).send({
+          content: `Message ID: ${interaction.message.id}\nSubmitted by ${interaction.user.toString()}`,
+          files: [pdf.url],
+        });
+        const cdnPdf = cdnMsg.attachments.first();
+        if (cdnPdf) finalFiles.push(cdnPdf.url);
+      }
+    }
+
     // Send announcement with acknowledge button
     const announcementMessage = await client.channels.cache.get(channel).send({
       content: targetField.value,
-      embeds: interaction.message.embeds,
-      files: interaction.message.attachments?.map(
-        (attachment) => attachment.url
-      ),
+      embeds: finalEmbeds,
+      files: finalFiles,
       components: [buttonRow],
     });
 

@@ -63,6 +63,12 @@ module.exports = {
           .get("signatoriesRequestAttachment")
           .execute(message, thread, client);
       }
+
+      if (thread.name.includes("Announcement Attachment Upload -")) {
+        return await client.events
+          .get("announcementAttachmentAdd")
+          .execute(message, thread, client);
+      }
     }
   },
 };

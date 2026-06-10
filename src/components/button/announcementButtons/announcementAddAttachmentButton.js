@@ -1,14 +1,11 @@
 const { EmbedBuilder, MessageFlags, ChannelType } = require("discord.js");
 
-const cdnChannel = "1384688917155938354";
-const MAX_EMBEDS = 10; // Discord's limit for embeds per message
-
 module.exports = {
   data: {
     name: `announcementAddAttachment`,
   },
   async execute(interaction, client) {
-    let messageEmbed = interaction.message.embeds[0];
+    const messageEmbed = interaction.message.embeds[0];
 
     const ownerField = messageEmbed.data.fields.find(
       (f) => f.name === "Prepared By"
@@ -23,73 +20,37 @@ module.exports = {
 
       return await interaction.reply({
         embeds: [replyEmbed],
+        flags: MessageFlags.Ephemeral,
       });
     }
 
-    const existingThread = await interaction.channel.threads.cache.find((t) =>
+    const existingThread = interaction.channel.threads.cache.find((t) =>
       t.name.includes(
         `Announcement Attachment Upload - ${interaction.message.id}`
       )
     );
 
     if (existingThread) {
-      await interaction.deferUpdate();
-      const attachments = await fetchThreadAttachments(
-        interaction,
-        existingThread,
-        client
-      );
-      const embedsToSend = [];
-      const filesToSend = [];
-      let embedLimitExceeded = false;
+      replyEmbed
+        .setDescription(`Please go to ${existingThread} and upload your attachments there. They will appear in the preview automatically.`)
+        .setColor("Blue");
 
-      if (attachments.media.length > 0) {
-        // Check if we have more than MAX_EMBEDS media attachments
-        if (attachments.media.length > MAX_EMBEDS) {
-          embedLimitExceeded = true;
-          // Only use the first MAX_EMBEDS attachments
-          attachments.media = attachments.media.slice(0, MAX_EMBEDS);
-        }
-
-        attachments.media.forEach((attachment) =>
-          embedsToSend.push(
-            new EmbedBuilder(messageEmbed.data)
-              .setImage(attachment)
-              .setURL("https://omnilert.odoo.com/")
-          )
-        );
-        attachments.pdf.forEach((attachment) => filesToSend.push(attachment));
-      } else {
-        const mainEmbed = new EmbedBuilder(messageEmbed.data);
-        embedsToSend.push(mainEmbed);
-      }
-
-      await interaction.message.edit({
-        embeds: embedsToSend,
-        files: filesToSend,
+      return await interaction.reply({
+        embeds: [replyEmbed],
+        flags: MessageFlags.Ephemeral,
       });
-
-      // Send a follow-up message if the embed limit was exceeded
-      if (embedLimitExceeded) {
-        await interaction.followUp({
-          content: `⚠️ **Warning:** Only the first ${MAX_EMBEDS} attachments were included due to Discord's embed limit.`,
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-
-      return;
     }
 
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     const thread = await interaction.message.startThread({
       name: `Announcement Attachment Upload - ${interaction.message.id}`,
-      autoArchiveDuration: 60, // Archive after 1 hour
-      type: ChannelType.PrivateThread, // Set to 'GuildPrivateThread' if only the user should see it
+      autoArchiveDuration: 60,
+      type: ChannelType.PrivateThread,
     });
 
     await thread.send({
-      content: `📸 **${interaction.user.toString()}, please upload the attachments here. Currently, you can only attach **IMAGES** and **PDF** files to the announcement.`,
+      content: `📸 **${interaction.user.toString()}, please upload your attachments here.** Supported formats: **images** and **PDF** files.\n\nAttachments will appear in the announcement preview automatically. You can also delete a message here to remove it from the preview.`,
     });
 
     replyEmbed
@@ -101,93 +62,3 @@ module.exports = {
     });
   },
 };
-
-async function fetchThreadAttachments(interaction, thread, client) {
-  const attachments = {
-    media: [],
-    pdf: [],
-  };
-
-  try {
-    // Fetch the last 100 messages from the thread
-    const messages = await thread.messages.fetch({ limit: 100 });
-    const reversedMessages = messages.reverse();
-
-    // Process messages in parallel batches
-    const messageBatches = [];
-    for (const [_, msg] of reversedMessages) {
-      if (!msg || !msg.attachments || msg.attachments.size <= 0) continue;
-      messageBatches.push(msg);
-    }
-
-    // Process messages in parallel, 10 at a time
-    for (let i = 0; i < messageBatches.length; i += 10) {
-      const batch = messageBatches.slice(i, i + 10);
-      const batchPromises = batch.map(async (msg) => {
-        const msgAttachments = [];
-        for (const [_, attachment] of msg.attachments) {
-          msgAttachments.push({
-            attachment,
-            author: msg.author,
-            timestamp: msg.createdAt,
-          });
-        }
-        return msgAttachments;
-      });
-
-      const batchResults = await Promise.all(batchPromises);
-      const flattenedAttachments = batchResults.flat();
-
-      // Send to CDN in parallel, 10 at a time
-      for (let j = 0; j < flattenedAttachments.length; j += 10) {
-        const attachmentBatch = flattenedAttachments.slice(j, j + 10);
-        const files = attachmentBatch.map((item) => item.attachment.url);
-
-        // Create a single content message for the batch
-        const content = `Message ID: ${
-          interaction.message.id
-        }\nSent by ${attachmentBatch[0].author.toString()}\nTimestamp: ${attachmentBatch[0].timestamp.toLocaleString(
-          "en-US",
-          {
-            timeZone: "Asia/Manila",
-          }
-        )}`;
-
-        try {
-          const cdnMessage = await client.channels.cache.get(cdnChannel).send({
-            content,
-            files,
-          });
-
-          // Process attachments in parallel
-          const attachmentPromises = Array.from(
-            cdnMessage.attachments.values()
-          ).map(async (cdnAttachment, index) => {
-            const originalAttachment = attachmentBatch[index].attachment;
-            const contentType = originalAttachment.contentType;
-            const attachmentUrl = cdnAttachment.proxyURL || cdnAttachment.url;
-
-            if (
-              contentType?.startsWith("image/") ||
-              contentType?.startsWith("video/")
-            ) {
-              attachments.media.push(attachmentUrl);
-            } else if (contentType === "application/pdf") {
-              attachments.pdf.push(attachmentUrl);
-            }
-          });
-
-          await Promise.all(attachmentPromises);
-        } catch (batchError) {
-          console.error(`Error processing batch: ${batchError.message}`);
-          continue;
-        }
-      }
-    }
-
-    return attachments;
-  } catch (error) {
-    console.error("Error fetching thread attachments:", error);
-    return attachments;
-  }
-}
