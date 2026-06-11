@@ -62,49 +62,119 @@ function initializePortalNotificationCleanupWorker(client) {
   worker = new Worker(
     'portal-notification-cleanup',
     async () => {
-      // Find delivered DM notifications older than 24 hours.
-      const expired = db
+      // Goal: delete EVERY bot-authored DM message older than 24h, whether or
+      // not it is tracked in portal_notifications (orphaned messages included).
+      //
+      // Discord has no bulk-delete endpoint for DM channels, so each message
+      // must be deleted individually. We make that loop robust: paginate the
+      // channel history, respect rate limits, and continue past per-message
+      // errors. DB rows are reconciled in bulk afterward.
+
+      // The set of DM channels to sweep = every channel we've ever recorded a
+      // portal notification in. The Discord API cannot enumerate a user's DMs,
+      // so this is the authoritative source of "channels the bot has DMed".
+      const channelRows = db
         .prepare(
           `
-          SELECT notification_id, dm_channel_id, message_id
+          SELECT DISTINCT dm_channel_id
           FROM portal_notifications
-          WHERE message_id IS NOT NULL
-            AND created_at IS NOT NULL
-            AND created_at <= datetime('now', '-24 hours')
+          WHERE dm_channel_id IS NOT NULL
         `
         )
         .all();
 
-      if (expired.length === 0) {
-        return { success: true, deleted: 0 };
+      if (channelRows.length === 0) {
+        return { success: true, deleted: 0, channelsScanned: 0 };
       }
 
+      const cutoffMs = Date.now() - 24 * 60 * 60 * 1000;
+      const botId = client.user && client.user.id;
       let deleted = 0;
+      let channelsScanned = 0;
+      const deletedMessageIds = [];
 
-      for (const row of expired) {
-        // Best-effort delete the DM message; swallow per-message errors
-        // (message may already be gone / channel unreachable).
-        if (row.dm_channel_id && row.message_id) {
-          try {
-            const channel = await client.channels.fetch(row.dm_channel_id);
-            await channel.messages.delete(row.message_id);
-          } catch (error) {
-            console.error(
-              `Failed to delete expired DM notification message ${row.message_id}:`,
-              error.message
-            );
-          }
+      for (const { dm_channel_id: channelId } of channelRows) {
+        let channel;
+        try {
+          channel = await client.channels.fetch(channelId);
+        } catch (error) {
+          // Channel unreachable (user closed DMs, blocked the bot, etc.).
+          // Drop its tracked rows so we stop retrying it forever.
+          console.error(
+            `Portal cleanup: cannot fetch DM channel ${channelId}: ${error.message}`
+          );
+          db.prepare('DELETE FROM portal_notifications WHERE dm_channel_id = ?').run(
+            channelId
+          );
+          continue;
         }
 
-        db.prepare('DELETE FROM portal_notifications WHERE notification_id = ?').run(
-          row.notification_id
-        );
-        deleted += 1;
+        channelsScanned += 1;
+
+        // Paginate the channel history from newest to oldest, deleting every
+        // bot-authored message older than the cutoff.
+        let before;
+        while (true) {
+          let batch;
+          try {
+            batch = await channel.messages.fetch({ limit: 100, before });
+          } catch (error) {
+            console.error(
+              `Portal cleanup: failed to fetch history for ${channelId}: ${error.message}`
+            );
+            break;
+          }
+
+          if (batch.size === 0) break;
+
+          // Oldest id in this batch becomes the pagination cursor.
+          before = batch.lastKey();
+
+          for (const message of batch.values()) {
+            if (botId && message.author.id !== botId) continue;
+            if (message.createdTimestamp >= cutoffMs) continue;
+
+            try {
+              await message.delete();
+              deletedMessageIds.push(message.id);
+              deleted += 1;
+            } catch (error) {
+              // 429s are retried transparently by discord.js; anything else
+              // (10008 Unknown Message, etc.) we log and skip.
+              console.error(
+                `Portal cleanup: failed to delete DM message ${message.id}: ${error.message}`
+              );
+            }
+          }
+
+          // Once a full batch is entirely newer than the cutoff we can stop:
+          // history is ordered newest-first, so older batches are all expired,
+          // but a partial last page (size < 100) means we've reached the end.
+          if (batch.size < 100) break;
+        }
       }
 
-      console.log(`✓ Portal notification cleanup removed ${deleted} expired notification(s)`);
+      // Bulk-reconcile the DB: drop rows for messages we deleted, plus any
+      // tracked rows already past the cutoff (orphaned/untracked-in-Discord).
+      if (deletedMessageIds.length > 0) {
+        const placeholders = deletedMessageIds.map(() => '?').join(',');
+        db.prepare(
+          `DELETE FROM portal_notifications WHERE message_id IN (${placeholders})`
+        ).run(...deletedMessageIds);
+      }
+      db.prepare(
+        `
+        DELETE FROM portal_notifications
+        WHERE created_at IS NOT NULL
+          AND created_at <= datetime('now', '-24 hours')
+      `
+      ).run();
 
-      return { success: true, deleted };
+      console.log(
+        `✓ Portal notification cleanup deleted ${deleted} DM message(s) across ${channelsScanned} channel(s)`
+      );
+
+      return { success: true, deleted, channelsScanned };
     },
     {
       connection: new IORedis({
