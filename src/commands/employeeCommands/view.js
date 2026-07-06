@@ -5,7 +5,7 @@ const {
   COMMAND_ADMINISTRATOR_ROLE_ID,
   buildDepartmentListPayload,
   isCommandAdministrator,
-} = require('../../functions/helpers/departmentUtils');
+} = require('../../utils/departmentUtils');
 
 module.exports = {
   data: new SlashCommandBuilder()

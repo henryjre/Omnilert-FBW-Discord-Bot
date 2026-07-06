@@ -120,7 +120,7 @@ test('/view departments renders empty Components V2 state', async () => {
 });
 
 test('department list renders formatted name, role, channel, and pagination controls', () => {
-  const { buildDepartmentListPayload } = require('../src/functions/helpers/departmentUtils');
+  const { buildDepartmentListPayload } = require('../src/utils/departmentUtils');
   const departments = [
     { id: 1, name: 'Alpha', emoji: '🅰️', role_id: 'role-1', channel_id: 'channel-1' },
     { id: 2, name: 'Beta', emoji: '🅱️', role_id: 'role-2', channel_id: 'channel-2' },

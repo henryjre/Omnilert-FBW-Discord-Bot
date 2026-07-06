@@ -11,7 +11,7 @@ const {
   COMMAND_ADMINISTRATOR_ROLE_ID,
   isCommandAdministrator,
   normalizeDepartmentId,
-} = require('../../../functions/helpers/departmentUtils');
+} = require('../../../utils/departmentUtils');
 
 module.exports = {
   data: {

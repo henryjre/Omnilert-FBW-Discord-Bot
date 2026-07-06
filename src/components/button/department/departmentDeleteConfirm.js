@@ -6,7 +6,7 @@ const {
   buildDepartmentListPayload,
   isCommandAdministrator,
   normalizeDepartmentId,
-} = require('../../../functions/helpers/departmentUtils');
+} = require('../../../utils/departmentUtils');
 
 module.exports = {
   data: {
