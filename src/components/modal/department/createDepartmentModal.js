@@ -7,6 +7,7 @@ const {
 } = require('discord.js');
 
 const { createDepartment } = require('../../../sqliteFunctions');
+const { syncDepartmentChannelPermissions } = require('../../../utils/departmentUtils');
 
 const commandAdministratorRoleId = '1523620813599936623';
 const managementRoleId = '1314413671245676685';
@@ -54,6 +55,9 @@ module.exports = {
       channel = submittedChannelId
         ? await resolveChannel(interaction, submittedChannelId)
         : await createPrivateDepartmentChannel(interaction, departmentName, emojiIcon);
+      if (role?.id && channel) {
+        await syncDepartmentChannelPermissions(interaction.guild, channel, role.id);
+      }
     } catch (error) {
       console.error('Department channel setup failed:', error);
       return interaction.editReply({

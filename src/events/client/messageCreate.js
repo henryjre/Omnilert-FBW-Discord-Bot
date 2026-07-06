@@ -1,3 +1,6 @@
+const { handleDepartmentVoiceUpdateMessage } = require('../../utils/departmentVoiceUtils');
+const { scheduleDepartmentVoiceSessionJobs } = require('../../queue/departmentVoiceQueue');
+
 module.exports = {
   name: "messageCreate",
   async execute(message, client) {
@@ -24,6 +27,8 @@ module.exports = {
     );
 
     if (thread) {
+      await handleDepartmentVoiceUpdateMessage(message, scheduleDepartmentVoiceSessionJobs);
+
       if (thread.name.includes("Proof Upload")) {
         return await client.events
           .get("incidentProofUpload")

@@ -294,6 +294,223 @@ const deleteDepartment = db.transaction((id) => {
   return result.changes > 0;
 });
 
+////////////////////////////////////////////////////////////
+// Department Voice Sessions
+////////////////////////////////////////////////////////////
+
+function selectDepartmentVoiceSessionById(id) {
+  return (
+    db
+      .prepare(
+        `
+          SELECT *
+          FROM department_voice_sessions
+          WHERE id = ?
+        `
+      )
+      .get(id) || null
+  );
+}
+
+function selectDepartmentVoiceSessionByUserDate(userId, departmentId, dateKey) {
+  return (
+    db
+      .prepare(
+        `
+          SELECT *
+          FROM department_voice_sessions
+          WHERE user_id = ?
+            AND department_id = ?
+            AND date_key = ?
+        `
+      )
+      .get(userId, departmentId, dateKey) || null
+  );
+}
+
+function selectActiveDepartmentVoiceSessionByUser(userId) {
+  return (
+    db
+      .prepare(
+        `
+          SELECT *
+          FROM department_voice_sessions
+          WHERE user_id = ?
+            AND active = 1
+          ORDER BY id DESC
+          LIMIT 1
+        `
+      )
+      .get(userId) || null
+  );
+}
+
+const getDepartmentVoiceSessionById = db.transaction((id) => {
+  return selectDepartmentVoiceSessionById(id);
+});
+
+const getDepartmentVoiceSessionByUserDate = db.transaction((userId, departmentId, dateKey) => {
+  return selectDepartmentVoiceSessionByUserDate(userId, departmentId, dateKey);
+});
+
+const getActiveDepartmentVoiceSessionByUser = db.transaction((userId) => {
+  return selectActiveDepartmentVoiceSessionByUser(userId);
+});
+
+const getActiveDepartmentVoiceSessionByThreadUser = db.transaction((threadId, userId) => {
+  return (
+    db
+      .prepare(
+        `
+          SELECT *
+          FROM department_voice_sessions
+          WHERE thread_id = ?
+            AND user_id = ?
+            AND active = 1
+          ORDER BY id DESC
+          LIMIT 1
+        `
+      )
+      .get(threadId, userId) || null
+  );
+});
+
+const upsertDepartmentVoiceSession = db.transaction(
+  ({ guildId, userId, departmentId, threadId, voiceChannelId, dateKey, checkInAt }) => {
+    const existing = selectDepartmentVoiceSessionByUserDate(userId, departmentId, dateKey);
+
+    if (existing) {
+      const nextTimerVersion = existing.timer_version + 1;
+      db.prepare(
+        `
+          UPDATE department_voice_sessions
+          SET guild_id = @guild_id,
+              thread_id = @thread_id,
+              voice_channel_id = @voice_channel_id,
+              active = 1,
+              timer_version = @timer_version,
+              check_in_at = @check_in_at,
+              check_out_at = NULL,
+              last_update_at = @check_in_at,
+              updated_at = CURRENT_TIMESTAMP
+          WHERE id = @id
+        `
+      ).run({
+        id: existing.id,
+        guild_id: guildId,
+        thread_id: threadId,
+        voice_channel_id: voiceChannelId,
+        timer_version: nextTimerVersion,
+        check_in_at: checkInAt,
+      });
+
+      return selectDepartmentVoiceSessionById(existing.id);
+    }
+
+    const result = db
+      .prepare(
+        `
+          INSERT INTO department_voice_sessions (
+            guild_id,
+            user_id,
+            department_id,
+            thread_id,
+            voice_channel_id,
+            date_key,
+            active,
+            timer_version,
+            check_in_at,
+            last_update_at
+          )
+          VALUES (
+            @guild_id,
+            @user_id,
+            @department_id,
+            @thread_id,
+            @voice_channel_id,
+            @date_key,
+            1,
+            0,
+            @check_in_at,
+            @check_in_at
+          )
+        `
+      )
+      .run({
+        guild_id: guildId,
+        user_id: userId,
+        department_id: departmentId,
+        thread_id: threadId,
+        voice_channel_id: voiceChannelId,
+        date_key: dateKey,
+        check_in_at: checkInAt,
+      });
+
+    return selectDepartmentVoiceSessionById(result.lastInsertRowid);
+  }
+);
+
+const markDepartmentVoiceSessionCheckedOut = db.transaction((sessionId, checkOutAt) => {
+  const session = selectDepartmentVoiceSessionById(sessionId);
+  if (!session) return null;
+
+  db.prepare(
+    `
+      UPDATE department_voice_sessions
+      SET active = 0,
+          timer_version = timer_version + 1,
+          check_out_at = @check_out_at,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = @id
+    `
+  ).run({
+    id: sessionId,
+    check_out_at: checkOutAt,
+  });
+
+  return selectDepartmentVoiceSessionById(sessionId);
+});
+
+const markActiveDepartmentVoiceSessionCheckedOut = db.transaction((userId, checkOutAt) => {
+  const session = selectActiveDepartmentVoiceSessionByUser(userId);
+  if (!session) return null;
+  db.prepare(
+    `
+      UPDATE department_voice_sessions
+      SET active = 0,
+          timer_version = timer_version + 1,
+          check_out_at = @check_out_at,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = @id
+    `
+  ).run({
+    id: session.id,
+    check_out_at: checkOutAt,
+  });
+
+  return selectDepartmentVoiceSessionById(session.id);
+});
+
+const recordDepartmentVoiceSessionUpdate = db.transaction((sessionId, updateAt) => {
+  const session = selectDepartmentVoiceSessionById(sessionId);
+  if (!session || !session.active) return null;
+
+  db.prepare(
+    `
+      UPDATE department_voice_sessions
+      SET last_update_at = @last_update_at,
+          timer_version = timer_version + 1,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = @id
+    `
+  ).run({
+    id: sessionId,
+    last_update_at: updateAt,
+  });
+
+  return selectDepartmentVoiceSessionById(sessionId);
+});
+
 module.exports = {
   getNextAuditId,
   saveAuditRatings,
@@ -313,4 +530,12 @@ module.exports = {
   getDepartmentById,
   updateDepartment,
   deleteDepartment,
+  getDepartmentVoiceSessionById,
+  getDepartmentVoiceSessionByUserDate,
+  getActiveDepartmentVoiceSessionByUser,
+  getActiveDepartmentVoiceSessionByThreadUser,
+  upsertDepartmentVoiceSession,
+  markDepartmentVoiceSessionCheckedOut,
+  markActiveDepartmentVoiceSessionCheckedOut,
+  recordDepartmentVoiceSessionUpdate,
 };

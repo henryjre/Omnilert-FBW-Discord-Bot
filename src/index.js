@@ -54,11 +54,13 @@ require('./sqliteConnection.js');
 const { closeQueue } = require('./queue/earlyAttendanceQueue');
 const { closeOnboardingRoleRemovalQueue } = require('./queue/onboardingRoleRemovalQueue');
 const { closePortalNotificationCleanupQueue } = require('./queue/portalNotificationCleanupQueue');
+const { closeDepartmentVoiceQueue } = require('./queue/departmentVoiceQueue');
 
 async function closeQueues() {
   await closeQueue();
   await closeOnboardingRoleRemovalQueue();
   await closePortalNotificationCleanupQueue();
+  await closeDepartmentVoiceQueue();
 }
 
 process.on('SIGTERM', async () => {

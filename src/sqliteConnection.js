@@ -112,6 +112,26 @@ db.exec(`
   )
 `);
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS department_voice_sessions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    guild_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    department_id INTEGER NOT NULL,
+    thread_id TEXT NOT NULL,
+    voice_channel_id TEXT NOT NULL,
+    date_key TEXT NOT NULL,
+    active INTEGER DEFAULT 1,
+    timer_version INTEGER DEFAULT 0,
+    check_in_at TEXT NOT NULL,
+    check_out_at TEXT,
+    last_update_at TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, department_id, date_key)
+  )
+`);
+
 // Idempotent migration: add the color column to pre-existing tables.
 try {
   db.exec(`ALTER TABLE portal_notifications ADD COLUMN color TEXT`);

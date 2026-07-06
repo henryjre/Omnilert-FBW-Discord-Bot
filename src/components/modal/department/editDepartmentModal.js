@@ -7,6 +7,7 @@ const {
   formatDepartmentChannelName,
   isCommandAdministrator,
   normalizeDepartmentId,
+  syncDepartmentChannelPermissions,
 } = require('../../../utils/departmentUtils');
 
 module.exports = {
@@ -48,6 +49,10 @@ module.exports = {
       if (roleId) await resolveRole(interaction, roleId);
       const finalChannelId = channelId || null;
       const channel = finalChannelId ? await resolveChannel(interaction, finalChannelId) : null;
+
+      if (channel && roleId) {
+        await syncDepartmentChannelPermissions(interaction.guild, channel, roleId);
+      }
 
       const nextDepartment = {
         ...existingDepartment,

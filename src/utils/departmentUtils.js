@@ -17,6 +17,31 @@ function formatDepartmentChannelName(department) {
   return `${department.emoji}┃${department.name}`;
 }
 
+async function syncDepartmentChannelPermissions(guild, channel, roleId) {
+  if (!guild || !channel || !roleId || !channel.permissionOverwrites?.edit) return false;
+
+  await channel.permissionOverwrites.edit(roleId, {
+    ViewChannel: true,
+    SendMessages: true,
+    SendMessagesInThreads: true,
+    CreatePublicThreads: true,
+  });
+
+  const botMember = guild.members?.me || (await guild.members?.fetchMe?.());
+  if (botMember?.id) {
+    await channel.permissionOverwrites.edit(botMember.id, {
+      ViewChannel: true,
+      SendMessages: true,
+      SendMessagesInThreads: true,
+      CreatePublicThreads: true,
+      ManageChannels: true,
+      ManageThreads: true,
+    });
+  }
+
+  return true;
+}
+
 function normalizeDepartmentId(id) {
   const departmentId = Number(id);
   return Number.isInteger(departmentId) && departmentId > 0 ? departmentId : null;
@@ -160,4 +185,5 @@ module.exports = {
   formatDepartmentChannelName,
   isCommandAdministrator,
   normalizeDepartmentId,
+  syncDepartmentChannelPermissions,
 };
