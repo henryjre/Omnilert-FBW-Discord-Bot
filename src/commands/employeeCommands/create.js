@@ -41,7 +41,21 @@ module.exports = {
         )
     )
     .addSubcommand((subcommand) =>
-      subcommand.setName('department').setDescription('Create a department.')
+      subcommand
+        .setName('department')
+        .setDescription('Create a department.')
+        .addStringOption((option) =>
+          option
+            .setName('role_id')
+            .setDescription('Optional existing Discord role ID.')
+            .setRequired(false)
+        )
+        .addStringOption((option) =>
+          option
+            .setName('channel_id')
+            .setDescription('Optional existing Discord channel ID.')
+            .setRequired(false)
+        )
     ),
   async execute(interaction, client) {
     // if (interaction.channel.id !== commandsChannel) {
@@ -148,7 +162,12 @@ async function runCreateDepartmentCommand(interaction, client) {
     return;
   }
 
-  const modal = new ModalBuilder().setCustomId('createDepartmentModal').setTitle('CREATE DEPARTMENT');
+  const roleId = interaction.options.getString('role_id')?.trim() || 'none';
+  const channelId = interaction.options.getString('channel_id')?.trim() || 'none';
+
+  const modal = new ModalBuilder()
+    .setCustomId(`createDepartmentModal:${roleId}:${channelId}`)
+    .setTitle('CREATE DEPARTMENT');
 
   const departmentNameInput = new TextInputBuilder()
     .setCustomId('departmentName')
@@ -170,27 +189,7 @@ async function runCreateDepartmentCommand(interaction, client) {
     .setDescription('Used in the channel name, e.g. 🏢.')
     .setTextInputComponent(emojiIconInput);
 
-  const roleIdInput = new TextInputBuilder()
-    .setCustomId('roleId')
-    .setStyle(TextInputStyle.Short)
-    .setRequired(false);
-
-  const roleIdLabel = new LabelBuilder()
-    .setLabel('Role ID')
-    .setDescription('Optional. Leave blank to create a new role.')
-    .setTextInputComponent(roleIdInput);
-
-  const channelIdInput = new TextInputBuilder()
-    .setCustomId('channelId')
-    .setStyle(TextInputStyle.Short)
-    .setRequired(false);
-
-  const channelIdLabel = new LabelBuilder()
-    .setLabel('Channel ID')
-    .setDescription('Optional. Leave blank to create a new private channel.')
-    .setTextInputComponent(channelIdInput);
-
-  modal.addLabelComponents(departmentNameLabel, emojiIconLabel, roleIdLabel, channelIdLabel);
+  modal.addLabelComponents(departmentNameLabel, emojiIconLabel);
 
   await interaction.showModal(modal);
 }

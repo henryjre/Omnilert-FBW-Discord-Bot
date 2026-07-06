@@ -31,7 +31,11 @@ function createRoleCache(roleIds = []) {
   };
 }
 
-function createCommandInteraction(roleIds = ['1523620813599936623']) {
+function createCommandInteraction({
+  roleIds = ['1523620813599936623'],
+  roleIdOption = '',
+  channelIdOption = '',
+} = {}) {
   const replies = [];
   const shownModals = [];
 
@@ -44,6 +48,11 @@ function createCommandInteraction(roleIds = ['1523620813599936623']) {
       },
       options: {
         getSubcommand: () => 'department',
+        getString: (name) => {
+          if (name === 'role_id') return roleIdOption;
+          if (name === 'channel_id') return channelIdOption;
+          return null;
+        },
       },
       reply: async (payload) => {
         replies.push(payload);
@@ -73,6 +82,7 @@ function createModalInteraction({ fields, roleIds = ['1523620813599936623'] }) {
         cache: createRoleCache(roleIds),
       },
     },
+    customId: fields.customId || 'createDepartmentModal:none:none',
     fields: {
       getTextInputValue: (id) => fields[id] || '',
     },
@@ -133,8 +143,6 @@ test('create department modal creates missing role and private management channe
     fields: {
       departmentName: 'FBW Test',
       emojiIcon: '🏢',
-      roleId: '',
-      channelId: '',
     },
   });
 
@@ -173,11 +181,11 @@ test('/create department opens modal for command administrators', async () => {
 
   assert.equal(replies.length, 0);
   assert.equal(shownModals.length, 1);
-  assert.equal(shownModals[0].data.custom_id, 'createDepartmentModal');
+  assert.equal(shownModals[0].data.custom_id, 'createDepartmentModal:none:none');
 });
 
 test('/create department rejects users without command administrator role', async () => {
-  const { interaction, replies, shownModals } = createCommandInteraction([]);
+  const { interaction, replies, shownModals } = createCommandInteraction({ roleIds: [] });
 
   await createCommand.execute(interaction, {});
 
@@ -187,7 +195,19 @@ test('/create department rejects users without command administrator role', asyn
   assert.equal(replies[0].embeds.length, 1);
 });
 
-test('create department modal uses provided role and creates only missing channel', async () => {
+test('/create department passes optional IDs through modal custom id', async () => {
+  const { interaction, shownModals } = createCommandInteraction({
+    roleIdOption: 'existing-role',
+    channelIdOption: 'existing-channel',
+  });
+
+  await createCommand.execute(interaction, {});
+
+  assert.equal(shownModals[0].data.custom_id, 'createDepartmentModal:existing-role:existing-channel');
+  assert.equal(shownModals[0].components.length, 2);
+});
+
+test('create department modal uses command role id and creates only missing channel', async () => {
   const savedDepartments = [];
   const modal = loadCreateDepartmentModal((department) => {
     savedDepartments.push(department);
@@ -197,8 +217,7 @@ test('create department modal uses provided role and creates only missing channe
     fields: {
       departmentName: 'FBW Partial',
       emojiIcon: '⭐',
-      roleId: 'existing-role',
-      channelId: '',
+      customId: 'createDepartmentModal:existing-role:none',
     },
   });
 

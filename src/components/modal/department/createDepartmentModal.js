@@ -27,8 +27,8 @@ module.exports = {
 
     const departmentName = interaction.fields.getTextInputValue('departmentName').trim();
     const emojiIcon = interaction.fields.getTextInputValue('emojiIcon').trim();
-    const submittedRoleId = normalizeOptionalId(interaction.fields.getTextInputValue('roleId'));
-    const submittedChannelId = normalizeOptionalId(interaction.fields.getTextInputValue('channelId'));
+    const { roleId: submittedRoleId, channelId: submittedChannelId } =
+      parseCreateDepartmentModalCustomId(interaction.customId);
 
     if (!departmentName || !emojiIcon) {
       return interaction.editReply({
@@ -93,7 +93,17 @@ module.exports = {
 
 function normalizeOptionalId(value) {
   const normalized = value?.trim();
-  return normalized || null;
+  if (!normalized || normalized === 'none') return null;
+  return normalized;
+}
+
+function parseCreateDepartmentModalCustomId(customId) {
+  const [, roleId, channelId] = customId.split(':');
+
+  return {
+    roleId: normalizeOptionalId(roleId),
+    channelId: normalizeOptionalId(channelId),
+  };
 }
 
 async function resolveRole(interaction, roleId) {

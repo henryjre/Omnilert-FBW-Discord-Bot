@@ -102,7 +102,10 @@ module.exports = {
     } else if (interaction.type == InteractionType.ModalSubmit) {
       const { modals } = client;
       const { customId } = interaction;
-      const modal = modals.get(customId);
+      const modalName = customId.startsWith("createDepartmentModal:")
+        ? "createDepartmentModal"
+        : customId;
+      const modal = modals.get(modalName);
       if (!modal) return new Error("No code for this modal.");
 
       try {
