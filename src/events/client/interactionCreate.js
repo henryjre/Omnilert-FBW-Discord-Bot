@@ -67,9 +67,21 @@ module.exports = {
       const { buttons } = client;
       const { customId } = interaction;
 
-      // Handle dynamic cash breakdown buttons
-      if (customId.startsWith("cashBreakdown_")) {
-        const button = buttons.get("cashBreakdown");
+      const dynamicButtonPrefixes = {
+        cashBreakdown_: "cashBreakdown",
+        "departmentPage:": "departmentPage",
+        "departmentEdit:": "departmentEdit",
+        "departmentDelete:": "departmentDelete",
+        "departmentDeleteConfirm:": "departmentDeleteConfirm",
+        "departmentDeleteCancel:": "departmentDeleteCancel",
+      };
+
+      const dynamicButtonName = Object.entries(dynamicButtonPrefixes).find(
+        ([prefix]) => customId.startsWith(prefix)
+      )?.[1];
+
+      if (dynamicButtonName) {
+        const button = buttons.get(dynamicButtonName);
         if (!button) return new Error("No code for this button.");
         try {
           await button.execute(interaction, client);
@@ -102,9 +114,13 @@ module.exports = {
     } else if (interaction.type == InteractionType.ModalSubmit) {
       const { modals } = client;
       const { customId } = interaction;
-      const modalName = customId.startsWith("createDepartmentModal:")
-        ? "createDepartmentModal"
-        : customId;
+      const dynamicModalPrefixes = {
+        "createDepartmentModal:": "createDepartmentModal",
+        "editDepartmentModal:": "editDepartmentModal",
+      };
+      const modalName =
+        Object.entries(dynamicModalPrefixes).find(([prefix]) => customId.startsWith(prefix))?.[1] ||
+        customId;
       const modal = modals.get(modalName);
       if (!modal) return new Error("No code for this modal.");
 

@@ -231,6 +231,69 @@ const createDepartment = db.transaction(({ name, emoji, roleId = null, channelId
   };
 });
 
+const getDepartments = db.transaction(() => {
+  return db
+    .prepare(
+      `
+        SELECT id, name, emoji, role_id, channel_id, created_by, created_at
+        FROM departments
+        ORDER BY id ASC
+      `
+    )
+    .all();
+});
+
+const getDepartmentById = db.transaction((id) => {
+  return (
+    db
+      .prepare(
+        `
+          SELECT id, name, emoji, role_id, channel_id, created_by, created_at
+          FROM departments
+          WHERE id = ?
+        `
+      )
+      .get(id) || null
+  );
+});
+
+const updateDepartment = db.transaction(({ id, name, emoji, roleId = null, channelId = null }) => {
+  const updateStmt = db.prepare(`
+    UPDATE departments
+    SET name = @name,
+        emoji = @emoji,
+        role_id = @role_id,
+        channel_id = @channel_id
+    WHERE id = @id
+  `);
+
+  const result = updateStmt.run({
+    id,
+    name,
+    emoji,
+    role_id: roleId,
+    channel_id: channelId,
+  });
+
+  if (result.changes === 0) return null;
+  return (
+    db
+      .prepare(
+        `
+          SELECT id, name, emoji, role_id, channel_id, created_by, created_at
+          FROM departments
+          WHERE id = ?
+        `
+      )
+      .get(id) || null
+  );
+});
+
+const deleteDepartment = db.transaction((id) => {
+  const result = db.prepare(`DELETE FROM departments WHERE id = ?`).run(id);
+  return result.changes > 0;
+});
+
 module.exports = {
   getNextAuditId,
   saveAuditRatings,
@@ -246,4 +309,8 @@ module.exports = {
   getNonAcknowledgers,
   deleteAnnouncementTracking,
   createDepartment,
+  getDepartments,
+  getDepartmentById,
+  updateDepartment,
+  deleteDepartment,
 };
