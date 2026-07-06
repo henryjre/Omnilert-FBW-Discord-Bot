@@ -100,6 +100,18 @@ db.exec(`
   )
 `);
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS departments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    emoji TEXT NOT NULL,
+    role_id TEXT,
+    channel_id TEXT,
+    created_by TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
 // Idempotent migration: add the color column to pre-existing tables.
 try {
   db.exec(`ALTER TABLE portal_notifications ADD COLUMN color TEXT`);

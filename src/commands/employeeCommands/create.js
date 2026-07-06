@@ -9,6 +9,7 @@ const {
 } = require('discord.js');
 
 const managementRoleId = '1314413671245676685';
+const commandAdministratorRoleId = '1523620813599936623';
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -38,6 +39,9 @@ module.exports = {
               },
             ])
         )
+    )
+    .addSubcommand((subcommand) =>
+      subcommand.setName('department').setDescription('Create a department.')
     ),
   async execute(interaction, client) {
     // if (interaction.channel.id !== commandsChannel) {
@@ -53,6 +57,9 @@ module.exports = {
     switch (subcommand) {
       case 'meeting':
         await runCreateMeetingCommand(interaction, client);
+        break;
+      case 'department':
+        await runCreateDepartmentCommand(interaction, client);
         break;
 
       default:
@@ -125,6 +132,65 @@ async function runCreateMeetingCommand(interaction, client) {
     .setTextInputComponent(thirdInput);
 
   modal.addLabelComponents(firstLabel, secondLabel, thirdLabel);
+
+  await interaction.showModal(modal);
+}
+
+async function runCreateDepartmentCommand(interaction, client) {
+  if (!interaction.member.roles.cache.has(commandAdministratorRoleId)) {
+    const replyEmbed = new EmbedBuilder().setDescription(
+      `🔴 ERROR: This command can only be used by <@&${commandAdministratorRoleId}>.`
+    );
+    await interaction.reply({
+      flags: MessageFlags.Ephemeral,
+      embeds: [replyEmbed],
+    });
+    return;
+  }
+
+  const modal = new ModalBuilder().setCustomId('createDepartmentModal').setTitle('CREATE DEPARTMENT');
+
+  const departmentNameInput = new TextInputBuilder()
+    .setCustomId('departmentName')
+    .setStyle(TextInputStyle.Short)
+    .setRequired(true);
+
+  const departmentNameLabel = new LabelBuilder()
+    .setLabel('Department Name')
+    .setDescription('The display name for this department.')
+    .setTextInputComponent(departmentNameInput);
+
+  const emojiIconInput = new TextInputBuilder()
+    .setCustomId('emojiIcon')
+    .setStyle(TextInputStyle.Short)
+    .setRequired(true);
+
+  const emojiIconLabel = new LabelBuilder()
+    .setLabel('Emoji Icon')
+    .setDescription('Used in the channel name, e.g. 🏢.')
+    .setTextInputComponent(emojiIconInput);
+
+  const roleIdInput = new TextInputBuilder()
+    .setCustomId('roleId')
+    .setStyle(TextInputStyle.Short)
+    .setRequired(false);
+
+  const roleIdLabel = new LabelBuilder()
+    .setLabel('Role ID')
+    .setDescription('Optional. Leave blank to create a new role.')
+    .setTextInputComponent(roleIdInput);
+
+  const channelIdInput = new TextInputBuilder()
+    .setCustomId('channelId')
+    .setStyle(TextInputStyle.Short)
+    .setRequired(false);
+
+  const channelIdLabel = new LabelBuilder()
+    .setLabel('Channel ID')
+    .setDescription('Optional. Leave blank to create a new private channel.')
+    .setTextInputComponent(channelIdInput);
+
+  modal.addLabelComponents(departmentNameLabel, emojiIconLabel, roleIdLabel, channelIdLabel);
 
   await interaction.showModal(modal);
 }

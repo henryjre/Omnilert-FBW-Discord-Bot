@@ -203,6 +203,34 @@ const deleteAnnouncementTracking = db.transaction((announcementId) => {
   deleteStmt.run(announcementId);
 });
 
+////////////////////////////////////////////////////////////
+// Departments
+////////////////////////////////////////////////////////////
+
+const createDepartment = db.transaction(({ name, emoji, roleId = null, channelId = null, createdBy }) => {
+  const insertStmt = db.prepare(`
+    INSERT INTO departments (name, emoji, role_id, channel_id, created_by)
+    VALUES (@name, @emoji, @role_id, @channel_id, @created_by)
+  `);
+
+  const result = insertStmt.run({
+    name,
+    emoji,
+    role_id: roleId,
+    channel_id: channelId,
+    created_by: createdBy,
+  });
+
+  return {
+    id: result.lastInsertRowid,
+    name,
+    emoji,
+    role_id: roleId,
+    channel_id: channelId,
+    created_by: createdBy,
+  };
+});
+
 module.exports = {
   getNextAuditId,
   saveAuditRatings,
@@ -217,4 +245,5 @@ module.exports = {
   getAnnouncementTracking,
   getNonAcknowledgers,
   deleteAnnouncementTracking,
+  createDepartment,
 };
