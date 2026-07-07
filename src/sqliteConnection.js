@@ -122,6 +122,10 @@ db.exec(`
     voice_channel_id TEXT NOT NULL,
     date_key TEXT NOT NULL,
     active INTEGER DEFAULT 1,
+    paused INTEGER DEFAULT 0,
+    paused_at TEXT,
+    paused_channel_id TEXT,
+    remaining_seconds INTEGER,
     timer_version INTEGER DEFAULT 0,
     check_in_at TEXT NOT NULL,
     check_out_at TEXT,
@@ -137,6 +141,19 @@ try {
   db.exec(`ALTER TABLE portal_notifications ADD COLUMN color TEXT`);
 } catch (e) {
   // Column already exists; ignore.
+}
+
+for (const migration of [
+  `ALTER TABLE department_voice_sessions ADD COLUMN paused INTEGER DEFAULT 0`,
+  `ALTER TABLE department_voice_sessions ADD COLUMN paused_at TEXT`,
+  `ALTER TABLE department_voice_sessions ADD COLUMN paused_channel_id TEXT`,
+  `ALTER TABLE department_voice_sessions ADD COLUMN remaining_seconds INTEGER`,
+]) {
+  try {
+    db.exec(migration);
+  } catch (e) {
+    // Column already exists; ignore.
+  }
 }
 
 module.exports = db;

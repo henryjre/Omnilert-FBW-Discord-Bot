@@ -56,11 +56,19 @@ const departmentVoiceQueue = new Queue('department-voice', {
 
 let worker = null;
 
-async function scheduleDepartmentVoiceSessionJobs(session) {
+async function scheduleDepartmentVoiceSessionJobsFromRemaining(session, remainingSeconds) {
   if (!session?.id) return [];
 
   const jobs = [];
-  for (const minute of DEPARTMENT_VOICE_REMINDER_MINUTES) {
+  const remainingMs = Math.max(0, Number(remainingSeconds) || 0) * 1000;
+  const reminderMinutesLeft = DEPARTMENT_VOICE_REMINDER_MINUTES.map(
+    (minute) => DEPARTMENT_VOICE_TIMEOUT_MINUTES - minute
+  );
+
+  for (const minutesLeft of reminderMinutesLeft) {
+    const delay = remainingMs - (minutesLeft * 60 * 1000);
+    if (delay <= 0) continue;
+
     jobs.push(
       departmentVoiceQueue.add(
         'reminder',
@@ -69,12 +77,11 @@ async function scheduleDepartmentVoiceSessionJobs(session) {
           userId: session.user_id,
           threadId: session.thread_id,
           timerVersion: session.timer_version,
-          minute,
-          minutesLeft: DEPARTMENT_VOICE_TIMEOUT_MINUTES - minute,
+          minutesLeft,
         },
         {
-          delay: minute * 60 * 1000,
-          jobId: `department-voice-${session.id}-${session.timer_version}-reminder-${minute}`,
+          delay,
+          jobId: `department-voice-${session.id}-${session.timer_version}-reminder-${minutesLeft}-left`,
         }
       )
     );
@@ -91,7 +98,7 @@ async function scheduleDepartmentVoiceSessionJobs(session) {
         timerVersion: session.timer_version,
       },
       {
-        delay: DEPARTMENT_VOICE_TIMEOUT_MINUTES * 60 * 1000,
+        delay: remainingMs,
         jobId: `department-voice-${session.id}-${session.timer_version}-auto-checkout`,
       }
     )
@@ -100,9 +107,14 @@ async function scheduleDepartmentVoiceSessionJobs(session) {
   return Promise.all(jobs);
 }
 
+async function scheduleDepartmentVoiceSessionJobs(session) {
+  return scheduleDepartmentVoiceSessionJobsFromRemaining(session, DEPARTMENT_VOICE_TIMEOUT_MINUTES * 60);
+}
+
 function isStaleDepartmentVoiceJob(jobData) {
   const session = getDepartmentVoiceSessionById(jobData.sessionId);
   if (!session || !session.active) return { stale: true, session };
+  if (session.paused) return { stale: true, session };
   if (session.timer_version !== jobData.timerVersion) return { stale: true, session };
   return { stale: false, session };
 }
@@ -182,4 +194,5 @@ module.exports = {
   initializeDepartmentVoiceWorker,
   isStaleDepartmentVoiceJob,
   scheduleDepartmentVoiceSessionJobs,
+  scheduleDepartmentVoiceSessionJobsFromRemaining,
 };

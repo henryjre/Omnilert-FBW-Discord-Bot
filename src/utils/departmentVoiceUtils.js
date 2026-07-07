@@ -9,10 +9,13 @@ const {
 
 const {
   getDepartments,
+  getActiveDepartmentVoiceSessionByUser,
   getActiveDepartmentVoiceSessionByThreadUser,
   getDepartmentVoiceSessionByUserDate,
   markActiveDepartmentVoiceSessionCheckedOut,
+  pauseDepartmentVoiceSession,
   recordDepartmentVoiceSessionUpdate,
+  resumeDepartmentVoiceSession,
   upsertDepartmentVoiceSession,
 } = require('../sqliteFunctions');
 const {
@@ -175,6 +178,68 @@ function buildDepartmentVoiceReminderPayload(userId, minutesLeft) {
   };
 }
 
+function buildDepartmentVoiceMeetingStartedPayload(memberId, channelId, pausedAt = new Date(), remainingSeconds = null) {
+  const minutesLeft = remainingSeconds === null ? null : Math.ceil(remainingSeconds / 60);
+  const remainingLine = minutesLeft === null ? null : `**Time Remaining:** ${minutesLeft} minute(s)`;
+  const container = new ContainerBuilder()
+    .setAccentColor(0x3498db)
+    .addTextDisplayComponents((textDisplay) =>
+      textDisplay.setContent(
+        [
+          '## Meeting Started',
+          `**User:** <@${memberId}>`,
+          `**Moved To:** <#${channelId}>`,
+          `**Time:** ${getDepartmentVoiceDisplayTime(pausedAt)}`,
+          remainingLine,
+        ].filter(Boolean).join('\n')
+      )
+    )
+    .addSeparatorComponents((separator) => separator.setSpacing(SeparatorSpacingSize.Large))
+    .addTextDisplayComponents((textDisplay) =>
+      textDisplay.setContent(
+        `The update timer is paused while <@${memberId}> is in that voice channel. It will resume when they return to <#${OFFICE_VOICE_CHANNEL_ID}>.`
+      )
+    );
+
+  return {
+    components: [container],
+    flags: MessageFlags.IsComponentsV2,
+  };
+}
+
+function buildDepartmentVoiceTimerResumedPayload(memberId, resumedAt = new Date(), remainingSeconds = null) {
+  const minutesLeft = remainingSeconds === null ? null : Math.ceil(remainingSeconds / 60);
+  const remainingLine = minutesLeft === null ? null : `**Time Remaining:** ${minutesLeft} minute(s)`;
+  const container = new ContainerBuilder()
+    .setAccentColor(0x2ecc71)
+    .addTextDisplayComponents((textDisplay) =>
+      textDisplay.setContent(
+        [
+          '## Timer Resumed',
+          `**User:** <@${memberId}>`,
+          `**Returned To:** <#${OFFICE_VOICE_CHANNEL_ID}>`,
+          `**Time:** ${getDepartmentVoiceDisplayTime(resumedAt)}`,
+          remainingLine,
+        ].filter(Boolean).join('\n')
+      )
+    );
+
+  return {
+    components: [container],
+    flags: MessageFlags.IsComponentsV2,
+  };
+}
+
+function calculateDepartmentVoiceRemainingSeconds(session, pausedAt = new Date()) {
+  if (session?.paused && Number.isFinite(Number(session.remaining_seconds))) {
+    return Math.max(0, Number(session.remaining_seconds));
+  }
+
+  const lastUpdateAt = session?.last_update_at ? new Date(session.last_update_at) : pausedAt;
+  const elapsedSeconds = Math.max(0, Math.floor((pausedAt.getTime() - lastUpdateAt.getTime()) / 1000));
+  return Math.max(0, (DEPARTMENT_VOICE_TIMEOUT_MINUTES * 60) - elapsedSeconds);
+}
+
 async function handleDepartmentVoiceCheckIn(newState, scheduleJobs, now = new Date()) {
   const member = newState.member;
   if (!isDepartmentVoiceTestUser(member?.id)) return null;
@@ -245,6 +310,61 @@ async function handleDepartmentVoiceCheckOut(oldState, client, now = new Date())
   return session;
 }
 
+async function handleDepartmentVoiceMeetingPause(oldState, newState, client, now = new Date()) {
+  const member = oldState.member || newState.member;
+  if (!isDepartmentVoiceTestUser(member?.id)) return null;
+
+  const activeSession = getActiveDepartmentVoiceSessionByUser(member.id);
+  if (!activeSession) return null;
+
+  const remainingSeconds = calculateDepartmentVoiceRemainingSeconds(activeSession, now);
+  const session = pauseDepartmentVoiceSession(
+    member.id,
+    now.toISOString(),
+    newState.channelId,
+    remainingSeconds
+  );
+  if (!session) return null;
+
+  const thread = await client?.channels?.fetch?.(session.thread_id).catch(() => null);
+  const resolvedThread = thread || oldState.guild?.channels?.cache?.get(session.thread_id);
+
+  if (resolvedThread?.send && !activeSession.paused) {
+    await resolvedThread.send(
+      buildDepartmentVoiceMeetingStartedPayload(member.id, newState.channelId, now, remainingSeconds)
+    );
+  }
+
+  return session;
+}
+
+async function handleDepartmentVoiceMeetingResume(newState, scheduleJobsFromRemaining, client, now = new Date()) {
+  const member = newState.member;
+  if (!isDepartmentVoiceTestUser(member?.id)) return null;
+
+  const activeSession = getActiveDepartmentVoiceSessionByUser(member.id);
+  if (!activeSession?.paused) return null;
+
+  const remainingSeconds = Number.isFinite(Number(activeSession.remaining_seconds))
+    ? Math.max(0, Number(activeSession.remaining_seconds))
+    : DEPARTMENT_VOICE_TIMEOUT_MINUTES * 60;
+  const session = resumeDepartmentVoiceSession(member.id, now.toISOString());
+  if (!session) return null;
+
+  const thread = await client?.channels?.fetch?.(session.thread_id).catch(() => null);
+  const resolvedThread = thread || newState.guild?.channels?.cache?.get(session.thread_id);
+
+  if (resolvedThread?.send) {
+    await resolvedThread.send(buildDepartmentVoiceTimerResumedPayload(member.id, now, remainingSeconds));
+  }
+
+  if (scheduleJobsFromRemaining) {
+    await scheduleJobsFromRemaining(session, remainingSeconds);
+  }
+
+  return session;
+}
+
 async function handleDepartmentVoiceUpdateMessage(message, scheduleJobs, now = new Date()) {
   if (message.author?.bot || !message.channel?.isThread?.()) return null;
   if (!isDepartmentVoiceTestUser(message.author.id)) return null;
@@ -265,14 +385,19 @@ module.exports = {
   OFFICE_VOICE_CHANNEL_ID,
   buildDepartmentVoiceCheckInPayload,
   buildDepartmentVoiceCheckOutPayload,
+  buildDepartmentVoiceMeetingStartedPayload,
   buildDepartmentVoiceReminderPayload,
+  buildDepartmentVoiceTimerResumedPayload,
   buildDepartmentVoiceThreadName,
+  calculateDepartmentVoiceRemainingSeconds,
   createOrReuseDepartmentVoiceThread,
   findMemberDepartment,
   getDepartmentVoiceDateKey,
   getDepartmentVoiceDisplayTime,
   handleDepartmentVoiceCheckIn,
   handleDepartmentVoiceCheckOut,
+  handleDepartmentVoiceMeetingPause,
+  handleDepartmentVoiceMeetingResume,
   handleDepartmentVoiceUpdateMessage,
   isDepartmentVoiceTestUser,
   replaceDepartmentVoiceThreadStatus,

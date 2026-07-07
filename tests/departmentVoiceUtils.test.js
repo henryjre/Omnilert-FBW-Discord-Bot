@@ -14,10 +14,13 @@ function loadDepartmentVoiceUtils(sqliteExports = {}) {
     loaded: true,
     exports: {
       getDepartments: () => [],
+      getActiveDepartmentVoiceSessionByUser: () => null,
       getActiveDepartmentVoiceSessionByThreadUser: () => null,
       getDepartmentVoiceSessionByUserDate: () => null,
       markActiveDepartmentVoiceSessionCheckedOut: () => null,
+      pauseDepartmentVoiceSession: () => null,
       recordDepartmentVoiceSessionUpdate: () => null,
+      resumeDepartmentVoiceSession: () => null,
       upsertDepartmentVoiceSession: () => null,
       ...sqliteExports,
     },
@@ -231,4 +234,179 @@ test('department voice checkout marks session out, renames thread red, and logs 
 
   assert.deepEqual(renamedThreads, ['🔴 | Jul 06, 2026 | Nick']);
   assert.equal(sentPayloads.length, 1);
+});
+
+test('department voice meeting pause stores remaining time and logs destination channel', async () => {
+  const sentPayloads = [];
+  const pauses = [];
+  const now = new Date('2026-07-06T02:00:00.000Z');
+  const thread = {
+    id: 'thread-1',
+    send: async (payload) => sentPayloads.push(payload),
+  };
+  const { handleDepartmentVoiceMeetingPause } = loadDepartmentVoiceUtils({
+    getActiveDepartmentVoiceSessionByUser: () => ({
+      id: 3,
+      active: 1,
+      paused: 0,
+      thread_id: 'thread-1',
+      last_update_at: '2026-07-06T01:40:00.000Z',
+    }),
+    pauseDepartmentVoiceSession: (...args) => {
+      pauses.push(args);
+      return {
+        id: 3,
+        thread_id: 'thread-1',
+        user_id: allowedUserId,
+        paused: 1,
+        remaining_seconds: args[3],
+      };
+    },
+  });
+
+  const session = await handleDepartmentVoiceMeetingPause(
+    {
+      member: createMember(),
+      guild: {
+        channels: {
+          cache: {
+            get: () => thread,
+          },
+        },
+      },
+    },
+    {
+      member: createMember(),
+      channelId: 'meeting-channel',
+    },
+    {
+      channels: {
+        fetch: async () => thread,
+      },
+    },
+    now
+  );
+
+  assert.equal(session.remaining_seconds, 600);
+  assert.deepEqual(pauses[0], [
+    allowedUserId,
+    '2026-07-06T02:00:00.000Z',
+    'meeting-channel',
+    600,
+  ]);
+  assert.equal(sentPayloads.length, 1);
+  assert.match(JSON.stringify(sentPayloads[0]), /Meeting Started/);
+  assert.match(JSON.stringify(sentPayloads[0]), /<#meeting-channel>/);
+});
+
+test('department voice meeting channel move keeps paused session without duplicate log', async () => {
+  const sentPayloads = [];
+  const pauses = [];
+  const { handleDepartmentVoiceMeetingPause } = loadDepartmentVoiceUtils({
+    getActiveDepartmentVoiceSessionByUser: () => ({
+      id: 3,
+      active: 1,
+      paused: 1,
+      thread_id: 'thread-1',
+      last_update_at: '2026-07-06T01:40:00.000Z',
+      remaining_seconds: 540,
+    }),
+    pauseDepartmentVoiceSession: (...args) => {
+      pauses.push(args);
+      return {
+        id: 3,
+        thread_id: 'thread-1',
+        user_id: allowedUserId,
+        paused: 1,
+        remaining_seconds: args[3],
+      };
+    },
+  });
+  const thread = {
+    id: 'thread-1',
+    send: async (payload) => sentPayloads.push(payload),
+  };
+
+  const session = await handleDepartmentVoiceMeetingPause(
+    {
+      member: createMember(),
+      guild: {
+        channels: {
+          cache: {
+            get: () => thread,
+          },
+        },
+      },
+    },
+    {
+      member: createMember(),
+      channelId: 'meeting-channel-2',
+    },
+    {
+      channels: {
+        fetch: async () => thread,
+      },
+    },
+    new Date('2026-07-06T02:05:00.000Z')
+  );
+
+  assert.equal(session.remaining_seconds, 540);
+  assert.equal(pauses[0][2], 'meeting-channel-2');
+  assert.equal(sentPayloads.length, 0);
+});
+
+test('department voice meeting resume logs timer resumed and schedules from remaining time', async () => {
+  const sentPayloads = [];
+  const scheduled = [];
+  const { handleDepartmentVoiceMeetingResume } = loadDepartmentVoiceUtils({
+    getActiveDepartmentVoiceSessionByUser: () => ({
+      id: 7,
+      active: 1,
+      paused: 1,
+      thread_id: 'thread-1',
+      user_id: allowedUserId,
+      remaining_seconds: 540,
+    }),
+    resumeDepartmentVoiceSession: () => ({
+      id: 7,
+      active: 1,
+      paused: 0,
+      thread_id: 'thread-1',
+      user_id: allowedUserId,
+      timer_version: 5,
+      remaining_seconds: null,
+      resume_remaining_seconds: 540,
+    }),
+  });
+  const thread = {
+    id: 'thread-1',
+    send: async (payload) => sentPayloads.push(payload),
+  };
+
+  const session = await handleDepartmentVoiceMeetingResume(
+    {
+      member: createMember(),
+      guild: {
+        channels: {
+          cache: {
+            get: () => thread,
+          },
+        },
+      },
+    },
+    async (...args) => scheduled.push(args),
+    {
+      channels: {
+        fetch: async () => thread,
+      },
+    },
+    new Date('2026-07-06T02:10:00.000Z')
+  );
+
+  assert.equal(session.timer_version, 5);
+  assert.equal(scheduled.length, 1);
+  assert.equal(scheduled[0][1], 540);
+  assert.equal(sentPayloads.length, 1);
+  assert.match(JSON.stringify(sentPayloads[0]), /Timer Resumed/);
+  assert.match(JSON.stringify(sentPayloads[0]), /9 minute/);
 });

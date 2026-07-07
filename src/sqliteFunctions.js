@@ -388,6 +388,10 @@ const upsertDepartmentVoiceSession = db.transaction(
               thread_id = @thread_id,
               voice_channel_id = @voice_channel_id,
               active = 1,
+              paused = 0,
+              paused_at = NULL,
+              paused_channel_id = NULL,
+              remaining_seconds = NULL,
               timer_version = @timer_version,
               check_in_at = @check_in_at,
               check_out_at = NULL,
@@ -458,6 +462,10 @@ const markDepartmentVoiceSessionCheckedOut = db.transaction((sessionId, checkOut
     `
       UPDATE department_voice_sessions
       SET active = 0,
+          paused = 0,
+          paused_at = NULL,
+          paused_channel_id = NULL,
+          remaining_seconds = NULL,
           timer_version = timer_version + 1,
           check_out_at = @check_out_at,
           updated_at = CURRENT_TIMESTAMP
@@ -478,6 +486,10 @@ const markActiveDepartmentVoiceSessionCheckedOut = db.transaction((userId, check
     `
       UPDATE department_voice_sessions
       SET active = 0,
+          paused = 0,
+          paused_at = NULL,
+          paused_channel_id = NULL,
+          remaining_seconds = NULL,
           timer_version = timer_version + 1,
           check_out_at = @check_out_at,
           updated_at = CURRENT_TIMESTAMP
@@ -491,6 +503,59 @@ const markActiveDepartmentVoiceSessionCheckedOut = db.transaction((userId, check
   return selectDepartmentVoiceSessionById(session.id);
 });
 
+const pauseDepartmentVoiceSession = db.transaction((userId, pausedAt, pausedChannelId, remainingSeconds) => {
+  const session = selectActiveDepartmentVoiceSessionByUser(userId);
+  if (!session) return null;
+
+  db.prepare(
+    `
+      UPDATE department_voice_sessions
+      SET paused = 1,
+          paused_at = @paused_at,
+          paused_channel_id = @paused_channel_id,
+          remaining_seconds = @remaining_seconds,
+          timer_version = timer_version + 1,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = @id
+    `
+  ).run({
+    id: session.id,
+    paused_at: pausedAt,
+    paused_channel_id: pausedChannelId,
+    remaining_seconds: remainingSeconds,
+  });
+
+  return selectDepartmentVoiceSessionById(session.id);
+});
+
+const resumeDepartmentVoiceSession = db.transaction((userId, resumedAt) => {
+  const session = selectActiveDepartmentVoiceSessionByUser(userId);
+  if (!session || !session.paused) return null;
+
+  const remainingSeconds = session.remaining_seconds;
+  db.prepare(
+    `
+      UPDATE department_voice_sessions
+      SET paused = 0,
+          paused_at = NULL,
+          paused_channel_id = NULL,
+          remaining_seconds = NULL,
+          timer_version = timer_version + 1,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = @id
+    `
+  ).run({
+    id: session.id,
+  });
+
+  const resumedSession = selectDepartmentVoiceSessionById(session.id);
+  return {
+    ...resumedSession,
+    resume_remaining_seconds: remainingSeconds,
+    resumed_at: resumedAt,
+  };
+});
+
 const recordDepartmentVoiceSessionUpdate = db.transaction((sessionId, updateAt) => {
   const session = selectDepartmentVoiceSessionById(sessionId);
   if (!session || !session.active) return null;
@@ -499,6 +564,10 @@ const recordDepartmentVoiceSessionUpdate = db.transaction((sessionId, updateAt) 
     `
       UPDATE department_voice_sessions
       SET last_update_at = @last_update_at,
+          paused = 0,
+          paused_at = NULL,
+          paused_channel_id = NULL,
+          remaining_seconds = NULL,
           timer_version = timer_version + 1,
           updated_at = CURRENT_TIMESTAMP
       WHERE id = @id
@@ -537,5 +606,7 @@ module.exports = {
   upsertDepartmentVoiceSession,
   markDepartmentVoiceSessionCheckedOut,
   markActiveDepartmentVoiceSessionCheckedOut,
+  pauseDepartmentVoiceSession,
+  resumeDepartmentVoiceSession,
   recordDepartmentVoiceSessionUpdate,
 };
