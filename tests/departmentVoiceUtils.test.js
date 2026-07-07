@@ -76,6 +76,25 @@ test('department voice feature only allows configured test users', async () => {
   assert.equal(result, null);
 });
 
+test('department voice thread name strips leading status emoji from member nickname', () => {
+  const { buildDepartmentVoiceThreadName } = loadDepartmentVoiceUtils();
+  const member = {
+    ...createMember(),
+    nickname: '🟢 | Nick',
+  };
+
+  assert.equal(
+    buildDepartmentVoiceThreadName('🟢', member, new Date('2026-07-06T01:30:00.000Z')),
+    '🟢 | Jul 06, 2026 | Nick'
+  );
+
+  member.nickname = '🔴 Nick';
+  assert.equal(
+    buildDepartmentVoiceThreadName('🔴', member, new Date('2026-07-06T01:30:00.000Z')),
+    '🔴 | Jul 06, 2026 | Nick'
+  );
+});
+
 test('department voice check-in reuses saved daily thread and schedules jobs', async () => {
   const scheduledSessions = [];
   const sentPayloads = [];

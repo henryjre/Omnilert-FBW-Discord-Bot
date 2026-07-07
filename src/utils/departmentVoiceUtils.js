@@ -51,7 +51,9 @@ function getDepartmentVoiceDisplayTime(date = new Date()) {
 }
 
 function getMemberDisplayName(member) {
-  return member?.nickname || member?.displayName || member?.user?.username || member?.user?.tag || 'Unknown User';
+  const displayName =
+    member?.nickname || member?.displayName || member?.user?.username || member?.user?.tag || 'Unknown User';
+  return displayName.replace(/^(?:🟢|🔴)\s*(?:\|\s*)?/u, '').trim() || displayName;
 }
 
 function buildDepartmentVoiceThreadName(statusEmoji, member, date = new Date()) {
