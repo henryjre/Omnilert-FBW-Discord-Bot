@@ -7,12 +7,16 @@ const {
 } = require('discord.js');
 const moment = require('moment-timezone');
 
-const departments = require('../../../config/departments.json');
 const workEntryTypes = require('../../../config/work_entry_types.json');
 const client = require('../../../index');
 const { searchActiveAttendance, editAttendance } = require('../../../odooRpc.js');
 const { earlyAttendanceQueue } = require('../../../queue/earlyAttendanceQueue');
-const { incrementThreadApprovals, getThreadApprovals } = require('../../../sqliteFunctions');
+const {
+  getBranchById,
+  getBranchRoles,
+  incrementThreadApprovals,
+  getThreadApprovals,
+} = require('../../../sqliteFunctions');
 const { isScheduleChannel, updateStarterMessageApprovals } = require('../../../functions/helpers/approvalCounterUtils');
 
 const managementAttendanceLogChannelId = '1314413190074994690';
@@ -23,7 +27,7 @@ const attendanceCheckIn = async (req, res) => {
   try {
     const { x_company_id, x_discord_id } = req.body;
 
-    const department = departments.find((d) => d.id === x_company_id);
+    const department = getBranchById(x_company_id);
 
     if (!department) throw new Error('Department not found');
 
@@ -40,7 +44,7 @@ const attendanceCheckIn = async (req, res) => {
         }
 
         if (department?.role) {
-          const rolesToRemove = departments.map((d) => d.role).filter(Boolean);
+          const rolesToRemove = getBranchRoles();
 
           await discordMember.roles.remove(rolesToRemove);
           await discordMember.roles.add(department.role);
@@ -66,7 +70,7 @@ const attendanceCheckOut = async (req, res) => {
   try {
     const { x_discord_id, id: attendanceId, x_company_id } = req.body;
 
-    const department = departments.find((d) => d.id === x_company_id);
+    const department = getBranchById(x_company_id);
 
     if (!department) throw new Error('Department not found');
 
@@ -122,7 +126,7 @@ const managementCheckIn = async (req, res) => {
       x_minutes_delta,
     } = req.body;
 
-    const department = departments.find((d) => d.id === x_company_id);
+    const department = getBranchById(x_company_id);
 
     if (!department) throw new Error('Department not found');
 
@@ -209,7 +213,7 @@ const managementCheckOut = async (req, res) => {
       x_company_id,
     } = req.body;
 
-    const department = departments.find((d) => d.id === x_company_id);
+    const department = getBranchById(x_company_id);
 
     if (!department) throw new Error('Department not found');
 
@@ -270,7 +274,7 @@ const employeeCheckIn = async (req, res) => {
     if (!x_planning_slot_id)
       throw new Error('Planning slot not found for employee: ' + x_employee_contact_name);
 
-    const department = departments.find((d) => d.id === x_company_id);
+    const department = getBranchById(x_company_id);
 
     if (!department) throw new Error('Department not found');
 
@@ -281,7 +285,9 @@ const employeeCheckIn = async (req, res) => {
     const punctuality = evaluatePunctuality(check_in, x_shift_start);
 
     const employeeName = x_employee_contact_name?.split('-')[1]?.trim() || 'Unknown';
-    const attendanceLogChannel = client.channels.cache.get(department.scheduleChannel);
+    throwDeprecatedBranchChannelRouting();
+
+    const attendanceLogChannel = client.channels.cache.get(null);
 
     if (!attendanceLogChannel) throw new Error('Attendance channel not found');
 
@@ -487,7 +493,7 @@ const employeeCheckOut = async (req, res) => {
     if (!x_planning_slot_id)
       throw new Error('Planning slot not found for employee: ' + x_employee_contact_name);
 
-    const department = departments.find((d) => d.id === x_company_id);
+    const department = getBranchById(x_company_id);
     if (!department) throw new Error('Department not found');
 
     const employeeName = x_employee_contact_name?.split('-')[1]?.trim() || 'Unknown';
@@ -501,7 +507,9 @@ const employeeCheckOut = async (req, res) => {
 
     const messageContent = `${shift_start_date} | ${x_planning_slot_id}`;
 
-    const attendanceLogChannel = client.channels.cache.get(department.scheduleChannel);
+    throwDeprecatedBranchChannelRouting();
+
+    const attendanceLogChannel = client.channels.cache.get(null);
     if (!attendanceLogChannel) throw new Error('Attendance channel not found');
 
     const channelMessages = await attendanceLogChannel.messages.fetch({
@@ -680,6 +688,10 @@ function formatTime(rawTime) {
     .tz(rawTime, 'YYYY-MM-DD HH:mm:ss', 'UTC')
     .tz('Asia/Manila')
     .format('MMMM D, YYYY [at] h:mm A');
+}
+
+function throwDeprecatedBranchChannelRouting() {
+  throw new Error('Branch schedule channel routing is deprecated.');
 }
 
 function formatDate(rawTime) {

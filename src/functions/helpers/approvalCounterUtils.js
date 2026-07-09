@@ -1,5 +1,4 @@
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const departments = require('../../config/departments.json');
 
 /**
  * Get emoji for approval count (0-10)
@@ -24,12 +23,12 @@ function getApprovalEmoji(count) {
 }
 
 /**
- * Check if a channel is a schedule channel from departments.json
+ * Schedule-channel routing was removed with the deprecated branch channel fields.
  * @param {string} channelId - The channel ID to check
- * @returns {boolean} True if channel is a schedule channel
+ * @returns {boolean} Always false until a new routing source is added
  */
 function isScheduleChannel(channelId) {
-  return departments.some(dept => dept.scheduleChannel === channelId);
+  return false;
 }
 
 /**

@@ -1,7 +1,7 @@
 const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
 
 const client = require('../../../index.js');
-const departments = require('../../../config/departments.json');
+const { getBranchById } = require('../../../sqliteFunctions');
 const auditTypes = require('../../../config/audit_types.json');
 
 const { meritDemerit } = require('../../../odooRpc.js');
@@ -11,7 +11,7 @@ const auditQueueChannelId = '1423573262641922149';
 const storeCCTVSpotAudit = async (req, res) => {
   const { company_id, x_pos_name } = req.body;
 
-  const department = departments.find((d) => d.id === company_id);
+  const department = getBranchById(company_id);
   if (!department) {
     return res.status(200).json({ ok: true, message: 'Department not found' });
   }

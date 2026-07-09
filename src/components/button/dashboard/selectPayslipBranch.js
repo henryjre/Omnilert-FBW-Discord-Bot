@@ -10,6 +10,8 @@ const {
   SeparatorBuilder,
 } = require('discord.js');
 
+const { getBranches } = require('../../../sqliteFunctions');
+
 module.exports = {
   data: {
     name: `salaryComputationDashboard`,
@@ -37,18 +39,23 @@ module.exports = {
 
     await interaction.deferUpdate();
 
+    const branches = getBranches();
+    const branchOptions = branches.slice(0, 25).map((branch) => ({
+      label: branch.name.slice(0, 100),
+      value: branch.name.slice(0, 100),
+    }));
+
     const branchMenu = new StringSelectMenuBuilder()
       .setCustomId('payslipBranchMenu')
       .setPlaceholder('Select a branch')
       .setMinValues(1)
-      .setMaxValues(1)
-      .addOptions(
-        { label: 'Omnilert', value: 'Main Omnilert' },
-        { label: 'DHVSU Bacolor', value: 'DHVSU Bacolor' },
-        { label: 'Primark Center Guagua', value: 'Primark Center Guagua' },
-        { label: 'Robinsons Starmills CSFP', value: 'Robinsons Starmills CSFP' },
-        { label: 'JASA Hiway Guagua', value: 'JASA Hiway Guagua' }
-      );
+      .setMaxValues(1);
+
+    if (branchOptions.length > 0) {
+      branchMenu.addOptions(branchOptions);
+    } else {
+      branchMenu.addOptions({ label: 'No branches available', value: 'none' }).setDisabled(true);
+    }
 
     const backButton = new ButtonBuilder()
       .setCustomId('backToDashboard')

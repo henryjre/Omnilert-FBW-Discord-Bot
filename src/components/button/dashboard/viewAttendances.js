@@ -13,7 +13,7 @@ const moment = require('moment-timezone');
 const { getAttendanceByEmployee } = require('../../../odooRpc.js');
 const { makeEmbedTable } = require('../../../functions/code/repeatFunctions.js');
 const { saveAttendanceRecords } = require('../../../sqliteFunctions.js');
-const departments = require('../../../config/departments.json');
+const { getBranchByName } = require('../../../sqliteFunctions.js');
 
 module.exports = {
   data: {
@@ -75,7 +75,7 @@ module.exports = {
       }
     }
 
-    const department = departments.find((d) => d.name === branchFromComponent);
+    const department = getBranchByName(branchFromComponent);
 
     if (!department) {
       const noAttendancesContainer = new ContainerBuilder()

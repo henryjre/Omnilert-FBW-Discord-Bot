@@ -1,4 +1,5 @@
 const db = require('./sqliteConnection');
+const { nanoid } = require('nanoid');
 
 const getNextAuditId = db.transaction((code) => {
   const upsertCounter = db.prepare(`
@@ -201,6 +202,150 @@ const deleteAnnouncementTracking = db.transaction((announcementId) => {
   `);
 
   deleteStmt.run(announcementId);
+});
+
+////////////////////////////////////////////////////////////
+// Branches
+////////////////////////////////////////////////////////////
+
+const createBranch = db.transaction(({ id, name, role = null }) => {
+  const insertStmt = db.prepare(`
+    INSERT INTO branches (id, name, role)
+    VALUES (@id, @name, @role)
+  `);
+
+  insertStmt.run({
+    id,
+    name,
+    role,
+  });
+
+  return { id, name, role };
+});
+
+const getBranches = db.transaction(() => {
+  return db
+    .prepare(
+      `
+        SELECT id, name, role
+        FROM branches
+        ORDER BY id ASC
+      `
+    )
+    .all();
+});
+
+const getBranchById = db.transaction((id) => {
+  return (
+    db
+      .prepare(
+        `
+          SELECT id, name, role
+          FROM branches
+          WHERE id = ?
+        `
+      )
+      .get(id) || null
+  );
+});
+
+const getBranchByName = db.transaction((name) => {
+  return (
+    db
+      .prepare(
+        `
+          SELECT id, name, role
+          FROM branches
+          WHERE name = ?
+        `
+      )
+      .get(name) || null
+  );
+});
+
+const updateBranch = db.transaction(({ originalId, id, name, role = null }) => {
+  const updateStmt = db.prepare(`
+    UPDATE branches
+    SET id = @id,
+        name = @name,
+        role = @role
+    WHERE id = @original_id
+  `);
+
+  const result = updateStmt.run({
+    original_id: originalId,
+    id,
+    name,
+    role,
+  });
+
+  if (result.changes === 0) return null;
+  return (
+    db
+      .prepare(
+        `
+          SELECT id, name, role
+          FROM branches
+          WHERE id = ?
+        `
+      )
+      .get(id) || null
+  );
+});
+
+const getBranchRoles = db.transaction(() => {
+  return db
+    .prepare(
+      `
+        SELECT role
+        FROM branches
+        WHERE role IS NOT NULL AND role != ''
+      `
+    )
+    .all()
+    .map((row) => row.role);
+});
+
+const createPendingBranchCreation = db.transaction((data, createdBy) => {
+  const token = nanoid(12);
+  db.prepare(
+    `
+      INSERT INTO pending_branch_creations (token, data, created_by)
+      VALUES (?, ?, ?)
+    `
+  ).run(token, JSON.stringify(data), createdBy);
+
+  return token;
+});
+
+const getPendingBranchCreation = db.transaction((token) => {
+  const row = db
+    .prepare(
+      `
+        SELECT token, data, created_by, created_at
+        FROM pending_branch_creations
+        WHERE token = ?
+      `
+    )
+    .get(token);
+
+  if (!row) return null;
+
+  try {
+    return {
+      token: row.token,
+      data: JSON.parse(row.data),
+      created_by: row.created_by,
+      created_at: row.created_at,
+    };
+  } catch (error) {
+    return null;
+  }
+});
+
+const deletePendingBranchCreation = db.transaction((token) => {
+  const result = db.prepare(`DELETE FROM pending_branch_creations WHERE token = ?`).run(token);
+  return result.changes > 0;
 });
 
 ////////////////////////////////////////////////////////////
@@ -594,6 +739,15 @@ module.exports = {
   getAnnouncementTracking,
   getNonAcknowledgers,
   deleteAnnouncementTracking,
+  createBranch,
+  getBranches,
+  getBranchById,
+  getBranchByName,
+  updateBranch,
+  getBranchRoles,
+  createPendingBranchCreation,
+  getPendingBranchCreation,
+  deletePendingBranchCreation,
   createDepartment,
   getDepartments,
   getDepartmentById,

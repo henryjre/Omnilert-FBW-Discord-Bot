@@ -9,7 +9,7 @@ const {
 } = require('discord.js');
 
 const { getEmployeePayslipData, createViewOnlyPayslip } = require('../../../odooRpc.js');
-const departments = require('../../../config/departments.json');
+const { getBranchByName } = require('../../../sqliteFunctions');
 
 module.exports = {
   data: {
@@ -45,7 +45,22 @@ module.exports = {
     await interaction.deferUpdate();
 
     const selectedBranch = interaction.values[0];
-    const department = departments.find((d) => d.name === selectedBranch);
+    const department = getBranchByName(selectedBranch);
+
+    if (!department) {
+      const noBranchContainer = new ContainerBuilder()
+        .addTextDisplayComponents((textDisplay) => textDisplay.setContent('# 📊 Employee Dashboard'))
+        .addSeparatorComponents((separator) => separator)
+        .addTextDisplayComponents((textDisplay) =>
+          textDisplay.setContent('*No branch found for the selected payslip details.*')
+        );
+
+      await interaction.message.edit({
+        components: [noBranchContainer],
+        flags: MessageFlags.IsComponentsV2,
+      });
+      return;
+    }
 
     let payslipData = await getEmployeePayslipData(interaction.user.id, department.id);
 

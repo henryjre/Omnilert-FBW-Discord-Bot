@@ -8,6 +8,8 @@ const {
   LabelBuilder,
 } = require('discord.js');
 
+const { getBrandDefaults } = require('../../utils/branchUtils');
+
 const managementRoleId = '1314413671245676685';
 const commandAdministratorRoleId = '1523620813599936623';
 
@@ -56,6 +58,27 @@ module.exports = {
             .setDescription('Optional existing Discord channel ID.')
             .setRequired(false)
         )
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName('branch')
+        .setDescription('Create a branch.')
+        .addIntegerOption((option) =>
+          option
+            .setName('odoo_id')
+            .setDescription('Odoo company ID for this branch.')
+            .setRequired(true)
+        )
+        .addStringOption((option) =>
+          option
+            .setName('brand')
+            .setDescription('Select the branch brand.')
+            .setRequired(true)
+            .setChoices(
+              { name: 'Famous Belgian Waffle', value: 'famous_belgian_waffle' },
+              { name: 'Monster Siomai', value: 'monster_siomai' }
+            )
+        )
     ),
   async execute(interaction, client) {
     // if (interaction.channel.id !== commandsChannel) {
@@ -74,6 +97,9 @@ module.exports = {
         break;
       case 'department':
         await runCreateDepartmentCommand(interaction, client);
+        break;
+      case 'branch':
+        await runCreateBranchCommand(interaction, client);
         break;
 
       default:
@@ -190,6 +216,90 @@ async function runCreateDepartmentCommand(interaction, client) {
     .setTextInputComponent(emojiIconInput);
 
   modal.addLabelComponents(departmentNameLabel, emojiIconLabel);
+
+  await interaction.showModal(modal);
+}
+
+async function runCreateBranchCommand(interaction, client) {
+  if (!interaction.member.roles.cache.has(commandAdministratorRoleId)) {
+    const replyEmbed = new EmbedBuilder().setDescription(
+      `🔴 ERROR: This command can only be used by <@&${commandAdministratorRoleId}>.`
+    );
+    await interaction.reply({
+      flags: MessageFlags.Ephemeral,
+      embeds: [replyEmbed],
+    });
+    return;
+  }
+
+  const odooId = interaction.options.getInteger('odoo_id');
+  const brand = interaction.options.getString('brand');
+  const defaults = getBrandDefaults(brand);
+
+  const modal = new ModalBuilder()
+    .setCustomId(`createBranchModal:${odooId}:${brand}`)
+    .setTitle('CREATE BRANCH');
+
+  const branchNameLabel = new LabelBuilder()
+    .setLabel('Branch Name')
+    .setDescription('The branch display name.')
+    .setTextInputComponent(
+      new TextInputBuilder()
+        .setCustomId('branchName')
+        .setStyle(TextInputStyle.Short)
+        .setRequired(true)
+    );
+
+  const branchNumberLabel = new LabelBuilder()
+    .setLabel('Branch Number')
+    .setDescription('Used in the inquiry channel name.')
+    .setTextInputComponent(
+      new TextInputBuilder()
+        .setCustomId('branchNumber')
+        .setStyle(TextInputStyle.Short)
+        .setRequired(true)
+    );
+
+  const rolePrefixLabel = new LabelBuilder()
+    .setLabel('Role Prefix')
+    .setDescription('Example: FBW or MS.')
+    .setTextInputComponent(
+      new TextInputBuilder()
+        .setCustomId('rolePrefix')
+        .setStyle(TextInputStyle.Short)
+        .setRequired(true)
+        .setValue(defaults.rolePrefix)
+    );
+
+  const categoryPrefixLabel = new LabelBuilder()
+    .setLabel('Category Prefix')
+    .setDescription('Example: 𝐅𝐁𝐖 or 𝐌𝐒.')
+    .setTextInputComponent(
+      new TextInputBuilder()
+        .setCustomId('categoryPrefix')
+        .setStyle(TextInputStyle.Short)
+        .setRequired(true)
+        .setValue(defaults.categoryPrefix)
+    );
+
+  const channelPrefixLabel = new LabelBuilder()
+    .setLabel('Channel Prefix')
+    .setDescription('Example: ꜰʙᴡ or ᴍs.')
+    .setTextInputComponent(
+      new TextInputBuilder()
+        .setCustomId('channelPrefix')
+        .setStyle(TextInputStyle.Short)
+        .setRequired(true)
+        .setValue(defaults.channelPrefix)
+    );
+
+  modal.addLabelComponents(
+    branchNameLabel,
+    branchNumberLabel,
+    rolePrefixLabel,
+    categoryPrefixLabel,
+    channelPrefixLabel
+  );
 
   await interaction.showModal(modal);
 }

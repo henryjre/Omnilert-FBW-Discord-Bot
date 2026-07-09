@@ -18,7 +18,7 @@ const pesoFormatter = new Intl.NumberFormat('en-PH', {
   minimumFractionDigits: 2,
 });
 
-const departments = require('../../../config/departments.json');
+const { getBranchById } = require('../../../sqliteFunctions');
 
 const MAX_EMBED_FIELD_VALUE_LENGTH = 1024;
 const MAX_PRODUCT_EMBED_FIELDS = 5;
@@ -37,16 +37,15 @@ const sessionOpen = async (req, res) => {
 
   console.log(req.body);
 
-  const department = departments.find((d) => d.id === company_id);
+  const department = getBranchById(company_id);
 
   if (!department) {
     return res.status(200).json({ ok: true, message: 'Webhook received' });
   }
-
-  const verificationChannel = client.channels.cache.get(department.verificationChannel);
+  return sendDeprecatedBranchChannelRouting(res);
 
   const currentDate = getFormattedDate();
-  const sessionChannel = client.channels.cache.get(department.posChannel);
+  return sendDeprecatedBranchChannelRouting(res);
   const threadName = `${currentDate} | ${x_company_name} | ${display_name}`;
   const pesoEndBal = pesoFormatter.format(cash_register_balance_end);
   const pesoStartBal = pesoFormatter.format(cash_register_balance_start);
@@ -251,14 +250,13 @@ const sessionClose = async (req, res) => {
       x_opening_pcf = 0,
     } = req.body;
 
-    const department = departments.find((d) => d.id === company_id);
+    const department = getBranchById(company_id);
 
     if (!department) {
       return res.status(200).json({ ok: true, message: 'Webhook received' });
     }
-
-    const sessionChannel = client.channels.cache.get(department.posChannel);
-    const verificationChannel = client.channels.cache.get(department.verificationChannel);
+  return sendDeprecatedBranchChannelRouting(res);
+  return sendDeprecatedBranchChannelRouting(res);
 
     if (!sessionChannel) {
       return res.status(200).json({ ok: true, message: 'Channel not found' });
@@ -601,13 +599,12 @@ const discountOrder = async (req, res) => {
     return res.status(200).json({ ok: true, message: 'Webhook received' });
   }
 
-  const department = departments.find((d) => d.id === company_id);
+  const department = getBranchById(company_id);
 
   if (!department) {
     return res.status(200).json({ ok: true, message: 'Webhook received' });
   }
-
-  const verificationChannel = client.channels.cache.get(department.verificationChannel);
+  return sendDeprecatedBranchChannelRouting(res);
   const orderDate = formatDateTime(date_order);
 
   let mentionable;
@@ -699,13 +696,12 @@ const nonCashOrder = async (req, res) => {
     return res.status(200).json({ ok: true, message: 'Webhook received' });
   }
 
-  const department = departments.find((d) => d.id === company_id);
+  const department = getBranchById(company_id);
 
   if (!department) {
     return res.status(200).json({ ok: true, message: 'Webhook received' });
   }
-
-  const verificationChannel = client.channels.cache.get(department.verificationChannel);
+  return sendDeprecatedBranchChannelRouting(res);
   const orderDate = formatDateTime(date_order);
 
   let mentionable;
@@ -798,13 +794,12 @@ const refundOrder = async (req, res) => {
     company_id,
   } = req.body;
 
-  const department = departments.find((d) => d.id === company_id);
+  const department = getBranchById(company_id);
 
   if (!department) {
     return res.status(200).json({ ok: true, message: 'Webhook received' });
   }
-
-  const verificationChannel = client.channels.cache.get(department.verificationChannel);
+  return sendDeprecatedBranchChannelRouting(res);
   const orderDate = formatDateTime(date_order);
 
   let mentionable;
@@ -876,13 +871,12 @@ const tokenPayOrder = async (req, res) => {
     company_id,
   } = req.body;
 
-  const department = departments.find((d) => d.id === company_id);
+  const department = getBranchById(company_id);
 
   if (!department) {
     return res.status(200).json({ ok: true, message: 'Webhook received' });
   }
-
-  const verificationChannel = client.channels.cache.get(department.verificationChannel);
+  return sendDeprecatedBranchChannelRouting(res);
   const orderDate = formatDateTime(date_order);
 
   let mentionable, customerMentionable;
@@ -966,7 +960,7 @@ const ispeOrder = async (req, res) => {
     date_approve,
   } = req.body;
 
-  const department = departments.find((d) => d.id === company_id);
+  const department = getBranchById(company_id);
 
   if (!department) {
     return res.status(200).json({ ok: true, message: 'Webhook received' });
@@ -974,7 +968,7 @@ const ispeOrder = async (req, res) => {
 
   const departmentName = department.name;
   const mentionable = `<@&${department.role}>`;
-  const verificationChannel = client.channels.cache.get(department.verificationChannel);
+  return sendDeprecatedBranchChannelRouting(res);
 
   const orderDate = formatDateTime(date_approve);
 
@@ -1037,13 +1031,12 @@ const ispeOrder = async (req, res) => {
 const posCashOutCashIn = async (req, res) => {
   const { amount_total, create_date, payment_ref, company_id } = req.body;
 
-  const department = departments.find((d) => d.id === company_id);
+  const department = getBranchById(company_id);
 
   if (!department) {
     return res.status(200).json({ ok: true, message: 'Webhook received' });
   }
-
-  const verificationChannel = client.channels.cache.get(department.verificationChannel);
+  return sendDeprecatedBranchChannelRouting(res);
 
   const paymentRef = payment_ref.split('-');
 
@@ -1134,6 +1127,10 @@ function getFormattedDate(timezone = 'Asia/Manila') {
 
 function getCurrentFormattedDate(timezone = 'Asia/Manila') {
   return moment().tz(timezone).format('MMMM DD, YYYY [at] h:mm A');
+}
+
+function sendDeprecatedBranchChannelRouting(res) {
+  return res.status(200).json({ ok: false, message: 'Branch POS channel routing is deprecated.' });
 }
 
 function formatDateTime(datetime) {

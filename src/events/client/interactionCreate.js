@@ -69,6 +69,10 @@ module.exports = {
 
       const dynamicButtonPrefixes = {
         cashBreakdown_: "cashBreakdown",
+        "branchPage:": "branchPage",
+        "branchEdit:": "branchEdit",
+        "branchCreateConfirm:": "branchCreateConfirm",
+        "branchCreateCancel:": "branchCreateCancel",
         "departmentPage:": "departmentPage",
         "departmentEdit:": "departmentEdit",
         "departmentDelete:": "departmentDelete",
@@ -115,6 +119,8 @@ module.exports = {
       const { modals } = client;
       const { customId } = interaction;
       const dynamicModalPrefixes = {
+        "createBranchModal:": "createBranchModal",
+        "editBranchModal:": "editBranchModal",
         "createDepartmentModal:": "createDepartmentModal",
         "editDepartmentModal:": "editDepartmentModal",
       };

@@ -1,9 +1,9 @@
 const { MessageFlags, EmbedBuilder } = require('discord.js');
 
-const departments = require('../../../config/departments.json');
 const dutyTypes = require('../../../config/duty_types.json');
 
 const { createPlanningShift } = require('../../../odooRpc.js');
+const { getBranchByName } = require('../../../sqliteFunctions');
 
 const moment = require('moment-timezone');
 
@@ -59,7 +59,7 @@ module.exports = {
       interimDutyData.attendanceId = cleanFieldValue(attendanceIdField.value);
     }
 
-    const department = departments.find((d) => d.name === interimDutyData.branch);
+    const department = getBranchByName(interimDutyData.branch);
 
     if (!department) {
       replyEmbed.setDescription(`🔴 ERROR: Branch not found.`).setColor('Red');

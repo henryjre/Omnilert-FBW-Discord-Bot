@@ -1,15 +1,7 @@
 const {
   MessageFlags,
   EmbedBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  ActionRowBuilder,
-  StringSelectMenuBuilder,
-  StringSelectMenuOptionBuilder
 } = require('discord.js');
-
-const departments = require('../../../config/departments.json');
-const { updateClosingPcfBalance } = require('../../../odooRpc.js');
 
 /**
  * Returns whether any message embed carries an image (proof).
@@ -35,8 +27,6 @@ module.exports = {
       const messageEmbed = allEmbeds[0];
 
       const replyEmbed = new EmbedBuilder();
-
-      const sessionField = messageEmbed.data.fields.find((f) => f.name === 'Session Name');
 
       const mentionedUser = interaction.message.mentions.users.first();
       const mentionedRole = interaction.message.mentions.roles.first();
@@ -76,117 +66,10 @@ module.exports = {
         });
       }
 
-      const sessionName = sessionField.value;
-
-      const department = departments.find(
-        (d) => d.verificationChannel === interaction.message.channelId
-      );
-
-      const posChannel = client.channels.cache.get(department.posChannel);
-
-      const sessionMessage = await posChannel.messages
-        .fetch({ limit: 100 })
-        .then((messages) => messages.find((msg) => msg.content.includes(sessionName)));
-
-      const posThread = await sessionMessage.thread;
-
-      const pcfUpdate = getPcfUpdate(messageEmbed, department.id);
-
-      if (!posThread) {
-        return await interaction.followUp({
-          content: `🔴 ERROR: No thread found.`,
-          flags: MessageFlags.Ephemeral
-        });
-      }
-
-      if (pcfUpdate) {
-        await updateClosingPcfBalance(
-          pcfUpdate.balance,
-          pcfUpdate.companyId,
-          pcfUpdate.sessionId,
-          pcfUpdate.type
-        );
-      }
-
-      messageEmbed.data.fields.push({
-        name: 'Confirmed By',
-        value: interaction.user.toString()
+      return await interaction.followUp({
+        content: '🔴 ERROR: Branch POS channel routing is deprecated.',
+        flags: MessageFlags.Ephemeral
       });
-
-      messageEmbed.data.footer = {
-        text: ``
-      };
-
-      const auditRatingMenu = new StringSelectMenuBuilder()
-        .setCustomId('posAuditRatingMenu')
-        .setOptions([
-          new StringSelectMenuOptionBuilder().setLabel('⭐').setValue('⭐'),
-          new StringSelectMenuOptionBuilder().setLabel('⭐⭐').setValue('⭐⭐'),
-          new StringSelectMenuOptionBuilder().setLabel('⭐⭐⭐').setValue('⭐⭐⭐'),
-          new StringSelectMenuOptionBuilder().setLabel('⭐⭐⭐⭐').setValue('⭐⭐⭐⭐'),
-          new StringSelectMenuOptionBuilder().setLabel('⭐⭐⭐⭐⭐').setValue('⭐⭐⭐⭐⭐')
-        ])
-        .setMinValues(1)
-        .setMaxValues(1)
-        .setPlaceholder('Select audit rating.');
-
-      // const submit = new ButtonBuilder()
-      //   .setCustomId("posOrderAudit")
-      //   .setLabel("Audit")
-      //   .setStyle(ButtonStyle.Primary);
-
-      const menuRow = new ActionRowBuilder().addComponents(auditRatingMenu);
-      // const buttonRow = new ActionRowBuilder().addComponents(submit);
-
-      await posThread.send({
-        embeds: allEmbeds,
-        components: [menuRow]
-      });
-
-      if (
-        interaction.message.thread &&
-        interaction.message.thread.name.includes('Token Pay Proof')
-      ) {
-        const customerField = messageEmbed.data.fields.find((f) => f.name === 'Customer');
-
-        const customer = customerField.value;
-
-        if (customer !== 'No user found') {
-          const confirmButton = new ButtonBuilder()
-            .setCustomId('acknowledgePenalty')
-            .setLabel('Acknowledge')
-            .setStyle(ButtonStyle.Success);
-
-          const acknowledgeButtonRow = new ActionRowBuilder().addComponents(confirmButton);
-
-          const employeeNotifChannel = client.channels.cache.get('1347592755706200155');
-
-          messageEmbed.data.description = messageEmbed.data.description.replace(
-            'Verification',
-            'Notification'
-          );
-
-          await employeeNotifChannel.send({
-            content: customer,
-            embeds: allEmbeds,
-            components: [acknowledgeButtonRow]
-          });
-        }
-      }
-
-      // Add error handling for deletions
-      try {
-        if (interaction.message.thread) {
-          await interaction.message.thread.delete();
-        }
-        await interaction.message.delete();
-      } catch (error) {
-        console.error('Error deleting messages:', error);
-        await interaction.followUp({
-          content: '🔴 ERROR: Failed to clean up messages. Please contact an administrator.',
-          flags: MessageFlags.Ephemeral
-        });
-      }
     } catch (error) {
       console.error('Error in order confirmation:', error);
       await interaction.followUp({

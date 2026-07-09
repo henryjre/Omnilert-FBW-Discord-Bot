@@ -11,10 +11,9 @@ const {
 } = require('discord.js');
 const AsyncLock = require('async-lock');
 
-const { getNextAuditId } = require('../../../sqliteFunctions.js');
+const { getBranchByName, getNextAuditId } = require('../../../sqliteFunctions.js');
 const { cleanAuditDescription } = require('../../../functions/code/repeatFunctions.js');
 
-const departments = require('../../../config/departments.json');
 const auditTypes = require('../../../config/audit_types.json');
 
 const lock = new AsyncLock();
@@ -204,7 +203,12 @@ async function runForWinner(interaction, client) {
   if (auditEmbed.data.description.includes('Store CCTV Spot Audit')) {
     const branchField = auditEmbed.data.fields.find((f) => f.name === 'Branch');
     const branch = branchField.value;
-    const department = departments.find((d) => d.name === branch);
+    const department = getBranchByName(branch);
+
+    if (!department?.role) {
+      replyEmbed.setDescription(`🔴 ERROR: Branch role not found.`).setColor('Red');
+      return await interaction.editReply({ embeds: [replyEmbed] });
+    }
 
     const departmentRole = await interaction.guild.roles.cache.get(department.role);
 

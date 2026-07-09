@@ -9,7 +9,7 @@ const moment = require('moment-timezone');
 
 const { getAttendanceById } = require('../../../odooRpc.js');
 
-const departments = require('../../../config/departments.json');
+const { getBranchById } = require('../../../sqliteFunctions');
 const client = require('../../../index');
 
 const roleColors = {
@@ -49,11 +49,11 @@ const deletedPlanningShift = async (req, res) => {
   try {
     const { id, company_id, start_datetime } = req.body;
 
-    const department = departments.find((d) => d.id === company_id);
+    const department = getBranchById(company_id);
     if (!department) throw new Error('Department not found');
-    if (!department.scheduleChannel) throw new Error('Schedule channel not found');
+    throwDeprecatedBranchChannelRouting();
 
-    const scheduleChannel = client.channels.cache.get(department.scheduleChannel);
+    const scheduleChannel = client.channels.cache.get(null);
     if (!scheduleChannel) throw new Error('Schedule channel not found');
 
     const channelMessages = await scheduleChannel.messages.fetch({
@@ -97,7 +97,7 @@ const processPublishedShift = async (payload) => {
       x_attendance_id
     } = payload;
 
-    const department = departments.find((d) => d.id === company_id);
+    const department = getBranchById(company_id);
 
     if (!department) throw new Error('Department not found');
 
@@ -106,9 +106,9 @@ const processPublishedShift = async (payload) => {
     const endDateTime = formatTime(end_datetime);
     const employeeName = x_employee_contact_name?.split('-')[1]?.trim() || 'Unknown';
 
-    if (!department.scheduleChannel) throw new Error('Schedule channel not found');
+    throwDeprecatedBranchChannelRouting();
 
-    const scheduleChannel = client.channels.cache.get(department.scheduleChannel);
+    const scheduleChannel = client.channels.cache.get(null);
 
     if (!scheduleChannel) throw new Error('Schedule channel not found');
     if (!x_discord_id) throw new Error('Discord ID not found');
@@ -295,7 +295,7 @@ const updatePlanningShift = async (payload, planningMessage, attendance) => {
     x_attendance_id
   } = payload;
 
-  const department = departments.find((d) => d.id === company_id);
+  const department = getBranchById(company_id);
 
   if (!department) throw new Error('Department not found');
 
@@ -464,6 +464,10 @@ const updatePlanningShift = async (payload, planningMessage, attendance) => {
 
 function cleanFieldValue(s) {
   return s.replace(/^[^|]*\|\s*/, '').trim();
+}
+
+function throwDeprecatedBranchChannelRouting() {
+  throw new Error('Branch schedule channel routing is deprecated.');
 }
 
 function formatMinutes(minutes) {

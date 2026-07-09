@@ -6,7 +6,7 @@ const {
 } = require("discord.js");
 const client = require("../../../index.js");
 const moment = require("moment-timezone");
-const departments = require("../../../config/departments.json");
+const { getBranchById } = require("../../../sqliteFunctions");
 
 const pesoFormatter = new Intl.NumberFormat("en-PH", {
   style: "currency",
@@ -41,7 +41,7 @@ const orderAudit = async (req, res) => {
   }
 
   try {
-    const department = departments.find((d) => d.id === company_id);
+    const department = getBranchById(company_id);
 
     if (!department) throw new Error("Department not found");
 

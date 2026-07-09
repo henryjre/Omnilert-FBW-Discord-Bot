@@ -1,4 +1,6 @@
 const Database = require('better-sqlite3');
+const fs = require('fs');
+const path = require('path');
 const db = new Database('./src/sqlite.db');
 
 db.exec(`
@@ -113,6 +115,23 @@ db.exec(`
 `);
 
 db.exec(`
+  CREATE TABLE IF NOT EXISTS branches (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    role TEXT
+  )
+`);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS pending_branch_creations (
+    token TEXT PRIMARY KEY,
+    data TEXT NOT NULL,
+    created_by TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
+db.exec(`
   CREATE TABLE IF NOT EXISTS department_voice_sessions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     guild_id TEXT NOT NULL,
@@ -154,6 +173,32 @@ for (const migration of [
   } catch (e) {
     // Column already exists; ignore.
   }
+}
+
+try {
+  const departmentsPath = path.join(__dirname, 'config', 'departments.json');
+  if (fs.existsSync(departmentsPath)) {
+    const departments = JSON.parse(fs.readFileSync(departmentsPath, 'utf8'));
+    const insertBranch = db.prepare(`
+      INSERT OR IGNORE INTO branches (id, name, role)
+      VALUES (@id, @name, @role)
+    `);
+
+    const seedBranches = db.transaction((items) => {
+      for (const item of items) {
+        if (!item || !Number.isInteger(Number(item.id)) || !item.name) continue;
+        insertBranch.run({
+          id: Number(item.id),
+          name: item.name,
+          role: item.role || null,
+        });
+      }
+    });
+
+    seedBranches(Array.isArray(departments) ? departments : []);
+  }
+} catch (e) {
+  console.error('Failed to seed branches from departments.json:', e.message);
 }
 
 module.exports = db;

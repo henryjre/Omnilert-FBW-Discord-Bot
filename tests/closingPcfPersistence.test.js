@@ -3,18 +3,11 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 
-function loadOrderConfirmationWithStubs({ departments, updateClosingPcfBalance }) {
+function loadOrderConfirmationWithStubs({ updateClosingPcfBalance }) {
   const modulePath = require.resolve('../src/components/button/posSession/orderConfirmation.js');
-  const departmentsPath = require.resolve('../src/config/departments.json');
   const odooRpcPath = require.resolve('../src/odooRpc.js');
 
   delete require.cache[modulePath];
-  require.cache[departmentsPath] = {
-    id: departmentsPath,
-    filename: departmentsPath,
-    loaded: true,
-    exports: departments,
-  };
   require.cache[odooRpcPath] = {
     id: odooRpcPath,
     filename: odooRpcPath,
@@ -55,7 +48,9 @@ function buildTestClient() {
 }
 
 function buildConfirmInteraction({ description, countedFieldName, countedValue }) {
+  const followUps = [];
   return {
+    followUps,
     user: {
       id: 'user-1',
       toString() {
@@ -102,14 +97,13 @@ function buildConfirmInteraction({ description, countedFieldName, countedValue }
       delete: async () => {},
     },
     deferUpdate: async () => {},
-    followUp: async () => {},
+    followUp: async (payload) => followUps.push(payload),
   };
 }
 
-test('orderConfirmation saves final counted closing PCF on confirm', async () => {
+test('orderConfirmation does not save closing PCF when POS routing is deprecated', async () => {
   const rpcCalls = [];
   const orderConfirmation = loadOrderConfirmationWithStubs({
-    departments: [{ id: 42, verificationChannel: 'verification-1', posChannel: 'pos-1' }],
     updateClosingPcfBalance: async (...args) => {
       rpcCalls.push(args);
     },
@@ -124,13 +118,13 @@ test('orderConfirmation saves final counted closing PCF on confirm', async () =>
 
   await orderConfirmation.execute(interaction, client);
 
-  assert.deepEqual(rpcCalls, [[1234.5, 42, 'Session ABC', 'closing']]);
+  assert.deepEqual(rpcCalls, []);
+  assert.match(interaction.followUps[0].content, /Branch POS channel routing is deprecated/);
 });
 
-test('orderConfirmation saves final counted opening PCF on confirm', async () => {
+test('orderConfirmation does not save opening PCF when POS routing is deprecated', async () => {
   const rpcCalls = [];
   const orderConfirmation = loadOrderConfirmationWithStubs({
-    departments: [{ id: 42, verificationChannel: 'verification-1', posChannel: 'pos-1' }],
     updateClosingPcfBalance: async (...args) => {
       rpcCalls.push(args);
     },
@@ -145,7 +139,8 @@ test('orderConfirmation saves final counted opening PCF on confirm', async () =>
 
   await orderConfirmation.execute(interaction, client);
 
-  assert.deepEqual(rpcCalls, [[243, 42, 'Session ABC', 'opening']]);
+  assert.deepEqual(rpcCalls, []);
+  assert.match(interaction.followUps[0].content, /Branch POS channel routing is deprecated/);
 });
 
 test('cashBreakdown does not save PCF before confirmation', () => {

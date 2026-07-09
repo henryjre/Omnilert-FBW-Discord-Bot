@@ -2,57 +2,36 @@
   {
     "id": 3,
     "name": "FBW DHVSU Bacolor",
-    "role": "1336992007910068225",
-    "posChannel": "1384203391529390100",
-    "verificationChannel": "1384203470386630656",
-    "scheduleChannel": "1416339336772718683"
+    "role": "1336992007910068225"
   },
   {
     "id": 2,
     "name": "FBW Primark Center Guagua",
-    "role": "1336992011525558312",
-    "posChannel": "1384203710523244604",
-    "verificationChannel": "1384203919449784460",
-    "scheduleChannel": "1416339399700119552"
+    "role": "1336992011525558312"
   },
   {
     "id": 4,
     "name": "FBW Robinsons Starmills CSFP",
-    "role": "1336992014545190933",
-    "posChannel": "1384203781738205236",
-    "verificationChannel": "1384203979780784159",
-    "scheduleChannel": "1416339740352843928"
+    "role": "1336992014545190933"
   },
   {
     "id": 1,
     "name": "Main Omnilert",
-    "role": null,
-    "posChannel": null,
-    "verificationChannel": null,
-    "scheduleChannel": null
+    "role": null
   },
   {
     "id": 5,
-    "name": "FBW JASA Hiway Guagua",
-    "role": "1336991998791385129",
-    "posChannel": "1384203842702278747",
-    "verificationChannel": "1384204044175937577",
-    "scheduleChannel": "1416339770929578035"
+    "name": "FBW JASA Caldiz Guagua",
+    "role": "1336991998791385129"
   },
   {
     "id": 9,
     "name": "MS Robinsons Starmills CSFP",
-    "role": "1449639023323775049",
-    "posChannel": "1449651377012740166",
-    "verificationChannel": "1449646897638801522",
-    "scheduleChannel": "1449646921315782807"
+    "role": "1449639023323775049"
   },
   {
     "id": 53,
-    "name": "MS LRT Katipunan",
-    "role": "1509393430097170522",
-    "posChannel": "",
-    "verificationChannel": "",
-    "scheduleChannel": ""
+    "name": "MS LRT Katipunan Station",
+    "role": "1509393430097170522"
   }
 ]
