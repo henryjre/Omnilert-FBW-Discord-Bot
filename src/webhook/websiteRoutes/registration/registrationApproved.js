@@ -7,6 +7,7 @@ const {
 } = require('../../../functions/helpers/onboardingUtils');
 const { lookupApprovedUser } = require('../../../functions/helpers/onboardingApi');
 const { extractBearerToken } = require('../notifications/cronNotifications');
+const { setManageableMemberNickname } = require('../../../utils/discordMemberStatus');
 
 const router = express.Router();
 const ONBOARDING_PARENT_CHANNEL_ID = '1314413190074994689';
@@ -97,8 +98,7 @@ async function renameApprovedMember(member, user, roles = []) {
     return { updated: false, nickname: null };
   }
 
-  await member.setNickname(nickname);
-  return { updated: true, nickname };
+  return setManageableMemberNickname(member, nickname);
 }
 
 async function lookupApprovedUserForNickname(email, approvedUserLookup = lookupApprovedUser) {

@@ -5,6 +5,10 @@ const {
   EmbedBuilder,
   MessageFlags,
 } = require("discord.js");
+const {
+  setManageableMemberNickname,
+  syncManageableMemberRoles,
+} = require("../../../utils/discordMemberStatus");
 
 const serviceCrewRole = "1314413960274907238";
 const botRoleId = "1343052940818255986";
@@ -26,7 +30,7 @@ module.exports = {
 
     // Change the member's nickname to the nicknameInput
     try {
-      await interaction.member.setNickname(nickname);
+      await setManageableMemberNickname(interaction.member, nickname);
     } catch (error) {
       console.error("Error changing nickname:", error);
     }
@@ -62,7 +66,7 @@ module.exports = {
       // })
       .setColor(botRole.color);
 
-    await interaction.member.roles.add(serviceCrewRole);
+    await syncManageableMemberRoles(interaction.member, [], serviceCrewRole);
 
     // await interaction.guild.members.cache
     //   .get(interaction.user.id)

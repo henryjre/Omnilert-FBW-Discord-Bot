@@ -18,6 +18,10 @@ const {
   getThreadApprovals,
 } = require('../../../sqliteFunctions');
 const { isScheduleChannel, updateStarterMessageApprovals } = require('../../../functions/helpers/approvalCounterUtils');
+const {
+  setAttendanceStatusNickname,
+  syncManageableMemberRoles,
+} = require('../../../utils/discordMemberStatus');
 
 const managementAttendanceLogChannelId = '1314413190074994690';
 const hrRoleId = '1314815153421680640';
@@ -35,22 +39,13 @@ const attendanceCheckIn = async (req, res) => {
       try {
         const guild = client.guilds.cache.get('1314413189613490248');
         const discordMember = guild?.members.cache.get(x_discord_id);
-        let currentNickname = discordMember.nickname || discordMember.user.username;
-
-        if (currentNickname.includes('🔴')) {
-          currentNickname = currentNickname.replace('🔴', '🟢');
-        } else if (!currentNickname.startsWith('🟢')) {
-          currentNickname = '🟢 ' + currentNickname;
-        }
 
         if (department?.role) {
           const rolesToRemove = getBranchRoles();
-
-          await discordMember.roles.remove(rolesToRemove);
-          await discordMember.roles.add(department.role);
+          await syncManageableMemberRoles(discordMember, rolesToRemove, department.role);
         }
 
-        await discordMember.setNickname(currentNickname);
+        await setAttendanceStatusNickname(discordMember, '🟢');
       } catch (error) {
         console.error('Error updating Discord member status:', error);
         // Continue execution even if Discord operations fail
@@ -81,15 +76,8 @@ const attendanceCheckOut = async (req, res) => {
         if (activeAttendance.length <= 0) {
           const guild = client.guilds.cache.get('1314413189613490248');
           const discordMember = guild?.members.cache.get(x_discord_id);
-          let currentNickname = discordMember.nickname || discordMember.user.username;
 
-          if (currentNickname.includes('🟢')) {
-            currentNickname = currentNickname.replace('🟢', '🔴');
-          } else if (!currentNickname.startsWith('🔴')) {
-            currentNickname = '🔴 ' + currentNickname;
-          }
-
-          await discordMember.setNickname(currentNickname);
+          await setAttendanceStatusNickname(discordMember, '🔴');
         }
       } catch (error) {
         console.error('Error updating user nickname:', error);

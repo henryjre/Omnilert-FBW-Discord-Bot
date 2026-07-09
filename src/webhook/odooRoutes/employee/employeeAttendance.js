@@ -9,6 +9,10 @@ const moment = require("moment-timezone");
 
 const client = require("../../../index");
 const { searchActiveAttendance } = require("../../../odooRpc");
+const {
+  setAttendanceStatusNickname,
+  syncManageableMemberRoles,
+} = require("../../../utils/discordMemberStatus");
 
 const departments = [
   { id: 1, name: "DHVSU Bacolor", role: "1336992007910068225" },
@@ -63,21 +67,11 @@ const employeeCheckIn = async (req, res) => {
       const discordMember = guild?.members.cache.get(x_discord_id);
 
       if (discordMember) {
-        let currentNickname =
-          discordMember.nickname || discordMember.user.username;
-
-        if (currentNickname.includes("🔴")) {
-          currentNickname = currentNickname.replace("🔴", "🟢");
-        } else if (!currentNickname.startsWith("🟢")) {
-          currentNickname = "🟢 " + currentNickname;
-        }
-
         if (department?.role) {
-          await discordMember.roles.remove(rolesToRemove);
-          await discordMember.roles.add(department.role);
+          await syncManageableMemberRoles(discordMember, rolesToRemove, department.role);
         }
 
-        await discordMember.setNickname(currentNickname);
+        await setAttendanceStatusNickname(discordMember, "🟢");
       }
     }
 
@@ -129,16 +123,8 @@ const employeeCheckOut = async (req, res) => {
       if (activeAttendance.length <= 0) {
         const guild = client.guilds.cache.get("1314413189613490248");
         const discordMember = guild?.members.cache.get(x_discord_id);
-        let currentNickname =
-          discordMember.nickname || discordMember.user.username;
 
-        if (currentNickname.includes("🟢")) {
-          currentNickname = currentNickname.replace("🟢", "🔴");
-        } else if (!currentNickname.startsWith("🔴")) {
-          currentNickname = "🔴 " + currentNickname;
-        }
-
-        await discordMember.setNickname(currentNickname);
+        await setAttendanceStatusNickname(discordMember, "🔴");
       }
     }
 
@@ -238,21 +224,12 @@ const check_in = async (req, res) => {
     if (x_discord_id) {
       const guild = client.guilds.cache.get("1314413189613490248");
       const discordMember = guild?.members.cache.get(x_discord_id);
-      let currentNickname =
-        discordMember.nickname || discordMember.user.username;
-
-      if (currentNickname.includes("🔴")) {
-        currentNickname = currentNickname.replace("🔴", "🟢");
-      } else if (!currentNickname.startsWith("🟢")) {
-        currentNickname = "🟢 " + currentNickname;
-      }
 
       if (department?.role) {
-        await discordMember.roles.remove(rolesToRemove);
-        await discordMember.roles.add(department.role);
+        await syncManageableMemberRoles(discordMember, rolesToRemove, department.role);
       }
 
-      await discordMember.setNickname(currentNickname);
+      await setAttendanceStatusNickname(discordMember, "🟢");
     }
 
     if (x_is_first_checkin) {
@@ -677,16 +654,8 @@ const check_out = async (req, res) => {
       if (activeAttendance.length <= 0) {
         const guild = client.guilds.cache.get("1314413189613490248");
         const discordMember = guild?.members.cache.get(x_discord_id);
-        let currentNickname =
-          discordMember.nickname || discordMember.user.username;
 
-        if (currentNickname.includes("🟢")) {
-          currentNickname = currentNickname.replace("🟢", "🔴");
-        } else if (!currentNickname.startsWith("🔴")) {
-          currentNickname = "🔴 " + currentNickname;
-        }
-
-        await discordMember.setNickname(currentNickname);
+        await setAttendanceStatusNickname(discordMember, "🔴");
       }
     }
 
