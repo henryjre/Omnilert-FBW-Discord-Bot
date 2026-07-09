@@ -62,6 +62,11 @@ async function resolveGuildMember(guild, userId) {
   return member || null;
 }
 
+async function defaultOnboardingRoleRemovalScheduler(guildId, userId) {
+  const { scheduleOnboardingRoleRemoval } = require('../../../queue/onboardingRoleRemovalQueue');
+  return scheduleOnboardingRoleRemoval(guildId, userId);
+}
+
 function getFirstNameFromUser(user) {
   const rawName = user?.first_name || user?.firstName || user?.name || user?.email?.split('@')[0];
   if (!isNonEmptyString(rawName)) return null;
@@ -233,6 +238,7 @@ function createRegistrationApprovedHandler({
   expectedToken = process.env.prodToken,
   guildId = resolveConfiguredGuildId(),
   onboardingParentChannelId = ONBOARDING_PARENT_CHANNEL_ID,
+  onboardingRoleRemovalScheduler = defaultOnboardingRoleRemovalScheduler,
 } = {}) {
   return async (req, res) => {
     try {
@@ -261,6 +267,7 @@ function createRegistrationApprovedHandler({
       }
 
       const syncResult = await syncApprovedDiscordRoles(member, req.body.roles);
+      await onboardingRoleRemovalScheduler(guildId, req.body.discord_user_id);
       let nicknameResult = { updated: false, nickname: null };
       let onboardingThreadResult = {
         marked: false,

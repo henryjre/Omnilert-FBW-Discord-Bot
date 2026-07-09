@@ -156,6 +156,7 @@ test('registration approved handler adds roles to discord_user_id member', async
     clientInstance,
     expectedToken: 'expected-token',
     guildId: 'guild123',
+    onboardingRoleRemovalScheduler: async () => {},
   });
   const req = {
     headers: { authorization: 'Bearer expected-token' },
@@ -216,6 +217,7 @@ test('registration approved handler renames user after adding service crew role'
     clientInstance,
     expectedToken: 'expected-token',
     guildId: 'guild123',
+    onboardingRoleRemovalScheduler: async () => {},
   });
   const req = {
     headers: { authorization: 'Bearer expected-token' },
@@ -442,6 +444,7 @@ test('completeOnboardingThread marks thread, sends approved message, and removes
 
 test('registration approved handler completes onboarding thread after syncing roles', async () => {
   const addedRoleIds = [];
+  const scheduledRoleRemovals = [];
   const renamedNicknames = [];
   const role = { id: '987654321098765432' };
   const sentMessages = [];
@@ -496,6 +499,9 @@ test('registration approved handler completes onboarding thread after syncing ro
     expectedToken: 'expected-token',
     guildId: 'guild123',
     onboardingParentChannelId: 'onboarding-channel',
+    onboardingRoleRemovalScheduler: async (guildId, userId) => {
+      scheduledRoleRemovals.push({ guildId, userId });
+    },
   });
   const req = {
     headers: { authorization: 'Bearer expected-token' },
@@ -507,6 +513,9 @@ test('registration approved handler completes onboarding thread after syncing ro
 
   assert.equal(res.statusCode, 200);
   assert.deepEqual(addedRoleIds, ['987654321098765432']);
+  assert.deepEqual(scheduledRoleRemovals, [
+    { guildId: 'guild123', userId: '123456789012345678' },
+  ]);
   assert.deepEqual(renamedNicknames, []);
   assert.equal(thread.name, '✅ Onboarding | 123456789012345678 | ojiechan');
   assert.equal(res.body.onboarding_thread_marked, true);
