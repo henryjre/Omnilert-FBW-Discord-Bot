@@ -220,7 +220,7 @@ async function handleMeetingVoiceStateUpdate(
   return { ignored: false, actions };
 }
 
-module.exports = {
+const meetingVoiceAttendance = {
   MEETING_VOICE_FINISH_DELAY_MS,
   buildMeetingFinishedPayload,
   buildMeetingVoiceJoinPayload,
@@ -232,3 +232,5 @@ module.exports = {
   postMeetingVoiceJoin,
   postMeetingVoiceLeave,
 };
+
+module.exports = Object.assign(() => meetingVoiceAttendance, meetingVoiceAttendance);
