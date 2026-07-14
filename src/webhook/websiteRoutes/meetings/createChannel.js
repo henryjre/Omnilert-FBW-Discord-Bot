@@ -7,6 +7,10 @@ const {
 } = require('discord.js');
 
 const { extractBearerToken } = require('../notifications/cronNotifications');
+const {
+  deleteMeetingVoiceChannel,
+  isValidMeetingDeleteChannelPayload,
+} = require('./deleteChannel');
 
 const router = express.Router();
 const MEETING_VOICE_CATEGORY_ID = '1526460615932248174';
@@ -63,6 +67,18 @@ function isValidMeetingCreateChannelPayload(payload) {
     typeof participant === 'object' &&
     isNonEmptyString(participant.discord_user_id)
   ));
+}
+
+function isValidMeetingChannelWebhookPayload(payload) {
+  if (payload?.event === 'meeting.create_channel') {
+    return isValidMeetingCreateChannelPayload(payload);
+  }
+
+  if (payload?.event === 'meeting.delete_channel') {
+    return isValidMeetingDeleteChannelPayload(payload);
+  }
+
+  return false;
 }
 
 function resolveConfiguredGuildId() {
@@ -264,7 +280,7 @@ async function createMeetingVoiceChannel({
   return channel.id;
 }
 
-function createMeetingCreateChannelHandler({
+function createMeetingChannelWebhookHandler({
   clientInstance,
   db,
   expectedToken = process.env.prodToken,
@@ -281,46 +297,65 @@ function createMeetingCreateChannelHandler({
         return res.status(401).json({ success: false, message: 'Unauthorized' });
       }
 
-      if (!isValidMeetingCreateChannelPayload(req.body)) {
+      if (!isValidMeetingChannelWebhookPayload(req.body)) {
         return res.status(400).json({ success: false, message: 'Invalid payload' });
       }
 
       const resolvedClient = clientInstance || require('../../../index.js');
-      const resolvedDb = db || require('../../../sqliteConnection.js');
       const payload = req.body;
 
-      const voiceChannelId = await lockInstance.acquire(
-        payload.meeting.id,
-        () => createMeetingVoiceChannel({
-          clientInstance: resolvedClient,
-          db: resolvedDb,
-          payload,
-          guildId,
-          categoryId,
-        }),
-      );
+      if (payload.event === 'meeting.create_channel') {
+        const resolvedDb = db || require('../../../sqliteConnection.js');
+        const voiceChannelId = await lockInstance.acquire(
+          payload.meeting.id,
+          () => createMeetingVoiceChannel({
+            clientInstance: resolvedClient,
+            db: resolvedDb,
+            payload,
+            guildId,
+            categoryId,
+          }),
+        );
+
+        return res.status(200).json({
+          success: true,
+          voice_channel_id: voiceChannelId,
+        });
+      }
+
+      const result = await deleteMeetingVoiceChannel({
+        clientInstance: resolvedClient,
+        payload,
+      });
 
       return res.status(200).json({
         success: true,
-        voice_channel_id: voiceChannelId,
+        voice_channel_id: payload.voice_channel_id,
+        deleted: result.deleted,
+        ...(result.reason ? { reason: result.reason } : {}),
       });
     } catch (error) {
-      console.error('Meeting create channel webhook error:', error);
+      console.error('Meeting channel webhook error:', error);
       return res.status(500).json({
         success: false,
-        message: 'Failed to create meeting voice channel',
+        message: 'Failed to process meeting channel webhook',
       });
     }
   };
 }
 
-router.post('/create-channel', createMeetingCreateChannelHandler());
+const defaultMeetingChannelWebhookHandler = createMeetingChannelWebhookHandler();
+
+router.post('/channel', defaultMeetingChannelWebhookHandler);
+router.post('/create-channel', defaultMeetingChannelWebhookHandler);
 
 module.exports = router;
 module.exports.MEETING_VOICE_CATEGORY_ID = MEETING_VOICE_CATEGORY_ID;
-module.exports.createMeetingCreateChannelHandler = createMeetingCreateChannelHandler;
+module.exports.createMeetingChannelWebhookHandler = createMeetingChannelWebhookHandler;
+module.exports.createMeetingCreateChannelHandler = createMeetingChannelWebhookHandler;
 module.exports.createMeetingVoiceChannel = createMeetingVoiceChannel;
 module.exports.isValidMeetingCreateChannelPayload = isValidMeetingCreateChannelPayload;
+module.exports.isValidMeetingChannelWebhookPayload = isValidMeetingChannelWebhookPayload;
 module.exports.normalizeChannelName = normalizeChannelName;
 module.exports.getParticipantDiscordIds = getParticipantDiscordIds;
 module.exports.buildMeetingPermissionOverwrites = buildMeetingPermissionOverwrites;

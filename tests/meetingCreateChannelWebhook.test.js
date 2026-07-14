@@ -8,8 +8,10 @@ const {
 const {
   MEETING_VOICE_CATEGORY_ID,
   buildMeetingChannelMessage,
+  createMeetingChannelWebhookHandler,
   createMeetingCreateChannelHandler,
   isValidMeetingCreateChannelPayload,
+  isValidMeetingChannelWebhookPayload,
   normalizeChannelName,
 } = require('../src/webhook/websiteRoutes/meetings/createChannel');
 
@@ -155,6 +157,23 @@ function createNoopLock() {
 
 test('isValidMeetingCreateChannelPayload accepts a valid payload', () => {
   assert.equal(isValidMeetingCreateChannelPayload(buildPayload()), true);
+});
+
+test('isValidMeetingChannelWebhookPayload accepts create and delete events', () => {
+  assert.equal(isValidMeetingChannelWebhookPayload(buildPayload()), true);
+  assert.equal(
+    isValidMeetingChannelWebhookPayload({
+      event: 'meeting.delete_channel',
+      version: 1,
+      environment: 'development',
+      sent_at: '2026-07-14T09:12:44.031Z',
+      meeting: { id: 'dfb8ba84-5301-43c4-8d0d-3a175bd1b862' },
+      voice_channel_id: '1398472048572048',
+      reason: 'cancelled',
+    }),
+    true,
+  );
+  assert.equal(isValidMeetingChannelWebhookPayload({ event: 'meeting.unknown' }), false);
 });
 
 test('isValidMeetingCreateChannelPayload rejects malformed payloads', () => {
@@ -342,7 +361,7 @@ test('handler returns 500 when Discord channel creation fails', async () => {
   assert.equal(res.statusCode, 500);
   assert.deepEqual(res.body, {
     success: false,
-    message: 'Failed to create meeting voice channel',
+    message: 'Failed to process meeting channel webhook',
   });
 });
 
@@ -377,5 +396,55 @@ test('handler returns 500 and deletes the incomplete channel when message send f
       id: '1398472048572048',
       reason: 'Meeting webhook failed before completion',
     },
+  ]);
+});
+
+test('shared meeting channel webhook handler dispatches delete events', async () => {
+  const deletedChannels = [];
+  const client = {
+    channels: {
+      cache: new Map([
+        [
+          '1398472048572048',
+          {
+            delete: async (reason) => {
+              deletedChannels.push(reason);
+            },
+          },
+        ],
+      ]),
+    },
+  };
+  const handler = createMeetingChannelWebhookHandler({
+    clientInstance: client,
+    expectedToken: 'expected-token',
+    lockInstance: createNoopLock(),
+  });
+  const res = createMockRes();
+
+  await handler(
+    {
+      headers: { authorization: 'Bearer expected-token' },
+      body: {
+        event: 'meeting.delete_channel',
+        version: 1,
+        environment: 'development',
+        sent_at: '2026-07-14T09:12:44.031Z',
+        meeting: { id: 'dfb8ba84-5301-43c4-8d0d-3a175bd1b862' },
+        voice_channel_id: '1398472048572048',
+        reason: 'cancelled',
+      },
+    },
+    res,
+  );
+
+  assert.equal(res.statusCode, 200);
+  assert.deepEqual(res.body, {
+    success: true,
+    voice_channel_id: '1398472048572048',
+    deleted: true,
+  });
+  assert.deepEqual(deletedChannels, [
+    'Meeting dfb8ba84-5301-43c4-8d0d-3a175bd1b862 cancelled from webhook',
   ]);
 });
