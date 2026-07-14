@@ -4,6 +4,7 @@ const { initializeAnnouncementAckWorker } = require('../../queue/announcementAck
 const { initializeOnboardingRoleRemovalWorker } = require('../../queue/onboardingRoleRemovalQueue');
 const { initializePortalNotificationCleanupWorker } = require('../../queue/portalNotificationCleanupQueue');
 const { initializeDepartmentVoiceWorker } = require('../../queue/departmentVoiceQueue');
+const { initializeMeetingVoiceWorker } = require('../../queue/meetingVoiceQueue');
 
 module.exports = {
   name: 'clientReady',
@@ -30,5 +31,8 @@ module.exports = {
 
     initializeDepartmentVoiceWorker(client);
     console.log(chalk.blue('📋 Department voice queue worker started'));
+
+    initializeMeetingVoiceWorker(client);
+    console.log(chalk.blue('📋 Meeting voice queue worker started'));
   },
 };

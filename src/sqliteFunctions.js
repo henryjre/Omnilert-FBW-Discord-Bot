@@ -725,6 +725,102 @@ const recordDepartmentVoiceSessionUpdate = db.transaction((sessionId, updateAt) 
   return selectDepartmentVoiceSessionById(sessionId);
 });
 
+////////////////////////////////////////////////////////////
+// Meeting Voice Channels
+////////////////////////////////////////////////////////////
+
+function selectMeetingVoiceChannelByMeetingId(meetingId) {
+  return (
+    db
+      .prepare(
+        `
+          SELECT *
+          FROM meeting_voice_channels
+          WHERE meeting_id = ?
+        `
+      )
+      .get(meetingId) || null
+  );
+}
+
+function selectMeetingVoiceChannelByVoiceChannelId(voiceChannelId) {
+  return (
+    db
+      .prepare(
+        `
+          SELECT *
+          FROM meeting_voice_channels
+          WHERE voice_channel_id = ?
+        `
+      )
+      .get(voiceChannelId) || null
+  );
+}
+
+const getMeetingVoiceChannelByMeetingId = db.transaction((meetingId) => {
+  return selectMeetingVoiceChannelByMeetingId(meetingId);
+});
+
+const getMeetingVoiceChannelByVoiceChannelId = db.transaction((voiceChannelId) => {
+  return selectMeetingVoiceChannelByVoiceChannelId(voiceChannelId);
+});
+
+const clearMeetingVoiceChannelEmptyState = db.transaction((meetingId) => {
+  const meeting = selectMeetingVoiceChannelByMeetingId(meetingId);
+  if (!meeting) return null;
+
+  db.prepare(
+    `
+      UPDATE meeting_voice_channels
+      SET empty_since = NULL,
+          empty_version = COALESCE(empty_version, 0) + 1,
+          last_updated = datetime('now')
+      WHERE meeting_id = ?
+    `
+  ).run(meetingId);
+
+  return selectMeetingVoiceChannelByMeetingId(meetingId);
+});
+
+const markMeetingVoiceChannelEmpty = db.transaction((meetingId, emptySince) => {
+  const meeting = selectMeetingVoiceChannelByMeetingId(meetingId);
+  if (!meeting || meeting.finished_at) return null;
+
+  db.prepare(
+    `
+      UPDATE meeting_voice_channels
+      SET empty_since = @empty_since,
+          empty_version = COALESCE(empty_version, 0) + 1,
+          last_updated = datetime('now')
+      WHERE meeting_id = @meeting_id
+    `
+  ).run({
+    meeting_id: meetingId,
+    empty_since: emptySince,
+  });
+
+  return selectMeetingVoiceChannelByMeetingId(meetingId);
+});
+
+const markMeetingVoiceChannelFinished = db.transaction((meetingId, endedAt) => {
+  const meeting = selectMeetingVoiceChannelByMeetingId(meetingId);
+  if (!meeting || meeting.finished_at) return null;
+
+  db.prepare(
+    `
+      UPDATE meeting_voice_channels
+      SET finished_at = @finished_at,
+          last_updated = datetime('now')
+      WHERE meeting_id = @meeting_id
+    `
+  ).run({
+    meeting_id: meetingId,
+    finished_at: endedAt,
+  });
+
+  return selectMeetingVoiceChannelByMeetingId(meetingId);
+});
+
 module.exports = {
   getNextAuditId,
   saveAuditRatings,
@@ -763,4 +859,9 @@ module.exports = {
   pauseDepartmentVoiceSession,
   resumeDepartmentVoiceSession,
   recordDepartmentVoiceSessionUpdate,
+  getMeetingVoiceChannelByMeetingId,
+  getMeetingVoiceChannelByVoiceChannelId,
+  clearMeetingVoiceChannelEmptyState,
+  markMeetingVoiceChannelEmpty,
+  markMeetingVoiceChannelFinished,
 };

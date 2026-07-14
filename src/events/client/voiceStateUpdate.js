@@ -9,6 +9,10 @@ const {
   scheduleDepartmentVoiceSessionJobs,
   scheduleDepartmentVoiceSessionJobsFromRemaining,
 } = require('../../queue/departmentVoiceQueue');
+const { scheduleMeetingVoiceFinishJob } = require('../../queue/meetingVoiceQueue');
+const {
+  handleMeetingVoiceStateUpdate,
+} = require('../../functions/helpers/meetingVoiceAttendance');
 
 module.exports = {
   name: "voiceStateUpdate",
@@ -28,6 +32,12 @@ module.exports = {
       && newChannelId
       && newChannelId !== OFFICE_VOICE_CHANNEL_ID
       && oldChannelId !== newChannelId;
+
+    handleMeetingVoiceStateUpdate(oldState, newState, {
+      scheduleFinish: scheduleMeetingVoiceFinishJob,
+    }).catch((error) => {
+      console.error('Meeting voice attendance handling failed:', error);
+    });
 
     if (joinedOfficeVoice) {
       const resumedSession = await handleDepartmentVoiceMeetingResume(

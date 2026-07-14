@@ -103,6 +103,20 @@ db.exec(`
 `);
 
 db.exec(`
+  CREATE TABLE IF NOT EXISTS meeting_voice_channels (
+    meeting_id TEXT PRIMARY KEY,
+    voice_channel_id TEXT NOT NULL,
+    guild_id TEXT NOT NULL,
+    payload TEXT,
+    empty_since TEXT,
+    empty_version INTEGER DEFAULT 0,
+    finished_at TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    last_updated TEXT DEFAULT (datetime('now'))
+  )
+`);
+
+db.exec(`
   CREATE TABLE IF NOT EXISTS departments (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
@@ -167,6 +181,9 @@ for (const migration of [
   `ALTER TABLE department_voice_sessions ADD COLUMN paused_at TEXT`,
   `ALTER TABLE department_voice_sessions ADD COLUMN paused_channel_id TEXT`,
   `ALTER TABLE department_voice_sessions ADD COLUMN remaining_seconds INTEGER`,
+  `ALTER TABLE meeting_voice_channels ADD COLUMN empty_since TEXT`,
+  `ALTER TABLE meeting_voice_channels ADD COLUMN empty_version INTEGER DEFAULT 0`,
+  `ALTER TABLE meeting_voice_channels ADD COLUMN finished_at TEXT`,
 ]) {
   try {
     db.exec(migration);

@@ -55,12 +55,14 @@ const { closeQueue } = require('./queue/earlyAttendanceQueue');
 const { closeOnboardingRoleRemovalQueue } = require('./queue/onboardingRoleRemovalQueue');
 const { closePortalNotificationCleanupQueue } = require('./queue/portalNotificationCleanupQueue');
 const { closeDepartmentVoiceQueue } = require('./queue/departmentVoiceQueue');
+const { closeMeetingVoiceQueue } = require('./queue/meetingVoiceQueue');
 
 async function closeQueues() {
   await closeQueue();
   await closeOnboardingRoleRemovalQueue();
   await closePortalNotificationCleanupQueue();
   await closeDepartmentVoiceQueue();
+  await closeMeetingVoiceQueue();
 }
 
 process.on('SIGTERM', async () => {
