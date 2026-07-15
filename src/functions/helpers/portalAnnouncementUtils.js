@@ -273,7 +273,7 @@ function buildPortalFinalPayload({ announcement, selectedRecipients, attachments
   };
 }
 
-module.exports = {
+const portalAnnouncementUtils = {
   PORTAL_ANNOUNCER_ROLE_ID,
   PORTAL_ANNOUNCEMENT_CHANNEL_ID,
   PORTAL_MESSAGE_LIMIT,
@@ -288,3 +288,5 @@ module.exports = {
   parsePortalPreviewMessage,
   rebuildPortalPreviewFromMessage,
 };
+
+module.exports = Object.assign(() => portalAnnouncementUtils, portalAnnouncementUtils);
