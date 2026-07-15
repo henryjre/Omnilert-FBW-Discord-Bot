@@ -12,6 +12,7 @@ const {
   createMeetingCreateChannelHandler,
   isValidMeetingCreateChannelPayload,
   isValidMeetingChannelWebhookPayload,
+  isValidMeetingUpdateParticipantsPayload,
   normalizeChannelName,
 } = require('../src/webhook/websiteRoutes/meetings/createChannel');
 
@@ -173,7 +174,49 @@ test('isValidMeetingChannelWebhookPayload accepts create and delete events', () 
     }),
     true,
   );
+  assert.equal(
+    isValidMeetingChannelWebhookPayload({
+      event: 'meeting.update_participants',
+      version: 1,
+      environment: 'production',
+      sent_at: '2026-07-15T09:00:00.000Z',
+      meeting: { id: 'dfb8ba84-5301-43c4-8d0d-3a175bd1b862' },
+      voice_channel_id: '1398472048572048',
+      added: [{ user_id: 'user-1', name: 'Ken Reyes', discord_user_id: '456' }],
+      removed: [{ user_id: 'user-2', name: 'Mia Santos', discord_user_id: '789' }],
+    }),
+    true,
+  );
   assert.equal(isValidMeetingChannelWebhookPayload({ event: 'meeting.unknown' }), false);
+});
+
+test('isValidMeetingUpdateParticipantsPayload rejects malformed payloads', () => {
+  const payload = {
+    event: 'meeting.update_participants',
+    version: 1,
+    environment: 'production',
+    sent_at: '2026-07-15T09:00:00.000Z',
+    meeting: { id: 'dfb8ba84-5301-43c4-8d0d-3a175bd1b862' },
+    voice_channel_id: '1398472048572048',
+    added: [{ user_id: 'user-1', name: 'Ken Reyes', discord_user_id: '456' }],
+    removed: [{ user_id: 'user-2', name: 'Mia Santos', discord_user_id: '789' }],
+  };
+
+  assert.equal(isValidMeetingUpdateParticipantsPayload(payload), true);
+  assert.equal(isValidMeetingUpdateParticipantsPayload({ ...payload, event: 'nope' }), false);
+  assert.equal(
+    isValidMeetingUpdateParticipantsPayload({ ...payload, meeting: { id: '' } }),
+    false,
+  );
+  assert.equal(isValidMeetingUpdateParticipantsPayload({ ...payload, voice_channel_id: '' }), false);
+  assert.equal(isValidMeetingUpdateParticipantsPayload({ ...payload, added: null }), false);
+  assert.equal(
+    isValidMeetingUpdateParticipantsPayload({
+      ...payload,
+      removed: [{ user_id: 'user-2', name: 'Mia Santos', discord_user_id: '' }],
+    }),
+    false,
+  );
 });
 
 test('isValidMeetingCreateChannelPayload rejects malformed payloads', () => {
@@ -447,4 +490,126 @@ test('shared meeting channel webhook handler dispatches delete events', async ()
   assert.deepEqual(deletedChannels, [
     'Meeting dfb8ba84-5301-43c4-8d0d-3a175bd1b862 cancelled from webhook',
   ]);
+});
+
+test('shared meeting channel webhook handler updates participant permissions', async () => {
+  const edits = [];
+  const deletes = [];
+  const client = {
+    channels: {
+      cache: new Map([
+        [
+          '1398472048572048',
+          {
+            permissionOverwrites: {
+              edit: async (id, options, extra) => {
+                edits.push({ id, options, extra });
+              },
+              delete: async (id, reason) => {
+                deletes.push({ id, reason });
+              },
+            },
+          },
+        ],
+      ]),
+    },
+  };
+  const handler = createMeetingChannelWebhookHandler({
+    clientInstance: client,
+    expectedToken: 'expected-token',
+    lockInstance: createNoopLock(),
+  });
+  const res = createMockRes();
+
+  await handler(
+    {
+      headers: { authorization: 'Bearer expected-token' },
+      body: {
+        event: 'meeting.update_participants',
+        version: 1,
+        environment: 'production',
+        sent_at: '2026-07-15T09:00:00.000Z',
+        meeting: { id: 'dfb8ba84-5301-43c4-8d0d-3a175bd1b862' },
+        voice_channel_id: '1398472048572048',
+        added: [
+          { user_id: 'user-1', name: 'Ken Reyes', discord_user_id: '456' },
+          { user_id: 'user-1', name: 'Ken Reyes', discord_user_id: '456' },
+        ],
+        removed: [{ user_id: 'user-2', name: 'Mia Santos', discord_user_id: '789' }],
+      },
+    },
+    res,
+  );
+
+  assert.equal(res.statusCode, 200);
+  assert.deepEqual(res.body, {
+    success: true,
+    voice_channel_id: '1398472048572048',
+    updated: true,
+    added: 1,
+    removed: 1,
+  });
+  assert.deepEqual(edits, [
+    {
+      id: '456',
+      options: {
+        ViewChannel: true,
+        Connect: true,
+        Speak: true,
+        SendMessages: true,
+        ReadMessageHistory: true,
+      },
+      extra: {
+        reason: 'Meeting dfb8ba84-5301-43c4-8d0d-3a175bd1b862 participant added from webhook',
+      },
+    },
+  ]);
+  assert.deepEqual(deletes, [
+    {
+      id: '789',
+      reason: 'Meeting dfb8ba84-5301-43c4-8d0d-3a175bd1b862 participant removed from webhook',
+    },
+  ]);
+});
+
+test('shared meeting channel webhook handler reports missing channel for participant updates', async () => {
+  const client = {
+    channels: {
+      cache: new Map(),
+      fetch: async () => null,
+    },
+  };
+  const handler = createMeetingChannelWebhookHandler({
+    clientInstance: client,
+    expectedToken: 'expected-token',
+    lockInstance: createNoopLock(),
+  });
+  const res = createMockRes();
+
+  await handler(
+    {
+      headers: { authorization: 'Bearer expected-token' },
+      body: {
+        event: 'meeting.update_participants',
+        version: 1,
+        environment: 'production',
+        sent_at: '2026-07-15T09:00:00.000Z',
+        meeting: { id: 'dfb8ba84-5301-43c4-8d0d-3a175bd1b862' },
+        voice_channel_id: 'missing-channel-id',
+        added: [{ user_id: 'user-1', name: 'Ken Reyes', discord_user_id: '456' }],
+        removed: [],
+      },
+    },
+    res,
+  );
+
+  assert.equal(res.statusCode, 200);
+  assert.deepEqual(res.body, {
+    success: true,
+    voice_channel_id: 'missing-channel-id',
+    updated: false,
+    added: 0,
+    removed: 0,
+    reason: 'not-found',
+  });
 });

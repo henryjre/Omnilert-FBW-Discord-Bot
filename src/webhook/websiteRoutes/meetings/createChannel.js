@@ -11,6 +11,10 @@ const {
   deleteMeetingVoiceChannel,
   isValidMeetingDeleteChannelPayload,
 } = require('./deleteChannel');
+const {
+  isValidMeetingUpdateParticipantsPayload,
+  updateMeetingVoiceChannelParticipants,
+} = require('./updateParticipants');
 
 const router = express.Router();
 const MEETING_VOICE_CATEGORY_ID = '1526460615932248174';
@@ -76,6 +80,10 @@ function isValidMeetingChannelWebhookPayload(payload) {
 
   if (payload?.event === 'meeting.delete_channel') {
     return isValidMeetingDeleteChannelPayload(payload);
+  }
+
+  if (payload?.event === 'meeting.update_participants') {
+    return isValidMeetingUpdateParticipantsPayload(payload);
   }
 
   return false;
@@ -323,6 +331,22 @@ function createMeetingChannelWebhookHandler({
         });
       }
 
+      if (payload.event === 'meeting.update_participants') {
+        const result = await updateMeetingVoiceChannelParticipants({
+          clientInstance: resolvedClient,
+          payload,
+        });
+
+        return res.status(200).json({
+          success: true,
+          voice_channel_id: payload.voice_channel_id,
+          updated: result.updated,
+          added: result.added,
+          removed: result.removed,
+          ...(result.reason ? { reason: result.reason } : {}),
+        });
+      }
+
       const result = await deleteMeetingVoiceChannel({
         clientInstance: resolvedClient,
         payload,
@@ -356,6 +380,8 @@ module.exports.createMeetingCreateChannelHandler = createMeetingChannelWebhookHa
 module.exports.createMeetingVoiceChannel = createMeetingVoiceChannel;
 module.exports.isValidMeetingCreateChannelPayload = isValidMeetingCreateChannelPayload;
 module.exports.isValidMeetingChannelWebhookPayload = isValidMeetingChannelWebhookPayload;
+module.exports.isValidMeetingUpdateParticipantsPayload = isValidMeetingUpdateParticipantsPayload;
+module.exports.updateMeetingVoiceChannelParticipants = updateMeetingVoiceChannelParticipants;
 module.exports.normalizeChannelName = normalizeChannelName;
 module.exports.getParticipantDiscordIds = getParticipantDiscordIds;
 module.exports.buildMeetingPermissionOverwrites = buildMeetingPermissionOverwrites;
