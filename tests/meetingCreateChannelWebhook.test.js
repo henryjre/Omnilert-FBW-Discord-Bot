@@ -14,6 +14,8 @@ const {
   isValidMeetingChannelWebhookPayload,
   isValidMeetingUpdateParticipantsPayload,
   normalizeChannelName,
+  getMeetingBranchNames,
+  buildMeetingBranchField,
 } = require('../src/webhook/websiteRoutes/meetings/createChannel');
 
 function buildPayload(overrides = {}) {
@@ -231,6 +233,130 @@ test('isValidMeetingCreateChannelPayload rejects malformed payloads', () => {
     isValidMeetingCreateChannelPayload(buildPayload({ participants: [{ discord_user_id: '' }] })),
     false,
   );
+});
+
+test('isValidMeetingCreateChannelPayload accepts a payload with a branches array', () => {
+  assert.equal(
+    isValidMeetingCreateChannelPayload(buildPayload({
+      meeting: {
+        branches: [
+          { id: 'branch-1', name: 'Cubao' },
+          { id: 'branch-2', name: 'Makati' },
+        ],
+      },
+    })),
+    true,
+  );
+});
+
+test('isValidMeetingCreateChannelPayload rejects malformed branches entries', () => {
+  assert.equal(
+    isValidMeetingCreateChannelPayload(buildPayload({ meeting: { branches: 'Cubao' } })),
+    false,
+  );
+  assert.equal(
+    isValidMeetingCreateChannelPayload(buildPayload({ meeting: { branches: [{ id: 'branch-1' }] } })),
+    false,
+  );
+  assert.equal(
+    isValidMeetingCreateChannelPayload(
+      buildPayload({ meeting: { branches: [{ id: '', name: 'Cubao' }] } }),
+    ),
+    false,
+  );
+});
+
+test('getMeetingBranchNames prefers branches and falls back to branch_name', () => {
+  assert.deepEqual(
+    getMeetingBranchNames({
+      branch_name: 'Cubao',
+      branches: [
+        { id: 'branch-1', name: 'Cubao' },
+        { id: 'branch-2', name: 'Makati' },
+      ],
+    }),
+    ['Cubao', 'Makati'],
+  );
+
+  // Legacy payloads without `branches` still resolve via branch_name.
+  assert.deepEqual(getMeetingBranchNames({ branch_name: 'MS Main Branch' }), ['MS Main Branch']);
+  assert.deepEqual(getMeetingBranchNames({ branches: [] , branch_name: 'Cubao' }), ['Cubao']);
+  assert.deepEqual(getMeetingBranchNames({}), []);
+});
+
+test('getMeetingBranchNames dedupes and trims branch names', () => {
+  assert.deepEqual(
+    getMeetingBranchNames({
+      branches: [
+        { id: 'branch-1', name: ' Cubao ' },
+        { id: 'branch-2', name: 'Cubao' },
+        { id: 'branch-3', name: '   ' },
+      ],
+    }),
+    ['Cubao'],
+  );
+});
+
+test('buildMeetingBranchField pluralizes the label and truncates long lists', () => {
+  assert.deepEqual(
+    buildMeetingBranchField({ branch_name: 'Cubao' }),
+    { name: 'Branch', value: 'Cubao', inline: true },
+  );
+  assert.deepEqual(
+    buildMeetingBranchField({
+      branches: [
+        { id: 'branch-1', name: 'Cubao' },
+        { id: 'branch-2', name: 'Makati' },
+      ],
+    }),
+    { name: 'Branches', value: 'Cubao, Makati', inline: true },
+  );
+  assert.deepEqual(buildMeetingBranchField({}), { name: 'Branch', value: 'N/A', inline: true });
+
+  const many = Array.from({ length: 200 }, (_, index) => ({
+    id: `branch-${index}`,
+    name: `Branch Number ${index}`,
+  }));
+  const field = buildMeetingBranchField({ branches: many });
+  assert.equal(field.name, 'Branches');
+  assert.ok(field.value.length <= 1024);
+  assert.match(field.value, /\+200 total$/);
+});
+
+test('handler renders every branch in the meeting embed', async () => {
+  const { client, sentMessages } = createMockClient();
+  const handler = createMeetingCreateChannelHandler({
+    clientInstance: client,
+    db: createMockDb(),
+    expectedToken: 'expected-token',
+    guildId: 'guild123',
+    lockInstance: createNoopLock(),
+  });
+  const res = createMockRes();
+
+  await handler(
+    {
+      headers: { authorization: 'Bearer expected-token' },
+      body: buildPayload({
+        meeting: {
+          branch_id: 'branch-1',
+          branch_name: 'Cubao',
+          branches: [
+            { id: 'branch-1', name: 'Cubao' },
+            { id: 'branch-2', name: 'Makati' },
+          ],
+        },
+      }),
+    },
+    res,
+  );
+
+  assert.equal(res.statusCode, 200);
+
+  const embed = sentMessages[0].embeds[0].toJSON();
+  const branchField = embed.fields.find((field) => field.name === 'Branches');
+  assert.ok(branchField);
+  assert.equal(branchField.value, 'Cubao, Makati');
 });
 
 test('normalizeChannelName trims, collapses whitespace, and caps at 100 characters', () => {

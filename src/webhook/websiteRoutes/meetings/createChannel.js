@@ -19,6 +19,7 @@ const {
 const router = express.Router();
 const MEETING_VOICE_CATEGORY_ID = '1526460615932248174';
 const DISCORD_CHANNEL_NAME_LIMIT = 100;
+const DISCORD_EMBED_FIELD_VALUE_LIMIT = 1024;
 
 const lock = new AsyncLock();
 
@@ -55,6 +56,42 @@ function getParticipantDiscordIds(participants) {
   return ids;
 }
 
+function getMeetingBranchNames(meeting) {
+  const seen = new Set();
+  const names = [];
+
+  const candidates = Array.isArray(meeting?.branches) && meeting.branches.length > 0
+    ? meeting.branches.map((branch) => branch?.name)
+    : [meeting?.branch_name];
+
+  for (const name of candidates) {
+    if (!isNonEmptyString(name)) continue;
+
+    const trimmed = name.trim();
+    if (seen.has(trimmed)) continue;
+
+    seen.add(trimmed);
+    names.push(trimmed);
+  }
+
+  return names;
+}
+
+function buildMeetingBranchField(meeting) {
+  const names = getMeetingBranchNames(meeting);
+  const name = names.length > 1 ? 'Branches' : 'Branch';
+
+  if (names.length === 0) return { name, value: 'N/A', inline: true };
+
+  let value = names.join(', ');
+  if (value.length > DISCORD_EMBED_FIELD_VALUE_LIMIT) {
+    const suffix = ` +${names.length} total`;
+    value = `${value.slice(0, DISCORD_EMBED_FIELD_VALUE_LIMIT - suffix.length - 1).trim()}…${suffix}`;
+  }
+
+  return { name, value, inline: true };
+}
+
 function isValidMeetingCreateChannelPayload(payload) {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return false;
   if (payload.event !== 'meeting.create_channel') return false;
@@ -65,6 +102,20 @@ function isValidMeetingCreateChannelPayload(payload) {
   if (!isNonEmptyString(payload.meeting.starts_at)) return false;
   if (!Number.isFinite(payload.meeting.duration_minutes)) return false;
   if (!Array.isArray(payload.participants)) return false;
+
+  // `branches` is optional so version 1 payloads sent before it existed stay valid.
+  if (payload.meeting.branches !== undefined) {
+    if (!Array.isArray(payload.meeting.branches)) return false;
+
+    const branchesAreValid = payload.meeting.branches.every((branch) => (
+      branch &&
+      typeof branch === 'object' &&
+      isNonEmptyString(branch.id) &&
+      isNonEmptyString(branch.name)
+    ));
+
+    if (!branchesAreValid) return false;
+  }
 
   return payload.participants.every((participant) => (
     participant &&
@@ -205,7 +256,7 @@ function buildMeetingEmbed(payload) {
         inline: true,
       },
       { name: 'Company', value: toDisplay(meeting.company_name), inline: true },
-      { name: 'Branch', value: toDisplay(meeting.branch_name), inline: true },
+      buildMeetingBranchField(meeting),
       {
         name: 'Created By',
         value: creator.discord_user_id
@@ -384,6 +435,8 @@ module.exports.isValidMeetingUpdateParticipantsPayload = isValidMeetingUpdatePar
 module.exports.updateMeetingVoiceChannelParticipants = updateMeetingVoiceChannelParticipants;
 module.exports.normalizeChannelName = normalizeChannelName;
 module.exports.getParticipantDiscordIds = getParticipantDiscordIds;
+module.exports.getMeetingBranchNames = getMeetingBranchNames;
+module.exports.buildMeetingBranchField = buildMeetingBranchField;
 module.exports.buildMeetingPermissionOverwrites = buildMeetingPermissionOverwrites;
 module.exports.buildMeetingChannelMessage = buildMeetingChannelMessage;
 module.exports.getStoredMeetingVoiceChannel = getStoredMeetingVoiceChannel;
