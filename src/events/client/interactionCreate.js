@@ -123,6 +123,7 @@ module.exports = {
         "editBranchModal:": "editBranchModal",
         "createDepartmentModal:": "createDepartmentModal",
         "editDepartmentModal:": "editDepartmentModal",
+        "renameEmployeeModal:": "renameEmployeeModal",
       };
       const modalName =
         Object.entries(dynamicModalPrefixes).find(([prefix]) => customId.startsWith(prefix))?.[1] ||

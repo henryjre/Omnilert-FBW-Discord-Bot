@@ -3,10 +3,14 @@ const assert = require('node:assert/strict');
 const { MessageFlags } = require('discord.js');
 
 const renameCommand = require('../src/commands/employeeCommands/rename.js');
+const renameModal = require('../src/components/modal/employee/renameEmployeeModal.js');
 const {
   HUMAN_RESOURCE_ROLE_ID,
+  buildRenameBudget,
+  buildRenameModalCustomId,
   buildRenamedNickname,
   extractStatusPrefix,
+  parseRenameModalCustomId,
 } = require('../src/utils/renameUtils.js');
 
 function createRoleCache(roleIds = []) {
@@ -17,7 +21,12 @@ function createRoleCache(roleIds = []) {
   };
 }
 
-function createMember({ nickname = null, username = 'employee', manageable = true, id = 'target-user' } = {}) {
+function createMember({
+  nickname = null,
+  username = 'employee',
+  manageable = true,
+  id = 'target-user',
+} = {}) {
   const member = {
     id,
     nickname,
@@ -35,12 +44,12 @@ function createMember({ nickname = null, username = 'employee', manageable = tru
   return member;
 }
 
-function createInteraction({
+function createCommandInteraction({
   roleIds = [HUMAN_RESOURCE_ROLE_ID],
   targetMember = createMember(),
-  name = 'Jane Doe',
 } = {}) {
-  const edits = [];
+  const replies = [];
+  const shownModals = [];
 
   return {
     interaction: {
@@ -49,13 +58,54 @@ function createInteraction({
       options: {
         getSubcommand: () => 'employee',
         getMember: () => targetMember,
-        getString: (option) => (option === 'name' ? name : null),
+      },
+      reply: async (payload) => {
+        replies.push(payload);
+      },
+      showModal: async (modal) => {
+        shownModals.push(modal);
+      },
+    },
+    replies,
+    shownModals,
+    targetMember,
+  };
+}
+
+function createModalInteraction({
+  roleIds = [HUMAN_RESOURCE_ROLE_ID],
+  targetMember = createMember(),
+  newName = 'Jane Doe',
+  customId = null,
+} = {}) {
+  const replies = [];
+  const edits = [];
+
+  return {
+    interaction: {
+      customId: customId || buildRenameModalCustomId(targetMember.id),
+      member: { roles: { cache: createRoleCache(roleIds) } },
+      user: { id: 'hr-user' },
+      guild: {
+        members: {
+          fetch: async (id) => {
+            if (id !== targetMember.id) throw new Error('Unknown member');
+            return targetMember;
+          },
+        },
+      },
+      fields: {
+        getTextInputValue: (id) => (id === 'newName' ? newName : ''),
+      },
+      reply: async (payload) => {
+        replies.push(payload);
       },
       deferReply: async () => {},
       editReply: async (payload) => {
         edits.push(payload);
       },
     },
+    replies,
     edits,
     targetMember,
   };
@@ -65,89 +115,143 @@ function describeOf(payload) {
   return payload.embeds[0].data.description;
 }
 
+function inputsOf(modal) {
+  return modal.components.map((row) => row.components[0].data);
+}
+
+// --- command: guards and modal construction ---
+
 test('/rename employee rejects users without the human resource role', async () => {
-  const { interaction, edits, targetMember } = createInteraction({ roleIds: [] });
+  const { interaction, replies, shownModals } = createCommandInteraction({ roleIds: [] });
 
   await renameCommand.execute(interaction, {});
 
-  assert.equal(targetMember.nicknameWrites.length, 0);
-  assert.equal(edits.length, 1);
-  assert.equal(edits[0].flags, MessageFlags.Ephemeral);
-  assert.match(describeOf(edits[0]), /🔴 ERROR/);
+  assert.equal(shownModals.length, 0);
+  assert.equal(replies.length, 1);
+  assert.equal(replies[0].flags, MessageFlags.Ephemeral);
+  assert.match(replies[0].content, /🔴 ERROR/);
 });
 
-test('/rename employee preserves a 🟢 prefix', async () => {
-  const targetMember = createMember({ nickname: '🟢 Old Name' });
-  const { interaction, edits } = createInteraction({ targetMember, name: 'New Name' });
+test('/rename employee refuses when role hierarchy blocks the change', async () => {
+  const targetMember = createMember({ nickname: '🟢 Old Name', manageable: false });
+  const { interaction, replies, shownModals } = createCommandInteraction({ targetMember });
 
   await renameCommand.execute(interaction, {});
+
+  assert.equal(shownModals.length, 0);
+  assert.match(replies[0].content, /role/i);
+});
+
+test('/rename employee refuses to rename the server owner', async () => {
+  const targetMember = createMember({ id: 'guild-owner', nickname: '🟢 Owner' });
+  const { interaction, replies, shownModals } = createCommandInteraction({ targetMember });
+
+  await renameCommand.execute(interaction, {});
+
+  assert.equal(shownModals.length, 0);
+  assert.match(replies[0].content, /owner/i);
+});
+
+test('/rename employee shows a modal prefilled with the current nickname', async () => {
+  const targetMember = createMember({ nickname: '🟢 Old Name' });
+  const { interaction, shownModals } = createCommandInteraction({ targetMember });
+
+  await renameCommand.execute(interaction, {});
+
+  assert.equal(shownModals.length, 1);
+  const [currentName, newName] = inputsOf(shownModals[0]);
+  assert.equal(currentName.value, '🟢 Old Name');
+  assert.equal(newName.max_length, 29);
+  assert.match(newName.label, /29/);
+});
+
+test('/rename employee caps the modal at 32 for a member with no prefix', async () => {
+  const targetMember = createMember({ nickname: null, username: 'plainuser' });
+  const { interaction, shownModals } = createCommandInteraction({ targetMember });
+
+  await renameCommand.execute(interaction, {});
+
+  const [currentName, newName] = inputsOf(shownModals[0]);
+  assert.equal(currentName.value, 'plainuser');
+  assert.equal(newName.max_length, 32);
+});
+
+test('/rename employee caps the modal below 29 for the pipe-variant prefix', async () => {
+  const targetMember = createMember({ nickname: '🟢 | Old Name' });
+  const { interaction, shownModals } = createCommandInteraction({ targetMember });
+
+  await renameCommand.execute(interaction, {});
+
+  const [, newName] = inputsOf(shownModals[0]);
+  assert.equal(newName.max_length, 32 - [...'🟢 | '].length);
+});
+
+// --- modal submit: the actual rename ---
+
+test('modal rejects submitters without the human resource role', async () => {
+  const { interaction, replies, targetMember } = createModalInteraction({ roleIds: [] });
+
+  await renameModal.execute(interaction, {});
+
+  assert.equal(targetMember.nicknameWrites.length, 0);
+  assert.match(replies[0].content, /🔴 ERROR/);
+});
+
+test('modal preserves a 🟢 prefix', async () => {
+  const targetMember = createMember({ nickname: '🟢 Old Name' });
+  const { interaction, edits } = createModalInteraction({ targetMember, newName: 'New Name' });
+
+  await renameModal.execute(interaction, {});
 
   assert.deepEqual(targetMember.nicknameWrites, ['🟢 New Name']);
   assert.match(describeOf(edits[0]), /✅/);
 });
 
-test('/rename employee preserves a 🔴 prefix', async () => {
+test('modal preserves a 🔴 prefix', async () => {
   const targetMember = createMember({ nickname: '🔴 Old Name' });
-  const { interaction } = createInteraction({ targetMember, name: 'New Name' });
+  const { interaction } = createModalInteraction({ targetMember, newName: 'New Name' });
 
-  await renameCommand.execute(interaction, {});
+  await renameModal.execute(interaction, {});
 
   assert.deepEqual(targetMember.nicknameWrites, ['🔴 New Name']);
 });
 
-test('/rename employee adds no prefix when the member has none', async () => {
+test('modal adds no prefix when the member has none', async () => {
   const targetMember = createMember({ nickname: null });
-  const { interaction } = createInteraction({ targetMember, name: 'New Name' });
+  const { interaction } = createModalInteraction({ targetMember, newName: 'New Name' });
 
-  await renameCommand.execute(interaction, {});
+  await renameModal.execute(interaction, {});
 
   assert.deepEqual(targetMember.nicknameWrites, ['New Name']);
 });
 
-test('/rename employee strips a status prefix typed into the name option', async () => {
+test('modal strips a status prefix typed into the new name field', async () => {
   const targetMember = createMember({ nickname: '🟢 Old Name' });
-  const { interaction } = createInteraction({ targetMember, name: '🟢 New Name' });
+  const { interaction } = createModalInteraction({ targetMember, newName: '🟢 New Name' });
 
-  await renameCommand.execute(interaction, {});
+  await renameModal.execute(interaction, {});
 
   assert.deepEqual(targetMember.nicknameWrites, ['🟢 New Name']);
 });
 
-test('/rename employee rejects a whitespace-only name', async () => {
+test('modal rejects a whitespace-only name', async () => {
   const targetMember = createMember({ nickname: '🟢 Old Name' });
-  const { interaction, edits } = createInteraction({ targetMember, name: '   ' });
+  const { interaction, edits } = createModalInteraction({ targetMember, newName: '   ' });
 
-  await renameCommand.execute(interaction, {});
+  await renameModal.execute(interaction, {});
 
   assert.equal(targetMember.nicknameWrites.length, 0);
   assert.match(describeOf(edits[0]), /not blank/);
 });
 
-test('/rename employee refuses when role hierarchy blocks the change', async () => {
-  const targetMember = createMember({ nickname: '🟢 Old Name', manageable: false });
-  const { interaction, edits } = createInteraction({ targetMember });
-
-  await renameCommand.execute(interaction, {});
-
-  assert.equal(targetMember.nicknameWrites.length, 0);
-  assert.match(describeOf(edits[0]), /role/i);
-});
-
-test('/rename employee refuses to rename the server owner', async () => {
-  const targetMember = createMember({ id: 'guild-owner', nickname: '🟢 Owner' });
-  const { interaction, edits } = createInteraction({ targetMember });
-
-  await renameCommand.execute(interaction, {});
-
-  assert.equal(targetMember.nicknameWrites.length, 0);
-  assert.match(describeOf(edits[0]), /owner/i);
-});
-
-test('/rename employee explains the prefix when rejecting an over-long name', async () => {
+test('modal explains the prefix when rejecting an over-long name', async () => {
   const targetMember = createMember({ nickname: '🟢 Old Name' });
-  const { interaction, edits } = createInteraction({ targetMember, name: 'a'.repeat(30) });
+  const { interaction, edits } = createModalInteraction({
+    targetMember,
+    newName: 'a'.repeat(30),
+  });
 
-  await renameCommand.execute(interaction, {});
+  await renameModal.execute(interaction, {});
 
   assert.equal(targetMember.nicknameWrites.length, 0);
   const description = describeOf(edits[0]);
@@ -155,12 +259,52 @@ test('/rename employee explains the prefix when rejecting an over-long name', as
   assert.match(description, /shift-status prefix/);
 });
 
+test('modal re-checks hierarchy at submit time', async () => {
+  const targetMember = createMember({ nickname: '🟢 Old Name', manageable: false });
+  const { interaction, edits } = createModalInteraction({ targetMember });
+
+  await renameModal.execute(interaction, {});
+
+  assert.equal(targetMember.nicknameWrites.length, 0);
+  assert.match(describeOf(edits[0]), /role/i);
+});
+
+test('modal reports when the member has left the server', async () => {
+  const targetMember = createMember({ nickname: '🟢 Old Name' });
+  const { interaction, edits } = createModalInteraction({
+    targetMember,
+    customId: buildRenameModalCustomId('someone-else'),
+  });
+
+  await renameModal.execute(interaction, {});
+
+  assert.equal(targetMember.nicknameWrites.length, 0);
+  assert.match(describeOf(edits[0]), /no longer a member/);
+});
+
+// --- customId round-trip ---
+
+test('rename modal customId round-trips the member id', () => {
+  assert.equal(parseRenameModalCustomId(buildRenameModalCustomId('12345')), '12345');
+  assert.equal(parseRenameModalCustomId('someOtherModal:12345'), null);
+  assert.equal(parseRenameModalCustomId('renameEmployeeModal:'), null);
+});
+
+// --- budget arithmetic ---
+
 test('extractStatusPrefix detects both status emojis and the pipe variant', () => {
   assert.equal(extractStatusPrefix('🟢 Jane'), '🟢 ');
   assert.equal(extractStatusPrefix('🔴 Jane'), '🔴 ');
   assert.equal(extractStatusPrefix('🟢 | Jane'), '🟢 | ');
   assert.equal(extractStatusPrefix('Jane'), null);
   assert.equal(extractStatusPrefix(null), null);
+});
+
+test('buildRenameBudget agrees with the modal cap for each prefix shape', () => {
+  assert.equal(buildRenameBudget(createMember({ nickname: '🟢 X' })).maxNameLength, 29);
+  assert.equal(buildRenameBudget(createMember({ nickname: '🔴 X' })).maxNameLength, 29);
+  assert.equal(buildRenameBudget(createMember({ nickname: null })).maxNameLength, 32);
+  assert.equal(buildRenameBudget(createMember({ nickname: '🟢 | X' })).maxNameLength, 28);
 });
 
 test('prefixed member accepts a 29-character name and stays within 32', () => {
