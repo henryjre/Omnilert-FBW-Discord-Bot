@@ -170,7 +170,14 @@ const managementCheckIn = async (req, res) => {
           (f) => f.name === 'Total Working Time'
         );
         if (cumulativeMinutesField) {
-          cumulativeMinutesField.value = `🕒 | ${cumulative_minutes} as of last check-out`;
+          // Odoo does not populate x_cumulative_minutes on check-in (it is only
+          // computed at check-out), so a 0 here means "no new total to report",
+          // not "the employee has worked 0 minutes". Keep the running total that
+          // the last check-out already wrote instead of clobbering it with 0.
+          const hasNewTotal = Number(x_cumulative_minutes) > 0;
+          cumulativeMinutesField.value = hasNewTotal
+            ? `🕒 | ${cumulative_minutes} as of last check-out`
+            : `🕒 | Currently Working`;
         }
 
         const newMessageEmbed = EmbedBuilder.from(messageEmbed)
@@ -220,7 +227,7 @@ const managementCheckOut = async (req, res) => {
     let messageEmbed = attendanceMessage.embeds[0];
 
     const totalWorkingTime = messageEmbed.data.fields?.find((f) => f.name === 'Total Working Time');
-    if (totalWorkingTime) totalWorkingTime.value = `⏳ | ${cumulative_minutes}`;
+    if (totalWorkingTime) totalWorkingTime.value = `🕒 | ${cumulative_minutes} as of last check-out`;
 
     messageEmbed.data.fields.push({
       name: 'Check-Out',
