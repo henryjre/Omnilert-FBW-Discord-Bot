@@ -56,13 +56,9 @@ function getParticipantDiscordIds(participants) {
   return ids;
 }
 
-function getMeetingBranchNames(meeting) {
+function collectUniqueNames(candidates) {
   const seen = new Set();
   const names = [];
-
-  const candidates = Array.isArray(meeting?.branches) && meeting.branches.length > 0
-    ? meeting.branches.map((branch) => branch?.name)
-    : [meeting?.branch_name];
 
   for (const name of candidates) {
     if (!isNonEmptyString(name)) continue;
@@ -77,9 +73,25 @@ function getMeetingBranchNames(meeting) {
   return names;
 }
 
-function buildMeetingBranchField(meeting) {
-  const names = getMeetingBranchNames(meeting);
-  const name = names.length > 1 ? 'Branches' : 'Branch';
+function getMeetingCompanyNames(meeting) {
+  if (Array.isArray(meeting?.companies) && meeting.companies.length > 0) {
+    return collectUniqueNames(meeting.companies.map((company) => company?.name));
+  }
+
+  if (isNonEmptyString(meeting?.company_name)) {
+    return collectUniqueNames([meeting.company_name]);
+  }
+
+  if (Array.isArray(meeting?.branches) && meeting.branches.length > 0) {
+    return collectUniqueNames(meeting.branches.map((branch) => branch?.name));
+  }
+
+  return collectUniqueNames([meeting?.branch_name]);
+}
+
+function buildMeetingCompanyField(meeting) {
+  const names = getMeetingCompanyNames(meeting);
+  const name = names.length > 1 ? 'Companies' : 'Company';
 
   if (names.length === 0) return { name, value: 'N/A', inline: true };
 
@@ -92,6 +104,9 @@ function buildMeetingBranchField(meeting) {
   return { name, value, inline: true };
 }
 
+const getMeetingBranchNames = getMeetingCompanyNames;
+const buildMeetingBranchField = buildMeetingCompanyField;
+
 function isValidMeetingCreateChannelPayload(payload) {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return false;
   if (payload.event !== 'meeting.create_channel') return false;
@@ -103,7 +118,20 @@ function isValidMeetingCreateChannelPayload(payload) {
   if (!Number.isFinite(payload.meeting.duration_minutes)) return false;
   if (!Array.isArray(payload.participants)) return false;
 
-  // `branches` is optional so version 1 payloads sent before it existed stay valid.
+  if (payload.meeting.companies !== undefined) {
+    if (!Array.isArray(payload.meeting.companies)) return false;
+
+    const companiesAreValid = payload.meeting.companies.every((company) => (
+      company &&
+      typeof company === 'object' &&
+      isNonEmptyString(company.id) &&
+      isNonEmptyString(company.name)
+    ));
+
+    if (!companiesAreValid) return false;
+  }
+
+  // `branches` is a legacy field from the previous website payload.
   if (payload.meeting.branches !== undefined) {
     if (!Array.isArray(payload.meeting.branches)) return false;
 
@@ -255,8 +283,7 @@ function buildMeetingEmbed(payload) {
         value: `${toDisplay(meeting.duration_minutes)} minutes`,
         inline: true,
       },
-      { name: 'Company', value: toDisplay(meeting.company_name), inline: true },
-      buildMeetingBranchField(meeting),
+      buildMeetingCompanyField(meeting),
       {
         name: 'Created By',
         value: creator.discord_user_id
@@ -437,6 +464,8 @@ module.exports.normalizeChannelName = normalizeChannelName;
 module.exports.getParticipantDiscordIds = getParticipantDiscordIds;
 module.exports.getMeetingBranchNames = getMeetingBranchNames;
 module.exports.buildMeetingBranchField = buildMeetingBranchField;
+module.exports.getMeetingCompanyNames = getMeetingCompanyNames;
+module.exports.buildMeetingCompanyField = buildMeetingCompanyField;
 module.exports.buildMeetingPermissionOverwrites = buildMeetingPermissionOverwrites;
 module.exports.buildMeetingChannelMessage = buildMeetingChannelMessage;
 module.exports.getStoredMeetingVoiceChannel = getStoredMeetingVoiceChannel;

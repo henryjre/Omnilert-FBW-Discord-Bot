@@ -14,8 +14,8 @@ const {
   isValidMeetingChannelWebhookPayload,
   isValidMeetingUpdateParticipantsPayload,
   normalizeChannelName,
-  getMeetingBranchNames,
-  buildMeetingBranchField,
+  getMeetingCompanyNames,
+  buildMeetingCompanyField,
 } = require('../src/webhook/websiteRoutes/meetings/createChannel');
 
 function buildPayload(overrides = {}) {
@@ -32,8 +32,9 @@ function buildPayload(overrides = {}) {
       duration_minutes: 45,
       company_id: 'c6c29aa5-1af2-4a93-baed-895ed098c6da',
       company_name: 'Monster Siomai',
-      branch_id: 'branch-uuid',
-      branch_name: 'MS Main Branch',
+      companies: [
+        { id: 'c6c29aa5-1af2-4a93-baed-895ed098c6da', name: 'Monster Siomai' },
+      ],
       created_by: {
         user_id: 'creator-uuid',
         name: 'Carl Anthony Camaya',
@@ -235,13 +236,13 @@ test('isValidMeetingCreateChannelPayload rejects malformed payloads', () => {
   );
 });
 
-test('isValidMeetingCreateChannelPayload accepts a payload with a branches array', () => {
+test('isValidMeetingCreateChannelPayload accepts the website companies array', () => {
   assert.equal(
     isValidMeetingCreateChannelPayload(buildPayload({
       meeting: {
-        branches: [
-          { id: 'branch-1', name: 'Cubao' },
-          { id: 'branch-2', name: 'Makati' },
+        companies: [
+          { id: 'company-1', name: 'Monster Siomai - Ayala' },
+          { id: 'company-2', name: 'Monster Siomai - BGC' },
         ],
       },
     })),
@@ -249,81 +250,85 @@ test('isValidMeetingCreateChannelPayload accepts a payload with a branches array
   );
 });
 
-test('isValidMeetingCreateChannelPayload rejects malformed branches entries', () => {
+test('isValidMeetingCreateChannelPayload rejects malformed companies entries', () => {
   assert.equal(
-    isValidMeetingCreateChannelPayload(buildPayload({ meeting: { branches: 'Cubao' } })),
-    false,
-  );
-  assert.equal(
-    isValidMeetingCreateChannelPayload(buildPayload({ meeting: { branches: [{ id: 'branch-1' }] } })),
+    isValidMeetingCreateChannelPayload(buildPayload({ meeting: { companies: 'Cubao' } })),
     false,
   );
   assert.equal(
     isValidMeetingCreateChannelPayload(
-      buildPayload({ meeting: { branches: [{ id: '', name: 'Cubao' }] } }),
+      buildPayload({ meeting: { companies: [{ id: 'company-1' }] } }),
+    ),
+    false,
+  );
+  assert.equal(
+    isValidMeetingCreateChannelPayload(
+      buildPayload({ meeting: { companies: [{ id: '', name: 'Cubao' }] } }),
     ),
     false,
   );
 });
 
-test('getMeetingBranchNames prefers branches and falls back to branch_name', () => {
+test('getMeetingCompanyNames prefers companies and falls back to company_name', () => {
   assert.deepEqual(
-    getMeetingBranchNames({
-      branch_name: 'Cubao',
-      branches: [
-        { id: 'branch-1', name: 'Cubao' },
-        { id: 'branch-2', name: 'Makati' },
+    getMeetingCompanyNames({
+      company_name: 'Monster Siomai - Ayala',
+      companies: [
+        { id: 'company-1', name: 'Monster Siomai - Ayala' },
+        { id: 'company-2', name: 'Monster Siomai - BGC' },
       ],
     }),
-    ['Cubao', 'Makati'],
+    ['Monster Siomai - Ayala', 'Monster Siomai - BGC'],
   );
 
-  // Legacy payloads without `branches` still resolve via branch_name.
-  assert.deepEqual(getMeetingBranchNames({ branch_name: 'MS Main Branch' }), ['MS Main Branch']);
-  assert.deepEqual(getMeetingBranchNames({ branches: [] , branch_name: 'Cubao' }), ['Cubao']);
-  assert.deepEqual(getMeetingBranchNames({}), []);
+  assert.deepEqual(getMeetingCompanyNames({ company_name: 'Monster Siomai' }), ['Monster Siomai']);
+  assert.deepEqual(
+    getMeetingCompanyNames({ companies: [], company_name: 'Monster Siomai' }),
+    ['Monster Siomai'],
+  );
+  assert.deepEqual(getMeetingCompanyNames({}), []);
 });
 
-test('getMeetingBranchNames dedupes and trims branch names', () => {
+test('getMeetingCompanyNames dedupes and trims company names', () => {
   assert.deepEqual(
-    getMeetingBranchNames({
-      branches: [
-        { id: 'branch-1', name: ' Cubao ' },
-        { id: 'branch-2', name: 'Cubao' },
-        { id: 'branch-3', name: '   ' },
+    getMeetingCompanyNames({
+      companies: [
+        { id: 'company-1', name: ' Monster Siomai - Ayala ' },
+        { id: 'company-2', name: 'Monster Siomai - Ayala' },
+        { id: 'company-3', name: '   ' },
       ],
     }),
-    ['Cubao'],
+    ['Monster Siomai - Ayala'],
   );
 });
 
-test('buildMeetingBranchField pluralizes the label and truncates long lists', () => {
+test('buildMeetingCompanyField pluralizes the label and truncates long lists', () => {
   assert.deepEqual(
-    buildMeetingBranchField({ branch_name: 'Cubao' }),
-    { name: 'Branch', value: 'Cubao', inline: true },
+    buildMeetingCompanyField({ company_name: 'Monster Siomai' }),
+    { name: 'Company', value: 'Monster Siomai', inline: true },
   );
   assert.deepEqual(
-    buildMeetingBranchField({
-      branches: [
-        { id: 'branch-1', name: 'Cubao' },
-        { id: 'branch-2', name: 'Makati' },
+    buildMeetingCompanyField({
+      companies: [
+        { id: 'company-1', name: 'Monster Siomai - Ayala' },
+        { id: 'company-2', name: 'Monster Siomai - BGC' },
       ],
     }),
-    { name: 'Branches', value: 'Cubao, Makati', inline: true },
+    { name: 'Companies', value: 'Monster Siomai - Ayala, Monster Siomai - BGC', inline: true },
   );
-  assert.deepEqual(buildMeetingBranchField({}), { name: 'Branch', value: 'N/A', inline: true });
+  assert.deepEqual(buildMeetingCompanyField({}), { name: 'Company', value: 'N/A', inline: true });
 
   const many = Array.from({ length: 200 }, (_, index) => ({
-    id: `branch-${index}`,
-    name: `Branch Number ${index}`,
+    id: `company-${index}`,
+    name: `Company Number ${index}`,
   }));
-  const field = buildMeetingBranchField({ branches: many });
-  assert.equal(field.name, 'Branches');
+  const field = buildMeetingCompanyField({ companies: many });
+  assert.equal(field.name, 'Companies');
   assert.ok(field.value.length <= 1024);
   assert.match(field.value, /\+200 total$/);
 });
 
-test('handler renders every branch in the meeting embed', async () => {
+test('handler renders every company in the meeting embed', async () => {
   const { client, sentMessages } = createMockClient();
   const handler = createMeetingCreateChannelHandler({
     clientInstance: client,
@@ -339,11 +344,11 @@ test('handler renders every branch in the meeting embed', async () => {
       headers: { authorization: 'Bearer expected-token' },
       body: buildPayload({
         meeting: {
-          branch_id: 'branch-1',
-          branch_name: 'Cubao',
-          branches: [
-            { id: 'branch-1', name: 'Cubao' },
-            { id: 'branch-2', name: 'Makati' },
+          company_id: 'company-1',
+          company_name: 'Monster Siomai - Ayala',
+          companies: [
+            { id: 'company-1', name: 'Monster Siomai - Ayala' },
+            { id: 'company-2', name: 'Monster Siomai - BGC' },
           ],
         },
       }),
@@ -354,9 +359,9 @@ test('handler renders every branch in the meeting embed', async () => {
   assert.equal(res.statusCode, 200);
 
   const embed = sentMessages[0].embeds[0].toJSON();
-  const branchField = embed.fields.find((field) => field.name === 'Branches');
-  assert.ok(branchField);
-  assert.equal(branchField.value, 'Cubao, Makati');
+  const companyField = embed.fields.find((field) => field.name === 'Companies');
+  assert.ok(companyField);
+  assert.equal(companyField.value, 'Monster Siomai - Ayala, Monster Siomai - BGC');
 });
 
 test('normalizeChannelName trims, collapses whitespace, and caps at 100 characters', () => {
@@ -457,7 +462,7 @@ test('handler creates a private voice channel and sends meeting details', async 
 
   const embed = sentMessages[0].embeds[0].toJSON();
   assert.equal(embed.title, 'Q3 Inventory Shrinkage Review');
-  assert.match(JSON.stringify(embed.fields), /MS Main Branch/);
+  assert.match(JSON.stringify(embed.fields), /Monster Siomai/);
   assert.match(JSON.stringify(embed.fields), /Carl Anthony Camaya/);
 });
 
