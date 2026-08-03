@@ -2,8 +2,6 @@ const managementRole = "1314413671245676685";
 const serviceEmployeeRole = "1314413960274907238";
 const officeChannels = ["1314413190074994690"];
 
-const odooWebhookUrl = "https://omnilert.odoo.com/web/hook/";
-
 const { callOdooAttendanceWebhook } = require("../../odooRpc.js");
 
 module.exports = {
@@ -33,7 +31,7 @@ module.exports = {
       const memberId = member.id;
       await callOdooAttendanceWebhook(
         "checkin",
-        `${odooWebhookUrl}${process.env.ODOO_CHECKIN_SECRET}`,
+        process.env.ODOO_CHECKIN_SECRET,
         memberId
       );
       return;
