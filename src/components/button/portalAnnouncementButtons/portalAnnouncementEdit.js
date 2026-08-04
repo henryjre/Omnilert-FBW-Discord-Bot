@@ -36,7 +36,6 @@ module.exports = {
     const announcementInput = new TextInputBuilder()
       .setCustomId('announcementInput')
       .setStyle(TextInputStyle.Paragraph)
-      .setPlaceholder(parsed.announcement)
       .setValue(parsed.announcement)
       .setMaxLength(PORTAL_MESSAGE_LIMIT)
       .setRequired(true);
