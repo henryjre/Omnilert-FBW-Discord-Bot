@@ -5,9 +5,8 @@ const {
   ContainerBuilder,
   MediaGalleryBuilder,
   MessageFlags,
+  RoleSelectMenuBuilder,
   SeparatorSpacingSize,
-  StringSelectMenuBuilder,
-  StringSelectMenuOptionBuilder,
 } = require('discord.js');
 
 const PORTAL_ANNOUNCER_ROLE_ID = '1314815091908022373';
@@ -16,19 +15,42 @@ const PORTAL_QUESTION_THREAD_TITLE = '❓ QUESTIONS HERE';
 const PORTAL_MESSAGE_LIMIT = 2000;
 const PORTAL_ATTACHMENT_THREAD_PREFIX = 'Portal Announcement Upload -';
 
-const PORTAL_RECIPIENT_OPTIONS = [
-  { label: 'Everyone', value: '@everyone' },
-  { label: 'Management', value: '1314413671245676685' },
-  { label: 'Service Crew/Employees', value: '1314413960274907238' },
-  { label: 'JASA Employees', value: '1336991998791385129' },
-  { label: 'Primark Employees', value: '1336992011525558312' },
-  { label: 'Robinsons Employees', value: '1336992014545190933' },
-  { label: 'DHVSU Employees', value: '1336992007910068225' },
-];
+const PORTAL_RECIPIENT_LIMIT = 25;
 
 function normalizeSelectedRecipients(values = []) {
-  const allowed = new Set(PORTAL_RECIPIENT_OPTIONS.map((option) => option.value));
-  return [...new Set(values)].filter((value) => allowed.has(value));
+  return [...new Set(values)]
+    .filter((value) => value === '@everyone' || /^\d+$/.test(value))
+    .slice(0, PORTAL_RECIPIENT_LIMIT);
+}
+
+// Discord renders every guild role in a RoleSelectMenu and offers no way to
+// filter the list client-side, so unusable picks are rejected on selection.
+function isAnnounceableRole(role, guild) {
+  if (!role) return false;
+  if (role.id === guild?.id) return false; // @everyone, offered as its own option
+  if (role.managed) return false; // bot/integration/booster roles
+  return role.mentionable;
+}
+
+function partitionRecipientsByRole(values = [], guild) {
+  const allowed = [];
+  const rejected = [];
+
+  for (const value of normalizeSelectedRecipients(values)) {
+    if (value === '@everyone') {
+      allowed.push(value);
+      continue;
+    }
+
+    const role = guild?.roles?.cache?.get(value);
+    if (isAnnounceableRole(role, guild)) {
+      allowed.push(value);
+    } else {
+      rejected.push({ id: value, name: role?.name || value, managed: Boolean(role?.managed) });
+    }
+  }
+
+  return { allowed, rejected };
 }
 
 function formatRecipient(value) {
@@ -42,21 +64,26 @@ function formatRecipients(values = []) {
 }
 
 function buildPortalRecipientMenu(selectedRecipients = []) {
-  const selected = new Set(normalizeSelectedRecipients(selectedRecipients));
+  const roleIds = normalizeSelectedRecipients(selectedRecipients).filter(
+    (value) => value !== '@everyone'
+  );
 
-  return new StringSelectMenuBuilder()
+  return new RoleSelectMenuBuilder()
     .setCustomId('portalAnnouncementRecipients')
     .setPlaceholder('Select target role/s.')
     .setMinValues(0)
-    .setMaxValues(PORTAL_RECIPIENT_OPTIONS.length)
-    .setOptions(
-      PORTAL_RECIPIENT_OPTIONS.map((option) =>
-        new StringSelectMenuOptionBuilder()
-          .setLabel(option.label)
-          .setValue(option.value)
-          .setDefault(selected.has(option.value))
-      )
-    );
+    .setMaxValues(PORTAL_RECIPIENT_LIMIT)
+    .setDefaultRoles(roleIds);
+}
+
+// @everyone is the guild's default role, which Discord omits from role pickers.
+function buildPortalEveryoneToggle(selectedRecipients = []) {
+  const active = normalizeSelectedRecipients(selectedRecipients).includes('@everyone');
+
+  return new ButtonBuilder()
+    .setCustomId('portalAnnouncementEveryone')
+    .setLabel(active ? '@everyone: ON' : '@everyone: OFF')
+    .setStyle(active ? ButtonStyle.Success : ButtonStyle.Secondary);
 }
 
 function buildPortalPreviewPayload({
@@ -116,6 +143,7 @@ function buildPortalPreviewPayload({
   }
 
   const buttons = [
+    buildPortalEveryoneToggle(selected),
     new ButtonBuilder()
       .setCustomId('portalAnnouncementEdit')
       .setLabel('Edit')
@@ -278,7 +306,10 @@ const portalAnnouncementUtils = {
   PORTAL_ANNOUNCEMENT_CHANNEL_ID,
   PORTAL_MESSAGE_LIMIT,
   PORTAL_QUESTION_THREAD_TITLE,
+  PORTAL_RECIPIENT_LIMIT,
   buildPortalFinalPayload,
+  isAnnounceableRole,
+  partitionRecipientsByRole,
   buildPortalPreviewPayload,
   collectPortalThreadAttachments,
   deletePortalAttachmentThreadForMessage,
