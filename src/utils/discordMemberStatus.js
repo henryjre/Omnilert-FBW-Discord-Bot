@@ -28,7 +28,7 @@ async function setAttendanceStatusNickname(member, statusEmoji) {
   const manageCheck = canManageMember(member);
 
   if (!manageCheck.ok) {
-    console.info(`Skipping attendance nickname update for ${member?.id || 'unknown user'}: ${manageCheck.reason}`);
+    console.warn(`Skipping attendance nickname update for ${member?.id || 'unknown user'}: ${manageCheck.reason}`);
     return { updated: false, reason: manageCheck.reason };
   }
 

@@ -38,7 +38,7 @@ const attendanceCheckIn = async (req, res) => {
     if (x_discord_id) {
       try {
         const guild = client.guilds.cache.get('1314413189613490248');
-        const discordMember = guild?.members.cache.get(x_discord_id);
+        const discordMember = await resolveGuildMember(guild, x_discord_id);
 
         if (department?.role) {
           const rolesToRemove = getBranchRoles();
@@ -75,7 +75,7 @@ const attendanceCheckOut = async (req, res) => {
 
         if (activeAttendance.length <= 0) {
           const guild = client.guilds.cache.get('1314413189613490248');
-          const discordMember = guild?.members.cache.get(x_discord_id);
+          const discordMember = await resolveGuildMember(guild, x_discord_id);
 
           await setAttendanceStatusNickname(discordMember, '🔴');
         }
@@ -677,6 +677,23 @@ const employeeCheckOut = async (req, res) => {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////// HELPER FUNCTIONS ///////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// The guild member cache is warmed by a full fetch on ready, but entries are
+// evicted over a long-running process. A cache miss here used to leave the
+// attendance status emoji stale, so fall back to fetching the member.
+async function resolveGuildMember(guild, discordId) {
+  if (!guild || !discordId) return null;
+
+  const cachedMember = guild.members.cache.get(discordId);
+  if (cachedMember) return cachedMember;
+
+  try {
+    return await guild.members.fetch(discordId);
+  } catch (error) {
+    console.warn(`Could not fetch guild member ${discordId}: ${error.message}`);
+    return null;
+  }
+}
 
 function formatTime(rawTime) {
   return moment
