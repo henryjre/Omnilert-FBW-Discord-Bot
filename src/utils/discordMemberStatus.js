@@ -18,7 +18,9 @@ function buildStatusNickname(member, statusEmoji) {
 
 function canManageMember(member) {
   if (!member) return { ok: false, reason: 'member not found' };
-  if (member.guild?.ownerId === member.id) return { ok: false, reason: 'server owner' };
+  if (member.guild?.ownerId && member.id && member.guild.ownerId === member.id) {
+    return { ok: false, reason: 'server owner' };
+  }
   if (member.manageable === false) return { ok: false, reason: 'role hierarchy' };
 
   return { ok: true };
