@@ -1,9 +1,12 @@
 const express = require('express');
 const AsyncLock = require('async-lock');
+const moment = require('moment-timezone');
 const {
   ChannelType,
-  EmbedBuilder,
+  ContainerBuilder,
+  MessageFlags,
   PermissionFlagsBits,
+  SeparatorSpacingSize,
 } = require('discord.js');
 
 const { extractBearerToken } = require('../notifications/cronNotifications');
@@ -19,7 +22,10 @@ const {
 const router = express.Router();
 const MEETING_VOICE_CATEGORY_ID = '1526460615932248174';
 const DISCORD_CHANNEL_NAME_LIMIT = 100;
-const DISCORD_EMBED_FIELD_VALUE_LIMIT = 1024;
+const MEETING_COMPANY_VALUE_LIMIT = 1024;
+const MEETING_AGENDA_LIMIT = 2000;
+const MEETING_TIMEZONE = 'Asia/Manila';
+const MEETING_DATE_FORMAT = 'MMMM DD [at] h:mm A';
 
 const lock = new AsyncLock();
 
@@ -89,23 +95,46 @@ function getMeetingCompanyNames(meeting) {
   return collectUniqueNames([meeting?.branch_name]);
 }
 
-function buildMeetingCompanyField(meeting) {
+function buildMeetingCompanyLine(meeting) {
   const names = getMeetingCompanyNames(meeting);
-  const name = names.length > 1 ? 'Companies' : 'Company';
+  const label = names.length > 1 ? 'Companies' : 'Company';
 
-  if (names.length === 0) return { name, value: 'N/A', inline: true };
+  if (names.length === 0) return { label, value: 'N/A' };
 
   let value = names.join(', ');
-  if (value.length > DISCORD_EMBED_FIELD_VALUE_LIMIT) {
+  if (value.length > MEETING_COMPANY_VALUE_LIMIT) {
     const suffix = ` +${names.length} total`;
-    value = `${value.slice(0, DISCORD_EMBED_FIELD_VALUE_LIMIT - suffix.length - 1).trim()}…${suffix}`;
+    value = `${value.slice(0, MEETING_COMPANY_VALUE_LIMIT - suffix.length - 1).trim()}…${suffix}`;
   }
 
-  return { name, value, inline: true };
+  return { label, value };
+}
+
+// `starts_at` arrives as a UTC ISO string; staff read schedules in Manila time.
+function formatMeetingStartsAt(startsAt) {
+  if (!isNonEmptyString(startsAt)) return 'N/A';
+
+  const parsed = moment.utc(startsAt, moment.ISO_8601, true);
+  if (!parsed.isValid()) return toDisplay(startsAt);
+
+  return parsed.tz(MEETING_TIMEZONE).format(MEETING_DATE_FORMAT);
+}
+
+function formatMeetingDuration(durationMinutes) {
+  if (!Number.isFinite(durationMinutes)) return 'N/A';
+
+  const hours = Math.floor(durationMinutes / 60);
+  const minutes = durationMinutes % 60;
+  const parts = [];
+
+  if (hours > 0) parts.push(`${hours} hour${hours === 1 ? '' : 's'}`);
+  if (minutes > 0 || parts.length === 0) parts.push(`${minutes} minute${minutes === 1 ? '' : 's'}`);
+
+  return parts.join(' ');
 }
 
 const getMeetingBranchNames = getMeetingCompanyNames;
-const buildMeetingBranchField = buildMeetingCompanyField;
+const buildMeetingBranchLine = buildMeetingCompanyLine;
 
 function isValidMeetingCreateChannelPayload(payload) {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return false;
@@ -267,46 +296,85 @@ function buildMeetingPermissionOverwrites(guild, clientInstance, participantIds)
   return overwrites;
 }
 
-function buildMeetingEmbed(payload) {
+function buildMeetingContainer(payload, participantIds) {
   const meeting = payload.meeting || {};
   const creator = meeting.created_by || {};
+  const company = buildMeetingCompanyLine(meeting);
+  const agenda = isNonEmptyString(meeting.agenda)
+    ? String(meeting.agenda).trim().slice(0, MEETING_AGENDA_LIMIT)
+    : '_No agenda provided._';
+  const createdBy = creator.discord_user_id
+    ? `${toDisplay(creator.name)} (<@${creator.discord_user_id}>)`
+    : toDisplay(creator.name);
 
-  const embed = new EmbedBuilder()
-    .setTitle(toDisplay(meeting.title))
-    .setColor(0x5865f2)
-    .addFields(
-      { name: 'Meeting ID', value: toDisplay(meeting.id) },
-      { name: 'Agenda', value: toDisplay(meeting.agenda) },
-      { name: 'Starts At', value: toDisplay(meeting.starts_at), inline: true },
-      {
-        name: 'Duration',
-        value: `${toDisplay(meeting.duration_minutes)} minutes`,
-        inline: true,
-      },
-      buildMeetingCompanyField(meeting),
-      {
-        name: 'Created By',
-        value: creator.discord_user_id
-          ? `${toDisplay(creator.name)} (<@${creator.discord_user_id}>)`
-          : toDisplay(creator.name),
-      },
+  // Components V2 renders mentions inside the container as real pings, so the
+  // participant list lives here instead of a separate content line.
+  const participants = participantIds.length > 0
+    ? participantIds.map((id) => `<@${id}>`).join(' ')
+    : '_No participants assigned._';
+
+  const container = new ContainerBuilder()
+    .setAccentColor(0x5865f2)
+    .addTextDisplayComponents((textDisplay) =>
+      textDisplay.setContent(
+        [
+          `## 📅 ${toDisplay(meeting.title)}`,
+          `-# ${company.label}: **${company.value}**`,
+        ].join('\n'),
+      ),
+    )
+    .addSeparatorComponents((separator) => separator.setSpacing(SeparatorSpacingSize.Small))
+    .addTextDisplayComponents((textDisplay) =>
+      textDisplay.setContent(
+        [
+          '### 📝 Agenda',
+          agenda,
+        ].join('\n'),
+      ),
+    )
+    .addSeparatorComponents((separator) => separator.setSpacing(SeparatorSpacingSize.Small))
+    .addTextDisplayComponents((textDisplay) =>
+      textDisplay.setContent(
+        [
+          '### 🕒 Schedule',
+          `> **Starts:** ${formatMeetingStartsAt(meeting.starts_at)}`,
+          `> **Duration:** ${formatMeetingDuration(meeting.duration_minutes)}`,
+          '',
+          '### 👥 Participants',
+          participants,
+          '',
+          '### ✍️ Organized By',
+          createdBy,
+        ].join('\n'),
+      ),
     );
 
   if (isNonEmptyString(meeting.link_url)) {
-    embed.addFields({ name: 'Link', value: meeting.link_url });
+    container
+      .addSeparatorComponents((separator) => separator.setSpacing(SeparatorSpacingSize.Small))
+      .addTextDisplayComponents((textDisplay) =>
+        textDisplay.setContent(`### 🔗 Meeting Link\n[Open in Omnilert](${meeting.link_url.trim()})`),
+      );
   }
 
-  return embed;
+  container.addTextDisplayComponents((textDisplay) =>
+    textDisplay.setContent(`-# Meeting ID: \`${toDisplay(meeting.id)}\``),
+  );
+
+  return container;
 }
 
 function buildMeetingChannelMessage(payload, participantIds) {
   const uniqueParticipantIds = [...new Set(participantIds)];
-  const mentions = uniqueParticipantIds.map((id) => `<@${id}>`).join(' ');
+  const creatorId = payload.meeting?.created_by?.discord_user_id;
+  const mentionableIds = isNonEmptyString(creatorId) && !uniqueParticipantIds.includes(creatorId)
+    ? [...uniqueParticipantIds, creatorId]
+    : uniqueParticipantIds;
 
   return {
-    content: mentions,
-    embeds: [buildMeetingEmbed(payload)],
-    allowedMentions: { users: uniqueParticipantIds, parse: [] },
+    components: [buildMeetingContainer(payload, uniqueParticipantIds)],
+    flags: MessageFlags.IsComponentsV2,
+    allowedMentions: { users: mentionableIds, parse: [] },
   };
 }
 
@@ -463,10 +531,13 @@ module.exports.updateMeetingVoiceChannelParticipants = updateMeetingVoiceChannel
 module.exports.normalizeChannelName = normalizeChannelName;
 module.exports.getParticipantDiscordIds = getParticipantDiscordIds;
 module.exports.getMeetingBranchNames = getMeetingBranchNames;
-module.exports.buildMeetingBranchField = buildMeetingBranchField;
+module.exports.buildMeetingBranchLine = buildMeetingBranchLine;
 module.exports.getMeetingCompanyNames = getMeetingCompanyNames;
-module.exports.buildMeetingCompanyField = buildMeetingCompanyField;
+module.exports.buildMeetingCompanyLine = buildMeetingCompanyLine;
+module.exports.formatMeetingStartsAt = formatMeetingStartsAt;
+module.exports.formatMeetingDuration = formatMeetingDuration;
 module.exports.buildMeetingPermissionOverwrites = buildMeetingPermissionOverwrites;
+module.exports.buildMeetingContainer = buildMeetingContainer;
 module.exports.buildMeetingChannelMessage = buildMeetingChannelMessage;
 module.exports.getStoredMeetingVoiceChannel = getStoredMeetingVoiceChannel;
 module.exports.saveMeetingVoiceChannel = saveMeetingVoiceChannel;

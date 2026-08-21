@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const {
   ChannelType,
+  MessageFlags,
   PermissionFlagsBits,
 } = require('discord.js');
 
@@ -15,8 +16,19 @@ const {
   isValidMeetingUpdateParticipantsPayload,
   normalizeChannelName,
   getMeetingCompanyNames,
-  buildMeetingCompanyField,
+  buildMeetingCompanyLine,
+  formatMeetingStartsAt,
+  formatMeetingDuration,
 } = require('../src/webhook/websiteRoutes/meetings/createChannel');
+
+// Flattens every TextDisplay content in a Components V2 message into one string.
+function getContainerText(message) {
+  const container = message.components[0].toJSON();
+  return (container.components || [])
+    .map((component) => component.content)
+    .filter((content) => typeof content === 'string')
+    .join('\n');
+}
 
 function buildPayload(overrides = {}) {
   const payload = {
@@ -302,33 +314,50 @@ test('getMeetingCompanyNames dedupes and trims company names', () => {
   );
 });
 
-test('buildMeetingCompanyField pluralizes the label and truncates long lists', () => {
+test('buildMeetingCompanyLine pluralizes the label and truncates long lists', () => {
   assert.deepEqual(
-    buildMeetingCompanyField({ company_name: 'Monster Siomai' }),
-    { name: 'Company', value: 'Monster Siomai', inline: true },
+    buildMeetingCompanyLine({ company_name: 'Monster Siomai' }),
+    { label: 'Company', value: 'Monster Siomai' },
   );
   assert.deepEqual(
-    buildMeetingCompanyField({
+    buildMeetingCompanyLine({
       companies: [
         { id: 'company-1', name: 'Monster Siomai - Ayala' },
         { id: 'company-2', name: 'Monster Siomai - BGC' },
       ],
     }),
-    { name: 'Companies', value: 'Monster Siomai - Ayala, Monster Siomai - BGC', inline: true },
+    { label: 'Companies', value: 'Monster Siomai - Ayala, Monster Siomai - BGC' },
   );
-  assert.deepEqual(buildMeetingCompanyField({}), { name: 'Company', value: 'N/A', inline: true });
+  assert.deepEqual(buildMeetingCompanyLine({}), { label: 'Company', value: 'N/A' });
 
   const many = Array.from({ length: 200 }, (_, index) => ({
     id: `company-${index}`,
     name: `Company Number ${index}`,
   }));
-  const field = buildMeetingCompanyField({ companies: many });
-  assert.equal(field.name, 'Companies');
-  assert.ok(field.value.length <= 1024);
-  assert.match(field.value, /\+200 total$/);
+  const line = buildMeetingCompanyLine({ companies: many });
+  assert.equal(line.label, 'Companies');
+  assert.ok(line.value.length <= 1024);
+  assert.match(line.value, /\+200 total$/);
 });
 
-test('handler renders every company in the meeting embed', async () => {
+test('formatMeetingStartsAt renders MMMM DD [at] h:mm A in Manila time', () => {
+  assert.equal(formatMeetingStartsAt('2026-08-21T14:00:00.000Z'), 'August 21 at 10:00 PM');
+  assert.equal(formatMeetingStartsAt('2026-07-15T02:00:00.000Z'), 'July 15 at 10:00 AM');
+  assert.equal(formatMeetingStartsAt(''), 'N/A');
+  assert.equal(formatMeetingStartsAt('not-a-date'), 'not-a-date');
+});
+
+test('formatMeetingDuration renders hours and minutes', () => {
+  assert.equal(formatMeetingDuration(45), '45 minutes');
+  assert.equal(formatMeetingDuration(60), '1 hour');
+  assert.equal(formatMeetingDuration(90), '1 hour 30 minutes');
+  assert.equal(formatMeetingDuration(125), '2 hours 5 minutes');
+  assert.equal(formatMeetingDuration(1), '1 minute');
+  assert.equal(formatMeetingDuration(0), '0 minutes');
+  assert.equal(formatMeetingDuration('45'), 'N/A');
+});
+
+test('handler renders every company in the meeting container', async () => {
   const { client, sentMessages } = createMockClient();
   const handler = createMeetingCreateChannelHandler({
     clientInstance: client,
@@ -358,10 +387,8 @@ test('handler renders every company in the meeting embed', async () => {
 
   assert.equal(res.statusCode, 200);
 
-  const embed = sentMessages[0].embeds[0].toJSON();
-  const companyField = embed.fields.find((field) => field.name === 'Companies');
-  assert.ok(companyField);
-  assert.equal(companyField.value, 'Monster Siomai - Ayala, Monster Siomai - BGC');
+  const text = getContainerText(sentMessages[0]);
+  assert.match(text, /Companies: \*\*Monster Siomai - Ayala, Monster Siomai - BGC\*\*/);
 });
 
 test('normalizeChannelName trims, collapses whitespace, and caps at 100 characters', () => {
@@ -454,16 +481,23 @@ test('handler creates a private voice channel and sends meeting details', async 
   assert.ok(botOverwrite.allow.includes(PermissionFlagsBits.ManageChannels));
 
   assert.equal(sentMessages.length, 1);
-  assert.equal(sentMessages[0].content, '<@987654321098765432>');
+  assert.equal(sentMessages[0].flags, MessageFlags.IsComponentsV2);
+  assert.equal(sentMessages[0].content, undefined);
   assert.deepEqual(sentMessages[0].allowedMentions, {
-    users: ['987654321098765432'],
+    users: ['987654321098765432', '123456789012345678'],
     parse: [],
   });
 
-  const embed = sentMessages[0].embeds[0].toJSON();
-  assert.equal(embed.title, 'Q3 Inventory Shrinkage Review');
-  assert.match(JSON.stringify(embed.fields), /Monster Siomai/);
-  assert.match(JSON.stringify(embed.fields), /Carl Anthony Camaya/);
+  const text = getContainerText(sentMessages[0]);
+  assert.match(text, /## 📅 Q3 Inventory Shrinkage Review/);
+  assert.match(text, /Company: \*\*Monster Siomai\*\*/);
+  assert.match(text, /### 📝 Agenda\nReview the Q3 inventory shrinkage numbers/);
+  assert.match(text, /> \*\*Starts:\*\* July 15 at 10:00 AM/);
+  assert.match(text, /> \*\*Duration:\*\* 45 minutes/);
+  assert.match(text, /### 👥 Participants\n<@987654321098765432>/);
+  assert.match(text, /Carl Anthony Camaya \(<@123456789012345678>\)/);
+  assert.match(text, /\[Open in Omnilert\]\(https:\/\/app\.omnilert\.app/);
+  assert.match(text, /-# Meeting ID: `dfb8ba84-5301-43c4-8d0d-3a175bd1b862`/);
 });
 
 test('buildMeetingChannelMessage dedupes participant mentions', () => {
@@ -472,11 +506,36 @@ test('buildMeetingChannelMessage dedupes participant mentions', () => {
     '987654321098765432',
   ]);
 
-  assert.equal(message.content, '<@987654321098765432>');
+  assert.equal(getContainerText(message).match(/<@987654321098765432>/g).length, 1);
   assert.deepEqual(message.allowedMentions, {
-    users: ['987654321098765432'],
+    users: ['987654321098765432', '123456789012345678'],
     parse: [],
   });
+});
+
+test('buildMeetingChannelMessage keeps the creator mention pingable without duplicating it', () => {
+  const message = buildMeetingChannelMessage(
+    buildPayload({
+      participants: [
+        { user_id: 'creator-uuid', name: 'Carl Anthony Camaya', discord_user_id: '123456789012345678' },
+      ],
+    }),
+    ['123456789012345678'],
+  );
+
+  assert.deepEqual(message.allowedMentions, {
+    users: ['123456789012345678'],
+    parse: [],
+  });
+});
+
+test('buildMeetingChannelMessage falls back when agenda, participants, and link are missing', () => {
+  const payload = buildPayload({ meeting: { agenda: '', link_url: '' } });
+  const text = getContainerText(buildMeetingChannelMessage(payload, []));
+
+  assert.match(text, /### 📝 Agenda\n_No agenda provided\._/);
+  assert.match(text, /### 👥 Participants\n_No participants assigned\._/);
+  assert.doesNotMatch(text, /Meeting Link/);
 });
 
 test('duplicate meeting id returns stored channel id without creating a channel', async () => {
