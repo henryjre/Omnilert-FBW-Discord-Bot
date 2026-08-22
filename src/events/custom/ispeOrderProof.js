@@ -1,4 +1,5 @@
 const cdnChannel = "1384688917155938354";
+const { getOdooBaseUrl } = require("../../config/odoo");
 const {
   DISCORD_MAX_FILE_SIZE_BYTES,
   compressBufferToLimit,
@@ -167,7 +168,7 @@ module.exports = {
 
     for (const attachment of cdnAttachmentsUrls) {
       const attachmentEmbed = {
-        url: "https://omnilert.odoo.com/",
+        url: getOdooBaseUrl(),
         image: {
           url: attachment,
         },

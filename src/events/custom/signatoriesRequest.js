@@ -1,4 +1,5 @@
 const { MessageFlags } = require("discord.js");
+const { getOdooBaseUrl } = require("../../config/odoo");
 
 const imageCdnChannel = "1384688917155938354";
 const pdfCdnChannel = "1393578039471767612";
@@ -75,7 +76,7 @@ module.exports = {
 
       for (const attachment of cdnAttachmentsUrls) {
         const attachmentEmbed = {
-          url: "https://omnilert.odoo.com/",
+          url: getOdooBaseUrl(),
           image: {
             url: attachment,
           },

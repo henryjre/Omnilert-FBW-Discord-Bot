@@ -9,6 +9,7 @@ const {
   ButtonStyle,
   ChannelType,
 } = require('discord.js');
+const { getOdooBaseUrl } = require('../../../config/odoo');
 
 const managementRoleId = '1314413671245676685';
 
@@ -37,7 +38,7 @@ module.exports = {
 
     const embed = new EmbedBuilder()
       .setTitle('✒️ SIGNATORIES REQUEST')
-      .setURL(`https://omnilert.odoo.com/`)
+      .setURL(getOdooBaseUrl())
       .addFields({
         name: 'Prepared By',
         value: `<@${interaction.user.id}>\n\u200b`,

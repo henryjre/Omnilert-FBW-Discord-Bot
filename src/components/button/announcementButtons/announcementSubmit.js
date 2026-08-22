@@ -1,6 +1,7 @@
 const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, MessageFlags } = require("discord.js");
 const { createAnnouncementTracking } = require("../../../sqliteFunctions");
 const { announcementAckQueue } = require("../../../queue/announcementAckQueue");
+const { getOdooBaseUrl } = require("../../../config/odoo");
 
 const generalChannel = "1314416941481328650";
 const managementChannel = "1314416207553761403";
@@ -75,7 +76,7 @@ module.exports = {
 
       const cdnUrls = cdnMessage.attachments.map((a) => a.proxyURL || a.url);
       for (const cdnUrl of cdnUrls) {
-        finalEmbeds.push({ url: "https://omnilert.odoo.com/", image: { url: cdnUrl } });
+        finalEmbeds.push({ url: getOdooBaseUrl(), image: { url: cdnUrl } });
       }
     }
 

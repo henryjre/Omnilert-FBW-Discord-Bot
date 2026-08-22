@@ -1,8 +1,6 @@
 const axios = require('axios');
 const moment = require('moment');
-
-const rpcUrl = 'https://omnilert.odoo.com/jsonrpc';
-const webhookUrl = 'https://omnilert.odoo.com/web/hook/';
+const { getOdooJsonRpcUrl, getOdooWebhookUrl } = require('./config/odoo');
 
 async function jsonRpc(method, params) {
   const data = {
@@ -13,7 +11,7 @@ async function jsonRpc(method, params) {
   };
 
   try {
-    const response = await axios.post(rpcUrl, data, {
+    const response = await axios.post(getOdooJsonRpcUrl(), data, {
       headers: {
         'Content-Type': 'application/json',
       },
@@ -175,7 +173,7 @@ async function updateClosingPcfBalance(balance, company_id, session_id, type) {
     type: type,
   };
 
-  const url = webhookUrl + process.env.ODOO_CLOSING_PCF_SECRET;
+  const url = getOdooWebhookUrl(process.env.ODOO_CLOSING_PCF_SECRET);
 
   try {
     const response = await axios.post(url, payload, {
@@ -211,7 +209,7 @@ async function callOdooWebhook(webhookType, payload) {
     throw new Error(`Invalid webhook type: ${webhookType}`);
   }
 
-  const url = `https://omnilert.odoo.com/web/hook/${secretMap[webhookType]}`;
+  const url = getOdooWebhookUrl(secretMap[webhookType]);
 
   try {
     const response = await axios.post(url, payload, {

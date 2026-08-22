@@ -1,4 +1,5 @@
 const { MessageFlags, EmbedBuilder } = require("discord.js");
+const { getOdooBaseUrl } = require("../../config/odoo");
 
 const MAX_EMBEDS = 10;
 
@@ -53,7 +54,7 @@ module.exports = {
         const toAdd = mediaAttachments.first(remaining);
         for (const attachment of toAdd) {
           currentEmbeds.push({
-            url: "https://omnilert.odoo.com/",
+            url: getOdooBaseUrl(),
             image: { url: attachment.url },
           });
         }

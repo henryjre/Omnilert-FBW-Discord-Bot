@@ -10,6 +10,7 @@ const {
 const moment = require('moment-timezone');
 
 const client = require('../../../index.js');
+const { getOdooBaseUrl } = require('../../../config/odoo');
 const { content } = require('googleapis/build/src/apis/content/index.js');
 const pesoFormatter = new Intl.NumberFormat('en-PH', {
   style: 'currency',
@@ -492,7 +493,7 @@ const sessionClose = async (req, res) => {
 
     const pcfEmbed = new EmbedBuilder()
       .setDescription(`## 📝 PCF Report`)
-      .setURL('https://omnilert.odoo.com/')
+      .setURL(getOdooBaseUrl())
       .setColor('White')
       .addFields([
         {
@@ -992,7 +993,7 @@ const ispeOrder = async (req, res) => {
 
   const orderEmbed = new EmbedBuilder()
     .setDescription(`## 🛒 ISPE Order Verification`)
-    .setURL('https://omnilert.odoo.com/')
+    .setURL(getOdooBaseUrl())
     .setColor('White')
     .addFields(fields)
     .setFooter({
@@ -1050,7 +1051,7 @@ const posCashOutCashIn = async (req, res) => {
 
   const pcfEmbed = new EmbedBuilder()
     .setDescription(`## ${title} Verification`)
-    .setURL('https://omnilert.odoo.com/')
+    .setURL(getOdooBaseUrl())
     .setColor(color)
     .addFields([
       {
