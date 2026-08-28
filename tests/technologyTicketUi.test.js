@@ -61,6 +61,22 @@ test('renders a compact ticket summary with dedicated staff controls', () => {
   assert.equal(staffSection.accessory.custom_id, 'techTicket:claim:TDD20260001');
 });
 
+test('deduplicates user mentions when one staff member fills multiple ticket roles', () => {
+  const payload = buildTechnologyTicketMessagePayload(
+    ticket({
+      status: 'CLOSED',
+      requester_id: 'requester',
+      assigned_to_id: 'staff',
+      first_responder_id: 'staff',
+      resolved_by_id: 'staff',
+      closed_at: '2026-08-28T01:00:00.000Z',
+      resolution: 'Replaced the damaged network cable.',
+    })
+  );
+
+  assert.deepEqual(payload.allowedMentions.users, ['requester', 'staff']);
+});
+
 test('formats lifecycle thread names within Discord limits', () => {
   const name = formatTechnologyTicketThreadName(ticket({ title: 'A'.repeat(200), status: 'REOPENED' }));
   assert.ok(name.length <= 100);

@@ -60,6 +60,10 @@ function splitText(value, maximumLength = 3900) {
   return chunks;
 }
 
+function uniqueMentionIds(...ids) {
+  return [...new Set(ids.filter(Boolean))];
+}
+
 function discordTimestamp(value, style = 'f') {
   const timestamp = Math.floor(Date.parse(value) / 1000);
   return Number.isFinite(timestamp) ? `<t:${timestamp}:${style}>` : 'Unknown';
@@ -214,7 +218,12 @@ function buildTechnologyTicketMessagePayload(ticket) {
     components: [container],
     flags: MessageFlags.IsComponentsV2,
     allowedMentions: {
-      users: [ticket.requester_id, ticket.assigned_to_id, ticket.first_responder_id, ticket.resolved_by_id].filter(Boolean),
+      users: uniqueMentionIds(
+        ticket.requester_id,
+        ticket.assigned_to_id,
+        ticket.first_responder_id,
+        ticket.resolved_by_id
+      ),
       roles: [TECHNOLOGY_DEPARTMENT_ROLE_ID],
       repliedUser: false,
     },
@@ -237,7 +246,7 @@ function buildTechnologyTicketReopenedPayload(ticket, actorId) {
     components: [container],
     flags: MessageFlags.IsComponentsV2,
     allowedMentions: {
-      users: [actorId, ticket.requester_id],
+      users: uniqueMentionIds(actorId, ticket.requester_id),
       roles: [TECHNOLOGY_DEPARTMENT_ROLE_ID],
       repliedUser: false,
     },
