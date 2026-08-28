@@ -10,6 +10,7 @@ const { TECHNOLOGY_TICKET_CATEGORIES } = require('./technologyTicketAi');
 const { TECHNOLOGY_DEPARTMENT_ROLE_ID } = require('./technologyTicketConstants');
 
 const PANEL_ACCENT = 0x2b6f77;
+const STAFF_ACCENT = 0xc49235;
 const STATUS_ACCENTS = {
   OPEN: 0x2f80ed,
   REOPENED: 0xf2a93b,
@@ -297,20 +298,20 @@ function buildTechnologyTicketListPayload({ tickets, userId, guildId, filter = '
     .addActionRowComponents((row) =>
       row.setComponents(
         new ButtonBuilder()
-          .setCustomId(`techTicket:list:active:0:${userId}`)
+          .setCustomId(`techTicket:list:active:0:${userId}:filter`)
           .setLabel('Open & Reopened')
           .setStyle(filter === 'active' ? ButtonStyle.Primary : ButtonStyle.Secondary),
         new ButtonBuilder()
-          .setCustomId(`techTicket:list:closed:0:${userId}`)
+          .setCustomId(`techTicket:list:closed:0:${userId}:filter`)
           .setLabel('Closed')
           .setStyle(filter === 'closed' ? ButtonStyle.Primary : ButtonStyle.Secondary),
         new ButtonBuilder()
-          .setCustomId(`techTicket:list:${filter}:${Math.max(0, currentPage - 1)}:${userId}`)
+          .setCustomId(`techTicket:list:${filter}:${Math.max(0, currentPage - 1)}:${userId}:previous`)
           .setLabel('Previous')
           .setStyle(ButtonStyle.Secondary)
           .setDisabled(currentPage === 0),
         new ButtonBuilder()
-          .setCustomId(`techTicket:list:${filter}:${Math.min(totalPages - 1, currentPage + 1)}:${userId}`)
+          .setCustomId(`techTicket:list:${filter}:${Math.min(totalPages - 1, currentPage + 1)}:${userId}:next`)
           .setLabel('Next')
           .setStyle(ButtonStyle.Secondary)
           .setDisabled(currentPage >= totalPages - 1)
@@ -321,61 +322,110 @@ function buildTechnologyTicketListPayload({ tickets, userId, guildId, filter = '
 }
 
 function formatStaffRow(row, rank = null) {
-  const rankLabel = rank ? `**#${rank} · <@${row.staffId}> — ${row.score.toFixed(1)}**` : `**<@${row.staffId}> · Not yet ranked**`;
+  const rankMarks = ['🥇', '🥈', '🥉'];
+  const rankLabel = rank
+    ? `### ${rankMarks[rank - 1] || `#${rank}`} <@${row.staffId}> · ${row.score.toFixed(1)} points`
+    : `### <@${row.staffId}> · Building eligibility`;
+  const resolvedLabel = rank
+    ? `Resolved **${row.resolvedCount}**`
+    : `Resolved **${row.resolvedCount} of 3 required**`;
   return [
     rankLabel,
-    `Resolved: ${row.resolvedCount} · First responses: ${row.firstResponsesHandled}`,
-    `Median response: ${formatDuration(row.medianFirstResponseMs)} · Median resolution: ${formatDuration(row.medianResolutionMs)} · Reopen rate: ${row.reopenRate == null ? 'N/A' : `${Math.round(row.reopenRate * 100)}%`}`,
+    `${resolvedLabel} · First responses **${row.firstResponsesHandled}**`,
+    `-# Median response ${formatDuration(row.medianFirstResponseMs)} · Resolution ${formatDuration(row.medianResolutionMs)} · Reopen rate ${row.reopenRate == null ? 'N/A' : `${Math.round(row.reopenRate * 100)}%`}`,
   ].join('\n');
 }
 
 function buildTechnologyTicketStatisticsPayload(statistics, page = 0) {
   const ranked = statistics.leaderboard.map((row, index) => ({ ...row, rank: index + 1 }));
+  const activeUnranked = statistics.unranked.filter(
+    (row) => row.resolvedCount > 0 || row.firstResponsesHandled > 0
+  );
   const combined = [
     ...ranked.map((row) => ({ ...row, group: 'ranked' })),
-    ...statistics.unranked.map((row) => ({ ...row, group: 'unranked' })),
+    ...activeUnranked.map((row) => ({ ...row, group: 'unranked' })),
   ];
   const totalPages = Math.max(1, Math.ceil(combined.length / 5));
   const currentPage = Math.max(0, Math.min(Number(page) || 0, totalPages - 1));
   const pageRows = combined.slice(currentPage * 5, currentPage * 5 + 5);
   const categoryText = Object.entries(statistics.categories)
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-    .map(([category, count]) => `${escapeTicketMarkdown(category)}: **${count}**`)
-    .join(' · ') || 'No ticket data yet.';
+    .map(([category, count]) => `- **${escapeTicketMarkdown(category)}** — ${count}`)
+    .join('\n');
 
-  const container = new ContainerBuilder()
+  const overview = new ContainerBuilder()
     .setAccentColor(PANEL_ACCENT)
     .addTextDisplayComponents((text) =>
       text.setContent(
         [
-          '## Technology Ticket Statistics',
-          `**Active:** ${statistics.counts.active} · **Open:** ${statistics.counts.open} · **Reopened:** ${statistics.counts.reopened}`,
-          `**Closed:** ${statistics.counts.closed} · **Total:** ${statistics.counts.total}`,
-          `**Last 7 days:** ${statistics.activity.created7} created · ${statistics.activity.closed7} closed`,
-          `**Last 30 days:** ${statistics.activity.created30} created · ${statistics.activity.closed30} closed`,
-          `**Median resolution:** ${formatDuration(statistics.medianResolutionMs)}`,
-          `**Oldest active:** ${formatDuration(statistics.oldestActiveMs)}`,
+          '## Technology Help Desk · Service Overview',
+          '-# Live workload and service health for Technology and Development.',
+          '### Queue board',
+          `\`OPEN ${statistics.counts.open}\` · \`REOPENED ${statistics.counts.reopened}\` · \`CLOSED ${statistics.counts.closed}\``,
+          `**${statistics.counts.active} active** · ${statistics.counts.total} tickets recorded`,
         ].join('\n')
       )
-    )
-    .addSeparatorComponents((separator) => separator.setSpacing(SeparatorSpacingSize.Large))
-    .addTextDisplayComponents((text) => text.setContent(`### Categories\n${categoryText}`))
-    .addSeparatorComponents((separator) => separator.setSpacing(SeparatorSpacingSize.Large))
+    );
+
+  if (statistics.counts.total === 0) {
+    overview
+      .addSeparatorComponents((separator) => separator.setSpacing(SeparatorSpacingSize.Large))
+      .addTextDisplayComponents((text) =>
+        text.setContent(
+          [
+            '### No ticket history yet',
+            'Open the first help ticket to begin measuring response time, resolution pace, and service demand.',
+          ].join('\n')
+        )
+      );
+  } else {
+    overview
+      .addSeparatorComponents((separator) => separator.setSpacing(SeparatorSpacingSize.Large))
+      .addTextDisplayComponents((text) =>
+        text.setContent(
+          [
+            '### Recent workload',
+            `**Last 7 days** · ${statistics.activity.created7} opened · ${statistics.activity.closed7} resolved`,
+            `**Last 30 days** · ${statistics.activity.created30} opened · ${statistics.activity.closed30} resolved`,
+            '',
+            '### Service pace',
+            `**Median resolution** · ${formatDuration(statistics.medianResolutionMs)}`,
+            `**Oldest active ticket** · ${formatDuration(statistics.oldestActiveMs)}`,
+          ].join('\n')
+        )
+      );
+
+    if (categoryText) {
+      overview
+        .addSeparatorComponents((separator) => separator.setSpacing(SeparatorSpacingSize.Large))
+        .addTextDisplayComponents((text) => text.setContent(`### Demand by category\n${categoryText}`));
+    }
+  }
+
+  const staff = new ContainerBuilder()
+    .setAccentColor(STAFF_ACCENT)
     .addTextDisplayComponents((text) =>
       text.setContent(
         [
-          `### ${statistics.monthLabel} Staff Leaderboard`,
-          '-# Balanced score: 30% resolved volume · 30% response speed · 30% resolution speed · 10% reopen rate',
+          `## Staff Performance · ${statistics.monthLabel}`,
+          '-# Score: 30% resolved volume · 30% response speed · 30% resolution speed · 10% low reopen rate',
           pageRows.length
-            ? pageRows.map((row) => formatStaffRow(row, row.group === 'ranked' ? row.rank : null)).join('\n\n')
-            : 'No Technology and Development staff statistics are available yet.',
-          `-# Page ${currentPage + 1} of ${totalPages} · At least 3 monthly resolutions are required to rank.`,
+            ? pageRows
+              .map((row) => formatStaffRow(row, row.group === 'ranked' ? row.rank : null))
+              .join('\n\n')
+            : [
+              '### No handling activity yet',
+              'Staff metrics appear after the first staff response or resolved ticket this month.',
+            ].join('\n'),
+          pageRows.length
+            ? `-# Page ${currentPage + 1} of ${totalPages} · Three monthly resolutions are required for a ranked score.`
+            : '-# Three monthly resolutions are required for a ranked score.',
         ].join('\n')
       )
     );
 
   if (totalPages > 1) {
-    container
+    staff
       .addSeparatorComponents((separator) => separator.setSpacing(SeparatorSpacingSize.Large))
       .addActionRowComponents((row) =>
         row.setComponents(
@@ -393,7 +443,11 @@ function buildTechnologyTicketStatisticsPayload(statistics, page = 0) {
       );
   }
 
-  return { components: [container], flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral };
+  return {
+    components: [overview, staff],
+    flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+    allowedMentions: { users: [], roles: [], repliedUser: false },
+  };
 }
 
 function buildTechnologyTicketNoticePayload(title, detail, accentColor = PANEL_ACCENT) {
