@@ -41,6 +41,19 @@ test('persists an atomic ticket lifecycle and annual counters', () => {
       updatedAt: '2026-08-28T00:01:00.000Z',
     });
     assert.equal(ticket.status, 'OPEN');
+    assert.equal(
+      store.countTechnologyTicketsByRequester({ requesterId: 'requester', filter: 'active' }),
+      1
+    );
+    assert.deepEqual(
+      store.getTechnologyTicketPageByRequester({
+        requesterId: 'requester',
+        filter: 'active',
+        limit: 5,
+        offset: 0,
+      }).map((row) => row.ticket_id),
+      [ticket.ticket_id]
+    );
     assert.equal(store.claimTechnologyTicket({ ticketId: ticket.ticket_id, staffId: 'staff', updatedAt: '2026-08-28T00:02:00.000Z' }).outcome, 'claimed');
     assert.equal(store.releaseTechnologyTicket({ ticketId: ticket.ticket_id, staffId: 'other-staff', updatedAt: '2026-08-28T00:02:10.000Z' }).outcome, 'not_assignee');
     assert.equal(store.releaseTechnologyTicket({ ticketId: ticket.ticket_id, staffId: 'staff', updatedAt: '2026-08-28T00:02:20.000Z' }).outcome, 'released');

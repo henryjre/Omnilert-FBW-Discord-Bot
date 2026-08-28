@@ -163,6 +163,30 @@ function getTechnologyTicketsByRequester(requesterId) {
     .all(requesterId);
 }
 
+function countTechnologyTicketsByRequester({ requesterId, filter }) {
+  const statusClause = filter === 'closed'
+    ? "status = 'CLOSED'"
+    : "status IN ('OPEN', 'REOPENED')";
+  return db.prepare(
+    `SELECT COUNT(*) AS count FROM technology_tickets WHERE requester_id = ? AND ${statusClause}`
+  ).get(requesterId).count;
+}
+
+function getTechnologyTicketPageByRequester({ requesterId, filter, limit = 5, offset = 0 }) {
+  const statusClause = filter === 'closed'
+    ? "status = 'CLOSED'"
+    : "status IN ('OPEN', 'REOPENED')";
+  return db.prepare(
+    `
+      SELECT ticket_id, thread_id, title, category, status, created_at
+      FROM technology_tickets
+      WHERE requester_id = ? AND ${statusClause}
+      ORDER BY created_at DESC
+      LIMIT ? OFFSET ?
+    `
+  ).all(requesterId, Math.max(1, Number(limit) || 5), Math.max(0, Number(offset) || 0));
+}
+
 const claimTechnologyTicket = db.transaction(({ ticketId, staffId, updatedAt }) => {
   const ticket = getTechnologyTicketById(ticketId);
   if (!ticket || !ACTIVE_STATUSES.includes(ticket.status)) return { outcome: 'inactive', ticket };
@@ -390,6 +414,8 @@ module.exports = {
   getTechnologyTicketById,
   getTechnologyTicketByThreadId,
   getTechnologyTicketsByRequester,
+  countTechnologyTicketsByRequester,
+  getTechnologyTicketPageByRequester,
   claimTechnologyTicket,
   releaseTechnologyTicket,
   changeTechnologyTicketCategory,

@@ -1,10 +1,12 @@
-const { MessageFlags } = require('discord.js');
 const { TECHNOLOGY_TICKET_CATEGORIES } = require('../../../utils/technologyTicketAi');
 const {
   changeTechnologyTicketCategory,
   isTechnologyStaff,
 } = require('../../../utils/technologyTicketService');
-const { buildTechnologyTicketNoticePayload } = require('../../../utils/technologyTicketUi');
+const {
+  buildTechnologyTicketMessagePayload,
+  buildTechnologyTicketNoticePayload,
+} = require('../../../utils/technologyTicketUi');
 const { TECHNOLOGY_DEPARTMENT_ROLE_ID } = require('../../../utils/technologyTicketConstants');
 
 module.exports = {
@@ -25,19 +27,26 @@ module.exports = {
         buildTechnologyTicketNoticePayload('Invalid category', 'Choose one of the listed ticket categories.', 0xc0392b)
       );
     }
-    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     const ticket = await changeTechnologyTicketCategory({
       client,
       threadId: interaction.channelId,
       category,
       staffId: interaction.user.id,
+      project: false,
     });
-    return interaction.editReply(
-      buildTechnologyTicketNoticePayload(
-        ticket ? 'Category updated' : 'Ticket unavailable',
-        ticket ? `${ticket.ticket_id} is now categorized as ${category}.` : 'This thread is not a registered ticket.',
-        ticket ? 0x2e8b57 : 0xc0392b
-      )
-    );
+    if (!ticket) {
+      return interaction.reply(
+        buildTechnologyTicketNoticePayload(
+          'Ticket unavailable',
+          'This thread is not a registered ticket.',
+          0xc0392b
+        )
+      );
+    }
+    const payload = buildTechnologyTicketMessagePayload(ticket);
+    return interaction.update({
+      components: payload.components,
+      allowedMentions: payload.allowedMentions,
+    });
   },
 };

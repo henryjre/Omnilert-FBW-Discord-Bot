@@ -63,7 +63,7 @@ async function classifyTechnologyTicket(description, options = {}) {
           },
         },
       },
-      { timeout: 10000 }
+      { timeout: 5000 }
     );
 
     const parsed = JSON.parse(response.output_text || '{}');

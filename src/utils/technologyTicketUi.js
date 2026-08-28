@@ -360,13 +360,16 @@ function buildTechnologyTicketClosedPayload(ticket, closedById, { includeReopenB
   };
 }
 
-function buildTechnologyTicketListPayload({ tickets, userId, guildId, filter = 'active', page = 0 }) {
-  const filtered = tickets.filter((ticket) =>
-    filter === 'closed' ? ticket.status === 'CLOSED' : ['OPEN', 'REOPENED'].includes(ticket.status)
-  );
-  const totalPages = Math.max(1, Math.ceil(filtered.length / 5));
+function buildTechnologyTicketListPayload({ tickets, userId, guildId, filter = 'active', page = 0, totalCount = null }) {
+  const isPaginated = Number.isInteger(totalCount);
+  const filtered = isPaginated
+    ? tickets
+    : tickets.filter((ticket) =>
+      filter === 'closed' ? ticket.status === 'CLOSED' : ['OPEN', 'REOPENED'].includes(ticket.status)
+    );
+  const totalPages = Math.max(1, Math.ceil((isPaginated ? totalCount : filtered.length) / 5));
   const currentPage = Math.max(0, Math.min(Number(page) || 0, totalPages - 1));
-  const pageTickets = filtered.slice(currentPage * 5, currentPage * 5 + 5);
+  const pageTickets = isPaginated ? filtered : filtered.slice(currentPage * 5, currentPage * 5 + 5);
   const heading = filter === 'closed' ? 'Closed tickets' : 'Open and reopened tickets';
   const container = new ContainerBuilder()
     .setAccentColor(PANEL_ACCENT)

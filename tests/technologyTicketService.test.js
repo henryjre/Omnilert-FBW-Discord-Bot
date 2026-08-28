@@ -156,7 +156,11 @@ test('upserts the panel and completes open, close, and reopen lifecycle', async 
     });
     assert.equal(reopened.outcome, 'reopened');
     assert.equal(resolutionMessageEdited, true);
-    const editedResolution = edits.at(-2);
+    const editedResolution = edits.find((payload) => {
+      const serialized = JSON.stringify(payload.components?.[0]?.toJSON?.() || {});
+      return serialized.includes('Ticket resolved') && !serialized.includes('Reopen Ticket');
+    });
+    assert.ok(editedResolution);
     assert.doesNotMatch(JSON.stringify(editedResolution.components[0].toJSON()), /Reopen Ticket/);
     assert.equal(thread.locked, false);
     assert.equal(thread.archived, false);

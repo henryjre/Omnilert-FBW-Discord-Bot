@@ -27,6 +27,7 @@ module.exports = {
         ticketId,
         requesterId: interaction.user.id,
         reason,
+        sourceMessage: interaction.message || null,
       });
       const messages = {
         marked: [

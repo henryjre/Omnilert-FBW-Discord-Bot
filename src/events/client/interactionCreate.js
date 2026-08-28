@@ -4,6 +4,26 @@ const {
   EmbedBuilder,
   MessageFlags,
 } = require("discord.js");
+const { buildTechnologyTicketNoticePayload } = require('../../utils/technologyTicketUi');
+
+async function respondToInteractionError(interaction, error) {
+  console.error(error);
+  const payload = buildTechnologyTicketNoticePayload(
+    'Interaction failed',
+    'Something went wrong while processing this action. Please try again.',
+    0xc0392b
+  );
+
+  try {
+    if (interaction.deferred) return await interaction.editReply(payload);
+    if (interaction.replied) return await interaction.followUp(payload);
+    return await interaction.reply(payload);
+  } catch (responseError) {
+    console.error('Failed to send interaction error response:', responseError);
+    return null;
+  }
+}
+
 module.exports = {
   name: "interactionCreate",
   async execute(interaction, client) {
@@ -57,11 +77,7 @@ module.exports = {
       try {
         await command.execute(interaction, client);
       } catch (error) {
-        console.error(error);
-        await interaction.reply({
-          content: `Something went wrong while executing this command...`,
-          flags: MessageFlags.Ephemeral,
-        });
+        await respondToInteractionError(interaction, error);
       }
     } else if (interaction.isButton()) {
       const { buttons } = client;
@@ -87,34 +103,34 @@ module.exports = {
 
       if (dynamicButtonName) {
         const button = buttons.get(dynamicButtonName);
-        if (!button) return new Error("No code for this button.");
+        if (!button) return respondToInteractionError(interaction, new Error('No code for this button.'));
         try {
           await button.execute(interaction, client);
         } catch (error) {
-          console.error(error);
+          await respondToInteractionError(interaction, error);
         }
         return;
       }
 
       // Handle static buttons as usual
       const button = buttons.get(customId);
-      if (!button) return new Error("No code for this button.");
+      if (!button) return respondToInteractionError(interaction, new Error('No code for this button.'));
 
       try {
         await button.execute(interaction, client);
       } catch (error) {
-        console.error(error);
+        await respondToInteractionError(interaction, error);
       }
     } else if (interaction.isStringSelectMenu() || interaction.isRoleSelectMenu()) {
       const { selectMenus } = client;
       const { customId } = interaction;
       const menu = selectMenus.get(customId);
-      if (!menu) return new Error("No code for this select menu.");
+      if (!menu) return respondToInteractionError(interaction, new Error('No code for this select menu.'));
 
       try {
         await menu.execute(interaction, client);
       } catch (error) {
-        console.error(error);
+        await respondToInteractionError(interaction, error);
       }
     } else if (interaction.type == InteractionType.ModalSubmit) {
       const { modals } = client;
@@ -131,13 +147,15 @@ module.exports = {
         Object.entries(dynamicModalPrefixes).find(([prefix]) => customId.startsWith(prefix))?.[1] ||
         customId;
       const modal = modals.get(modalName);
-      if (!modal) return new Error("No code for this modal.");
+      if (!modal) return respondToInteractionError(interaction, new Error('No code for this modal.'));
 
       try {
         await modal.execute(interaction, client);
       } catch (error) {
-        console.error(error);
+        await respondToInteractionError(interaction, error);
       }
     }
   },
 };
+
+module.exports.respondToInteractionError = respondToInteractionError;

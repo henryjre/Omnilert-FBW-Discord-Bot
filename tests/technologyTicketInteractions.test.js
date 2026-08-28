@@ -6,6 +6,21 @@ const { ChannelType, MessageFlags } = require('discord.js');
 let closeRequest;
 let urgencyRequest;
 let urgencyResult = { outcome: 'marked' };
+let reopenError = null;
+
+function mockTicket(overrides = {}) {
+  return {
+    ticket_id: 'TDD20260001',
+    title: 'Office Printer Offline',
+    description: 'The office printer is offline.',
+    category: 'Hardware',
+    status: 'OPEN',
+    requester_id: 'requester',
+    assigned_to_id: 'staff',
+    created_at: '2026-08-28T00:00:00.000Z',
+    ...overrides,
+  };
+}
 
 const servicePath = path.resolve(__dirname, '../src/utils/technologyTicketService.js');
 require.cache[servicePath] = {
@@ -15,7 +30,13 @@ require.cache[servicePath] = {
   exports: {
     buildTechnologyTicketListForUser: () => ({ components: [] }),
     buildTechnologyTicketStatisticsForGuild: async () => ({ components: [] }),
-    claimTechnologyTicket: async () => ({ outcome: 'claimed' }),
+    changeTechnologyTicketCategory: async ({ category }) => mockTicket({ category }),
+    claimTechnologyTicket: async () => ({ outcome: 'claimed', ticket: mockTicket() }),
+    createTechnologyTicketFromDescription: async () => ({
+      ticket_id: 'TDD20260001',
+      guild_id: 'guild',
+      thread_id: 'thread',
+    }),
     closeTechnologyTicket: async (request) => {
       closeRequest = request;
       return { outcome: 'closed', ticket: { ticket_id: 'TDD20260001' } };
@@ -30,8 +51,14 @@ require.cache[servicePath] = {
       urgencyRequest = request;
       return { ...urgencyResult, ticket: { ticket_id: request.ticketId } };
     },
-    releaseTechnologyTicket: async () => ({ outcome: 'released' }),
-    reopenTechnologyTicket: async () => ({ outcome: 'reopened' }),
+    releaseTechnologyTicket: async () => ({
+      outcome: 'released',
+      ticket: mockTicket({ assigned_to_id: null }),
+    }),
+    reopenTechnologyTicket: async () => {
+      if (reopenError) throw reopenError;
+      return { outcome: 'reopened' };
+    },
   },
 };
 
@@ -39,6 +66,9 @@ const button = require('../src/components/button/technologyTickets/technologyTic
 const closeCommand = require('../src/commands/employeeCommands/close_thread');
 const closeModal = require('../src/components/modal/technologyTickets/technologyTicketCloseModal');
 const urgencyModal = require('../src/components/modal/technologyTickets/technologyTicketUrgencyModal');
+const openModal = require('../src/components/modal/technologyTickets/technologyTicketOpenModal');
+const categoryMenu = require('../src/components/menu/technologyTickets/technologyTicketCategory');
+const interactionEvent = require('../src/events/client/interactionCreate');
 
 test('Open Ticket shows one accessible required description field', async () => {
   let modal;
@@ -71,6 +101,72 @@ test('ticket staff actions reject non-Technology members ephemerally', async () 
   );
   assert.equal(Boolean(reply.flags & MessageFlags.Ephemeral), true);
   assert.equal(Boolean(reply.flags & MessageFlags.IsComponentsV2), true);
+});
+
+test('ticket creation immediately shows progress before returning the thread link', async () => {
+  const responses = [];
+  await openModal.execute(
+    {
+      fields: { getTextInputValue: () => 'The office printer is offline.' },
+      guildId: 'guild',
+      user: { id: 'requester' },
+      reply: async (payload) => { responses.push(payload); },
+      editReply: async (payload) => { responses.push(payload); },
+    },
+    {}
+  );
+
+  assert.match(JSON.stringify(responses[0].components[0].toJSON()), /Creating your ticket/);
+  assert.match(JSON.stringify(responses[1].components[0].toJSON()), /Ticket opened/);
+});
+
+test('claim updates the clicked ticket card without a message fetch', async () => {
+  let update;
+  await button.execute(
+    {
+      customId: 'techTicket:claim:TDD20260001',
+      member: { isTechnologyStaff: true },
+      user: { id: 'staff' },
+      update: async (payload) => { update = payload; },
+    },
+    {}
+  );
+
+  assert.match(JSON.stringify(update.components[0].toJSON()), /\*\*Owner\*\* · <@staff>/);
+});
+
+test('category selection updates the clicked ticket card directly', async () => {
+  let update;
+  await categoryMenu.execute(
+    {
+      member: { isTechnologyStaff: true },
+      values: ['Network & Internet'],
+      channelId: 'thread',
+      user: { id: 'staff' },
+      update: async (payload) => { update = payload; },
+    },
+    {}
+  );
+
+  assert.match(JSON.stringify(update.components[0].toJSON()), /Network & Internet/);
+});
+
+test('global interaction errors complete an already deferred response', async () => {
+  let reply;
+  const originalConsoleError = console.error;
+  console.error = () => {};
+  try {
+    await interactionEvent.respondToInteractionError(
+      {
+        deferred: true,
+        editReply: async (payload) => { reply = payload; },
+      },
+      new Error('Test failure')
+    );
+  } finally {
+    console.error = originalConsoleError;
+  }
+  assert.match(JSON.stringify(reply.components[0].toJSON()), /Interaction failed/);
 });
 
 test('Mark as Urgent opens a required reason modal for the requester', async () => {
@@ -134,6 +230,31 @@ test('urgency modal explains when another alert is on cooldown', async () => {
 
   assert.match(JSON.stringify(reply.components[0].toJSON()), /Urgent alert on cooldown/);
   assert.match(JSON.stringify(reply.components[0].toJSON()), /about 15 minutes/);
+});
+
+test('reopen button completes the deferred reply when thread unlocking fails', async () => {
+  let reply;
+  reopenError = Object.assign(new Error('Missing Permissions'), { code: 50013 });
+  const originalConsoleError = console.error;
+  console.error = () => {};
+  try {
+    await button.execute(
+      {
+        customId: 'techTicket:reopen:TDD20260001',
+        user: { id: 'requester' },
+        deferReply: async () => {},
+        editReply: async (payload) => { reply = payload; },
+      },
+      {}
+    );
+  } finally {
+    console.error = originalConsoleError;
+    reopenError = null;
+  }
+
+  const serialized = JSON.stringify(reply.components[0].toJSON());
+  assert.match(serialized, /Ticket could not be reopened/);
+  assert.match(serialized, /Manage Threads/);
 });
 
 test('/close ticket opens a required resolution modal', async () => {

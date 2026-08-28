@@ -14,7 +14,10 @@ const {
   releaseTechnologyTicket,
   reopenTechnologyTicket,
 } = require('../../../utils/technologyTicketService');
-const { buildTechnologyTicketNoticePayload } = require('../../../utils/technologyTicketUi');
+const {
+  buildTechnologyTicketMessagePayload,
+  buildTechnologyTicketNoticePayload,
+} = require('../../../utils/technologyTicketUi');
 const { TECHNOLOGY_DEPARTMENT_ROLE_ID } = require('../../../utils/technologyTicketConstants');
 
 module.exports = {
@@ -62,10 +65,15 @@ module.exports = {
 
     if (action === 'stats') {
       const page = Number(value) || 0;
-      const payload = await buildTechnologyTicketStatisticsForGuild(interaction.guild, page);
       const isEphemeralMessage = interaction.message?.flags?.has?.(MessageFlags.Ephemeral);
-      if (isEphemeralMessage) return interaction.update({ components: payload.components });
-      return interaction.reply(payload);
+      if (isEphemeralMessage) {
+        await interaction.deferUpdate();
+        const payload = await buildTechnologyTicketStatisticsForGuild(interaction.guild, page);
+        return interaction.editReply({ components: payload.components });
+      }
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+      const payload = await buildTechnologyTicketStatisticsForGuild(interaction.guild, page);
+      return interaction.editReply(payload);
     }
 
     if (action === 'claim' || action === 'release') {
@@ -78,14 +86,19 @@ module.exports = {
           )
         );
       }
-      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
       const result =
         action === 'claim'
-          ? await claimTechnologyTicket({ client, ticketId: value, staffId: interaction.user.id })
-          : await releaseTechnologyTicket({ client, ticketId: value, staffId: interaction.user.id });
+          ? await claimTechnologyTicket({ client, ticketId: value, staffId: interaction.user.id, project: false })
+          : await releaseTechnologyTicket({ client, ticketId: value, staffId: interaction.user.id, project: false });
+      const updated = action === 'claim' ? result.outcome === 'claimed' : result.outcome === 'released';
+      if (updated) {
+        const payload = buildTechnologyTicketMessagePayload(result.ticket);
+        return interaction.update({
+          components: payload.components,
+          allowedMentions: payload.allowedMentions,
+        });
+      }
       const messages = {
-        claimed: ['Ticket claimed', `You are now assigned to ${value}.`, 0x2e8b57],
-        released: ['Ticket released', `${value} is now unassigned.`, 0x2b6f77],
         already_assigned_to_you: ['Already assigned', `You are already assigned to ${value}.`, 0xf2a93b],
         already_assigned: ['Already assigned', `${value} is assigned to another staff member.`, 0xf2a93b],
         not_assignee: ['Cannot release ticket', `Only the current assignee can release ${value}.`, 0xc0392b],
@@ -93,7 +106,7 @@ module.exports = {
         inactive: ['Ticket unavailable', `${value} is not active.`, 0xc0392b],
       };
       const [title, detail, color] = messages[result.outcome] || ['Ticket unavailable', 'The ticket could not be updated.', 0xc0392b];
-      return interaction.editReply(buildTechnologyTicketNoticePayload(title, detail, color));
+      return interaction.reply(buildTechnologyTicketNoticePayload(title, detail, color));
     }
 
     if (action === 'urgent') {
@@ -137,15 +150,29 @@ module.exports = {
 
     if (action === 'reopen') {
       await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-      const result = await reopenTechnologyTicket({ client, ticketId: value, actorId: interaction.user.id });
-      const success = result.outcome === 'reopened';
-      return interaction.editReply(
-        buildTechnologyTicketNoticePayload(
-          success ? 'Ticket reopened' : 'Ticket not reopened',
-          success ? `${value} is active again.` : `${value} is no longer closed or could not be found.`,
-          success ? 0xf2a93b : 0xc0392b
-        )
-      );
+      try {
+        const result = await reopenTechnologyTicket({ client, ticketId: value, actorId: interaction.user.id });
+        const success = result.outcome === 'reopened';
+        return interaction.editReply(
+          buildTechnologyTicketNoticePayload(
+            success ? 'Ticket reopened' : 'Ticket not reopened',
+            success ? `${value} is active again.` : `${value} is no longer closed or could not be found.`,
+            success ? 0xf2a93b : 0xc0392b
+          )
+        );
+      } catch (error) {
+        console.error('Technology ticket reopen failed:', error);
+        const missingPermission = error?.code === 50013;
+        return interaction.editReply(
+          buildTechnologyTicketNoticePayload(
+            'Ticket could not be reopened',
+            missingPermission
+              ? 'The bot needs Manage Threads permission to unlock this ticket.'
+              : 'The thread could not be unlocked. Please ask Technology staff to check the ticket.',
+            0xc0392b
+          )
+        );
+      }
     }
 
     return interaction.reply(

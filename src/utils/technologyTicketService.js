@@ -22,6 +22,8 @@ const {
 
 const ticketLock = new AsyncLock();
 const URGENCY_COOLDOWN_MS = 30 * 60 * 1000;
+const STATISTICS_CACHE_TTL_MS = 30 * 1000;
+const statisticsCache = new Map();
 
 function nowIso() {
   return new Date().toISOString();
@@ -33,6 +35,11 @@ function isTechnologyStaff(member) {
 
 function getTechnologyTicket(ticketId) {
   return store.getTechnologyTicketById(ticketId);
+}
+
+function invalidateTechnologyTicketStatistics(guildId) {
+  if (guildId) statisticsCache.delete(guildId);
+  else statisticsCache.clear();
 }
 
 async function fetchChannel(client, channelId) {
@@ -82,8 +89,10 @@ async function createTechnologyTicketFromDescription({ interaction, client, desc
   let thread = null;
 
   try {
-    const classification = await classifyTechnologyTicket(description);
-    const parentChannel = await fetchChannel(client, TECHNOLOGY_TICKET_CHANNEL_ID);
+    const [classification, parentChannel] = await Promise.all([
+      classifyTechnologyTicket(description),
+      fetchChannel(client, TECHNOLOGY_TICKET_CHANNEL_ID),
+    ]);
     if (!parentChannel || parentChannel.type !== ChannelType.GuildText) {
       throw new Error('The configured help-ticket channel is unavailable.');
     }
@@ -101,8 +110,10 @@ async function createTechnologyTicketFromDescription({ interaction, client, desc
       invitable: false,
       reason: `${record.ticket_id} opened by ${interaction.user.tag || interaction.user.id}`,
     });
-    await thread.members.add(interaction.user.id);
-    const initialMessage = await thread.send(buildTechnologyTicketMessagePayload(provisional));
+    const [, initialMessage] = await Promise.all([
+      thread.members.add(interaction.user.id),
+      thread.send(buildTechnologyTicketMessagePayload(provisional)),
+    ]);
     const ticket = store.finalizeTechnologyTicket({
       ticketId: record.ticket_id,
       title: classification.title,
@@ -112,6 +123,7 @@ async function createTechnologyTicketFromDescription({ interaction, client, desc
       updatedAt: nowIso(),
     });
     if (!ticket) throw new Error('The ticket record could not be finalized.');
+    invalidateTechnologyTicketStatistics(ticket.guild_id);
     return ticket;
   } catch (error) {
     store.failTechnologyTicket({ ticketId: record.ticket_id, reason: error.message, updatedAt: nowIso() });
@@ -152,23 +164,23 @@ async function refreshActiveTechnologyTicketMessages(client) {
   return { refreshed, total: activeTickets.length };
 }
 
-async function claimTechnologyTicket({ client, ticketId, staffId }) {
+async function claimTechnologyTicket({ client, ticketId, staffId, project = true }) {
   return ticketLock.acquire(ticketId, async () => {
     const result = store.claimTechnologyTicket({ ticketId, staffId, updatedAt: nowIso() });
-    if (result.outcome === 'claimed') await refreshTechnologyTicketMessage(client, result.ticket);
+    if (project && result.outcome === 'claimed') await refreshTechnologyTicketMessage(client, result.ticket);
     return result;
   });
 }
 
-async function releaseTechnologyTicket({ client, ticketId, staffId }) {
+async function releaseTechnologyTicket({ client, ticketId, staffId, project = true }) {
   return ticketLock.acquire(ticketId, async () => {
     const result = store.releaseTechnologyTicket({ ticketId, staffId, updatedAt: nowIso() });
-    if (result.outcome === 'released') await refreshTechnologyTicketMessage(client, result.ticket);
+    if (project && result.outcome === 'released') await refreshTechnologyTicketMessage(client, result.ticket);
     return result;
   });
 }
 
-async function changeTechnologyTicketCategory({ client, threadId, category, staffId }) {
+async function changeTechnologyTicketCategory({ client, threadId, category, staffId, project = true }) {
   const current = store.getTechnologyTicketByThreadId(threadId);
   if (!current) return null;
   return ticketLock.acquire(current.ticket_id, async () => {
@@ -178,12 +190,15 @@ async function changeTechnologyTicketCategory({ client, threadId, category, staf
       staffId,
       updatedAt: nowIso(),
     });
-    if (ticket) await refreshTechnologyTicketMessage(client, ticket);
+    if (ticket) {
+      invalidateTechnologyTicketStatistics(ticket.guild_id);
+      if (project) await refreshTechnologyTicketMessage(client, ticket);
+    }
     return ticket;
   });
 }
 
-async function markTechnologyTicketUrgent({ client, ticketId, requesterId, reason }) {
+async function markTechnologyTicketUrgent({ client, ticketId, requesterId, reason, sourceMessage = null }) {
   return ticketLock.acquire(ticketId, async () => {
     const result = store.markTechnologyTicketUrgent({
       ticketId,
@@ -194,10 +209,15 @@ async function markTechnologyTicketUrgent({ client, ticketId, requesterId, reaso
     });
     if (result.outcome !== 'marked') return result;
 
-    await refreshTechnologyTicketMessage(client, result.ticket);
     const thread = await fetchChannel(client, result.ticket.thread_id);
-    await thread.setName(formatTechnologyTicketThreadName(result.ticket));
-    await thread.send(buildTechnologyTicketUrgentPayload(result.ticket));
+    const messageUpdate = sourceMessage?.edit
+      ? sourceMessage.edit(buildTechnologyTicketMessagePayload(result.ticket))
+      : refreshTechnologyTicketMessage(client, result.ticket);
+    await Promise.all([
+      messageUpdate,
+      thread.setName(formatTechnologyTicketThreadName(result.ticket)),
+      thread.send(buildTechnologyTicketUrgentPayload(result.ticket)),
+    ]);
     return result;
   });
 }
@@ -216,8 +236,11 @@ async function closeTechnologyTicket({ client, thread, actorId, resolution = nul
       resolution: resolution?.trim() || null,
       closedAt: nowIso(),
     });
-    await refreshTechnologyTicketMessage(client, ticket);
-    await thread.setName(formatTechnologyTicketThreadName(ticket));
+    invalidateTechnologyTicketStatistics(ticket.guild_id);
+    await Promise.all([
+      refreshTechnologyTicketMessage(client, ticket),
+      thread.setName(formatTechnologyTicketThreadName(ticket)),
+    ]);
     const closureMessage = await thread.send(buildTechnologyTicketClosedPayload(ticket, actorId));
     const savedTicket = store.saveTechnologyTicketClosureMessage({
       ticketId: ticket.ticket_id,
@@ -225,8 +248,7 @@ async function closeTechnologyTicket({ client, thread, actorId, resolution = nul
       updatedAt: nowIso(),
     });
     if (!savedTicket) throw new Error(`Could not save the closure message for ${ticket.ticket_id}.`);
-    await thread.setLocked(true);
-    await thread.setArchived(true);
+    await thread.edit({ locked: true, archived: true });
     return { outcome: 'closed', ticket: savedTicket };
   });
 }
@@ -238,12 +260,13 @@ async function reopenTechnologyTicket({ client, ticketId, actorId }) {
     if (latest.status !== 'CLOSED') return { outcome: 'not_closed', ticket: latest };
     const thread = await fetchChannel(client, latest.thread_id);
     await thread.edit({ archived: false, locked: false });
+    const ticket = store.reopenTechnologyTicketRecord({ ticketId, actorId, reopenedAt: nowIso() });
+    invalidateTechnologyTicketStatistics(ticket.guild_id);
+
+    const projections = [];
     if (latest.closure_message_id) {
-      const closureMessage = await thread.messages.fetch(latest.closure_message_id).catch((error) => {
-        if (error?.code === 10008) return null;
-        throw error;
-      });
-      if (closureMessage) {
+      projections.push((async () => {
+        const closureMessage = await thread.messages.fetch(latest.closure_message_id);
         await closureMessage.edit(
           buildTechnologyTicketClosedPayload(
             latest,
@@ -251,12 +274,19 @@ async function reopenTechnologyTicket({ client, ticketId, actorId }) {
             { includeReopenButton: false }
           )
         );
+      })());
+    }
+    projections.push(
+      refreshTechnologyTicketMessage(client, ticket),
+      thread.setName(formatTechnologyTicketThreadName(ticket)),
+      thread.send(buildTechnologyTicketReopenedPayload(ticket, actorId))
+    );
+    const projectionResults = await Promise.allSettled(projections);
+    for (const result of projectionResults) {
+      if (result.status === 'rejected' && result.reason?.code !== 10008) {
+        console.error(`Failed to synchronize reopened ticket ${ticketId}:`, result.reason);
       }
     }
-    const ticket = store.reopenTechnologyTicketRecord({ ticketId, actorId, reopenedAt: nowIso() });
-    await refreshTechnologyTicketMessage(client, ticket);
-    await thread.setName(formatTechnologyTicketThreadName(ticket));
-    await thread.send(buildTechnologyTicketReopenedPayload(ticket, actorId));
     return { outcome: 'reopened', ticket };
   });
 }
@@ -273,20 +303,38 @@ async function recordFirstTechnologyStaffResponse(message, client) {
   if (updated) await refreshTechnologyTicketMessage(client, updated).catch((error) => {
     console.error('Failed to refresh ticket after first response:', error);
   });
+  if (updated) invalidateTechnologyTicketStatistics(updated.guild_id);
   return updated;
 }
 
 function buildTechnologyTicketListForUser({ userId, guildId, filter, page }) {
+  const normalizedFilter = filter === 'closed' ? 'closed' : 'active';
+  const totalCount = store.countTechnologyTicketsByRequester({
+    requesterId: userId,
+    filter: normalizedFilter,
+  });
+  const totalPages = Math.max(1, Math.ceil(totalCount / 5));
+  const currentPage = Math.max(0, Math.min(Number(page) || 0, totalPages - 1));
   return buildTechnologyTicketListPayload({
-    tickets: store.getTechnologyTicketsByRequester(userId),
+    tickets: store.getTechnologyTicketPageByRequester({
+      requesterId: userId,
+      filter: normalizedFilter,
+      limit: 5,
+      offset: currentPage * 5,
+    }),
     userId,
     guildId,
-    filter,
-    page,
+    filter: normalizedFilter,
+    page: currentPage,
+    totalCount,
   });
 }
 
 async function buildTechnologyTicketStatisticsForGuild(guild, page = 0) {
+  const cached = statisticsCache.get(guild.id);
+  if (cached && cached.expiresAt > Date.now()) {
+    return buildTechnologyTicketStatisticsPayload(cached.statistics, page);
+  }
   let role = guild.roles.cache.get(TECHNOLOGY_DEPARTMENT_ROLE_ID);
   if (!role) role = await guild.roles.fetch(TECHNOLOGY_DEPARTMENT_ROLE_ID).catch(() => null);
   const staffIds = role ? [...role.members.keys()] : [];
@@ -295,13 +343,19 @@ async function buildTechnologyTicketStatisticsForGuild(guild, page = 0) {
     events: store.getTechnologyTicketEvents(),
     staffIds,
   });
+  statisticsCache.set(guild.id, {
+    statistics,
+    expiresAt: Date.now() + STATISTICS_CACHE_TTL_MS,
+  });
   return buildTechnologyTicketStatisticsPayload(statistics, page);
 }
 
 module.exports = {
   URGENCY_COOLDOWN_MS,
+  STATISTICS_CACHE_TTL_MS,
   isTechnologyStaff,
   getTechnologyTicket,
+  invalidateTechnologyTicketStatistics,
   ensureTechnologyTicketPanel,
   createTechnologyTicketFromDescription,
   refreshTechnologyTicketMessage,

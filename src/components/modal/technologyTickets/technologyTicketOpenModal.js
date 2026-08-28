@@ -1,4 +1,3 @@
-const { MessageFlags } = require('discord.js');
 const { createTechnologyTicketFromDescription } = require('../../../utils/technologyTicketService');
 const { buildTechnologyTicketNoticePayload } = require('../../../utils/technologyTicketUi');
 
@@ -16,7 +15,13 @@ module.exports = {
       );
     }
 
-    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+    await interaction.reply(
+      buildTechnologyTicketNoticePayload(
+        'Creating your ticket…',
+        'Generating a title and preparing your private help thread.',
+        0x2f80ed
+      )
+    );
     try {
       const ticket = await createTechnologyTicketFromDescription({ interaction, client, description });
       return interaction.editReply(

@@ -25,7 +25,7 @@ test('uses schema-constrained AI classification output', async () => {
   assert.equal(request[0].model, 'gpt-4o-mini');
   assert.equal(request[0].text.format.type, 'json_schema');
   assert.equal(request[0].text.format.strict, true);
-  assert.equal(request[1].timeout, 10000);
+  assert.equal(request[1].timeout, 5000);
 });
 
 test('falls back when AI output cannot be parsed', async () => {
