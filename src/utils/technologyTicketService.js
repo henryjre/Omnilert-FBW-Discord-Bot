@@ -223,6 +223,7 @@ async function markTechnologyTicketUrgent({ client, ticketId, requesterId, reaso
 }
 
 async function closeTechnologyTicket({ client, thread, actorId, resolution = null }) {
+  const closeStartedAt = Date.now();
   const current = store.getTechnologyTicketByThreadId(thread.id);
   if (!current) return { outcome: 'not_ticket', ticket: null };
   return ticketLock.acquire(current.ticket_id, async () => {
@@ -237,18 +238,35 @@ async function closeTechnologyTicket({ client, thread, actorId, resolution = nul
       closedAt: nowIso(),
     });
     invalidateTechnologyTicketStatistics(ticket.guild_id);
-    await Promise.all([
+    const projectionStartedAt = Date.now();
+    const [messageResult, nameResult, closureResult] = await Promise.allSettled([
       refreshTechnologyTicketMessage(client, ticket),
       thread.setName(formatTechnologyTicketThreadName(ticket)),
+      thread.send(buildTechnologyTicketClosedPayload(ticket, actorId)),
     ]);
-    const closureMessage = await thread.send(buildTechnologyTicketClosedPayload(ticket, actorId));
+    if (messageResult.status === 'rejected') {
+      console.error(`Failed to refresh closed ticket ${ticket.ticket_id}:`, messageResult.reason);
+    }
+    if (nameResult.status === 'rejected') {
+      console.error(`Failed to rename closed ticket ${ticket.ticket_id}:`, nameResult.reason);
+    }
+    if (closureResult.status === 'rejected') throw closureResult.reason;
+
+    const closureMessage = closureResult.value;
     const savedTicket = store.saveTechnologyTicketClosureMessage({
       ticketId: ticket.ticket_id,
       messageId: closureMessage.id,
       updatedAt: nowIso(),
     });
     if (!savedTicket) throw new Error(`Could not save the closure message for ${ticket.ticket_id}.`);
+    const archiveStartedAt = Date.now();
     await thread.edit({ locked: true, archived: true });
+    const totalMs = Date.now() - closeStartedAt;
+    if (totalMs >= 3000) {
+      console.warn(
+        `Slow ticket close ${ticket.ticket_id}: total=${totalMs}ms, projections=${archiveStartedAt - projectionStartedAt}ms, archive=${Date.now() - archiveStartedAt}ms`
+      );
+    }
     return { outcome: 'closed', ticket: savedTicket };
   });
 }

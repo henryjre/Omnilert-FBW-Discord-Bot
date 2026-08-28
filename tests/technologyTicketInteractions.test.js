@@ -286,6 +286,7 @@ test('/close ticket opens a required resolution modal', async () => {
 
 test('resolution modal closes the ticket with the submitted resolution', async () => {
   let reply;
+  let progress;
   closeRequest = null;
   const thread = { id: 'thread', type: ChannelType.PrivateThread };
   await closeModal.execute(
@@ -294,7 +295,7 @@ test('resolution modal closes the ticket with the submitted resolution', async (
       channel: thread,
       user: { id: 'staff' },
       fields: { getTextInputValue: () => '  Replaced the damaged network cable.  ' },
-      deferReply: async () => {},
+      reply: async (payload) => { progress = payload; },
       editReply: async (payload) => { reply = payload; },
     },
     { user: { id: 'bot' } }
@@ -303,6 +304,7 @@ test('resolution modal closes the ticket with the submitted resolution', async (
   assert.equal(closeRequest.thread, thread);
   assert.equal(closeRequest.actorId, 'staff');
   assert.equal(closeRequest.resolution, 'Replaced the damaged network cable.');
+  assert.match(JSON.stringify(progress.components[0].toJSON()), /Closing ticket/);
   assert.equal(Boolean(reply.flags & MessageFlags.Ephemeral), true);
 });
 

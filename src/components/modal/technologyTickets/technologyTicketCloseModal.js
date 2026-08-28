@@ -1,4 +1,4 @@
-const { ChannelType, MessageFlags } = require('discord.js');
+const { ChannelType } = require('discord.js');
 const {
   closeTechnologyTicket,
   isTechnologyStaff,
@@ -41,7 +41,13 @@ module.exports = {
       );
     }
 
-    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+    await interaction.reply(
+      buildTechnologyTicketNoticePayload(
+        'Closing ticket…',
+        'Saving the resolution and closing the private thread.',
+        0x2f80ed
+      )
+    );
     try {
       const result = await closeTechnologyTicket({
         client,
