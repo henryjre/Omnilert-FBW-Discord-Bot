@@ -4,6 +4,7 @@ const {
   ContainerBuilder,
   MessageFlags,
   SeparatorSpacingSize,
+  SectionBuilder,
   StringSelectMenuBuilder,
 } = require('discord.js');
 const { TECHNOLOGY_TICKET_CATEGORIES } = require('./technologyTicketAi');
@@ -24,6 +25,13 @@ const STATUS_LABELS = {
   CLOSED: 'Closed',
   CREATING: 'Creating',
   FAILED: 'Failed',
+};
+const STATUS_ICONS = {
+  OPEN: '🟦',
+  REOPENED: '🟨',
+  CLOSED: '✅',
+  CREATING: '⏳',
+  FAILED: '❌',
 };
 const THREAD_STATUS_LABELS = {
   OPEN: 'ᴏᴘᴇɴ',
@@ -86,7 +94,7 @@ function buildTechnologyTicketPanelPayload() {
     .addTextDisplayComponents((text) =>
       text.setContent(
         [
-          '## Technology Help Desk',
+          '## 🎫 Technology Help Desk',
           'Report a technology concern in one step. Your request will be placed in a private thread with the Technology and Development team.',
           '-# Describe what happened, where it happened, and any error message you saw.',
         ].join('\n')
@@ -98,14 +106,17 @@ function buildTechnologyTicketPanelPayload() {
         new ButtonBuilder()
           .setCustomId('techTicket:open')
           .setLabel('Open Ticket')
+          .setEmoji('🎫')
           .setStyle(ButtonStyle.Primary),
         new ButtonBuilder()
           .setCustomId('techTicket:list:active:0')
           .setLabel('View My Tickets')
+          .setEmoji('📋')
           .setStyle(ButtonStyle.Secondary),
         new ButtonBuilder()
           .setCustomId('techTicket:stats:0')
           .setLabel('Ticket Statistics')
+          .setEmoji('📊')
           .setStyle(ButtonStyle.Secondary)
       )
     );
@@ -120,18 +131,17 @@ function buildTechnologyTicketMessagePayload(ticket) {
     .addTextDisplayComponents((text) =>
       text.setContent(
         [
-          `## ${ticket.ticket_id} · ${escapeTicketMarkdown(ticket.title)}`,
-          `**Status:** ${status}`,
-          `**Category:** ${escapeTicketMarkdown(ticket.category)}`,
-          `**Requested by:** <@${ticket.requester_id}>`,
-          `**Technology team:** <@&${TECHNOLOGY_DEPARTMENT_ROLE_ID}>`,
-          `**Assigned to:** ${ticket.assigned_to_id ? `<@${ticket.assigned_to_id}>` : 'Unassigned'}`,
-          `**Created:** ${discordTimestamp(ticket.created_at)}`,
+          `## ${STATUS_ICONS[ticket.status] || '🎫'} ${escapeTicketMarkdown(ticket.title)}`,
+          `\`${ticket.ticket_id}\` · **${status.toUpperCase()}** · ${escapeTicketMarkdown(ticket.category)}`,
+          '',
+          `**Requester** · <@${ticket.requester_id}>`,
+          `**Technology team** · <@&${TECHNOLOGY_DEPARTMENT_ROLE_ID}>`,
+          `-# Opened ${discordTimestamp(ticket.created_at)}`,
         ].join('\n')
       )
     )
     .addSeparatorComponents((separator) => separator.setSpacing(SeparatorSpacingSize.Large))
-    .addTextDisplayComponents((text) => text.setContent('### Description'));
+    .addTextDisplayComponents((text) => text.setContent('### 📝 Request details'));
 
   for (const descriptionChunk of splitText(escapeTicketMarkdown(ticket.description))) {
     container.addTextDisplayComponents((text) => text.setContent(descriptionChunk));
@@ -151,7 +161,7 @@ function buildTechnologyTicketMessagePayload(ticket) {
       .addTextDisplayComponents((text) =>
         text.setContent(
           [
-            `### Resolution`,
+            `### ✅ Resolution`,
             ticket.resolution ? escapeTicketMarkdown(ticket.resolution) : 'No resolution note was provided.',
             `-# Resolved by <@${ticket.resolved_by_id}> · ${discordTimestamp(ticket.closed_at)}`,
           ].join('\n')
@@ -160,19 +170,35 @@ function buildTechnologyTicketMessagePayload(ticket) {
   } else {
     container
       .addSeparatorComponents((separator) => separator.setSpacing(SeparatorSpacingSize.Large))
-      .addActionRowComponents((row) =>
-        row.setComponents(
-          new ButtonBuilder()
-            .setCustomId(`techTicket:${ticket.assigned_to_id ? 'release' : 'claim'}:${ticket.ticket_id}`)
-            .setLabel(ticket.assigned_to_id ? 'Release Ticket' : 'Claim Ticket')
-            .setStyle(ticket.assigned_to_id ? ButtonStyle.Secondary : ButtonStyle.Success)
-        )
+      .addSectionComponents(
+        new SectionBuilder()
+          .addTextDisplayComponents((text) =>
+            text.setContent(
+              [
+                '### 🛠️ Staff controls',
+                `**Owner** · ${ticket.assigned_to_id ? `<@${ticket.assigned_to_id}>` : 'Unassigned'}`,
+                ticket.assigned_to_id
+                  ? '-# The current owner can release this ticket.'
+                  : '-# Technology staff can claim responsibility for this request.',
+              ].join('\n')
+            )
+          )
+          .setButtonAccessory(
+            new ButtonBuilder()
+              .setCustomId(`techTicket:${ticket.assigned_to_id ? 'release' : 'claim'}:${ticket.ticket_id}`)
+              .setLabel(ticket.assigned_to_id ? 'Release' : 'Claim')
+              .setEmoji(ticket.assigned_to_id ? '↩️' : '🙋')
+              .setStyle(ticket.assigned_to_id ? ButtonStyle.Secondary : ButtonStyle.Success)
+          )
+      )
+      .addTextDisplayComponents((text) =>
+        text.setContent('-# Correct the automatically selected category when needed.')
       )
       .addActionRowComponents((row) =>
         row.setComponents(
           new StringSelectMenuBuilder()
             .setCustomId('technologyTicketCategory')
-            .setPlaceholder('Change ticket category')
+            .setPlaceholder('Change category')
             .addOptions(
               TECHNOLOGY_TICKET_CATEGORIES.map((category) => ({
                 label: category,
@@ -201,7 +227,7 @@ function buildTechnologyTicketReopenedPayload(ticket, actorId) {
     .addTextDisplayComponents((text) =>
       text.setContent(
         [
-          '## Ticket reopened',
+          '## 🔄 Ticket reopened',
           `<@${actorId}> reopened **${ticket.ticket_id}**.`,
           `<@${ticket.requester_id}> <@&${TECHNOLOGY_DEPARTMENT_ROLE_ID}>`,
         ].join('\n')
@@ -224,7 +250,7 @@ function buildTechnologyTicketClosedPayload(ticket, closedById) {
     .addTextDisplayComponents((text) =>
       text.setContent(
         [
-          '## Ticket resolved',
+          '## ✅ Ticket resolved',
           `**Ticket:** ${ticket.ticket_id}`,
           `**Closed by:** <@${closedById}>`,
           `**Resolved at:** ${discordTimestamp(ticket.closed_at)}`,
@@ -240,6 +266,7 @@ function buildTechnologyTicketClosedPayload(ticket, closedById) {
         new ButtonBuilder()
           .setCustomId(`techTicket:reopen:${ticket.ticket_id}`)
           .setLabel('Reopen Ticket')
+          .setEmoji('🔄')
           .setStyle(ButtonStyle.Primary)
       )
     );
@@ -261,7 +288,7 @@ function buildTechnologyTicketListPayload({ tickets, userId, guildId, filter = '
   const container = new ContainerBuilder()
     .setAccentColor(PANEL_ACCENT)
     .addTextDisplayComponents((text) =>
-      text.setContent(`## My Technology Tickets\n**${heading}** · Page ${currentPage + 1} of ${totalPages}`)
+      text.setContent(`## 📋 My Technology Tickets\n**${heading}** · Page ${currentPage + 1} of ${totalPages}`)
     );
 
   if (!pageTickets.length) {
@@ -276,7 +303,7 @@ function buildTechnologyTicketListPayload({ tickets, userId, guildId, filter = '
           pageTickets
             .map(
               (ticket) =>
-                `**${ticket.ticket_id}** · ${escapeTicketMarkdown(ticket.title)}\n-# ${STATUS_LABELS[ticket.status]} · ${escapeTicketMarkdown(ticket.category)} · ${discordTimestamp(ticket.created_at, 'R')}`
+                `${STATUS_ICONS[ticket.status] || '🎫'} **${ticket.ticket_id}** · ${escapeTicketMarkdown(ticket.title)}\n-# ${STATUS_LABELS[ticket.status]} · ${escapeTicketMarkdown(ticket.category)} · ${discordTimestamp(ticket.created_at, 'R')}`
             )
             .join('\n\n')
         )
@@ -300,10 +327,12 @@ function buildTechnologyTicketListPayload({ tickets, userId, guildId, filter = '
         new ButtonBuilder()
           .setCustomId(`techTicket:list:active:0:${userId}:filter`)
           .setLabel('Open & Reopened')
+          .setEmoji('🟦')
           .setStyle(filter === 'active' ? ButtonStyle.Primary : ButtonStyle.Secondary),
         new ButtonBuilder()
           .setCustomId(`techTicket:list:closed:0:${userId}:filter`)
           .setLabel('Closed')
+          .setEmoji('✅')
           .setStyle(filter === 'closed' ? ButtonStyle.Primary : ButtonStyle.Secondary),
         new ButtonBuilder()
           .setCustomId(`techTicket:list:${filter}:${Math.max(0, currentPage - 1)}:${userId}:previous`)
@@ -358,7 +387,7 @@ function buildTechnologyTicketStatisticsPayload(statistics, page = 0) {
     .addTextDisplayComponents((text) =>
       text.setContent(
         [
-          '## Technology Help Desk · Service Overview',
+          '## 📊 Technology Help Desk · Service Overview',
           '-# Live workload and service health for Technology and Development.',
           '### Queue board',
           `\`OPEN ${statistics.counts.open}\` · \`REOPENED ${statistics.counts.reopened}\` · \`CLOSED ${statistics.counts.closed}\``,
@@ -407,7 +436,7 @@ function buildTechnologyTicketStatisticsPayload(statistics, page = 0) {
     .addTextDisplayComponents((text) =>
       text.setContent(
         [
-          `## Staff Performance · ${statistics.monthLabel}`,
+          `## 🏅 Staff Performance · ${statistics.monthLabel}`,
           '-# Score: 30% resolved volume · 30% response speed · 30% resolution speed · 10% low reopen rate',
           pageRows.length
             ? pageRows

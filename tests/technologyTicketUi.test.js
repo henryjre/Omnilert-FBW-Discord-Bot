@@ -30,6 +30,9 @@ test('builds a Components V2 panel with the three required actions', () => {
   assert.match(json, /Open Ticket/);
   assert.match(json, /View My Tickets/);
   assert.match(json, /Ticket Statistics/);
+  assert.match(json, /🎫/);
+  assert.match(json, /📋/);
+  assert.match(json, /📊/);
 });
 
 test('splits a maximum-size escaped description into valid text displays', () => {
@@ -38,6 +41,24 @@ test('splits a maximum-size escaped description into valid text displays', () =>
   const textDisplays = JSON.stringify(json).match(/"type":10/g) || [];
   assert.ok(textDisplays.length >= 3);
   assert.deepEqual(payload.allowedMentions.roles, ['1314815091908022373']);
+});
+
+test('renders a compact ticket summary with dedicated staff controls', () => {
+  const payload = buildTechnologyTicketMessagePayload(ticket());
+  const json = payload.components[0].toJSON();
+  const serialized = JSON.stringify(json);
+
+  assert.match(serialized, /🟦 Office Printer Not Responding/);
+  assert.match(serialized, /`TDD20260001` · \*\*OPEN\*\* · Hardware/);
+  assert.match(serialized, /📝 Request details/);
+  assert.match(serialized, /🛠️ Staff controls/);
+  assert.match(serialized, /\*\*Owner\*\* · Unassigned/);
+  assert.match(serialized, /Change category/);
+  assert.doesNotMatch(serialized, /Assigned to:/);
+
+  const staffSection = json.components.find((component) => component.type === 9);
+  assert.equal(staffSection.accessory.label, 'Claim');
+  assert.equal(staffSection.accessory.custom_id, 'techTicket:claim:TDD20260001');
 });
 
 test('formats lifecycle thread names within Discord limits', () => {

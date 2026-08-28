@@ -1,8 +1,14 @@
-const { SlashCommandBuilder, MessageFlags, EmbedBuilder, ChannelType } = require('discord.js');
 const {
-  closeTechnologyTicket,
-  isTechnologyStaff,
-} = require('../../utils/technologyTicketService');
+  ActionRowBuilder,
+  ChannelType,
+  EmbedBuilder,
+  MessageFlags,
+  ModalBuilder,
+  SlashCommandBuilder,
+  TextInputBuilder,
+  TextInputStyle,
+} = require('discord.js');
+const { isTechnologyStaff } = require('../../utils/technologyTicketService');
 const { buildTechnologyTicketNoticePayload } = require('../../utils/technologyTicketUi');
 const { TECHNOLOGY_DEPARTMENT_ROLE_ID } = require('../../utils/technologyTicketConstants');
 
@@ -17,13 +23,6 @@ module.exports = {
       subcommand
         .setName('ticket')
         .setDescription('Resolve and close a Technology Department help ticket.')
-        .addStringOption((option) =>
-          option
-            .setName('resolution')
-            .setDescription('Optional note explaining how the concern was resolved.')
-            .setMaxLength(1000)
-            .setRequired(false)
-        )
     ),
   async execute(interaction, client) {
     const subcommand = interaction.options.getSubcommand();
@@ -63,38 +62,23 @@ async function closeTechnologyTicketCommand(interaction, client) {
     );
   }
 
-  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-  try {
-    const result = await closeTechnologyTicket({
-      client,
-      thread: interaction.channel,
-      actorId: interaction.user.id,
-      resolution: interaction.options.getString('resolution'),
-    });
-    const success = result.outcome === 'closed';
-    const detail =
-      result.outcome === 'not_ticket'
-        ? 'This private thread is not a registered Technology Department ticket.'
-        : result.outcome === 'already_closed'
-          ? `${result.ticket.ticket_id} is already closed.`
-          : `${result.ticket.ticket_id} was resolved, locked, and archived.`;
-    return interaction.editReply(
-      buildTechnologyTicketNoticePayload(
-        success ? 'Ticket closed' : 'Ticket not closed',
-        detail,
-        success ? 0x2e8b57 : 0xc0392b
+  const modal = new ModalBuilder()
+    .setCustomId('technologyTicketCloseModal')
+    .setTitle('Close Technology Ticket')
+    .addComponents(
+      new ActionRowBuilder().addComponents(
+        new TextInputBuilder()
+          .setCustomId('technologyTicketResolution')
+          .setLabel('How was this ticket resolved?')
+          .setPlaceholder('Describe the solution or action taken.')
+          .setStyle(TextInputStyle.Paragraph)
+          .setMinLength(5)
+          .setMaxLength(1000)
+          .setRequired(true)
       )
     );
-  } catch (error) {
-    console.error('Technology ticket close failed:', error);
-    return interaction.editReply(
-      buildTechnologyTicketNoticePayload(
-        'Ticket close incomplete',
-        'The ticket state could not be fully synchronized. Check the thread and try again.',
-        0xc0392b
-      )
-    );
-  }
+
+  return interaction.showModal(modal);
 }
 
 async function closeThreadCommand(interaction, client) {
