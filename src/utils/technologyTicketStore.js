@@ -212,6 +212,44 @@ const changeTechnologyTicketCategory = db.transaction(
   }
 );
 
+const markTechnologyTicketUrgent = db.transaction(
+  ({ ticketId, requesterId, reason, urgentAt, cooldownMs }) => {
+    const ticket = getTechnologyTicketById(ticketId);
+    if (!ticket) return { outcome: 'not_found', ticket: null };
+    if (!ACTIVE_STATUSES.includes(ticket.status)) return { outcome: 'inactive', ticket };
+    if (ticket.requester_id !== requesterId) return { outcome: 'not_requester', ticket };
+
+    const previousUrgentAt = Date.parse(ticket.urgent_at);
+    const nextAllowedAt = previousUrgentAt + cooldownMs;
+    if (Number.isFinite(previousUrgentAt) && Date.parse(urgentAt) < nextAllowedAt) {
+      return { outcome: 'cooldown', ticket, nextAllowedAt: new Date(nextAllowedAt).toISOString() };
+    }
+
+    db.prepare(
+      `
+        UPDATE technology_tickets
+        SET is_urgent = 1,
+            urgency_reason = @reason,
+            urgent_at = @urgent_at,
+            urgent_by_id = @requester_id,
+            urgency_count = urgency_count + 1,
+            updated_at = @urgent_at
+        WHERE ticket_id = @ticket_id
+      `
+    ).run({ ticket_id: ticketId, requester_id: requesterId, reason, urgent_at: urgentAt });
+
+    const updated = getTechnologyTicketById(ticketId);
+    insertEvent({
+      ticketId,
+      eventType: 'MARKED_URGENT',
+      actorId: requesterId,
+      metadata: { reason, urgencyCount: updated.urgency_count },
+      createdAt: urgentAt,
+    });
+    return { outcome: 'marked', ticket: updated };
+  }
+);
+
 const closeTechnologyTicketRecord = db.transaction(
   ({ ticketId, actorId, resolution = null, closedAt }) => {
     const ticket = getTechnologyTicketById(ticketId);
@@ -223,7 +261,8 @@ const closeTechnologyTicketRecord = db.transaction(
       `
         UPDATE technology_tickets
         SET status = 'CLOSED', resolved_by_id = @resolved_by_id,
-            resolution = @resolution, closed_at = @closed_at, updated_at = @closed_at
+            resolution = @resolution, closed_at = @closed_at, is_urgent = 0,
+            updated_at = @closed_at
         WHERE ticket_id = @ticket_id
       `
     ).run({
@@ -340,6 +379,7 @@ module.exports = {
   claimTechnologyTicket,
   releaseTechnologyTicket,
   changeTechnologyTicketCategory,
+  markTechnologyTicketUrgent,
   closeTechnologyTicketRecord,
   reopenTechnologyTicketRecord,
   recordTechnologyTicketFirstResponse,

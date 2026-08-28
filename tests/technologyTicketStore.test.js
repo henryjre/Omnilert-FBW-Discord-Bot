@@ -49,13 +49,48 @@ test('persists an atomic ticket lifecycle and annual counters', () => {
     assert.equal(ticket.category, 'Network & Internet');
     ticket = store.recordTechnologyTicketFirstResponse({ ticketId: ticket.ticket_id, staffId: 'staff', respondedAt: '2026-08-28T00:03:00.000Z' });
     assert.equal(ticket.first_responder_id, 'staff');
+    const urgent = store.markTechnologyTicketUrgent({
+      ticketId: ticket.ticket_id,
+      requesterId: 'requester',
+      reason: 'Payroll processing is blocked for the entire office.',
+      urgentAt: '2026-08-28T00:04:00.000Z',
+      cooldownMs: 30 * 60 * 1000,
+    });
+    assert.equal(urgent.outcome, 'marked');
+    assert.equal(urgent.ticket.is_urgent, 1);
+    assert.equal(urgent.ticket.urgency_count, 1);
+    assert.equal(
+      store.markTechnologyTicketUrgent({
+        ticketId: ticket.ticket_id,
+        requesterId: 'requester',
+        reason: 'The same business-critical work remains blocked.',
+        urgentAt: '2026-08-28T00:10:00.000Z',
+        cooldownMs: 30 * 60 * 1000,
+      }).outcome,
+      'cooldown'
+    );
+    assert.equal(
+      store.markTechnologyTicketUrgent({
+        ticketId: ticket.ticket_id,
+        requesterId: 'someone-else',
+        reason: 'I should not be able to escalate this ticket.',
+        urgentAt: '2026-08-28T00:40:00.000Z',
+        cooldownMs: 30 * 60 * 1000,
+      }).outcome,
+      'not_requester'
+    );
     ticket = store.closeTechnologyTicketRecord({ ticketId: ticket.ticket_id, actorId: 'closer', resolution: 'Restarted it.', closedAt: '2026-08-28T01:00:00.000Z' });
     assert.equal(ticket.resolved_by_id, 'staff');
     assert.equal(ticket.status, 'CLOSED');
+    assert.equal(ticket.is_urgent, 0);
     ticket = store.reopenTechnologyTicketRecord({ ticketId: ticket.ticket_id, actorId: 'requester', reopenedAt: '2026-08-28T02:00:00.000Z' });
     assert.equal(ticket.status, 'REOPENED');
     assert.equal(ticket.reopen_count, 1);
     assert.ok(store.getTechnologyTicketEvents().some((event) => event.event_type === 'REOPENED'));
+    assert.equal(
+      store.getTechnologyTicketEvents().filter((event) => event.event_type === 'MARKED_URGENT').length,
+      1
+    );
   } finally {
     db.close();
     process.chdir(originalCwd);

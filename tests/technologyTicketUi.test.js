@@ -6,6 +6,7 @@ const {
   buildTechnologyTicketMessagePayload,
   buildTechnologyTicketPanelPayload,
   buildTechnologyTicketStatisticsPayload,
+  buildTechnologyTicketUrgentPayload,
   formatTechnologyTicketThreadName,
 } = require('../src/utils/technologyTicketUi');
 
@@ -56,7 +57,9 @@ test('renders a compact ticket summary with dedicated staff controls', () => {
   assert.match(serialized, /Change category/);
   assert.doesNotMatch(serialized, /Assigned to:/);
 
-  const staffSection = json.components.find((component) => component.type === 9);
+  const staffSection = json.components.find(
+    (component) => component.type === 9 && component.accessory?.custom_id?.startsWith('techTicket:claim:')
+  );
   assert.equal(staffSection.accessory.label, 'Claim');
   assert.equal(staffSection.accessory.custom_id, 'techTicket:claim:TDD20260001');
 });
@@ -75,6 +78,25 @@ test('deduplicates user mentions when one staff member fills multiple ticket rol
   );
 
   assert.deepEqual(payload.allowedMentions.users, ['requester', 'staff']);
+});
+
+test('renders urgent state, escalation control, and a controlled staff notification', () => {
+  const urgentTicket = ticket({
+    is_urgent: 1,
+    urgency_reason: 'Point of Sale checkout is blocking all customer transactions.',
+    urgent_at: '2026-08-28T00:10:00.000Z',
+  });
+  const ticketPayload = buildTechnologyTicketMessagePayload(urgentTicket);
+  const serialized = JSON.stringify(ticketPayload.components[0].toJSON());
+  assert.match(serialized, /🚨 URGENT/);
+  assert.match(serialized, /Urgent request/);
+  assert.match(serialized, /Send Reminder/);
+  assert.match(serialized, /techTicket:urgent:TDD20260001/);
+
+  const notification = buildTechnologyTicketUrgentPayload(urgentTicket);
+  assert.match(JSON.stringify(notification.components[0].toJSON()), /Urgent ticket escalation/);
+  assert.deepEqual(notification.allowedMentions.users, ['100']);
+  assert.deepEqual(notification.allowedMentions.roles, ['1314815091908022373']);
 });
 
 test('formats lifecycle thread names within Discord limits', () => {

@@ -5,7 +5,10 @@ const { initializeOnboardingRoleRemovalWorker } = require('../../queue/onboardin
 const { initializePortalNotificationCleanupWorker } = require('../../queue/portalNotificationCleanupQueue');
 const { initializeDepartmentVoiceWorker } = require('../../queue/departmentVoiceQueue');
 const { initializeMeetingVoiceWorker } = require('../../queue/meetingVoiceQueue');
-const { ensureTechnologyTicketPanel } = require('../../utils/technologyTicketService');
+const {
+  ensureTechnologyTicketPanel,
+  refreshActiveTechnologyTicketMessages,
+} = require('../../utils/technologyTicketService');
 
 module.exports = {
   name: 'clientReady',
@@ -19,6 +22,8 @@ module.exports = {
     try {
       await ensureTechnologyTicketPanel(client);
       console.log(chalk.blue('🎫 Technology help-ticket panel synchronized'));
+      const ticketRefresh = await refreshActiveTechnologyTicketMessages(client);
+      console.log(chalk.blue(`🎫 Refreshed ${ticketRefresh.refreshed}/${ticketRefresh.total} active ticket messages`));
     } catch (error) {
       console.error('Technology help-ticket panel setup failed:', error);
     }

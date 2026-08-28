@@ -144,6 +144,11 @@ db.exec(`
     closed_at TEXT,
     reopened_at TEXT,
     reopen_count INTEGER NOT NULL DEFAULT 0,
+    is_urgent INTEGER NOT NULL DEFAULT 0,
+    urgency_reason TEXT,
+    urgent_at TEXT,
+    urgent_by_id TEXT,
+    urgency_count INTEGER NOT NULL DEFAULT 0,
     failed_reason TEXT,
     updated_at TEXT NOT NULL
   );
@@ -178,6 +183,20 @@ db.exec(`
     updated_at TEXT NOT NULL
   );
 `);
+
+for (const migration of [
+  `ALTER TABLE technology_tickets ADD COLUMN is_urgent INTEGER NOT NULL DEFAULT 0`,
+  `ALTER TABLE technology_tickets ADD COLUMN urgency_reason TEXT`,
+  `ALTER TABLE technology_tickets ADD COLUMN urgent_at TEXT`,
+  `ALTER TABLE technology_tickets ADD COLUMN urgent_by_id TEXT`,
+  `ALTER TABLE technology_tickets ADD COLUMN urgency_count INTEGER NOT NULL DEFAULT 0`,
+]) {
+  try {
+    db.exec(migration);
+  } catch (error) {
+    if (!String(error.message).includes('duplicate column name')) throw error;
+  }
+}
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS departments (

@@ -130,13 +130,14 @@ function buildTechnologyTicketPanelPayload() {
 
 function buildTechnologyTicketMessagePayload(ticket) {
   const status = STATUS_LABELS[ticket.status] || ticket.status;
+  const urgencyState = ticket.is_urgent ? ' · **🚨 URGENT**' : '';
   const container = new ContainerBuilder()
     .setAccentColor(STATUS_ACCENTS[ticket.status] || PANEL_ACCENT)
     .addTextDisplayComponents((text) =>
       text.setContent(
         [
           `## ${STATUS_ICONS[ticket.status] || '🎫'} ${escapeTicketMarkdown(ticket.title)}`,
-          `\`${ticket.ticket_id}\` · **${status.toUpperCase()}** · ${escapeTicketMarkdown(ticket.category)}`,
+          `\`${ticket.ticket_id}\` · **${status.toUpperCase()}** · ${escapeTicketMarkdown(ticket.category)}${urgencyState}`,
           '',
           `**Requester** · <@${ticket.requester_id}>`,
           `**Technology team** · <@&${TECHNOLOGY_DEPARTMENT_ROLE_ID}>`,
@@ -159,6 +160,20 @@ function buildTechnologyTicketMessagePayload(ticket) {
     );
   }
 
+  if (ticket.is_urgent && ticket.urgency_reason) {
+    container
+      .addSeparatorComponents((separator) => separator.setSpacing(SeparatorSpacingSize.Large))
+      .addTextDisplayComponents((text) =>
+        text.setContent(
+          [
+            '### 🚨 Urgent request',
+            escapeTicketMarkdown(ticket.urgency_reason),
+            `-# Escalated ${discordTimestamp(ticket.urgent_at, 'R')}`,
+          ].join('\n')
+        )
+      );
+  }
+
   if (ticket.status === 'CLOSED') {
     container
       .addSeparatorComponents((separator) => separator.setSpacing(SeparatorSpacingSize.Large))
@@ -173,6 +188,27 @@ function buildTechnologyTicketMessagePayload(ticket) {
       );
   } else {
     container
+      .addSeparatorComponents((separator) => separator.setSpacing(SeparatorSpacingSize.Large))
+      .addSectionComponents(
+        new SectionBuilder()
+          .addTextDisplayComponents((text) =>
+            text.setContent(
+              [
+                ticket.is_urgent ? '### 🚨 Urgent escalation' : '### Need immediate attention?',
+                ticket.is_urgent
+                  ? '-# You may remind the team after the 30-minute cooldown.'
+                  : '-# Use this only when the issue needs immediate attention or resolution.',
+              ].join('\n')
+            )
+          )
+          .setButtonAccessory(
+            new ButtonBuilder()
+              .setCustomId(`techTicket:urgent:${ticket.ticket_id}`)
+              .setLabel(ticket.is_urgent ? 'Send Reminder' : 'Mark as Urgent')
+              .setEmoji('🚨')
+              .setStyle(ButtonStyle.Danger)
+          )
+      )
       .addSeparatorComponents((separator) => separator.setSpacing(SeparatorSpacingSize.Large))
       .addSectionComponents(
         new SectionBuilder()
@@ -224,6 +260,32 @@ function buildTechnologyTicketMessagePayload(ticket) {
         ticket.first_responder_id,
         ticket.resolved_by_id
       ),
+      roles: [TECHNOLOGY_DEPARTMENT_ROLE_ID],
+      repliedUser: false,
+    },
+  };
+}
+
+function buildTechnologyTicketUrgentPayload(ticket) {
+  const container = new ContainerBuilder()
+    .setAccentColor(0xd83c3e)
+    .addTextDisplayComponents((text) =>
+      text.setContent(
+        [
+          '## 🚨 Urgent ticket escalation',
+          `<@${ticket.requester_id}> marked **${ticket.ticket_id}** as urgent.`,
+          `**Reason** · ${escapeTicketMarkdown(ticket.urgency_reason)}`,
+          `<@&${TECHNOLOGY_DEPARTMENT_ROLE_ID}>`,
+          '-# Please review this request as soon as possible.',
+        ].join('\n')
+      )
+    );
+
+  return {
+    components: [container],
+    flags: MessageFlags.IsComponentsV2,
+    allowedMentions: {
+      users: uniqueMentionIds(ticket.requester_id),
       roles: [TECHNOLOGY_DEPARTMENT_ROLE_ID],
       repliedUser: false,
     },
@@ -504,6 +566,7 @@ module.exports = {
   buildTechnologyTicketMessagePayload,
   buildTechnologyTicketClosedPayload,
   buildTechnologyTicketReopenedPayload,
+  buildTechnologyTicketUrgentPayload,
   buildTechnologyTicketListPayload,
   buildTechnologyTicketStatisticsPayload,
   buildTechnologyTicketNoticePayload,

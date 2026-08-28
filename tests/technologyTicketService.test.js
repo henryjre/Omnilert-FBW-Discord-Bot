@@ -109,6 +109,20 @@ test('upserts the panel and completes open, close, and reopen lifecycle', async 
     assert.equal(ticket.status, 'OPEN');
     assert.equal(ticket.category, 'Hardware');
     assert.match(thread.name, /^ᴏᴘᴇɴ \|/);
+    assert.deepEqual(
+      await service.refreshActiveTechnologyTicketMessages(client),
+      { refreshed: 1, total: 1 }
+    );
+
+    const urgent = await service.markTechnologyTicketUrgent({
+      client,
+      ticketId: ticket.ticket_id,
+      requesterId: 'requester',
+      reason: 'Store checkout is blocked during operating hours.',
+    });
+    assert.equal(urgent.outcome, 'marked');
+    assert.equal(urgent.ticket.is_urgent, 1);
+    assert.match(JSON.stringify(threadMessages.at(-1).components[0].toJSON()), /Urgent ticket escalation/);
 
     const closed = await service.closeTechnologyTicket({
       client,

@@ -4,6 +4,8 @@ const path = require('node:path');
 const { ChannelType, MessageFlags } = require('discord.js');
 
 let closeRequest;
+let urgencyRequest;
+let urgencyResult = { outcome: 'marked' };
 
 const servicePath = path.resolve(__dirname, '../src/utils/technologyTicketService.js');
 require.cache[servicePath] = {
@@ -19,6 +21,15 @@ require.cache[servicePath] = {
       return { outcome: 'closed', ticket: { ticket_id: 'TDD20260001' } };
     },
     isTechnologyStaff: (member) => Boolean(member?.isTechnologyStaff),
+    getTechnologyTicket: () => ({
+      ticket_id: 'TDD20260001',
+      requester_id: 'requester',
+      status: 'OPEN',
+    }),
+    markTechnologyTicketUrgent: async (request) => {
+      urgencyRequest = request;
+      return { ...urgencyResult, ticket: { ticket_id: request.ticketId } };
+    },
     releaseTechnologyTicket: async () => ({ outcome: 'released' }),
     reopenTechnologyTicket: async () => ({ outcome: 'reopened' }),
   },
@@ -27,6 +38,7 @@ require.cache[servicePath] = {
 const button = require('../src/components/button/technologyTickets/technologyTicketButton');
 const closeCommand = require('../src/commands/employeeCommands/close_thread');
 const closeModal = require('../src/components/modal/technologyTickets/technologyTicketCloseModal');
+const urgencyModal = require('../src/components/modal/technologyTickets/technologyTicketUrgencyModal');
 
 test('Open Ticket shows one accessible required description field', async () => {
   let modal;
@@ -59,6 +71,69 @@ test('ticket staff actions reject non-Technology members ephemerally', async () 
   );
   assert.equal(Boolean(reply.flags & MessageFlags.Ephemeral), true);
   assert.equal(Boolean(reply.flags & MessageFlags.IsComponentsV2), true);
+});
+
+test('Mark as Urgent opens a required reason modal for the requester', async () => {
+  let modal;
+  await button.execute(
+    {
+      customId: 'techTicket:urgent:TDD20260001',
+      user: { id: 'requester' },
+      showModal: async (value) => { modal = value; },
+    },
+    {}
+  );
+
+  const json = modal.toJSON();
+  assert.equal(json.custom_id, 'technologyTicketUrgencyModal:TDD20260001');
+  const input = json.components[0].components[0];
+  assert.equal(input.custom_id, 'technologyTicketUrgencyReason');
+  assert.equal(input.required, true);
+  assert.equal(input.min_length, 10);
+  assert.equal(input.max_length, 500);
+  assert.equal(input.style, 2);
+});
+
+test('urgency modal submits the reason for the current requester', async () => {
+  let reply;
+  urgencyRequest = null;
+  urgencyResult = { outcome: 'marked' };
+  await urgencyModal.execute(
+    {
+      customId: 'technologyTicketUrgencyModal:TDD20260001',
+      user: { id: 'requester' },
+      fields: { getTextInputValue: () => '  Checkout is blocked at every register.  ' },
+      deferReply: async () => {},
+      editReply: async (payload) => { reply = payload; },
+    },
+    {}
+  );
+
+  assert.equal(urgencyRequest.ticketId, 'TDD20260001');
+  assert.equal(urgencyRequest.requesterId, 'requester');
+  assert.equal(urgencyRequest.reason, 'Checkout is blocked at every register.');
+  assert.equal(Boolean(reply.flags & MessageFlags.Ephemeral), true);
+});
+
+test('urgency modal explains when another alert is on cooldown', async () => {
+  let reply;
+  urgencyResult = {
+    outcome: 'cooldown',
+    nextAllowedAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+  };
+  await urgencyModal.execute(
+    {
+      customId: 'technologyTicketUrgencyModal:TDD20260001',
+      user: { id: 'requester' },
+      fields: { getTextInputValue: () => 'Checkout remains blocked at every register.' },
+      deferReply: async () => {},
+      editReply: async (payload) => { reply = payload; },
+    },
+    {}
+  );
+
+  assert.match(JSON.stringify(reply.components[0].toJSON()), /Urgent alert on cooldown/);
+  assert.match(JSON.stringify(reply.components[0].toJSON()), /about 15 minutes/);
 });
 
 test('/close ticket opens a required resolution modal', async () => {

@@ -16,10 +16,12 @@ const {
   buildTechnologyTicketPanelPayload,
   buildTechnologyTicketReopenedPayload,
   buildTechnologyTicketStatisticsPayload,
+  buildTechnologyTicketUrgentPayload,
   formatTechnologyTicketThreadName,
 } = require('./technologyTicketUi');
 
 const ticketLock = new AsyncLock();
+const URGENCY_COOLDOWN_MS = 30 * 60 * 1000;
 
 function nowIso() {
   return new Date().toISOString();
@@ -27,6 +29,10 @@ function nowIso() {
 
 function isTechnologyStaff(member) {
   return Boolean(member?.roles?.cache?.has(TECHNOLOGY_DEPARTMENT_ROLE_ID));
+}
+
+function getTechnologyTicket(ticketId) {
+  return store.getTechnologyTicketById(ticketId);
 }
 
 async function fetchChannel(client, channelId) {
@@ -127,6 +133,23 @@ async function refreshTechnologyTicketMessage(client, ticket) {
   return message;
 }
 
+async function refreshActiveTechnologyTicketMessages(client) {
+  const activeTickets = store
+    .getAllTechnologyTickets()
+    .filter((ticket) => store.ACTIVE_STATUSES.includes(ticket.status));
+  let refreshed = 0;
+
+  for (const ticket of activeTickets) {
+    try {
+      await refreshTechnologyTicketMessage(client, ticket);
+      refreshed += 1;
+    } catch (error) {
+      console.error(`Failed to refresh active ticket ${ticket.ticket_id}:`, error);
+    }
+  }
+  return { refreshed, total: activeTickets.length };
+}
+
 async function claimTechnologyTicket({ client, ticketId, staffId }) {
   return ticketLock.acquire(ticketId, async () => {
     const result = store.claimTechnologyTicket({ ticketId, staffId, updatedAt: nowIso() });
@@ -155,6 +178,24 @@ async function changeTechnologyTicketCategory({ client, threadId, category, staf
     });
     if (ticket) await refreshTechnologyTicketMessage(client, ticket);
     return ticket;
+  });
+}
+
+async function markTechnologyTicketUrgent({ client, ticketId, requesterId, reason }) {
+  return ticketLock.acquire(ticketId, async () => {
+    const result = store.markTechnologyTicketUrgent({
+      ticketId,
+      requesterId,
+      reason: reason.trim(),
+      urgentAt: nowIso(),
+      cooldownMs: URGENCY_COOLDOWN_MS,
+    });
+    if (result.outcome !== 'marked') return result;
+
+    await refreshTechnologyTicketMessage(client, result.ticket);
+    const thread = await fetchChannel(client, result.ticket.thread_id);
+    await thread.send(buildTechnologyTicketUrgentPayload(result.ticket));
+    return result;
   });
 }
 
@@ -234,13 +275,17 @@ async function buildTechnologyTicketStatisticsForGuild(guild, page = 0) {
 }
 
 module.exports = {
+  URGENCY_COOLDOWN_MS,
   isTechnologyStaff,
+  getTechnologyTicket,
   ensureTechnologyTicketPanel,
   createTechnologyTicketFromDescription,
   refreshTechnologyTicketMessage,
+  refreshActiveTechnologyTicketMessages,
   claimTechnologyTicket,
   releaseTechnologyTicket,
   changeTechnologyTicketCategory,
+  markTechnologyTicketUrgent,
   closeTechnologyTicket,
   reopenTechnologyTicket,
   recordFirstTechnologyStaffResponse,

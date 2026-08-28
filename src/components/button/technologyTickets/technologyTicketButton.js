@@ -9,6 +9,7 @@ const {
   buildTechnologyTicketListForUser,
   buildTechnologyTicketStatisticsForGuild,
   claimTechnologyTicket,
+  getTechnologyTicket,
   isTechnologyStaff,
   releaseTechnologyTicket,
   reopenTechnologyTicket,
@@ -93,6 +94,45 @@ module.exports = {
       };
       const [title, detail, color] = messages[result.outcome] || ['Ticket unavailable', 'The ticket could not be updated.', 0xc0392b];
       return interaction.editReply(buildTechnologyTicketNoticePayload(title, detail, color));
+    }
+
+    if (action === 'urgent') {
+      const ticket = getTechnologyTicket(value);
+      if (!ticket || !['OPEN', 'REOPENED'].includes(ticket.status)) {
+        return interaction.reply(
+          buildTechnologyTicketNoticePayload(
+            'Ticket unavailable',
+            `${value} is no longer active or could not be found.`,
+            0xc0392b
+          )
+        );
+      }
+      if (ticket.requester_id !== interaction.user.id) {
+        return interaction.reply(
+          buildTechnologyTicketNoticePayload(
+            'Requester action only',
+            'Only the person who opened this ticket can mark it as urgent.',
+            0xc0392b
+          )
+        );
+      }
+
+      const modal = new ModalBuilder()
+        .setCustomId(`technologyTicketUrgencyModal:${value}`)
+        .setTitle('Mark Ticket as Urgent')
+        .addComponents(
+          new ActionRowBuilder().addComponents(
+            new TextInputBuilder()
+              .setCustomId('technologyTicketUrgencyReason')
+              .setLabel('Why does this need immediate attention?')
+              .setPlaceholder('Explain the immediate impact or deadline.')
+              .setStyle(TextInputStyle.Paragraph)
+              .setMinLength(10)
+              .setMaxLength(500)
+              .setRequired(true)
+          )
+        );
+      return interaction.showModal(modal);
     }
 
     if (action === 'reopen') {
