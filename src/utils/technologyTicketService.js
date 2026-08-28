@@ -142,6 +142,8 @@ async function refreshActiveTechnologyTicketMessages(client) {
   for (const ticket of activeTickets) {
     try {
       await refreshTechnologyTicketMessage(client, ticket);
+      const thread = await fetchChannel(client, ticket.thread_id);
+      await thread.setName(formatTechnologyTicketThreadName(ticket));
       refreshed += 1;
     } catch (error) {
       console.error(`Failed to refresh active ticket ${ticket.ticket_id}:`, error);
@@ -194,6 +196,7 @@ async function markTechnologyTicketUrgent({ client, ticketId, requesterId, reaso
 
     await refreshTechnologyTicketMessage(client, result.ticket);
     const thread = await fetchChannel(client, result.ticket.thread_id);
+    await thread.setName(formatTechnologyTicketThreadName(result.ticket));
     await thread.send(buildTechnologyTicketUrgentPayload(result.ticket));
     return result;
   });
@@ -215,10 +218,16 @@ async function closeTechnologyTicket({ client, thread, actorId, resolution = nul
     });
     await refreshTechnologyTicketMessage(client, ticket);
     await thread.setName(formatTechnologyTicketThreadName(ticket));
-    await thread.send(buildTechnologyTicketClosedPayload(ticket, actorId));
+    const closureMessage = await thread.send(buildTechnologyTicketClosedPayload(ticket, actorId));
+    const savedTicket = store.saveTechnologyTicketClosureMessage({
+      ticketId: ticket.ticket_id,
+      messageId: closureMessage.id,
+      updatedAt: nowIso(),
+    });
+    if (!savedTicket) throw new Error(`Could not save the closure message for ${ticket.ticket_id}.`);
     await thread.setLocked(true);
     await thread.setArchived(true);
-    return { outcome: 'closed', ticket };
+    return { outcome: 'closed', ticket: savedTicket };
   });
 }
 
@@ -229,6 +238,21 @@ async function reopenTechnologyTicket({ client, ticketId, actorId }) {
     if (latest.status !== 'CLOSED') return { outcome: 'not_closed', ticket: latest };
     const thread = await fetchChannel(client, latest.thread_id);
     await thread.edit({ archived: false, locked: false });
+    if (latest.closure_message_id) {
+      const closureMessage = await thread.messages.fetch(latest.closure_message_id).catch((error) => {
+        if (error?.code === 10008) return null;
+        throw error;
+      });
+      if (closureMessage) {
+        await closureMessage.edit(
+          buildTechnologyTicketClosedPayload(
+            latest,
+            latest.closed_by_id || latest.resolved_by_id,
+            { includeReopenButton: false }
+          )
+        );
+      }
+    }
     const ticket = store.reopenTechnologyTicketRecord({ ticketId, actorId, reopenedAt: nowIso() });
     await refreshTechnologyTicketMessage(client, ticket);
     await thread.setName(formatTechnologyTicketThreadName(ticket));

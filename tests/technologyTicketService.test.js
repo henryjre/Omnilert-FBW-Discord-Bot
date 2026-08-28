@@ -39,12 +39,16 @@ test('upserts the panel and completes open, close, and reopen lifecycle', async 
 
   const edits = [];
   const threadMessages = [];
+  const threadMessageMap = new Map();
+  let resolutionMessageEdited = false;
   let panelMessage = null;
   let initialMessage = null;
   const thread = {
     id: 'thread-1',
     messages: {
-      fetch: async (messageId) => (messageId === initialMessage?.id ? initialMessage : null),
+      fetch: async (messageId) => (
+        messageId === initialMessage?.id ? initialMessage : threadMessageMap.get(messageId) || null
+      ),
     },
     members: { add: async (userId) => assert.equal(userId, 'requester') },
     send: async (payload) => {
@@ -53,7 +57,15 @@ test('upserts the panel and completes open, close, and reopen lifecycle', async 
         initialMessage = { id: 'initial-1', edit: async (nextPayload) => edits.push(nextPayload) };
         return initialMessage;
       }
-      return { id: `thread-message-${threadMessages.length}` };
+      const message = {
+        id: `thread-message-${threadMessages.length}`,
+        edit: async (nextPayload) => {
+          resolutionMessageEdited = true;
+          edits.push(nextPayload);
+        },
+      };
+      threadMessageMap.set(message.id, message);
+      return message;
     },
     setName: async (name) => { thread.name = name; },
     setLocked: async (locked) => { thread.locked = locked; },
@@ -122,6 +134,7 @@ test('upserts the panel and completes open, close, and reopen lifecycle', async 
     });
     assert.equal(urgent.outcome, 'marked');
     assert.equal(urgent.ticket.is_urgent, 1);
+    assert.match(thread.name, /^🚨 ᴏᴘᴇɴ \|/);
     assert.match(JSON.stringify(threadMessages.at(-1).components[0].toJSON()), /Urgent ticket escalation/);
 
     const closed = await service.closeTechnologyTicket({
@@ -131,6 +144,7 @@ test('upserts the panel and completes open, close, and reopen lifecycle', async 
       resolution: 'Restarted the printer.',
     });
     assert.equal(closed.outcome, 'closed');
+    assert.ok(closed.ticket.closure_message_id);
     assert.equal(thread.locked, true);
     assert.equal(thread.archived, true);
     assert.match(thread.name, /^ᴄʟᴏꜱᴇᴅ \|/);
@@ -141,6 +155,9 @@ test('upserts the panel and completes open, close, and reopen lifecycle', async 
       actorId: 'requester',
     });
     assert.equal(reopened.outcome, 'reopened');
+    assert.equal(resolutionMessageEdited, true);
+    const editedResolution = edits.at(-2);
+    assert.doesNotMatch(JSON.stringify(editedResolution.components[0].toJSON()), /Reopen Ticket/);
     assert.equal(thread.locked, false);
     assert.equal(thread.archived, false);
     assert.match(thread.name, /^ʀᴇᴏᴘᴇɴᴇᴅ \|/);

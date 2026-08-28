@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { MessageFlags } = require('discord.js');
 const {
+  buildTechnologyTicketClosedPayload,
   buildTechnologyTicketListPayload,
   buildTechnologyTicketMessagePayload,
   buildTechnologyTicketPanelPayload,
@@ -99,11 +100,42 @@ test('renders urgent state, escalation control, and a controlled staff notificat
   assert.deepEqual(notification.allowedMentions.roles, ['1314815091908022373']);
 });
 
+test('resolution notice mentions the requester and can render without reopen controls', () => {
+  const closedTicket = ticket({
+    status: 'CLOSED',
+    requester_id: 'requester',
+    resolved_by_id: 'staff',
+    closed_at: '2026-08-28T01:00:00.000Z',
+    resolution: 'Replaced the damaged network cable.',
+  });
+  const withButton = buildTechnologyTicketClosedPayload(closedTicket, 'closer');
+  const withoutButton = buildTechnologyTicketClosedPayload(closedTicket, 'closer', {
+    includeReopenButton: false,
+  });
+
+  assert.match(JSON.stringify(withButton.components[0].toJSON()), /<@requester>/);
+  assert.match(JSON.stringify(withButton.components[0].toJSON()), /Reopen Ticket/);
+  assert.doesNotMatch(JSON.stringify(withoutButton.components[0].toJSON()), /Reopen Ticket/);
+  assert.deepEqual(withButton.allowedMentions.users, ['requester', 'closer']);
+});
+
 test('formats lifecycle thread names within Discord limits', () => {
   const name = formatTechnologyTicketThreadName(ticket({ title: 'A'.repeat(200), status: 'REOPENED' }));
   assert.ok(name.length <= 100);
   assert.match(name, /^ʀᴇᴏᴘᴇɴᴇᴅ \|/);
   assert.match(name, /TDD20260001$/);
+
+  const urgentName = formatTechnologyTicketThreadName(
+    ticket({ title: 'A'.repeat(200), status: 'OPEN', is_urgent: 1 })
+  );
+  assert.ok(urgentName.length <= 100);
+  assert.match(urgentName, /^🚨 ᴏᴘᴇɴ \|/);
+  assert.match(urgentName, /TDD20260001$/);
+
+  const closedName = formatTechnologyTicketThreadName(
+    ticket({ status: 'CLOSED', is_urgent: 1 })
+  );
+  assert.doesNotMatch(closedName, /^🚨/);
 });
 
 function collectCustomIds(value, ids = []) {

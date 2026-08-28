@@ -261,13 +261,15 @@ const closeTechnologyTicketRecord = db.transaction(
       `
         UPDATE technology_tickets
         SET status = 'CLOSED', resolved_by_id = @resolved_by_id,
-            resolution = @resolution, closed_at = @closed_at, is_urgent = 0,
+            closed_by_id = @closed_by_id, resolution = @resolution,
+            closed_at = @closed_at, is_urgent = 0,
             updated_at = @closed_at
         WHERE ticket_id = @ticket_id
       `
     ).run({
       ticket_id: ticketId,
       resolved_by_id: creditedStaffId,
+      closed_by_id: actorId,
       resolution,
       closed_at: closedAt,
     });
@@ -284,6 +286,17 @@ const closeTechnologyTicketRecord = db.transaction(
   }
 );
 
+function saveTechnologyTicketClosureMessage({ ticketId, messageId, updatedAt }) {
+  const result = db.prepare(
+    `
+      UPDATE technology_tickets
+      SET closure_message_id = ?, updated_at = ?
+      WHERE ticket_id = ? AND status = 'CLOSED'
+    `
+  ).run(messageId, updatedAt, ticketId);
+  return result.changes ? getTechnologyTicketById(ticketId) : null;
+}
+
 const reopenTechnologyTicketRecord = db.transaction(({ ticketId, actorId, reopenedAt }) => {
   const ticket = getTechnologyTicketById(ticketId);
   if (!ticket || ticket.status !== 'CLOSED') return null;
@@ -292,7 +305,8 @@ const reopenTechnologyTicketRecord = db.transaction(({ ticketId, actorId, reopen
     `
       UPDATE technology_tickets
       SET status = 'REOPENED', reopened_at = @reopened_at,
-          reopen_count = reopen_count + 1, updated_at = @reopened_at
+          reopen_count = reopen_count + 1, closure_message_id = NULL,
+          updated_at = @reopened_at
       WHERE ticket_id = @ticket_id
     `
   ).run({ ticket_id: ticketId, reopened_at: reopenedAt });
@@ -381,6 +395,7 @@ module.exports = {
   changeTechnologyTicketCategory,
   markTechnologyTicketUrgent,
   closeTechnologyTicketRecord,
+  saveTechnologyTicketClosureMessage,
   reopenTechnologyTicketRecord,
   recordTechnologyTicketFirstResponse,
   getTechnologyTicketEvents,

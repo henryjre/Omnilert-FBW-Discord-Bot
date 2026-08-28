@@ -130,6 +130,7 @@ db.exec(`
     parent_channel_id TEXT NOT NULL,
     thread_id TEXT UNIQUE,
     initial_message_id TEXT,
+    closure_message_id TEXT,
     requester_id TEXT NOT NULL,
     title TEXT NOT NULL DEFAULT 'Technology Support Request',
     description TEXT NOT NULL,
@@ -137,6 +138,7 @@ db.exec(`
     status TEXT NOT NULL DEFAULT 'CREATING',
     assigned_to_id TEXT,
     resolved_by_id TEXT,
+    closed_by_id TEXT,
     resolution TEXT,
     first_response_at TEXT,
     first_responder_id TEXT,
@@ -185,6 +187,8 @@ db.exec(`
 `);
 
 for (const migration of [
+  `ALTER TABLE technology_tickets ADD COLUMN closure_message_id TEXT`,
+  `ALTER TABLE technology_tickets ADD COLUMN closed_by_id TEXT`,
   `ALTER TABLE technology_tickets ADD COLUMN is_urgent INTEGER NOT NULL DEFAULT 0`,
   `ALTER TABLE technology_tickets ADD COLUMN urgency_reason TEXT`,
   `ALTER TABLE technology_tickets ADD COLUMN urgent_at TEXT`,

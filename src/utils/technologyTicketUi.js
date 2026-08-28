@@ -82,7 +82,9 @@ function formatDuration(milliseconds) {
 }
 
 function formatTechnologyTicketThreadName(ticket) {
-  const status = THREAD_STATUS_LABELS[ticket.status] || THREAD_STATUS_LABELS.OPEN;
+  const statusLabel = THREAD_STATUS_LABELS[ticket.status] || THREAD_STATUS_LABELS.OPEN;
+  const isActiveUrgent = ticket.is_urgent && ['OPEN', 'REOPENED'].includes(ticket.status);
+  const status = isActiveUrgent ? `🚨 ${statusLabel}` : statusLabel;
   const suffix = ` | ${ticket.ticket_id}`;
   const availableTitleLength = Math.max(1, 100 - status.length - 3 - suffix.length);
   const title = [...String(ticket.title || 'Technology Support Request')]
@@ -315,13 +317,14 @@ function buildTechnologyTicketReopenedPayload(ticket, actorId) {
   };
 }
 
-function buildTechnologyTicketClosedPayload(ticket, closedById) {
+function buildTechnologyTicketClosedPayload(ticket, closedById, { includeReopenButton = true } = {}) {
   const container = new ContainerBuilder()
     .setAccentColor(STATUS_ACCENTS.CLOSED)
     .addTextDisplayComponents((text) =>
       text.setContent(
         [
           '## ✅ Ticket resolved',
+          `<@${ticket.requester_id}>, your Technology ticket has been resolved.`,
           `**Ticket:** ${ticket.ticket_id}`,
           `**Closed by:** <@${closedById}>`,
           `**Resolved at:** ${discordTimestamp(ticket.closed_at)}`,
@@ -330,21 +333,30 @@ function buildTechnologyTicketClosedPayload(ticket, closedById) {
             : 'No resolution note was provided.',
         ].join('\n')
       )
-    )
-    .addSeparatorComponents((separator) => separator.setSpacing(SeparatorSpacingSize.Large))
-    .addActionRowComponents((row) =>
-      row.setComponents(
-        new ButtonBuilder()
-          .setCustomId(`techTicket:reopen:${ticket.ticket_id}`)
-          .setLabel('Reopen Ticket')
-          .setEmoji('🔄')
-          .setStyle(ButtonStyle.Primary)
-      )
     );
+
+  if (includeReopenButton) {
+    container
+      .addSeparatorComponents((separator) => separator.setSpacing(SeparatorSpacingSize.Large))
+      .addActionRowComponents((row) =>
+        row.setComponents(
+          new ButtonBuilder()
+            .setCustomId(`techTicket:reopen:${ticket.ticket_id}`)
+            .setLabel('Reopen Ticket')
+            .setEmoji('🔄')
+            .setStyle(ButtonStyle.Primary)
+        )
+      );
+  }
+
   return {
     components: [container],
     flags: MessageFlags.IsComponentsV2,
-    allowedMentions: { users: [closedById], roles: [], repliedUser: false },
+    allowedMentions: {
+      users: uniqueMentionIds(ticket.requester_id, closedById),
+      roles: [],
+      repliedUser: false,
+    },
   };
 }
 

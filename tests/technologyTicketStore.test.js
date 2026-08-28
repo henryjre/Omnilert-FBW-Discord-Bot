@@ -81,11 +81,19 @@ test('persists an atomic ticket lifecycle and annual counters', () => {
     );
     ticket = store.closeTechnologyTicketRecord({ ticketId: ticket.ticket_id, actorId: 'closer', resolution: 'Restarted it.', closedAt: '2026-08-28T01:00:00.000Z' });
     assert.equal(ticket.resolved_by_id, 'staff');
+    assert.equal(ticket.closed_by_id, 'closer');
     assert.equal(ticket.status, 'CLOSED');
     assert.equal(ticket.is_urgent, 0);
+    ticket = store.saveTechnologyTicketClosureMessage({
+      ticketId: ticket.ticket_id,
+      messageId: 'closure-message',
+      updatedAt: '2026-08-28T01:00:01.000Z',
+    });
+    assert.equal(ticket.closure_message_id, 'closure-message');
     ticket = store.reopenTechnologyTicketRecord({ ticketId: ticket.ticket_id, actorId: 'requester', reopenedAt: '2026-08-28T02:00:00.000Z' });
     assert.equal(ticket.status, 'REOPENED');
     assert.equal(ticket.reopen_count, 1);
+    assert.equal(ticket.closure_message_id, null);
     assert.ok(store.getTechnologyTicketEvents().some((event) => event.event_type === 'REOPENED'));
     assert.equal(
       store.getTechnologyTicketEvents().filter((event) => event.event_type === 'MARKED_URGENT').length,
