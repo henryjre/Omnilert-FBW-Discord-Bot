@@ -117,6 +117,69 @@ db.exec(`
 `);
 
 db.exec(`
+  CREATE TABLE IF NOT EXISTS technology_ticket_counters (
+    year INTEGER PRIMARY KEY,
+    last_number INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS technology_tickets (
+    ticket_id TEXT PRIMARY KEY,
+    sequence_year INTEGER NOT NULL,
+    sequence_number INTEGER NOT NULL,
+    guild_id TEXT NOT NULL,
+    parent_channel_id TEXT NOT NULL,
+    thread_id TEXT UNIQUE,
+    initial_message_id TEXT,
+    requester_id TEXT NOT NULL,
+    title TEXT NOT NULL DEFAULT 'Technology Support Request',
+    description TEXT NOT NULL,
+    category TEXT NOT NULL DEFAULT 'Other',
+    status TEXT NOT NULL DEFAULT 'CREATING',
+    assigned_to_id TEXT,
+    resolved_by_id TEXT,
+    resolution TEXT,
+    first_response_at TEXT,
+    first_responder_id TEXT,
+    created_at TEXT NOT NULL,
+    closed_at TEXT,
+    reopened_at TEXT,
+    reopen_count INTEGER NOT NULL DEFAULT 0,
+    failed_reason TEXT,
+    updated_at TEXT NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS technology_tickets_requester_status_idx
+    ON technology_tickets(requester_id, status, created_at DESC);
+  CREATE INDEX IF NOT EXISTS technology_tickets_thread_idx
+    ON technology_tickets(thread_id);
+  CREATE INDEX IF NOT EXISTS technology_tickets_created_idx
+    ON technology_tickets(created_at);
+
+  CREATE TABLE IF NOT EXISTS technology_ticket_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ticket_id TEXT NOT NULL,
+    event_type TEXT NOT NULL,
+    actor_id TEXT,
+    credited_staff_id TEXT,
+    metadata TEXT NOT NULL DEFAULT '{}',
+    created_at TEXT NOT NULL,
+    FOREIGN KEY(ticket_id) REFERENCES technology_tickets(ticket_id)
+  );
+
+  CREATE INDEX IF NOT EXISTS technology_ticket_events_ticket_idx
+    ON technology_ticket_events(ticket_id, created_at);
+  CREATE INDEX IF NOT EXISTS technology_ticket_events_type_time_idx
+    ON technology_ticket_events(event_type, created_at);
+
+  CREATE TABLE IF NOT EXISTS technology_ticket_config (
+    guild_id TEXT PRIMARY KEY,
+    channel_id TEXT NOT NULL,
+    panel_message_id TEXT,
+    updated_at TEXT NOT NULL
+  );
+`);
+
+db.exec(`
   CREATE TABLE IF NOT EXISTS departments (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,

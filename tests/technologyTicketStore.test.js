@@ -1,0 +1,64 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+
+test('persists an atomic ticket lifecycle and annual counters', () => {
+  const originalCwd = process.cwd();
+  const temporaryRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'technology-ticket-store-'));
+  fs.mkdirSync(path.join(temporaryRoot, 'src'));
+  process.chdir(temporaryRoot);
+
+  const connectionPath = path.join(originalCwd, 'src', 'sqliteConnection.js');
+  const storePath = path.join(originalCwd, 'src', 'utils', 'technologyTicketStore.js');
+  delete require.cache[require.resolve(connectionPath)];
+  delete require.cache[require.resolve(storePath)];
+  const store = require(storePath);
+  const db = require(connectionPath);
+
+  try {
+    const base = {
+      guildId: 'guild',
+      parentChannelId: 'parent',
+      requesterId: 'requester',
+      description: 'Printer is offline',
+      createdAt: '2026-08-28T00:00:00.000Z',
+    };
+    const first = store.createTechnologyTicket({ ...base, year: 2026 });
+    const second = store.createTechnologyTicket({ ...base, year: 2026 });
+    const nextYear = store.createTechnologyTicket({ ...base, year: 2027 });
+    assert.equal(first.ticket_id, 'TDD20260001');
+    assert.equal(second.ticket_id, 'TDD20260002');
+    assert.equal(nextYear.ticket_id, 'TDD20270001');
+
+    let ticket = store.finalizeTechnologyTicket({
+      ticketId: first.ticket_id,
+      title: 'Printer Offline',
+      category: 'Hardware',
+      threadId: 'thread',
+      initialMessageId: 'message',
+      updatedAt: '2026-08-28T00:01:00.000Z',
+    });
+    assert.equal(ticket.status, 'OPEN');
+    assert.equal(store.claimTechnologyTicket({ ticketId: ticket.ticket_id, staffId: 'staff', updatedAt: '2026-08-28T00:02:00.000Z' }).outcome, 'claimed');
+    assert.equal(store.releaseTechnologyTicket({ ticketId: ticket.ticket_id, staffId: 'other-staff', updatedAt: '2026-08-28T00:02:10.000Z' }).outcome, 'not_assignee');
+    assert.equal(store.releaseTechnologyTicket({ ticketId: ticket.ticket_id, staffId: 'staff', updatedAt: '2026-08-28T00:02:20.000Z' }).outcome, 'released');
+    assert.equal(store.claimTechnologyTicket({ ticketId: ticket.ticket_id, staffId: 'staff', updatedAt: '2026-08-28T00:02:30.000Z' }).outcome, 'claimed');
+    ticket = store.changeTechnologyTicketCategory({ ticketId: ticket.ticket_id, category: 'Network & Internet', staffId: 'staff', updatedAt: '2026-08-28T00:02:40.000Z' });
+    assert.equal(ticket.category, 'Network & Internet');
+    ticket = store.recordTechnologyTicketFirstResponse({ ticketId: ticket.ticket_id, staffId: 'staff', respondedAt: '2026-08-28T00:03:00.000Z' });
+    assert.equal(ticket.first_responder_id, 'staff');
+    ticket = store.closeTechnologyTicketRecord({ ticketId: ticket.ticket_id, actorId: 'closer', resolution: 'Restarted it.', closedAt: '2026-08-28T01:00:00.000Z' });
+    assert.equal(ticket.resolved_by_id, 'staff');
+    assert.equal(ticket.status, 'CLOSED');
+    ticket = store.reopenTechnologyTicketRecord({ ticketId: ticket.ticket_id, actorId: 'requester', reopenedAt: '2026-08-28T02:00:00.000Z' });
+    assert.equal(ticket.status, 'REOPENED');
+    assert.equal(ticket.reopen_count, 1);
+    assert.ok(store.getTechnologyTicketEvents().some((event) => event.event_type === 'REOPENED'));
+  } finally {
+    db.close();
+    process.chdir(originalCwd);
+    fs.rmSync(temporaryRoot, { recursive: true, force: true });
+  }
+});

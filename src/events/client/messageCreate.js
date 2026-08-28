@@ -1,5 +1,6 @@
 const { handleDepartmentVoiceUpdateMessage } = require('../../utils/departmentVoiceUtils');
 const { scheduleDepartmentVoiceSessionJobs } = require('../../queue/departmentVoiceQueue');
+const { recordFirstTechnologyStaffResponse } = require('../../utils/technologyTicketService');
 
 module.exports = {
   name: "messageCreate",
@@ -7,6 +8,9 @@ module.exports = {
     if (message.author.bot) {
       return;
     }
+    await recordFirstTechnologyStaffResponse(message, client).catch((error) => {
+      console.error('Technology ticket first-response tracking failed:', error);
+    });
     if (message.member.roles.cache.has("1117791688832860182")) {
       return;
     }

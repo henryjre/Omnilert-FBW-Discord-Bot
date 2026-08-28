@@ -5,6 +5,7 @@ const { initializeOnboardingRoleRemovalWorker } = require('../../queue/onboardin
 const { initializePortalNotificationCleanupWorker } = require('../../queue/portalNotificationCleanupQueue');
 const { initializeDepartmentVoiceWorker } = require('../../queue/departmentVoiceQueue');
 const { initializeMeetingVoiceWorker } = require('../../queue/meetingVoiceQueue');
+const { ensureTechnologyTicketPanel } = require('../../utils/technologyTicketService');
 
 module.exports = {
   name: 'clientReady',
@@ -14,6 +15,13 @@ module.exports = {
       .get(process.env.node_env === 'prod' ? process.env.prodGuildId : process.env.testGuildId)
       .members.fetch();
     console.log(chalk.green(`🟢 ${client.user.tag} is online!`));
+
+    try {
+      await ensureTechnologyTicketPanel(client);
+      console.log(chalk.blue('🎫 Technology help-ticket panel synchronized'));
+    } catch (error) {
+      console.error('Technology help-ticket panel setup failed:', error);
+    }
 
     // Initialize early attendance queue worker
     initializeWorker(client);

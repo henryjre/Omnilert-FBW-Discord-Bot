@@ -78,6 +78,7 @@ module.exports = {
         "departmentDelete:": "departmentDelete",
         "departmentDeleteConfirm:": "departmentDeleteConfirm",
         "departmentDeleteCancel:": "departmentDeleteCancel",
+        "techTicket:": "technologyTicketButton",
       };
 
       const dynamicButtonName = Object.entries(dynamicButtonPrefixes).find(

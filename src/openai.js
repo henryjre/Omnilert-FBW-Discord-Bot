@@ -1,9 +1,16 @@
 const OpenAI = require('openai');
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-  organization: process.env.OPENAI_ORGANIZATION_ID,
-  project: process.env.OPENAI_PROJECT_ID
-});
+let openai;
+
+function getOpenAIClient() {
+  if (!openai) {
+    openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+      organization: process.env.OPENAI_ORGANIZATION_ID,
+      project: process.env.OPENAI_PROJECT_ID
+    });
+  }
+  return openai;
+}
 
 async function analyzeAudit(messages) {
   const transcript = messages.map((m) => `${m.author}: ${m.content}`).join('\n');
@@ -15,7 +22,7 @@ Audit logs:
 ${transcript}
 `;
 
-  const completion = await openai.chat.completions.create({
+  const completion = await getOpenAIClient().chat.completions.create({
     model: 'gpt-4o-mini',
     temperature: 0.3,
     max_tokens: 250, // Adjust for your preferred output length
@@ -27,4 +34,4 @@ ${transcript}
   return text;
 }
 
-module.exports = { analyzeAudit };
+module.exports = { getOpenAIClient, analyzeAudit };
