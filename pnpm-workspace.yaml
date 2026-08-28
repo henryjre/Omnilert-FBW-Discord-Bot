@@ -5,3 +5,6 @@ allowBuilds:
   better-sqlite3: true
   msgpackr-extract: true
   sharp: true
+
+# Never let deployment silently skip a newly introduced native build script.
+strictDepBuilds: true
