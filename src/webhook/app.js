@@ -16,7 +16,7 @@ const SQLITE_BINDING_CHECK =
 const DEPLOY_COMMAND = [
   'cd /root/omnilert-discord-bot',
   'git pull --ff-only origin main',
-  'pnpm install --frozen-lockfile',
+  'pnpm install --frozen-lockfile --config.confirmModulesPurge=false',
   `(${SQLITE_BINDING_CHECK} || pnpm rebuild better-sqlite3)`,
   SQLITE_BINDING_CHECK,
   'pm2 restart discord-bot --update-env',
