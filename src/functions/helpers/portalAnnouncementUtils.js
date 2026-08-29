@@ -3,15 +3,19 @@ const {
   ButtonBuilder,
   ButtonStyle,
   ContainerBuilder,
+  EmbedBuilder,
   MediaGalleryBuilder,
   MessageFlags,
   RoleSelectMenuBuilder,
   SeparatorSpacingSize,
 } = require('discord.js');
+const moment = require('moment-timezone');
 
-const PORTAL_ANNOUNCER_ROLE_ID = '1314815091908022373';
+// Gates the Portal Update toggle only; invoking /announce is gated separately.
+const TECHNOLOGY_ROLE_ID = '1314815091908022373';
+const ANNOUNCEMENT_CHANNEL_ID = '1314416941481328650';
 const PORTAL_ANNOUNCEMENT_CHANNEL_ID = '1526553793238532198';
-const PORTAL_QUESTION_THREAD_TITLE = '❓ QUESTIONS HERE';
+const QUESTION_THREAD_TITLE = '❓ | QUESTIONS HERE';
 const PORTAL_MESSAGE_LIMIT = 2000;
 const PORTAL_ATTACHMENT_THREAD_PREFIX = 'Portal Announcement Upload -';
 
@@ -86,11 +90,34 @@ function buildPortalEveryoneToggle(selectedRecipients = []) {
     .setStyle(active ? ButtonStyle.Success : ButtonStyle.Secondary);
 }
 
+// Mirrors buildPortalEveryoneToggle. Only the technology department may press it,
+// which is enforced in the button handler, not here.
+function buildPortalUpdateToggle(isPortalUpdate = false) {
+  return new ButtonBuilder()
+    .setCustomId('portalAnnouncementPortalUpdate')
+    .setLabel(isPortalUpdate ? 'Portal Update: ON' : 'Portal Update: OFF')
+    .setStyle(isPortalUpdate ? ButtonStyle.Success : ButtonStyle.Secondary);
+}
+
+function buildAnnouncementMetadataEmbed({ selectedRecipients = [], ownerId, timestamp }) {
+  const when =
+    timestamp || moment().tz('Asia/Manila').format('MMMM D, YYYY [at] h:mm A');
+
+  return new EmbedBuilder()
+    .setColor(0x5865f2)
+    .addFields(
+      { name: 'Targets', value: formatRecipients(selectedRecipients) },
+      { name: 'Announced By', value: ownerId ? `<@${ownerId}>` : 'Unknown' },
+      { name: 'Date & Time', value: when }
+    );
+}
+
 function buildPortalPreviewPayload({
   announcement,
   ownerId,
   selectedRecipients = [],
   attachments = [],
+  isPortalUpdate = false,
 }) {
   const safeAnnouncement = String(announcement || '').slice(0, PORTAL_MESSAGE_LIMIT);
   const selected = normalizeSelectedRecipients(selectedRecipients);
@@ -109,6 +136,9 @@ function buildPortalPreviewPayload({
           '',
           '### Recipients',
           formatRecipients(selected),
+          '',
+          '### Portal Update',
+          isPortalUpdate ? 'Yes' : 'No',
           '',
           '### Message',
           safeAnnouncement,
@@ -142,12 +172,17 @@ function buildPortalPreviewPayload({
     container.addMediaGalleryComponents(gallery);
   }
 
-  const buttons = [
+  // Six buttons can be present at once, which exceeds the five-per-row cap.
+  const toggleRow = [
     buildPortalEveryoneToggle(selected),
+    buildPortalUpdateToggle(isPortalUpdate),
     new ButtonBuilder()
       .setCustomId('portalAnnouncementEdit')
       .setLabel('Edit')
       .setStyle(ButtonStyle.Secondary),
+  ];
+
+  const actionButtons = [
     new ButtonBuilder()
       .setCustomId('portalAnnouncementAddAttachment')
       .setLabel('Add Attachment')
@@ -159,7 +194,7 @@ function buildPortalPreviewPayload({
   ];
 
   if (selected.length > 0) {
-    buttons.push(
+    actionButtons.push(
       new ButtonBuilder()
         .setCustomId('portalAnnouncementSubmit')
         .setLabel('Announce')
@@ -172,7 +207,8 @@ function buildPortalPreviewPayload({
     .addActionRowComponents((actionRow) =>
       actionRow.setComponents(buildPortalRecipientMenu(selected))
     )
-    .addActionRowComponents((actionRow) => actionRow.setComponents(...buttons));
+    .addActionRowComponents((actionRow) => actionRow.setComponents(...toggleRow))
+    .addActionRowComponents((actionRow) => actionRow.setComponents(...actionButtons));
 
   return {
     components: [container],
@@ -200,12 +236,13 @@ function parsePortalPreviewMessage(message) {
   );
 
   if (!content) {
-    return { announcement: '', ownerId: null, selectedRecipients: [] };
+    return { announcement: '', ownerId: null, isPortalUpdate: false, selectedRecipients: [] };
   }
 
   const ownerId = content.match(/Prepared by:\s*<@!?(\d+)>/)?.[1] || null;
+  // Anchored on the Portal Update heading, which now sits between the two.
   const recipientsBlock =
-    content.match(/### Recipients\n([\s\S]*?)\n\n### Message/)?.[1]?.trim() || '';
+    content.match(/### Recipients\n([\s\S]*?)\n\n### Portal Update/)?.[1]?.trim() || '';
   const selectedRecipients = [];
 
   if (recipientsBlock.includes('@everyone')) selectedRecipients.push('@everyone');
@@ -213,11 +250,13 @@ function parsePortalPreviewMessage(message) {
     selectedRecipients.push(match[1]);
   }
 
+  const isPortalUpdate = content.match(/### Portal Update\n(Yes|No)/)?.[1] === 'Yes';
   const announcement = content.match(/### Message\n([\s\S]*)$/)?.[1] || '';
 
   return {
     announcement,
     ownerId,
+    isPortalUpdate,
     selectedRecipients: normalizeSelectedRecipients(selectedRecipients),
   };
 }
@@ -279,9 +318,19 @@ async function deletePortalAttachmentThreadForMessage(message, client) {
   if (thread) await thread.delete();
 }
 
-function buildPortalFinalPayload({ announcement, selectedRecipients, attachments = [] }) {
+// suppressMentions drives the portal audit copy: the mention line is dropped from
+// the content outright, not merely denied by allowedMentions, so the copy carries
+// no pings at all.
+function buildPortalFinalPayload({
+  announcement,
+  selectedRecipients,
+  attachments = [],
+  ownerId,
+  timestamp,
+  suppressMentions = false,
+}) {
   const selected = normalizeSelectedRecipients(selectedRecipients);
-  const mentionLine = selected.map(formatRecipient).join(' ');
+  const mentionLine = suppressMentions ? '' : selected.map(formatRecipient).join(' ');
   const separator = mentionLine ? '\n\n' : '';
   const maxAnnouncementLength = Math.max(
     0,
@@ -293,21 +342,27 @@ function buildPortalFinalPayload({ announcement, selectedRecipients, attachments
 
   return {
     content,
+    embeds: [buildAnnouncementMetadataEmbed({ selectedRecipients: selected, ownerId, timestamp })],
     files: attachments.map((attachment) => attachment.url),
-    allowedMentions: {
-      parse: selected.includes('@everyone') ? ['everyone'] : [],
-      roles: roleIds,
-    },
+    allowedMentions: suppressMentions
+      ? { parse: [], roles: [], users: [] }
+      : {
+          parse: selected.includes('@everyone') ? ['everyone'] : [],
+          roles: roleIds,
+        },
   };
 }
 
 const portalAnnouncementUtils = {
-  PORTAL_ANNOUNCER_ROLE_ID,
+  ANNOUNCEMENT_CHANNEL_ID,
   PORTAL_ANNOUNCEMENT_CHANNEL_ID,
   PORTAL_MESSAGE_LIMIT,
-  PORTAL_QUESTION_THREAD_TITLE,
   PORTAL_RECIPIENT_LIMIT,
+  QUESTION_THREAD_TITLE,
+  TECHNOLOGY_ROLE_ID,
+  buildAnnouncementMetadataEmbed,
   buildPortalFinalPayload,
+  buildPortalUpdateToggle,
   isAnnounceableRole,
   partitionRecipientsByRole,
   buildPortalPreviewPayload,

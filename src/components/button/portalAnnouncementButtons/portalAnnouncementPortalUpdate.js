@@ -4,11 +4,12 @@ const {
   collectPortalThreadAttachments,
   findPortalAttachmentThread,
   parsePortalPreviewMessage,
+  TECHNOLOGY_ROLE_ID,
 } = require('../../../functions/helpers/portalAnnouncementUtils');
 
 module.exports = {
   data: {
-    name: 'portalAnnouncementEveryone',
+    name: 'portalAnnouncementPortalUpdate',
   },
   async execute(interaction, client) {
     const parsed = parsePortalPreviewMessage(interaction.message);
@@ -24,10 +25,18 @@ module.exports = {
       });
     }
 
-    const roleIds = parsed.selectedRecipients.filter((value) => value !== '@everyone');
-    const selectedRecipients = parsed.selectedRecipients.includes('@everyone')
-      ? roleIds
-      : ['@everyone', ...roleIds];
+    if (!interaction.member.roles.cache.has(TECHNOLOGY_ROLE_ID)) {
+      const replyEmbed = new EmbedBuilder()
+        .setDescription(
+          `🔴 ERROR: Only <@&${TECHNOLOGY_ROLE_ID}> can tag an announcement as a portal update.`
+        )
+        .setColor('Red');
+
+      return interaction.reply({
+        embeds: [replyEmbed],
+        flags: MessageFlags.Ephemeral,
+      });
+    }
 
     const thread = findPortalAttachmentThread(interaction.message.channel, interaction.message.id);
     const attachments = await collectPortalThreadAttachments(thread);
@@ -37,7 +46,7 @@ module.exports = {
     await interaction.message.edit(
       buildPortalPreviewPayload({
         ...parsed,
-        selectedRecipients,
+        isPortalUpdate: !parsed.isPortalUpdate,
         attachments,
       })
     );

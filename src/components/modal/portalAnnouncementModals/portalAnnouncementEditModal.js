@@ -22,9 +22,8 @@ module.exports = {
 
     await interaction.message.edit(
       buildPortalPreviewPayload({
+        ...parsed,
         announcement,
-        ownerId: parsed.ownerId,
-        selectedRecipients: parsed.selectedRecipients,
         attachments,
       })
     );

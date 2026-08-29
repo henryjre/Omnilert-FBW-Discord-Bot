@@ -14,11 +14,5 @@ module.exports = {
         .get("portalAnnouncementAttachmentDelete")
         .execute(message, thread, client);
     }
-
-    if (thread.name.includes("Announcement Attachment Upload -")) {
-      return await client.events
-        .get("announcementAttachmentDelete")
-        .execute(message, thread, client);
-    }
   },
 };

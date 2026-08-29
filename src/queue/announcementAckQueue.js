@@ -83,9 +83,9 @@ function initializeAnnouncementAckWorker(client) {
 
         const announcementChannel = await client.channels.fetch(channelId);
         const announcementMessage = await announcementChannel.messages.fetch(announcementId);
-        const announcementDescription = announcementMessage.embeds?.[0]?.description;
+        // The announcement body is plain content now; the embed holds only metadata.
         const deductionReason = buildAcknowledgmentDeductionReason({
-          description: announcementDescription,
+          description: announcementMessage.content,
           announcementId,
           messageUrl: announcementMessage.url,
         });

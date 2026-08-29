@@ -42,8 +42,7 @@ module.exports = {
 
     await interaction.message.edit(
       buildPortalPreviewPayload({
-        announcement: parsed.announcement,
-        ownerId: parsed.ownerId,
+        ...parsed,
         selectedRecipients,
         attachments,
       })
