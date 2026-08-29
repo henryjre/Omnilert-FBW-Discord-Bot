@@ -8,6 +8,7 @@ const {
 } = require('discord.js');
 const {
   parsePortalPreviewMessage,
+  ANNOUNCEMENT_TITLE_LIMIT,
   PORTAL_MESSAGE_LIMIT,
 } = require('../../../functions/helpers/portalAnnouncementUtils');
 
@@ -31,7 +32,19 @@ module.exports = {
 
     const modal = new ModalBuilder()
       .setCustomId('portalAnnouncementEditModal')
-      .setTitle('Edit portal announcement');
+      .setTitle('Edit announcement');
+
+    const titleInput = new TextInputBuilder()
+      .setCustomId('titleInput')
+      .setStyle(TextInputStyle.Short)
+      .setValue(parsed.title)
+      .setMaxLength(ANNOUNCEMENT_TITLE_LIMIT)
+      .setRequired(true);
+
+    const titleLabel = new LabelBuilder()
+      .setLabel('Title')
+      .setDescription('The title of your announcement')
+      .setTextInputComponent(titleInput);
 
     const announcementInput = new TextInputBuilder()
       .setCustomId('announcementInput')
@@ -42,10 +55,10 @@ module.exports = {
 
     const announcementLabel = new LabelBuilder()
       .setLabel('Announcement')
-      .setDescription('The announcement to send in the portal announcement channel')
+      .setDescription('The details of your announcement')
       .setTextInputComponent(announcementInput);
 
-    modal.addLabelComponents(announcementLabel);
+    modal.addLabelComponents(titleLabel, announcementLabel);
 
     return interaction.showModal(modal);
   },

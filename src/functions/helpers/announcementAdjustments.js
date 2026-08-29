@@ -3,10 +3,14 @@ const axios = require('axios');
 const ANNOUNCEMENT_ADJUSTMENTS_URL =
   'https://omnilert.app/api/v1/integrations/discord/adjustments';
 
-// Announcement content leads with a mention line, then the body. The title is the
-// first line that carries something other than mentions.
+// Announcement content leads with a mention line, then a `## Title` heading, then
+// the body. Falls back to the first line carrying more than mentions for older
+// announcements posted before the title became required.
 function extractAnnouncementTitle(description, fallbackTitle) {
   if (typeof description !== 'string') return fallbackTitle;
+
+  const headingMatch = description.match(/^##\s+(.+?)\s*$/m);
+  if (headingMatch) return headingMatch[1].trim();
 
   for (const line of description.split('\n')) {
     const withoutMentions = line

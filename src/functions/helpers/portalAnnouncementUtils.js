@@ -17,6 +17,7 @@ const ANNOUNCEMENT_CHANNEL_ID = '1314416941481328650';
 const PORTAL_ANNOUNCEMENT_CHANNEL_ID = '1526553793238532198';
 const QUESTION_THREAD_TITLE = '❓ | QUESTIONS HERE';
 const PORTAL_MESSAGE_LIMIT = 2000;
+const ANNOUNCEMENT_TITLE_LIMIT = 200;
 const PORTAL_ATTACHMENT_THREAD_PREFIX = 'Portal Announcement Upload -';
 
 const PORTAL_RECIPIENT_LIMIT = 25;
@@ -114,11 +115,13 @@ function buildAnnouncementMetadataEmbed({ selectedRecipients = [], ownerId, time
 
 function buildPortalPreviewPayload({
   announcement,
+  title,
   ownerId,
   selectedRecipients = [],
   attachments = [],
   isPortalUpdate = false,
 }) {
+  const safeTitle = String(title || '').slice(0, ANNOUNCEMENT_TITLE_LIMIT);
   const safeAnnouncement = String(announcement || '').slice(0, PORTAL_MESSAGE_LIMIT);
   const selected = normalizeSelectedRecipients(selectedRecipients);
   const safeAttachments = Array.isArray(attachments) ? attachments : [];
@@ -133,6 +136,9 @@ function buildPortalPreviewPayload({
         [
           '## Portal Announcement Preview',
           `Prepared by: <@${ownerId}>`,
+          '',
+          '### Title',
+          safeTitle,
           '',
           '### Recipients',
           formatRecipients(selected),
@@ -236,10 +242,17 @@ function parsePortalPreviewMessage(message) {
   );
 
   if (!content) {
-    return { announcement: '', ownerId: null, isPortalUpdate: false, selectedRecipients: [] };
+    return {
+      announcement: '',
+      title: '',
+      ownerId: null,
+      isPortalUpdate: false,
+      selectedRecipients: [],
+    };
   }
 
   const ownerId = content.match(/Prepared by:\s*<@!?(\d+)>/)?.[1] || null;
+  const title = content.match(/### Title\n([\s\S]*?)\n\n### Recipients/)?.[1]?.trim() || '';
   // Anchored on the Portal Update heading, which now sits between the two.
   const recipientsBlock =
     content.match(/### Recipients\n([\s\S]*?)\n\n### Portal Update/)?.[1]?.trim() || '';
@@ -255,6 +268,7 @@ function parsePortalPreviewMessage(message) {
 
   return {
     announcement,
+    title,
     ownerId,
     isPortalUpdate,
     selectedRecipients: normalizeSelectedRecipients(selectedRecipients),
@@ -320,29 +334,33 @@ async function deletePortalAttachmentThreadForMessage(message, client) {
 
 // suppressMentions drives the portal audit copy: the mention line is dropped from
 // the content outright, not merely denied by allowedMentions, so the copy carries
-// no pings at all.
+// no pings at all. That copy also keeps the metadata embed inline, since it has no
+// thread to hold it - the announcement copy posts the embed into its thread instead.
 function buildPortalFinalPayload({
   announcement,
+  title,
   selectedRecipients,
   attachments = [],
   ownerId,
   timestamp,
   suppressMentions = false,
+  includeMetadataEmbed = false,
 }) {
   const selected = normalizeSelectedRecipients(selectedRecipients);
   const mentionLine = suppressMentions ? '' : selected.map(formatRecipient).join(' ');
-  const separator = mentionLine ? '\n\n' : '';
+  const titleLine = title ? `## ${String(title).slice(0, ANNOUNCEMENT_TITLE_LIMIT)}` : '';
+  const header = [mentionLine, titleLine].filter(Boolean).join('\n\n');
+  const separator = header ? '\n\n' : '';
   const maxAnnouncementLength = Math.max(
     0,
-    PORTAL_MESSAGE_LIMIT - mentionLine.length - separator.length
+    PORTAL_MESSAGE_LIMIT - header.length - separator.length
   );
   const safeAnnouncement = String(announcement || '').slice(0, maxAnnouncementLength);
-  const content = [mentionLine, safeAnnouncement].filter(Boolean).join(separator);
+  const content = [header, safeAnnouncement].filter(Boolean).join(separator);
   const roleIds = selected.filter((value) => value !== '@everyone');
 
-  return {
+  const payload = {
     content,
-    embeds: [buildAnnouncementMetadataEmbed({ selectedRecipients: selected, ownerId, timestamp })],
     files: attachments.map((attachment) => attachment.url),
     allowedMentions: suppressMentions
       ? { parse: [], roles: [], users: [] }
@@ -351,10 +369,19 @@ function buildPortalFinalPayload({
           roles: roleIds,
         },
   };
+
+  if (includeMetadataEmbed) {
+    payload.embeds = [
+      buildAnnouncementMetadataEmbed({ selectedRecipients: selected, ownerId, timestamp }),
+    ];
+  }
+
+  return payload;
 }
 
 const portalAnnouncementUtils = {
   ANNOUNCEMENT_CHANNEL_ID,
+  ANNOUNCEMENT_TITLE_LIMIT,
   PORTAL_ANNOUNCEMENT_CHANNEL_ID,
   PORTAL_MESSAGE_LIMIT,
   PORTAL_RECIPIENT_LIMIT,

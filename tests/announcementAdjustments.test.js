@@ -7,10 +7,10 @@ const {
   extractAnnouncementTitle,
 } = require('../src/functions/helpers/announcementAdjustments');
 
-test('extractAnnouncementTitle skips the role mention line', () => {
+test('extractAnnouncementTitle reads the title heading after a role mention line', () => {
   const content = `<@&1314413671245676685> <@&1336991998791385129>
 
-Avoid Misuse of Mineral Water
+## Avoid Misuse of Mineral Water
 
 Good day team!`;
 
@@ -20,10 +20,10 @@ Good day team!`;
   );
 });
 
-test('extractAnnouncementTitle skips an @everyone mention line', () => {
+test('extractAnnouncementTitle reads the title heading after an @everyone line', () => {
   const content = `@everyone
 
-Proper Logging of Work Schedules
+## Proper Logging of Work Schedules
 
 Good day team!`;
 
@@ -33,8 +33,10 @@ Good day team!`;
   );
 });
 
-test('extractAnnouncementTitle uses the first line when there is no mention line', () => {
-  const content = `Do not use the POS System as the cashier
+test('extractAnnouncementTitle falls back to the first line for untitled announcements', () => {
+  const content = `@everyone
+
+Do not use the POS System as the cashier
 
 Reminder!`;
 
@@ -59,7 +61,7 @@ test('buildAcknowledgmentDeductionReason includes title and Discord message link
   const reason = buildAcknowledgmentDeductionReason({
     description: `@everyone
 
-Avoid Misuse of Mineral Water
+## Avoid Misuse of Mineral Water
 
 Good day team!`,
     announcementId: '123',

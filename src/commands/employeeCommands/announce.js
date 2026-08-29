@@ -7,7 +7,10 @@ const {
   LabelBuilder,
   MessageFlags,
 } = require('discord.js');
-const { PORTAL_MESSAGE_LIMIT } = require('../../functions/helpers/portalAnnouncementUtils');
+const {
+  ANNOUNCEMENT_TITLE_LIMIT,
+  PORTAL_MESSAGE_LIMIT,
+} = require('../../functions/helpers/portalAnnouncementUtils');
 
 // Invoking /announce is gated on Management; tagging a draft as a portal update
 // is gated separately on the technology department in the toggle handler.
@@ -54,6 +57,17 @@ function buildAnnouncementModal(value) {
 
   modal.setTitle('Make an announcement');
 
+  const titleInput = new TextInputBuilder()
+    .setCustomId('titleInput')
+    .setStyle(TextInputStyle.Short)
+    .setMaxLength(ANNOUNCEMENT_TITLE_LIMIT)
+    .setRequired(true);
+
+  const titleLabel = new LabelBuilder()
+    .setLabel('Title')
+    .setDescription('The title of your announcement')
+    .setTextInputComponent(titleInput);
+
   const announcementInput = new TextInputBuilder()
     .setCustomId('announcementInput')
     .setStyle(TextInputStyle.Paragraph)
@@ -70,7 +84,7 @@ function buildAnnouncementModal(value) {
     .setDescription('The details of your announcement')
     .setTextInputComponent(announcementInput);
 
-  modal.addLabelComponents(announcementLabel);
+  modal.addLabelComponents(titleLabel, announcementLabel);
 
   return modal;
 }

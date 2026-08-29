@@ -69,22 +69,44 @@ test('portal preview parser returns edited announcement text', () => {
   assert.equal(parsePortalPreviewMessage(toMessage(payload)).announcement, 'Latest announcement body');
 });
 
-test('announcement payload is plain content with a metadata embed and files', () => {
+test('announcement payload carries mentions, title heading and files, without an embed', () => {
   const payload = buildPortalFinalPayload({
     announcement: 'Plain portal announcement',
+    title: 'Mineral Water Notice',
     selectedRecipients: ['@everyone', '1314413671245676685'],
     attachments: [{ url: 'https://cdn.discordapp.com/file.pdf' }],
-    ownerId: '123',
-    timestamp: 'January 1, 2026 at 9:00 AM',
   });
 
-  assert.equal(payload.content, '@everyone <@&1314413671245676685>\n\nPlain portal announcement');
+  assert.equal(
+    payload.content,
+    '@everyone <@&1314413671245676685>\n\n## Mineral Water Notice\n\nPlain portal announcement'
+  );
   assert.deepEqual(payload.files, ['https://cdn.discordapp.com/file.pdf']);
   assert.deepEqual(payload.allowedMentions, {
     parse: ['everyone'],
     roles: ['1314413671245676685'],
   });
+  // Metadata is posted into the thread instead, to keep the channel uncluttered.
+  assert.equal('embeds' in payload, false);
+});
 
+test('portal audit copy drops the mention line and keeps the metadata embed', () => {
+  const payload = buildPortalFinalPayload({
+    announcement: 'Plain portal announcement',
+    title: 'Mineral Water Notice',
+    selectedRecipients: ['@everyone', '1314413671245676685'],
+    ownerId: '123',
+    timestamp: 'January 1, 2026 at 9:00 AM',
+    suppressMentions: true,
+    includeMetadataEmbed: true,
+  });
+
+  assert.equal(payload.content, '## Mineral Water Notice\n\nPlain portal announcement');
+  assert.equal(payload.content.includes('@everyone'), false);
+  assert.equal(payload.content.includes('<@&1314413671245676685>'), false);
+  assert.deepEqual(payload.allowedMentions, { parse: [], roles: [], users: [] });
+
+  // The audit copy has no thread, so it keeps its metadata inline.
   const embed = payload.embeds[0].toJSON();
   assert.deepEqual(
     embed.fields.map((field) => field.name),
@@ -95,24 +117,33 @@ test('announcement payload is plain content with a metadata embed and files', ()
   assert.equal(embed.fields[2].value, 'January 1, 2026 at 9:00 AM');
 });
 
-test('portal audit copy drops the mention line and suppresses all mentions', () => {
-  const payload = buildPortalFinalPayload({
-    announcement: 'Plain portal announcement',
-    selectedRecipients: ['@everyone', '1314413671245676685'],
+test('title round-trips through the preview message', () => {
+  const payload = buildPortalPreviewPayload({
+    announcement: 'Body text',
+    title: 'Mineral Water Notice',
     ownerId: '123',
-    timestamp: 'January 1, 2026 at 9:00 AM',
-    suppressMentions: true,
+    selectedRecipients: ['@everyone'],
+    isPortalUpdate: true,
+  });
+  const parsed = parsePortalPreviewMessage(toMessage(payload));
+
+  assert.equal(parsed.title, 'Mineral Water Notice');
+  // The title section must not disturb the neighbouring anchors.
+  assert.deepEqual(parsed.selectedRecipients, ['@everyone']);
+  assert.equal(parsed.isPortalUpdate, true);
+  assert.equal(parsed.announcement, 'Body text');
+});
+
+test('announcement content stays within the Discord message limit', () => {
+  const payload = buildPortalFinalPayload({
+    announcement: 'x'.repeat(2500),
+    title: 'A rather long title',
+    selectedRecipients: ['@everyone', '1314413671245676685'],
   });
 
-  assert.equal(payload.content, 'Plain portal announcement');
-  assert.equal(payload.content.includes('@everyone'), false);
-  assert.equal(payload.content.includes('<@&1314413671245676685>'), false);
-  assert.deepEqual(payload.allowedMentions, { parse: [], roles: [], users: [] });
-
-  // The audit copy still carries the same metadata as the announcement.
-  const embed = payload.embeds[0].toJSON();
-  assert.equal(embed.fields[0].value, '@everyone <@&1314413671245676685>');
-  assert.equal(embed.fields[2].value, 'January 1, 2026 at 9:00 AM');
+  assert.ok(payload.content.length <= 2000, `content was ${payload.content.length}`);
+  assert.equal(payload.content.startsWith('@everyone <@&1314413671245676685>'), true);
+  assert.equal(payload.content.includes('## A rather long title'), true);
 });
 
 test('portal update flag round-trips through the preview message', () => {

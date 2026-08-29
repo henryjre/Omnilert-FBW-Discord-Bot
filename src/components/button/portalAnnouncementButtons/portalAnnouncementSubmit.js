@@ -7,6 +7,7 @@ const {
 } = require('discord.js');
 const moment = require('moment-timezone');
 const {
+  buildAnnouncementMetadataEmbed,
   buildPortalFinalPayload,
   collectPortalThreadAttachments,
   deletePortalAttachmentThreadForMessage,
@@ -94,16 +95,26 @@ module.exports = {
     const announcementMessage = await announcementChannel.send(
       buildPortalFinalPayload({
         announcement: parsed.announcement,
+        title: parsed.title,
         selectedRecipients: parsed.selectedRecipients,
         attachments,
-        ownerId: parsed.ownerId,
-        timestamp,
       })
     );
 
     const ackThread = await announcementMessage.startThread({
       name: QUESTION_THREAD_TITLE,
       autoArchiveDuration: 1440,
+    });
+
+    // Metadata lives in the thread so it does not clutter the announcement channel.
+    await ackThread.send({
+      embeds: [
+        buildAnnouncementMetadataEmbed({
+          selectedRecipients: parsed.selectedRecipients,
+          ownerId: parsed.ownerId,
+          timestamp,
+        }),
+      ],
     });
 
     const expectedUsers = await resolveExpectedUsers(
@@ -157,11 +168,13 @@ module.exports = {
       await portalChannel.send(
         buildPortalFinalPayload({
           announcement: parsed.announcement,
+          title: parsed.title,
           selectedRecipients: parsed.selectedRecipients,
           attachments,
           ownerId: parsed.ownerId,
           timestamp,
           suppressMentions: true,
+          includeMetadataEmbed: true,
         })
       );
     }
