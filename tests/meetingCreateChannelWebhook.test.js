@@ -15,6 +15,7 @@ const {
   isValidMeetingChannelWebhookPayload,
   isValidMeetingUpdateParticipantsPayload,
   normalizeChannelName,
+  buildMeetingChannelName,
   getMeetingCompanyNames,
   buildMeetingCompanyLine,
   formatMeetingStartsAt,
@@ -396,6 +397,33 @@ test('normalizeChannelName trims, collapses whitespace, and caps at 100 characte
   assert.equal(normalizeChannelName('x'.repeat(120)).length, 100);
 });
 
+test('buildMeetingChannelName prefixes the Manila start time before the title', () => {
+  assert.equal(
+    buildMeetingChannelName({ title: 'Q3 Inventory Review', starts_at: '2026-07-15T02:00:00.000Z' }),
+    'Jul 15, 10:00 AM | Q3 Inventory Review',
+  );
+});
+
+test('buildMeetingChannelName falls back to just the title when starts_at is unusable', () => {
+  assert.equal(
+    buildMeetingChannelName({ title: 'Q3 Inventory Review', starts_at: 'not-a-date' }),
+    'Q3 Inventory Review',
+  );
+  assert.equal(
+    buildMeetingChannelName({ title: 'Q3 Inventory Review' }),
+    'Q3 Inventory Review',
+  );
+});
+
+test('buildMeetingChannelName caps at 100 characters, truncating the title not the date prefix', () => {
+  const name = buildMeetingChannelName({
+    title: 'x'.repeat(200),
+    starts_at: '2026-07-15T02:00:00.000Z',
+  });
+  assert.equal(name.length, 100);
+  assert.ok(name.startsWith('Jul 15, 10:00 AM | '));
+});
+
 test('handler returns 401 when authorization is missing or wrong', async () => {
   const { client } = createMockClient();
   const handler = createMeetingCreateChannelHandler({
@@ -457,7 +485,7 @@ test('handler creates a private voice channel and sends meeting details', async 
   assert.equal(createdChannels.length, 1);
 
   const createdChannel = createdChannels[0];
-  assert.equal(createdChannel.name, 'Q3 Inventory Shrinkage Review');
+  assert.equal(createdChannel.name, 'Jul 15, 10:00 AM | Q3 Inventory Shrinkage Review');
   assert.equal(createdChannel.type, ChannelType.GuildVoice);
   assert.equal(createdChannel.parent, MEETING_VOICE_CATEGORY_ID);
 

@@ -1,6 +1,5 @@
 const express = require('express');
 const AsyncLock = require('async-lock');
-const moment = require('moment-timezone');
 const {
   ChannelType,
   ContainerBuilder,
@@ -11,6 +10,14 @@ const {
 
 const { extractBearerToken } = require('../notifications/cronNotifications');
 const {
+  isNonEmptyString,
+  toDisplay,
+  normalizeChannelName,
+  buildMeetingChannelName,
+  formatMeetingStartsAt,
+  formatMeetingDuration,
+} = require('./meetingChannelName');
+const {
   deleteMeetingVoiceChannel,
   isValidMeetingDeleteChannelPayload,
 } = require('./deleteChannel');
@@ -18,34 +25,17 @@ const {
   isValidMeetingUpdateParticipantsPayload,
   updateMeetingVoiceChannelParticipants,
 } = require('./updateParticipants');
+const {
+  isValidMeetingReschedulePayload,
+  rescheduleMeetingVoiceChannel,
+} = require('./rescheduleChannel');
 
 const router = express.Router();
 const MEETING_VOICE_CATEGORY_ID = '1526460615932248174';
-const DISCORD_CHANNEL_NAME_LIMIT = 100;
 const MEETING_COMPANY_VALUE_LIMIT = 1024;
 const MEETING_AGENDA_LIMIT = 2000;
-const MEETING_TIMEZONE = 'Asia/Manila';
-const MEETING_DATE_FORMAT = 'MMMM DD [at] h:mm A';
 
 const lock = new AsyncLock();
-
-function isNonEmptyString(value) {
-  return typeof value === 'string' && value.trim().length > 0;
-}
-
-function toDisplay(value) {
-  if (value === null || value === undefined) return 'N/A';
-
-  const stringValue = String(value).trim();
-  return stringValue.length === 0 ? 'N/A' : stringValue;
-}
-
-function normalizeChannelName(title) {
-  const normalized = toDisplay(title).replace(/\s+/g, ' ').trim();
-  if (normalized.length <= DISCORD_CHANNEL_NAME_LIMIT) return normalized;
-
-  return normalized.slice(0, DISCORD_CHANNEL_NAME_LIMIT).trim();
-}
 
 function getParticipantDiscordIds(participants) {
   const seen = new Set();
@@ -110,29 +100,6 @@ function buildMeetingCompanyLine(meeting) {
   return { label, value };
 }
 
-// `starts_at` arrives as a UTC ISO string; staff read schedules in Manila time.
-function formatMeetingStartsAt(startsAt) {
-  if (!isNonEmptyString(startsAt)) return 'N/A';
-
-  const parsed = moment.utc(startsAt, moment.ISO_8601, true);
-  if (!parsed.isValid()) return toDisplay(startsAt);
-
-  return parsed.tz(MEETING_TIMEZONE).format(MEETING_DATE_FORMAT);
-}
-
-function formatMeetingDuration(durationMinutes) {
-  if (!Number.isFinite(durationMinutes)) return 'N/A';
-
-  const hours = Math.floor(durationMinutes / 60);
-  const minutes = durationMinutes % 60;
-  const parts = [];
-
-  if (hours > 0) parts.push(`${hours} hour${hours === 1 ? '' : 's'}`);
-  if (minutes > 0 || parts.length === 0) parts.push(`${minutes} minute${minutes === 1 ? '' : 's'}`);
-
-  return parts.join(' ');
-}
-
 const getMeetingBranchNames = getMeetingCompanyNames;
 const buildMeetingBranchLine = buildMeetingCompanyLine;
 
@@ -192,6 +159,10 @@ function isValidMeetingChannelWebhookPayload(payload) {
 
   if (payload?.event === 'meeting.update_participants') {
     return isValidMeetingUpdateParticipantsPayload(payload);
+  }
+
+  if (payload?.event === 'meeting.reschedule') {
+    return isValidMeetingReschedulePayload(payload);
   }
 
   return false;
@@ -395,7 +366,7 @@ async function createMeetingVoiceChannel({
 
   const participantIds = getParticipantDiscordIds(payload.participants);
   const channel = await guild.channels.create({
-    name: normalizeChannelName(payload.meeting.title),
+    name: buildMeetingChannelName(payload.meeting),
     type: ChannelType.GuildVoice,
     parent: categoryId,
     reason: `Meeting channel created from webhook for ${payload.meeting.id}`,
@@ -493,6 +464,20 @@ function createMeetingChannelWebhookHandler({
         });
       }
 
+      if (payload.event === 'meeting.reschedule') {
+        const result = await rescheduleMeetingVoiceChannel({
+          clientInstance: resolvedClient,
+          payload,
+        });
+
+        return res.status(200).json({
+          success: true,
+          voice_channel_id: payload.voice_channel_id,
+          rescheduled: result.rescheduled,
+          ...(result.reason ? { reason: result.reason } : {}),
+        });
+      }
+
       const result = await deleteMeetingVoiceChannel({
         clientInstance: resolvedClient,
         payload,
@@ -528,7 +513,10 @@ module.exports.isValidMeetingCreateChannelPayload = isValidMeetingCreateChannelP
 module.exports.isValidMeetingChannelWebhookPayload = isValidMeetingChannelWebhookPayload;
 module.exports.isValidMeetingUpdateParticipantsPayload = isValidMeetingUpdateParticipantsPayload;
 module.exports.updateMeetingVoiceChannelParticipants = updateMeetingVoiceChannelParticipants;
+module.exports.isValidMeetingReschedulePayload = isValidMeetingReschedulePayload;
+module.exports.rescheduleMeetingVoiceChannel = rescheduleMeetingVoiceChannel;
 module.exports.normalizeChannelName = normalizeChannelName;
+module.exports.buildMeetingChannelName = buildMeetingChannelName;
 module.exports.getParticipantDiscordIds = getParticipantDiscordIds;
 module.exports.getMeetingBranchNames = getMeetingBranchNames;
 module.exports.buildMeetingBranchLine = buildMeetingBranchLine;
