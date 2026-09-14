@@ -4,6 +4,7 @@ const {
 } = require('discord.js');
 const {
   BLOCKED_ONBOARDING_ROLE_IDS,
+  HR_ONBOARDING_ROLE_ID,
   addOnboardingRole,
   buildDiscordThreadUrl,
   buildOnboardingThreadName,
@@ -43,6 +44,9 @@ module.exports = {
 
     await privateThread.members.add(interaction.user.id);
     await addOnboardingRole(interaction.member);
+    await privateThread.send({
+      content: `${interaction.user.toString()} <@&${HR_ONBOARDING_ROLE_ID}>\nGlad to hear you're already familiar with Discord! Let's get your registration verified below.`,
+    });
     await sendVerificationPrompt(
       privateThread,
       buildDiscordThreadUrl(interaction.guild.id, privateThread.id)

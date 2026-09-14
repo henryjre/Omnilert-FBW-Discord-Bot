@@ -8,8 +8,7 @@ const {
 } = require('discord.js');
 const {
   BLOCKED_ONBOARDING_ROLE_IDS,
-  HR_ROLE_ID,
-  TECH_ROLE_ID,
+  HR_ONBOARDING_ROLE_ID,
   addOnboardingRole,
   buildOnboardingThreadName,
 } = require('../../../functions/helpers/onboardingUtils');
@@ -50,7 +49,7 @@ module.exports = {
     const onboardingContainer = new ContainerBuilder()
       .addTextDisplayComponents((textDisplay) =>
         textDisplay.setContent(
-          `||${interaction.user.toString()} <@&${TECH_ROLE_ID}> <@&${HR_ROLE_ID}>||\n### For our employees who are new to Discord, below are the guides that you may need to familiarize yourself with the Discord application.`
+          `||${interaction.user.toString()} <@&${HR_ONBOARDING_ROLE_ID}>||\n### For our employees who are new to Discord, below are the guides that you may need to familiarize yourself with the Discord application.`
         )
       )
       .addSeparatorComponents((separator) =>

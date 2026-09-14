@@ -89,7 +89,7 @@ function buildApprovedMemberNickname(user, member, roles = []) {
   const roleLabel = getRoleLabelForMember(member, roles);
 
   if (!firstName || !roleLabel) return null;
-  return `${firstName} - ${roleLabel}`;
+  return `🔴 ${firstName} - ${roleLabel}`;
 }
 
 async function renameApprovedMember(member, user, roles = []) {

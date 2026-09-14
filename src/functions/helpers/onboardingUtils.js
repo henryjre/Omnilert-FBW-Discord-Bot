@@ -9,6 +9,7 @@ const {
 const ONBOARDING_ROLE_ID = '1451964458791604244';
 const HR_ROLE_ID = '1314815153421680640';
 const TECH_ROLE_ID = '1314815091908022373';
+const HR_ONBOARDING_ROLE_ID = '1548901403609796639';
 const ONBOARDING_ROLE_REMOVAL_DELAY_MS = 24 * 60 * 60 * 1000;
 const REGISTRATION_URL = 'https://omnilert.app/register';
 const OMNILERT_API_BASE_URL = 'https://omnilert.app/api/v1/integrations/discord';
@@ -105,7 +106,7 @@ function buildPendingContainer() {
     .setAccentColor(0xf1c40f)
     .addTextDisplayComponents((textDisplay) =>
       textDisplay.setContent(
-        `## Registration verified\nYour website registration has been verified and is currently pending HR approval. Please wait for <@${HR_ROLE_ID}> to complete the review. While waiting, prepare your bank information and employment requirements.`
+        '## Registration submitted\nYour website registration has been submitted and is currently pending HR approval. While waiting, prepare your bank information and employment requirements.'
       )
     );
 }
@@ -116,17 +117,58 @@ function buildApprovedContainer() {
     .addTextDisplayComponents((textDisplay) =>
       textDisplay.setContent('## 🎉 Registration approved\nYour registration has been approved. Welcome to Omnilert!')
     )
-    .addSeparatorComponents((separator) => separator)
-    .addTextDisplayComponents((textDisplay) =>
-      textDisplay.setContent(
-        [
-          '**Next steps**',
-          '1. View your POS PIN in `My Account > My Profile`.',
-          '2. Submit your bank details in `My Account > My Profile`.',
-          '3. Upload your employment requirements in `My Account > My Profile`.',
-          '4. Enable notifications in `My Account > Settings`.',
-        ].join('\n')
-      )
+    .addSeparatorComponents((separator) =>
+      separator.setDivider(false).setSpacing(SeparatorSpacingSize.Large)
+    )
+    .addTextDisplayComponents((textDisplay) => textDisplay.setContent('**Next steps**'))
+    .addSeparatorComponents((separator) => separator.setDivider(true))
+    .addSectionComponents((section) =>
+      section
+        .addTextDisplayComponents((textDisplay) =>
+          textDisplay.setContent('View your POS PIN in `My Account`.')
+        )
+        .setButtonAccessory((button) =>
+          button
+            .setLabel('My Account')
+            .setStyle(ButtonStyle.Link)
+            .setURL('https://omnilert.app/account')
+        )
+    )
+    .addSectionComponents((section) =>
+      section
+        .addTextDisplayComponents((textDisplay) =>
+          textDisplay.setContent('Submit your bank details in `My Account > Banks`.')
+        )
+        .setButtonAccessory((button) =>
+          button
+            .setLabel('Banks')
+            .setStyle(ButtonStyle.Link)
+            .setURL('https://omnilert.app/account/profile')
+        )
+    )
+    .addSectionComponents((section) =>
+      section
+        .addTextDisplayComponents((textDisplay) =>
+          textDisplay.setContent('Upload your employment requirements in `My Account > Requirements`.')
+        )
+        .setButtonAccessory((button) =>
+          button
+            .setLabel('Requirements')
+            .setStyle(ButtonStyle.Link)
+            .setURL('https://omnilert.app/account/work')
+        )
+    )
+    .addSectionComponents((section) =>
+      section
+        .addTextDisplayComponents((textDisplay) =>
+          textDisplay.setContent('Enable notifications in `My Account > Settings`.')
+        )
+        .setButtonAccessory((button) =>
+          button
+            .setLabel('Settings')
+            .setStyle(ButtonStyle.Link)
+            .setURL('https://omnilert.app/account/settings')
+        )
     );
 }
 
@@ -202,6 +244,7 @@ async function syncApprovedDiscordRoles(member, roles) {
 const onboardingUtils = {
   BLOCKED_ONBOARDING_ROLE_IDS,
   HR_ROLE_ID,
+  HR_ONBOARDING_ROLE_ID,
   ONBOARDING_ROLE_ID,
   ONBOARDING_ROLE_REMOVAL_DELAY_MS,
   OMNILERT_API_BASE_URL,

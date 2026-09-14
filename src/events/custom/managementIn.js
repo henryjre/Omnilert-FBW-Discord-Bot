@@ -2,7 +2,7 @@ const managementRole = "1314413671245676685";
 const serviceEmployeeRole = "1314413960274907238";
 const officeChannels = ["1314413190074994690"];
 
-const { callOdooAttendanceWebhook } = require("../../odooRpc.js");
+const { checkInEmployeeByDiscordId } = require("../../odooRpc.js");
 
 module.exports = {
   name: "managementIn",
@@ -29,11 +29,12 @@ module.exports = {
       // 1. Member has only management role (allowed in all channels)
       // 2. Member has both roles and is in an office channel
       const memberId = member.id;
-      await callOdooAttendanceWebhook(
-        "checkin",
-        process.env.ODOO_CHECKIN_SECRET,
-        memberId
-      );
+      const checkInTime = new Date().toISOString().replace("T", " ").split(".")[0];
+      try {
+        await checkInEmployeeByDiscordId(memberId, checkInTime);
+      } catch (error) {
+        console.error("Error checking in employee via JSON-RPC:", error);
+      }
       return;
     }
   },

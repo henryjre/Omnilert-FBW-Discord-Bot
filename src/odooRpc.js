@@ -500,6 +500,8 @@ module.exports = {
   getEmployeePayslipData,
   createViewOnlyPayslip,
   toggleAttendance,
+  checkInEmployeeByDiscordId,
+  checkOutEmployeeByDiscordId,
 };
 
 async function callOdooRpc(model, method, domain = [], fields = [], options = {}) {
@@ -651,4 +653,111 @@ async function toggleAttendance(employeeId, timestamp = null) {
       checkIn: checkTime
     };
   }
+}
+
+/**
+ * Check in an employee identified by their Discord ID directly via JSON-RPC
+ * (replaces the ODOO_CHECKIN_SECRET webhook call).
+ * @param {string} discordId - Discord user ID (x_discord_id)
+ * @param {string} checkInTime - 'YYYY-MM-DD HH:MM:SS' (UTC)
+ * @returns {Promise<number|null>} - New attendance ID, or null if no employee/already checked in
+ */
+async function checkInEmployeeByDiscordId(discordId, checkInTime) {
+  const employees = await callOdooRpc(
+    'hr.employee',
+    'search_read',
+    [
+      ['x_discord_id', '=', discordId],
+      ['company_id', '=', 1],
+    ],
+    ['id', 'name'],
+    { limit: 1 }
+  );
+  const employee = employees?.[0];
+  if (!employee) {
+    console.warn(`No employee found with Discord ID ${discordId}, company_id = 1`);
+    return null;
+  }
+
+  const openAttendance = await callOdooRpc(
+    'hr.attendance',
+    'search_read',
+    [
+      ['employee_id', '=', employee.id],
+      ['check_out', '=', false],
+    ],
+    ['id'],
+    { limit: 1 }
+  );
+
+  if (openAttendance?.length) {
+    console.log(
+      `Employee ${employee.name} already has an open attendance. No new check-in created.`
+    );
+    return null;
+  }
+
+  const attendanceId = await callOdooKw('hr.attendance', 'create', [
+    {
+      employee_id: employee.id,
+      check_in: checkInTime,
+      in_mode: 'technical',
+    },
+  ]);
+
+  await callOdooKw('hr.attendance', 'write', [[attendanceId], { x_ready_in: true }]);
+
+  console.log(`Checked in employee ${employee.name} at ${checkInTime} in Technical mode`);
+  return attendanceId;
+}
+
+/**
+ * Check out an employee identified by their Discord ID directly via JSON-RPC
+ * (replaces the ODOO_CHECKOUT_SECRET webhook call).
+ * @param {string} discordId - Discord user ID (x_discord_id)
+ * @param {string} checkOutTime - 'YYYY-MM-DD HH:MM:SS' (UTC)
+ * @returns {Promise<number[]|null>} - IDs of closed attendance records, or null if none
+ */
+async function checkOutEmployeeByDiscordId(discordId, checkOutTime) {
+  const employees = await callOdooRpc(
+    'hr.employee',
+    'search_read',
+    [
+      ['x_discord_id', '=', discordId],
+      ['company_id', '=', 1],
+    ],
+    ['id', 'name'],
+    { limit: 1 }
+  );
+  const employee = employees?.[0];
+  if (!employee) {
+    console.warn(`No employee found with Discord ID ${discordId}, company_id = 1`);
+    return null;
+  }
+
+  const openAttendances = await callOdooRpc(
+    'hr.attendance',
+    'search_read',
+    [
+      ['employee_id', '=', employee.id],
+      ['check_out', '=', false],
+    ],
+    ['id']
+  );
+
+  if (!openAttendances?.length) {
+    console.log(`No open attendances to check out for employee ${employee.name}`);
+    return null;
+  }
+
+  const ids = openAttendances.map((a) => a.id);
+  await callOdooKw('hr.attendance', 'write', [
+    ids,
+    { check_out: checkOutTime, out_mode: 'technical' },
+  ]);
+
+  console.log(
+    `Checked out ${ids.length} attendance(s) for employee ${employee.name} at ${checkOutTime} in Technical mode`
+  );
+  return ids;
 }

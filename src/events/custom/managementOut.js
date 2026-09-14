@@ -1,7 +1,7 @@
 const managementRole = "1314413671245676685";
 const serviceEmployeeRole = "1314413960274907238";
 
-const { callOdooAttendanceWebhook } = require("../../odooRpc.js");
+const { checkOutEmployeeByDiscordId } = require("../../odooRpc.js");
 
 module.exports = {
   name: "managementOut",
@@ -17,11 +17,11 @@ module.exports = {
     }
 
     const memberId = member.id;
-
-    await callOdooAttendanceWebhook(
-      "checkout",
-      process.env.ODOO_CHECKOUT_SECRET,
-      memberId
-    );
+    const checkOutTime = new Date().toISOString().replace("T", " ").split(".")[0];
+    try {
+      await checkOutEmployeeByDiscordId(memberId, checkOutTime);
+    } catch (error) {
+      console.error("Error checking out employee via JSON-RPC:", error);
+    }
   },
 };
