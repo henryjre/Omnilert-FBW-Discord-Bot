@@ -22,13 +22,8 @@ const {
   formatMeetingDuration,
 } = require('../src/webhook/websiteRoutes/meetings/createChannel');
 
-// Flattens every TextDisplay content in a Components V2 message into one string.
 function getContainerText(message) {
-  const container = message.components[0].toJSON();
-  return (container.components || [])
-    .map((component) => component.content)
-    .filter((content) => typeof content === 'string')
-    .join('\n');
+  return message.content;
 }
 
 function buildPayload(overrides = {}) {
@@ -95,6 +90,12 @@ function createMockDb(initialRows = []) {
     calls,
     rows,
     prepare(sql) {
+      if (/SELECT meeting_id, voice_channel_id, guild_id, payload\s*\n\s*FROM meeting_voice_channels\s*\n\s*WHERE guild_id/i.test(sql)) {
+        return {
+          all: (guildId) => [...rows.values()].filter((row) => row.guild_id === guildId),
+        };
+      }
+
       if (/SELECT meeting_id, voice_channel_id, guild_id/i.test(sql)) {
         return {
           get: (meetingId) => {
@@ -509,8 +510,8 @@ test('handler creates a private voice channel and sends meeting details', async 
   assert.ok(botOverwrite.allow.includes(PermissionFlagsBits.ManageChannels));
 
   assert.equal(sentMessages.length, 1);
-  assert.equal(sentMessages[0].flags, MessageFlags.IsComponentsV2);
-  assert.equal(sentMessages[0].content, undefined);
+  assert.equal(sentMessages[0].flags, undefined);
+  assert.equal(typeof sentMessages[0].content, 'string');
   assert.deepEqual(sentMessages[0].allowedMentions, {
     users: ['987654321098765432', '123456789012345678'],
     parse: [],

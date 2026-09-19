@@ -1,6 +1,5 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { MessageFlags } = require('discord.js');
 
 const {
   isValidMeetingReschedulePayload,
@@ -56,9 +55,11 @@ function createMockRes() {
 function createMockClient({ channelId = '1398472048572048', useFetch = false, setNameError, sendError } = {}) {
   const renames = [];
   const sentMessages = [];
+  const positions = [];
 
   const channel = {
     id: channelId,
+    guildId: 'guild123',
     setName: async (name, reason) => {
       if (setNameError) throw setNameError;
       renames.push({ name, reason });
@@ -67,6 +68,9 @@ function createMockClient({ channelId = '1398472048572048', useFetch = false, se
       if (sendError) throw sendError;
       sentMessages.push(message);
       return { id: 'reschedule-message-id' };
+    },
+    setPosition: async (position, options) => {
+      positions.push({ position, options });
     },
   };
 
@@ -77,15 +81,44 @@ function createMockClient({ channelId = '1398472048572048', useFetch = false, se
     },
   };
 
-  return { client, channel, renames, sentMessages };
+  return { client, channel, renames, sentMessages, positions };
+}
+
+function createMockDb(initialRows = []) {
+  const rows = new Map(initialRows.map((row) => [row.meeting_id, row]));
+
+  return {
+    rows,
+    prepare(sql) {
+      if (/SELECT meeting_id, voice_channel_id, guild_id, payload\s*\n\s*FROM meeting_voice_channels\s*\n\s*WHERE guild_id/i.test(sql)) {
+        return {
+          all: (guildId) => [...rows.values()].filter((row) => row.guild_id === guildId),
+        };
+      }
+
+      if (/SELECT meeting_id, voice_channel_id, guild_id/i.test(sql)) {
+        return {
+          get: (meetingId) => rows.get(meetingId) || null,
+        };
+      }
+
+      if (/UPDATE meeting_voice_channels/i.test(sql)) {
+        return {
+          run: (payloadJson, meetingId) => {
+            const existing = rows.get(meetingId);
+            if (existing) rows.set(meetingId, { ...existing, payload: payloadJson });
+            return { changes: existing ? 1 : 0 };
+          },
+        };
+      }
+
+      throw new Error(`Unexpected SQL in test: ${sql}`);
+    },
+  };
 }
 
 function getContainerText(message) {
-  const container = message.components[0].toJSON();
-  return (container.components || [])
-    .map((component) => component.content)
-    .filter((content) => typeof content === 'string')
-    .join('\n');
+  return message.content;
 }
 
 test('isValidMeetingReschedulePayload accepts a valid payload', () => {
@@ -114,7 +147,7 @@ test('isValidMeetingChannelWebhookPayload accepts reschedule events', () => {
 test('buildMeetingRescheduleMessage shows old and new Manila times, duration, and count', () => {
   const message = buildMeetingRescheduleMessage(buildPayload());
 
-  assert.equal(message.flags, MessageFlags.IsComponentsV2);
+  assert.equal(message.flags, undefined);
 
   const text = getContainerText(message);
   assert.match(text, /## 🔄 Meeting Rescheduled/);
@@ -133,8 +166,16 @@ test('buildMeetingRescheduleMessage omits the link section when link_url is null
 
 test('rescheduleMeetingVoiceChannel renames the channel with the new start time and posts a message', async () => {
   const { client, renames, sentMessages } = createMockClient();
+  const db = createMockDb([
+    {
+      meeting_id: 'dfb8ba84-5301-43c4-8d0d-3a175bd1b862',
+      voice_channel_id: '1398472048572048',
+      guild_id: 'guild123',
+      payload: JSON.stringify({ meeting: { starts_at: '2026-07-15T02:00:00.000Z' } }),
+    },
+  ]);
 
-  const result = await rescheduleMeetingVoiceChannel({ clientInstance: client, payload: buildPayload() });
+  const result = await rescheduleMeetingVoiceChannel({ clientInstance: client, db, payload: buildPayload() });
 
   assert.deepEqual(result, { rescheduled: true });
   assert.equal(renames.length, 1);

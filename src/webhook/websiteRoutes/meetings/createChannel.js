@@ -2,10 +2,7 @@ const express = require('express');
 const AsyncLock = require('async-lock');
 const {
   ChannelType,
-  ContainerBuilder,
-  MessageFlags,
   PermissionFlagsBits,
-  SeparatorSpacingSize,
 } = require('discord.js');
 
 const { extractBearerToken } = require('../notifications/cronNotifications');
@@ -29,6 +26,10 @@ const {
   isValidMeetingReschedulePayload,
   rescheduleMeetingVoiceChannel,
 } = require('./rescheduleChannel');
+const {
+  computeSortedPosition,
+  getGuildMeetingVoiceChannels,
+} = require('./meetingChannelSort');
 
 const router = express.Router();
 const MEETING_VOICE_CATEGORY_ID = '1526460615932248174';
@@ -267,7 +268,7 @@ function buildMeetingPermissionOverwrites(guild, clientInstance, participantIds)
   return overwrites;
 }
 
-function buildMeetingContainer(payload, participantIds) {
+function buildMeetingMessageContent(payload, participantIds) {
   const meeting = payload.meeting || {};
   const creator = meeting.created_by || {};
   const company = buildMeetingCompanyLine(meeting);
@@ -278,61 +279,35 @@ function buildMeetingContainer(payload, participantIds) {
     ? `${toDisplay(creator.name)} (<@${creator.discord_user_id}>)`
     : toDisplay(creator.name);
 
-  // Components V2 renders mentions inside the container as real pings, so the
-  // participant list lives here instead of a separate content line.
   const participants = participantIds.length > 0
     ? participantIds.map((id) => `<@${id}>`).join(' ')
     : '_No participants assigned._';
 
-  const container = new ContainerBuilder()
-    .setAccentColor(0x5865f2)
-    .addTextDisplayComponents((textDisplay) =>
-      textDisplay.setContent(
-        [
-          `## 📅 ${toDisplay(meeting.title)}`,
-          `-# ${company.label}: **${company.value}**`,
-        ].join('\n'),
-      ),
-    )
-    .addSeparatorComponents((separator) => separator.setSpacing(SeparatorSpacingSize.Small))
-    .addTextDisplayComponents((textDisplay) =>
-      textDisplay.setContent(
-        [
-          '### 📝 Agenda',
-          agenda,
-        ].join('\n'),
-      ),
-    )
-    .addSeparatorComponents((separator) => separator.setSpacing(SeparatorSpacingSize.Small))
-    .addTextDisplayComponents((textDisplay) =>
-      textDisplay.setContent(
-        [
-          '### 🕒 Schedule',
-          `> **Starts:** ${formatMeetingStartsAt(meeting.starts_at)}`,
-          `> **Duration:** ${formatMeetingDuration(meeting.duration_minutes)}`,
-          '',
-          '### 👥 Participants',
-          participants,
-          '',
-          '### ✍️ Organized By',
-          createdBy,
-        ].join('\n'),
-      ),
-    );
+  const lines = [
+    `## 📅 ${toDisplay(meeting.title)}`,
+    `-# ${company.label}: **${company.value}**`,
+    '',
+    '### 📝 Agenda',
+    agenda,
+    '',
+    '### 🕒 Schedule',
+    `> **Starts:** ${formatMeetingStartsAt(meeting.starts_at)}`,
+    `> **Duration:** ${formatMeetingDuration(meeting.duration_minutes)}`,
+    '',
+    '### 👥 Participants',
+    participants,
+    '',
+    '### ✍️ Organized By',
+    createdBy,
+  ];
 
   if (isNonEmptyString(meeting.link_url)) {
-    container
-      .addSeparatorComponents((separator) => separator.setSpacing(SeparatorSpacingSize.Small))
-      .addTextDisplayComponents((textDisplay) =>
-        textDisplay.setContent(`### 🔗 Meeting Link\n[Open in Omnilert](${meeting.link_url.trim()})`),
-      );
+    lines.push('', '### 🔗 Meeting Link', `[Open in Omnilert](${meeting.link_url.trim()})`);
   }
 
-  container.addTextDisplayComponents((textDisplay) =>
-    textDisplay.setContent(`-# Meeting ID: \`${toDisplay(meeting.id)}\``),
-  );
+  lines.push('', `-# Meeting ID: \`${toDisplay(meeting.id)}\``);
 
-  return container;
+  return lines.join('\n');
 }
 
 function buildMeetingChannelMessage(payload, participantIds) {
@@ -343,8 +318,7 @@ function buildMeetingChannelMessage(payload, participantIds) {
     : uniqueParticipantIds;
 
   return {
-    components: [buildMeetingContainer(payload, uniqueParticipantIds)],
-    flags: MessageFlags.IsComponentsV2,
+    content: buildMeetingMessageContent(payload, uniqueParticipantIds),
     allowedMentions: { users: mentionableIds, parse: [] },
   };
 }
@@ -365,10 +339,14 @@ async function createMeetingVoiceChannel({
   }
 
   const participantIds = getParticipantDiscordIds(payload.participants);
+  const siblings = getGuildMeetingVoiceChannels(db, guildId);
+  const position = computeSortedPosition(siblings, payload.meeting.starts_at, payload.meeting.id);
+
   const channel = await guild.channels.create({
     name: buildMeetingChannelName(payload.meeting),
     type: ChannelType.GuildVoice,
     parent: categoryId,
+    position,
     reason: `Meeting channel created from webhook for ${payload.meeting.id}`,
     permissionOverwrites: buildMeetingPermissionOverwrites(
       guild,
@@ -465,8 +443,10 @@ function createMeetingChannelWebhookHandler({
       }
 
       if (payload.event === 'meeting.reschedule') {
+        const resolvedDb = db || require('../../../sqliteConnection.js');
         const result = await rescheduleMeetingVoiceChannel({
           clientInstance: resolvedClient,
+          db: resolvedDb,
           payload,
         });
 
@@ -525,7 +505,7 @@ module.exports.buildMeetingCompanyLine = buildMeetingCompanyLine;
 module.exports.formatMeetingStartsAt = formatMeetingStartsAt;
 module.exports.formatMeetingDuration = formatMeetingDuration;
 module.exports.buildMeetingPermissionOverwrites = buildMeetingPermissionOverwrites;
-module.exports.buildMeetingContainer = buildMeetingContainer;
+module.exports.buildMeetingMessageContent = buildMeetingMessageContent;
 module.exports.buildMeetingChannelMessage = buildMeetingChannelMessage;
 module.exports.getStoredMeetingVoiceChannel = getStoredMeetingVoiceChannel;
 module.exports.saveMeetingVoiceChannel = saveMeetingVoiceChannel;

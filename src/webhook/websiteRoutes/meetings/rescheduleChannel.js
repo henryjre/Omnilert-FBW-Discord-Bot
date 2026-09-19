@@ -1,9 +1,3 @@
-const {
-  ContainerBuilder,
-  MessageFlags,
-  SeparatorSpacingSize,
-} = require('discord.js');
-
 const { resolveDiscordChannel } = require('./deleteChannel');
 const {
   buildMeetingChannelName,
@@ -12,6 +6,10 @@ const {
   formatMeetingStartsAt,
   formatMeetingDuration,
 } = require('./meetingChannelName');
+const {
+  computeSortedPosition,
+  getGuildMeetingVoiceChannels,
+} = require('./meetingChannelSort');
 
 function isValidMeetingReschedulePayload(payload) {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return false;
@@ -35,45 +33,64 @@ function buildMeetingRescheduleMessage(payload) {
   const count = payload.rescheduled_count;
   const countLine = `-# Rescheduled ${count} time${count === 1 ? '' : 's'}`;
 
-  const container = new ContainerBuilder()
-    .setAccentColor(0x5865f2)
-    .addTextDisplayComponents((textDisplay) =>
-      textDisplay.setContent(
-        [
-          '## 🔄 Meeting Rescheduled',
-          `**${toDisplay(meeting.title)}**`,
-        ].join('\n'),
-      ),
-    )
-    .addSeparatorComponents((separator) => separator.setSpacing(SeparatorSpacingSize.Small))
-    .addTextDisplayComponents((textDisplay) =>
-      textDisplay.setContent(
-        [
-          '### 🕒 New Schedule',
-          `> ~~${formatMeetingStartsAt(payload.previous_starts_at)}~~ → **${formatMeetingStartsAt(payload.starts_at)}**`,
-          `> **Duration:** ${formatMeetingDuration(payload.duration_minutes)}`,
-        ].join('\n'),
-      ),
-    );
+  const lines = [
+    '## 🔄 Meeting Rescheduled',
+    `**${toDisplay(meeting.title)}**`,
+    '',
+    '### 🕒 New Schedule',
+    `> ~~${formatMeetingStartsAt(payload.previous_starts_at)}~~ → **${formatMeetingStartsAt(payload.starts_at)}**`,
+    `> **Duration:** ${formatMeetingDuration(payload.duration_minutes)}`,
+  ];
 
   if (isNonEmptyString(payload.link_url)) {
-    container
-      .addSeparatorComponents((separator) => separator.setSpacing(SeparatorSpacingSize.Small))
-      .addTextDisplayComponents((textDisplay) =>
-        textDisplay.setContent(`### 🔗 Meeting Link\n[Open in Omnilert](${payload.link_url.trim()})`),
-      );
+    lines.push('', '### 🔗 Meeting Link', `[Open in Omnilert](${payload.link_url.trim()})`);
   }
 
-  container.addTextDisplayComponents((textDisplay) => textDisplay.setContent(countLine));
+  lines.push('', countLine);
 
   return {
-    components: [container],
-    flags: MessageFlags.IsComponentsV2,
+    content: lines.join('\n'),
     allowedMentions: { parse: [] },
   };
 }
 
-async function rescheduleMeetingVoiceChannel({ clientInstance, payload }) {
+function getStoredMeetingVoiceChannelRow(db, meetingId) {
+  return (
+    db
+      .prepare(
+        `
+          SELECT meeting_id, voice_channel_id, guild_id, payload
+          FROM meeting_voice_channels
+          WHERE meeting_id = ?
+        `,
+      )
+      .get(meetingId) || null
+  );
+}
+
+function updateStoredMeetingStartsAt(db, meetingId, startsAt) {
+  const row = getStoredMeetingVoiceChannelRow(db, meetingId);
+  if (!row) return;
+
+  let stored;
+  try {
+    stored = row.payload ? JSON.parse(row.payload) : {};
+  } catch {
+    stored = {};
+  }
+
+  stored.meeting = { ...(stored.meeting || {}), starts_at: startsAt };
+
+  db.prepare(
+    `
+      UPDATE meeting_voice_channels
+      SET payload = ?, last_updated = datetime('now')
+      WHERE meeting_id = ?
+    `,
+  ).run(JSON.stringify(stored), meetingId);
+}
+
+async function rescheduleMeetingVoiceChannel({ clientInstance, db, payload }) {
   const channel = await resolveDiscordChannel(clientInstance, payload.voice_channel_id);
 
   if (!channel) {
@@ -90,6 +107,23 @@ async function rescheduleMeetingVoiceChannel({ clientInstance, payload }) {
   );
 
   await channel.send(buildMeetingRescheduleMessage(payload));
+
+  if (db) {
+    updateStoredMeetingStartsAt(db, payload.meeting.id, payload.starts_at);
+
+    if (typeof channel.setPosition === 'function') {
+      const siblings = getGuildMeetingVoiceChannels(db, channel.guildId || channel.guild?.id);
+      const position = computeSortedPosition(siblings, payload.starts_at, payload.meeting.id);
+
+      try {
+        await channel.setPosition(position, {
+          reason: `Meeting ${payload.meeting.id} resorted after reschedule`,
+        });
+      } catch (error) {
+        console.error('Failed to reposition rescheduled meeting voice channel:', error);
+      }
+    }
+  }
 
   return { rescheduled: true };
 }
