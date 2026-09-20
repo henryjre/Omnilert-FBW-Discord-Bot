@@ -5,6 +5,11 @@ const {
   MessageFlags,
 } = require("discord.js");
 const { buildTechnologyTicketNoticePayload } = require('../../utils/technologyTicketUi');
+const {
+  beginSlashCommandActivity,
+  finishSlashCommandActivity,
+  safelyCapture,
+} = require('../../utils/discordActivity');
 
 async function respondToInteractionError(interaction, error) {
   console.error(error);
@@ -32,6 +37,10 @@ module.exports = {
       const { commandName } = interaction;
       const command = commands.get(commandName);
       if (!command) return;
+      const activityCapture = safelyCapture(
+        'slash command start',
+        () => beginSlashCommandActivity(interaction),
+      );
 
       if (!cooldowns.has(command.data.name)) {
         cooldowns.set(command.data.name, new Collection());
@@ -48,6 +57,10 @@ module.exports = {
           timestamps.get(interaction.user.id) + cooldownAmount;
 
         if (now < expirationTime) {
+          safelyCapture(
+            'slash command cooldown',
+            () => finishSlashCommandActivity(activityCapture, 'cooldown_rejected'),
+          );
           const expiredTimestamp = Math.round(expirationTime / 1000);
           const cooldownEmbed = new EmbedBuilder()
             .setTitle(`PLEASE WAIT`)
@@ -76,7 +89,15 @@ module.exports = {
 
       try {
         await command.execute(interaction, client);
+        safelyCapture(
+          'slash command success',
+          () => finishSlashCommandActivity(activityCapture, 'succeeded'),
+        );
       } catch (error) {
+        safelyCapture(
+          'slash command failure',
+          () => finishSlashCommandActivity(activityCapture, 'failed', error),
+        );
         await respondToInteractionError(interaction, error);
       }
     } else if (interaction.isButton()) {

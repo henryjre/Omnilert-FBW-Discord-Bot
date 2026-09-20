@@ -1,6 +1,9 @@
+const { captureMessageDeleted, safelyCapture } = require('../../utils/discordActivity');
+
 module.exports = {
   name: "messageDelete",
   async execute(message, client) {
+    safelyCapture('message deleted', () => captureMessageDeleted(message));
     if (message.partial) return;
     if (message.author?.bot) return;
 

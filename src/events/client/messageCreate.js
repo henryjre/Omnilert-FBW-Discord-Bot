@@ -1,6 +1,7 @@
 const { handleDepartmentVoiceUpdateMessage } = require('../../utils/departmentVoiceUtils');
 const { scheduleDepartmentVoiceSessionJobs } = require('../../queue/departmentVoiceQueue');
 const { recordFirstTechnologyStaffResponse } = require('../../utils/technologyTicketService');
+const { captureMessageCreated, safelyCapture } = require('../../utils/discordActivity');
 
 module.exports = {
   name: "messageCreate",
@@ -8,6 +9,7 @@ module.exports = {
     if (message.author.bot) {
       return;
     }
+    safelyCapture('message created', () => captureMessageCreated(message));
     await recordFirstTechnologyStaffResponse(message, client).catch((error) => {
       console.error('Technology ticket first-response tracking failed:', error);
     });

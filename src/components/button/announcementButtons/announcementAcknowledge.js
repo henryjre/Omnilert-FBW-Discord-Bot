@@ -1,6 +1,10 @@
 const { EmbedBuilder, MessageFlags } = require("discord.js");
 const { addAcknowledgment, getAnnouncementTracking } = require("../../../sqliteFunctions");
 const moment = require("moment-timezone");
+const {
+  isConfiguredGuild,
+  recordAnnouncementAcknowledgmentActivity,
+} = require('../../../utils/discordActivity');
 
 module.exports = {
   data: {
@@ -38,15 +42,35 @@ module.exports = {
     }
 
     // Try to add acknowledgment
-    const result = addAcknowledgment(announcementId, userId);
+    const result = isConfiguredGuild(interaction.guildId)
+      ? recordAnnouncementAcknowledgmentActivity(interaction)
+      : addAcknowledgment(announcementId, userId);
 
-    if (result.alreadyAcknowledged) {
+    if (result?.alreadyAcknowledged || result?.reason === 'duplicate') {
       const replyEmbed = new EmbedBuilder()
         .setDescription(`You have already acknowledged this announcement.`)
         .setColor("Grey");
 
       return await interaction.reply({
         embeds: [replyEmbed],
+        flags: MessageFlags.Ephemeral,
+      });
+    }
+
+    if (result?.reason === 'not-found') {
+      return await interaction.reply({
+        embeds: [new EmbedBuilder()
+          .setDescription(`This announcement is no longer accepting acknowledgments.`)
+          .setColor('Grey')],
+        flags: MessageFlags.Ephemeral,
+      });
+    }
+
+    if (result?.reason === 'not-required') {
+      return await interaction.reply({
+        embeds: [new EmbedBuilder()
+          .setDescription(`You are not required to acknowledge this announcement.`)
+          .setColor('Grey')],
         flags: MessageFlags.Ephemeral,
       });
     }

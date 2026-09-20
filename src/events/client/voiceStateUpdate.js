@@ -13,10 +13,12 @@ const { scheduleMeetingVoiceFinishJob } = require('../../queue/meetingVoiceQueue
 const {
   handleMeetingVoiceStateUpdate,
 } = require('../../functions/helpers/meetingVoiceAttendance');
+const { captureVoiceState, safelyCapture } = require('../../utils/discordActivity');
 
 module.exports = {
   name: "voiceStateUpdate",
   async execute(oldState, newState, client) {
+    safelyCapture('voice state', () => captureVoiceState(oldState, newState));
     if (process.env.node_env === "test") return;
 
     const oldChannelId = oldState.channelId;

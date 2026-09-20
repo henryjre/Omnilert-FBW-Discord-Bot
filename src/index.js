@@ -2,12 +2,15 @@ const { Client, Collection, GatewayIntentBits, Partials } = require('discord.js'
 const fs = require('fs');
 
 require('dotenv').config({ path: 'src/.env' });
+const { validateActivityConfiguration } = require('./utils/discordActivity');
+validateActivityConfiguration();
 
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.GuildMembers,
+    GatewayIntentBits.GuildModeration,
     GatewayIntentBits.MessageContent,
     GatewayIntentBits.GuildMessageReactions,
     GatewayIntentBits.GuildIntegrations,
@@ -56,6 +59,7 @@ const { closeOnboardingRoleRemovalQueue } = require('./queue/onboardingRoleRemov
 const { closePortalNotificationCleanupQueue } = require('./queue/portalNotificationCleanupQueue');
 const { closeDepartmentVoiceQueue } = require('./queue/departmentVoiceQueue');
 const { closeMeetingVoiceQueue } = require('./queue/meetingVoiceQueue');
+const { closeDiscordActivityQueue } = require('./queue/discordActivityQueue');
 
 async function closeQueues() {
   await closeQueue();
@@ -63,6 +67,7 @@ async function closeQueues() {
   await closePortalNotificationCleanupQueue();
   await closeDepartmentVoiceQueue();
   await closeMeetingVoiceQueue();
+  await closeDiscordActivityQueue();
 }
 
 process.on('SIGTERM', async () => {

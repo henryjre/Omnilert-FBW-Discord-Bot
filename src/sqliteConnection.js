@@ -1,7 +1,7 @@
 const Database = require('better-sqlite3');
 const fs = require('fs');
 const path = require('path');
-const db = new Database('./src/sqlite.db');
+const db = new Database(process.env.SQLITE_DB_PATH || './src/sqlite.db');
 
 db.exec(`
     CREATE TABLE IF NOT EXISTS CASE_REPORTS (
@@ -253,6 +253,38 @@ db.exec(`
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(user_id, department_id, date_key)
   )
+`);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS discord_message_snapshots (
+    message_id TEXT PRIMARY KEY,
+    guild_id TEXT NOT NULL,
+    channel_id TEXT NOT NULL,
+    author_id TEXT,
+    revision INTEGER NOT NULL DEFAULT 1,
+    snapshot TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    edited_at TEXT,
+    updated_at TEXT NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS discord_message_snapshots_channel_idx
+    ON discord_message_snapshots(guild_id, channel_id);
+
+  CREATE TABLE IF NOT EXISTS discord_activity_outbox (
+    event_id TEXT PRIMARY KEY,
+    event_type TEXT NOT NULL,
+    payload TEXT NOT NULL,
+    state TEXT NOT NULL DEFAULT 'pending',
+    attempts INTEGER NOT NULL DEFAULT 0,
+    next_attempt_at TEXT,
+    last_error TEXT,
+    created_at TEXT NOT NULL,
+    delivered_at TEXT
+  );
+
+  CREATE INDEX IF NOT EXISTS discord_activity_outbox_state_idx
+    ON discord_activity_outbox(state, next_attempt_at, created_at);
 `);
 
 // Idempotent migration: add the color column to pre-existing tables.

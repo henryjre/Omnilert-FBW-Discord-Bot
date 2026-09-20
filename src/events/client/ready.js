@@ -5,6 +5,7 @@ const { initializeOnboardingRoleRemovalWorker } = require('../../queue/onboardin
 const { initializePortalNotificationCleanupWorker } = require('../../queue/portalNotificationCleanupQueue');
 const { initializeDepartmentVoiceWorker } = require('../../queue/departmentVoiceQueue');
 const { initializeMeetingVoiceWorker } = require('../../queue/meetingVoiceQueue');
+const { initializeDiscordActivityWorker } = require('../../queue/discordActivityQueue');
 const {
   ensureTechnologyTicketPanel,
   refreshActiveTechnologyTicketMessages,
@@ -47,5 +48,7 @@ module.exports = {
 
     initializeMeetingVoiceWorker(client);
     console.log(chalk.blue('📋 Meeting voice queue worker started'));
+
+    await initializeDiscordActivityWorker();
   },
 };

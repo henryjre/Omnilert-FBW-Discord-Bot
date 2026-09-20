@@ -1,7 +1,10 @@
+const { captureReaction, safelyCapture } = require('../../utils/discordActivity');
+
 module.exports = {
   name: "messageReactionAdd",
   async execute(reaction, user, client) {
     if (user.bot) return;
+    safelyCapture('reaction added', () => captureReaction('added', reaction, user));
     const message = await reaction.message;
 
     // if (message.channelId === "1171463711156862986") {
