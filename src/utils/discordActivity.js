@@ -344,34 +344,6 @@ function captureAuditLogEntry(entry, guild) {
   return activity;
 }
 
-async function captureNicknameChanged(oldMember, newMember) {
-  const guildId = newMember?.guild?.id || oldMember?.guild?.id;
-  if (!isConfiguredGuild(guildId) || oldMember?.nickname === newMember?.nickname) return null;
-  let actorId = null;
-  try {
-    const logs = await newMember.guild.fetchAuditLogs({ type: AuditLogEvent.MemberUpdate, limit: 6 });
-    const match = [...logs.entries.values()].find((entry) => (
-      (entry.targetId || entry.target?.id) === newMember.id &&
-      Date.now() - entry.createdTimestamp < 10000 &&
-      entry.changes?.some?.((change) => change.key === 'nick')
-    ));
-    actorId = match?.executorId || match?.executor?.id || null;
-  } catch (_) {
-    actorId = null;
-  }
-
-  const activity = makeEnvelope({
-    id: makeEventId('discord-nickname-changed'),
-    type: 'discord.member.nickname_changed',
-    guildId,
-    actorId,
-    subject: { discord_user_id: newMember.id },
-    content: { before: oldMember.nickname || null, after: newMember.nickname || null },
-  });
-  persistAndSchedule(activity);
-  return activity;
-}
-
 function normalizedOptionValue(option, interaction) {
   switch (option.type) {
     case ApplicationCommandOptionType.User:
@@ -492,7 +464,6 @@ module.exports = {
   captureMessageCreated,
   captureMessageDeleted,
   captureMessageEdited,
-  captureNicknameChanged,
   captureReaction,
   captureReactionsCleared,
   captureVoiceState,
