@@ -65,13 +65,62 @@ function channelTypeName(type, channel = null) {
 function channelContext(channel, overrides = {}) {
   return {
     channel_id: channel?.id || overrides.channel_id || null,
+    channel_name: channel?.name || overrides.channel_name || null,
     channel_type: channelTypeName(channel?.type ?? overrides.channel_type, channel),
     parent_channel_id: channel?.parentId || overrides.parent_channel_id || null,
+    parent_channel_name: channel?.parent?.name || overrides.parent_channel_name || null,
     ...overrides,
   };
 }
 
-function makeEnvelope({ id, type, occurredAt, guildId, actorId = null, subject = {}, context = {}, content = {} }) {
+function userIdentity(user, fallbackId = null) {
+  const account = user?.user || user;
+  const discordUserId = account?.id || user?.id || fallbackId || null;
+  const username = account?.username || null;
+  return {
+    discord_user_id: discordUserId,
+    username,
+    display_name: user?.displayName || account?.globalName || username || null,
+  };
+}
+
+function makeLogPayload(type, actor, subject, context, content) {
+  return {
+    event_type: type,
+    actor,
+    subject,
+    location: {
+      channel_id: context.channel_id,
+      channel_name: context.channel_name,
+      channel_type: context.channel_type,
+      parent_channel_id: context.parent_channel_id,
+      parent_channel_name: context.parent_channel_name,
+      message_url: context.message_url || null,
+    },
+    details: content,
+  };
+}
+
+function makeEnvelope({
+  id,
+  type,
+  occurredAt,
+  guildId,
+  actorId = null,
+  actor = null,
+  subject = {},
+  context = {},
+  content = {},
+}) {
+  const normalizedActor = userIdentity(actor, actorId);
+  const normalizedContext = {
+    channel_id: null,
+    channel_name: null,
+    channel_type: null,
+    parent_channel_id: null,
+    parent_channel_name: null,
+    ...context,
+  };
   return {
     id,
     schema_version: 1,
@@ -80,15 +129,11 @@ function makeEnvelope({ id, type, occurredAt, guildId, actorId = null, subject =
     occurred_at: occurredAt || nowIso(),
     observed_at: nowIso(),
     guild_id: guildId,
-    actor: { discord_user_id: actorId || null },
+    actor: normalizedActor,
     subject,
-    context: {
-      channel_id: null,
-      channel_type: null,
-      parent_channel_id: null,
-      ...context,
-    },
+    context: normalizedContext,
     content,
+    log: makeLogPayload(type, normalizedActor, subject, normalizedContext, content),
   };
 }
 
@@ -182,6 +227,7 @@ function captureMessageCreated(message) {
     occurredAt: snapshot.created_at,
     guildId: snapshot.guild_id,
     actorId: snapshot.author_id,
+    actor: message.member || message.author,
     subject: { message_id: message.id },
     context: snapshot.context,
     content: { message: saved.after },
@@ -208,6 +254,7 @@ async function captureMessageEdited(oldMessage, newMessage) {
     occurredAt: saved.after.edited_at || saved.after.observed_at,
     guildId,
     actorId: saved.after.author_id,
+    actor: current.member || current.author,
     subject: { message_id: current.id },
     context: saved.after.context,
     content: { before, after: saved.after, before_available: Boolean(before) },
@@ -250,6 +297,7 @@ function captureReaction(type, reaction, user = null) {
     type: `discord.reaction.${type}`,
     guildId,
     actorId: user?.id || null,
+    actor: user,
     subject: { message_id: message.id },
     context: channelContext(message.channel, {
       channel_id: message.channelId,
@@ -291,7 +339,8 @@ function captureVoiceState(oldState, newState) {
     type: `discord.voice.${kind}`,
     guildId,
     actorId: userId,
-    subject: { discord_user_id: userId },
+    actor: newState?.member || oldState?.member,
+    subject: userIdentity(newState?.member || oldState?.member, userId),
     context: channelContext(channel, { channel_id: newChannelId || oldChannelId, channel_type: 'voice' }),
     content: {
       from_channel_id: oldChannelId,
@@ -330,9 +379,10 @@ function captureAuditLogEntry(entry, guild) {
     occurredAt: entry.createdAt?.toISOString?.() || nowIso(),
     guildId,
     actorId: entry.executorId || entry.executor?.id || null,
+    actor: entry.executor,
     subject: isChannel
       ? { channel_id: targetId }
-      : { discord_user_id: targetId },
+      : userIdentity(target, targetId),
     context: isChannel ? channelContext(target, { channel_id: targetId }) : {},
     content: {
       reason: entry.reason || null,
@@ -380,6 +430,7 @@ function beginSlashCommandActivity(interaction) {
     occurredAt,
     guildId: interaction.guildId,
     actorId: interaction.user?.id || null,
+    actor: interaction.member || interaction.user,
     subject: { interaction_id: interaction.id },
     context: channelContext(interaction.channel, { channel_id: interaction.channelId }),
     content: {
@@ -431,6 +482,7 @@ function buildAnnouncementAcknowledgmentActivity(interaction, tracking) {
     occurredAt: acknowledgedAt,
     guildId,
     actorId: interaction.user.id,
+    actor: interaction.member || interaction.user,
     subject: { announcement_id: message.id },
     context: channelContext(message.channel, {
       channel_id: tracking.channel_id || message.channelId,

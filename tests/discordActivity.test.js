@@ -29,10 +29,11 @@ const db = require('../src/sqliteConnection');
 const store = require('../src/utils/discordActivityStore');
 const activity = require('../src/utils/discordActivity');
 
-function makeChannel(id = 'channel-1', type = ChannelType.GuildText) {
+function makeChannel(id = 'channel-1', type = ChannelType.GuildText, name = 'general') {
   return {
     id,
     type,
+    name,
     parentId: null,
     isThread: () => false,
   };
@@ -81,6 +82,20 @@ test('message creation, edit, and deletion retain complete history', async () =>
 
   const created = store.getActivity('discord-message-created:message-1');
   assert.equal(created.payload.type, 'discord.message.created');
+  assert.deepEqual(created.payload.actor, {
+    discord_user_id: 'user-1',
+    username: null,
+    display_name: null,
+  });
+  assert.equal(created.payload.context.channel_name, 'general');
+  assert.deepEqual(created.payload.log.location, {
+    channel_id: 'channel-1',
+    channel_name: 'general',
+    channel_type: 'text',
+    parent_channel_id: null,
+    parent_channel_name: null,
+    message_url: 'https://discord.com/channels/guild-1/channel-1/message-1',
+  });
   assert.equal(created.payload.content.message.content, 'Original content');
   assert.deepEqual(created.payload.content.message.attachments[0], {
     id: 'attachment-1',
@@ -112,6 +127,24 @@ test('message creation, edit, and deletion retain complete history', async () =>
   assert.equal(deleted.payload.content.content_available, true);
   assert.equal(deleted.payload.content.before.content, 'Edited content');
   assert.equal(store.getMessageSnapshot('message-1'), null);
+});
+
+test('channel context includes readable channel and parent names', () => {
+  const parent = { id: 'category-1', name: 'Operations' };
+  assert.deepEqual(activity.channelContext({
+    id: 'channel-1',
+    name: 'daily-standup',
+    type: ChannelType.GuildText,
+    parentId: parent.id,
+    parent,
+    isThread: () => false,
+  }), {
+    channel_id: 'channel-1',
+    channel_name: 'daily-standup',
+    channel_type: 'text',
+    parent_channel_id: 'category-1',
+    parent_channel_name: 'Operations',
+  });
 });
 
 test('bot and webhook messages are not captured', () => {
@@ -200,6 +233,8 @@ test('slash command options are minimized and outcomes finalize one event', () =
   assert.equal(row.state, 'pending');
   assert.equal(row.payload.content.outcome, 'failed');
   assert.equal(row.payload.content.failure_code, 'E_COMMAND');
+  assert.equal(row.payload.log.details.outcome, 'failed');
+  assert.equal(row.payload.log.details.failure_code, 'E_COMMAND');
   assert.equal(JSON.stringify(row.payload).includes('secret text'), false);
 });
 

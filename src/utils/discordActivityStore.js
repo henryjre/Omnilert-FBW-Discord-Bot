@@ -54,6 +54,7 @@ const finalizeCapturingActivity = db.transaction((eventId, contentPatch, observe
   if (!row) return false;
   const payload = parseJson(row.payload, {});
   payload.content = { ...(payload.content || {}), ...contentPatch };
+  if (payload.log) payload.log.details = payload.content;
   payload.observed_at = observedAt || payload.observed_at || new Date().toISOString();
 
   const result = db.prepare(`
@@ -86,6 +87,7 @@ const recoverInterruptedCommands = db.transaction((now = new Date().toISOString(
       outcome: 'interrupted',
       duration_ms: Number.isFinite(startedAt) ? Math.max(0, Date.parse(now) - startedAt) : null,
     };
+    if (payload.log) payload.log.details = payload.content;
     update.run(JSON.stringify(payload), row.event_id);
   }
 
