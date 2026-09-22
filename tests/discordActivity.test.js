@@ -46,7 +46,7 @@ function makeMessage(overrides = {}) {
     guildId: 'guild-1',
     channelId: channel.id,
     channel,
-    author: { id: 'user-1', bot: false },
+    author: { id: 'user-1', username: 'jane', globalName: 'Jane Doe', bot: false },
     content: 'Original content',
     attachments: new Map([
       ['attachment-1', {
@@ -84,9 +84,10 @@ test('message creation, edit, and deletion retain complete history', async () =>
   assert.equal(created.payload.type, 'discord.message.created');
   assert.deepEqual(created.payload.actor, {
     discord_user_id: 'user-1',
-    username: null,
-    display_name: null,
+    username: 'jane',
+    display_name: 'Jane Doe',
   });
+  assert.deepEqual(created.payload.log.subject.author, created.payload.actor);
   assert.equal(created.payload.context.channel_name, 'general');
   assert.deepEqual(created.payload.log.location, {
     channel_id: 'channel-1',
@@ -126,6 +127,7 @@ test('message creation, edit, and deletion retain complete history', async () =>
   const deleted = store.getActivity('discord-message-deleted:message-1');
   assert.equal(deleted.payload.content.content_available, true);
   assert.equal(deleted.payload.content.before.content, 'Edited content');
+  assert.deepEqual(deleted.payload.log.subject.author, created.payload.actor);
   assert.equal(store.getMessageSnapshot('message-1'), null);
 });
 
@@ -156,17 +158,32 @@ test('bot and webhook messages are not captured', () => {
 test('voice transitions emit joined, moved, and left once each', () => {
   const member = { id: 'user-1', user: { id: 'user-1', bot: false } };
   const guild = { id: 'guild-1' };
-  const voiceOne = makeChannel('voice-1', ChannelType.GuildVoice);
-  const voiceTwo = makeChannel('voice-2', ChannelType.GuildVoice);
+  const voiceOne = makeChannel('voice-1', ChannelType.GuildVoice, 'Lobby');
+  const voiceTwo = makeChannel('voice-2', ChannelType.GuildVoice, 'Operations');
 
   assert.equal(activity.captureVoiceState(
     { guild, member, id: 'user-1', channelId: null, channel: null },
     { guild, member, id: 'user-1', channelId: 'voice-1', channel: voiceOne },
   ).type, 'discord.voice.joined');
-  assert.equal(activity.captureVoiceState(
+  const moved = activity.captureVoiceState(
     { guild, member, id: 'user-1', channelId: 'voice-1', channel: voiceOne },
     { guild, member, id: 'user-1', channelId: 'voice-2', channel: voiceTwo },
-  ).type, 'discord.voice.moved');
+  );
+  assert.equal(moved.type, 'discord.voice.moved');
+  assert.deepEqual(moved.log.details.from_channel, {
+    channel_id: 'voice-1',
+    channel_name: 'Lobby',
+    channel_type: 'voice',
+    parent_channel_id: null,
+    parent_channel_name: null,
+  });
+  assert.deepEqual(moved.log.details.to_channel, {
+    channel_id: 'voice-2',
+    channel_name: 'Operations',
+    channel_type: 'voice',
+    parent_channel_id: null,
+    parent_channel_name: null,
+  });
   assert.equal(activity.captureVoiceState(
     { guild, member, id: 'user-1', channelId: 'voice-2', channel: voiceTwo },
     { guild, member, id: 'user-1', channelId: null, channel: null },
@@ -226,7 +243,11 @@ test('slash command options are minimized and outcomes finalize one event', () =
   const capture = activity.beginSlashCommandActivity(interaction);
   let row = store.getActivity('discord-command:interaction-1');
   assert.equal(row.state, 'capturing');
-  assert.deepEqual(row.payload.content.options[0].value[0].value, { discord_id: 'user-2' });
+  assert.deepEqual(row.payload.content.options[0].value[0].value, {
+    discord_user_id: 'user-2',
+    username: null,
+    display_name: null,
+  });
 
   activity.finishSlashCommandActivity(capture, 'failed', Object.assign(new Error('secret text'), { code: 'E_COMMAND' }));
   row = store.getActivity('discord-command:interaction-1');

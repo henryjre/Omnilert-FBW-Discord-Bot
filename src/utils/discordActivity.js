@@ -75,12 +75,23 @@ function channelContext(channel, overrides = {}) {
 
 function userIdentity(user, fallbackId = null) {
   const account = user?.user || user;
-  const discordUserId = account?.id || user?.id || fallbackId || null;
+  const discordUserId = account?.id || user?.id || user?.discord_user_id || fallbackId || null;
   const username = account?.username || null;
   return {
     discord_user_id: discordUserId,
     username,
-    display_name: user?.displayName || account?.globalName || username || null,
+    display_name: user?.displayName || user?.display_name || account?.globalName || username || null,
+  };
+}
+
+function messageSubject(message, snapshot = null) {
+  const author = snapshot?.author || userIdentity(
+    message?.member || message?.author,
+    snapshot?.author_id || message?.author?.id,
+  );
+  return {
+    message_id: message?.id || snapshot?.message_id || null,
+    author,
   };
 }
 
@@ -192,6 +203,7 @@ function normalizeMessageSnapshot(message) {
     guild_id: guildId,
     channel_id: channelId,
     author_id: message.author?.id || null,
+    author: userIdentity(message.member || message.author, message.author?.id),
     content: message.content ?? null,
     reference: message.reference ? {
       message_id: message.reference.messageId || null,
@@ -228,7 +240,7 @@ function captureMessageCreated(message) {
     guildId: snapshot.guild_id,
     actorId: snapshot.author_id,
     actor: message.member || message.author,
-    subject: { message_id: message.id },
+    subject: messageSubject(message, saved.after),
     context: snapshot.context,
     content: { message: saved.after },
   });
@@ -255,7 +267,7 @@ async function captureMessageEdited(oldMessage, newMessage) {
     guildId,
     actorId: saved.after.author_id,
     actor: current.member || current.author,
-    subject: { message_id: current.id },
+    subject: messageSubject(current, saved.after),
     context: saved.after.context,
     content: { before, after: saved.after, before_available: Boolean(before) },
   });
@@ -272,7 +284,7 @@ function captureMessageDeleted(message) {
     type: 'discord.message.deleted',
     guildId,
     actorId: null,
-    subject: { message_id: message.id, author_discord_user_id: snapshot?.author_id || null },
+    subject: messageSubject(message, snapshot),
     context: snapshot?.context || channelContext(message.channel, { channel_id: channelId }),
     content: { before: snapshot, content_available: Boolean(snapshot) },
   }));
@@ -298,7 +310,7 @@ function captureReaction(type, reaction, user = null) {
     guildId,
     actorId: user?.id || null,
     actor: user,
-    subject: { message_id: message.id },
+    subject: messageSubject(message),
     context: channelContext(message.channel, {
       channel_id: message.channelId,
       message_url: `https://discord.com/channels/${guildId}/${message.channelId}/${message.id}`,
@@ -316,7 +328,7 @@ function captureReactionsCleared(message, reactions = null) {
     id: makeEventId('discord-reactions-cleared'),
     type: 'discord.reaction.cleared',
     guildId,
-    subject: { message_id: message.id },
+    subject: messageSubject(message),
     context: channelContext(message.channel, { channel_id: message.channelId }),
     content: { reaction_count: reactions?.size ?? null },
   });
@@ -345,6 +357,8 @@ function captureVoiceState(oldState, newState) {
     content: {
       from_channel_id: oldChannelId,
       to_channel_id: newChannelId,
+      from_channel: channelContext(oldState?.channel, { channel_id: oldChannelId, channel_type: 'voice' }),
+      to_channel: channelContext(newState?.channel, { channel_id: newChannelId, channel_type: 'voice' }),
     },
   });
   persistAndSchedule(activity);
@@ -395,12 +409,22 @@ function captureAuditLogEntry(entry, guild) {
 }
 
 function normalizedOptionValue(option, interaction) {
+  const optionId = String(option.value);
+  const resolved = interaction.options?.resolved;
   switch (option.type) {
     case ApplicationCommandOptionType.User:
+      return userIdentity(resolved?.members?.get?.(optionId) || resolved?.users?.get?.(optionId), optionId);
     case ApplicationCommandOptionType.Channel:
-    case ApplicationCommandOptionType.Role:
-    case ApplicationCommandOptionType.Mentionable:
-      return { discord_id: String(option.value) };
+      return channelContext(resolved?.channels?.get?.(optionId), { channel_id: optionId });
+    case ApplicationCommandOptionType.Role: {
+      const role = resolved?.roles?.get?.(optionId);
+      return { discord_role_id: optionId, name: role?.name || null };
+    }
+    case ApplicationCommandOptionType.Mentionable: {
+      const role = resolved?.roles?.get?.(optionId);
+      if (role) return { discord_role_id: optionId, name: role.name || null };
+      return userIdentity(resolved?.members?.get?.(optionId) || resolved?.users?.get?.(optionId), optionId);
+    }
     case ApplicationCommandOptionType.Attachment: {
       const attachment = interaction.options?.resolved?.attachments?.get?.(option.value);
       return attachment ? normalizeAttachments(new Map([[attachment.id, attachment]]))[0] : { id: String(option.value) };
