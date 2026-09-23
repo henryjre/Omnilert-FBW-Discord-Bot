@@ -5,6 +5,7 @@ const {
   DEFAULT_BREAK_ROOMS_CATEGORY_ID,
   isBreakRoomsVoiceState,
   buildBreakRoomsVoicePayload,
+  createSignature,
   sendBreakRoomsVoiceWebhook,
 } = require('../src/utils/breakRoomsVoiceWebhook');
 
@@ -67,20 +68,56 @@ test('Break Rooms webhook ignores other categories and posts the compact payload
   assert.equal(buildBreakRoomsVoicePayload(makeState(), makeState(outsideRoom)), null);
 
   const previousUrl = process.env.BREAK_ROOMS_WEBHOOK_URL;
+  const previousSecret = process.env.DISCORD_ACTIVITY_WEBHOOK_SECRET;
   process.env.BREAK_ROOMS_WEBHOOK_URL = 'https://example.test/break-rooms';
+  process.env.DISCORD_ACTIVITY_WEBHOOK_SECRET = 'activity-secret';
   const requests = [];
   const delivered = await sendBreakRoomsVoiceWebhook(makeState(), makeState(makeChannel('room-1', 'Breakout One')), {
     httpClient: {
       post: async (url, payload, options) => {
         requests.push({ url, payload, options });
+        return { status: 204, headers: {} };
       },
     },
   });
   if (previousUrl === undefined) delete process.env.BREAK_ROOMS_WEBHOOK_URL;
   else process.env.BREAK_ROOMS_WEBHOOK_URL = previousUrl;
+  if (previousSecret === undefined) delete process.env.DISCORD_ACTIVITY_WEBHOOK_SECRET;
+  else process.env.DISCORD_ACTIVITY_WEBHOOK_SECRET = previousSecret;
 
   assert.equal(delivered, true);
   assert.equal(requests[0].url, 'https://example.test/break-rooms');
-  assert.equal(requests[0].payload.event, 'joined');
-  assert.deepEqual(requests[0].options.headers, { 'Content-Type': 'application/json' });
+  assert.equal(JSON.parse(requests[0].payload).event, 'joined');
+  assert.match(requests[0].options.headers['X-Omnilert-Event-Id'], /^discord-break-rooms-voice:/);
+  assert.equal(
+    requests[0].options.headers['X-Omnilert-Signature'],
+    createSignature('activity-secret', requests[0].options.headers['X-Omnilert-Timestamp'], requests[0].payload),
+  );
+});
+
+test('Break Rooms webhook retries transient failures with the same event id', async () => {
+  const previousUrl = process.env.BREAK_ROOMS_WEBHOOK_URL;
+  const previousSecret = process.env.DISCORD_ACTIVITY_WEBHOOK_SECRET;
+  process.env.BREAK_ROOMS_WEBHOOK_URL = 'https://example.test/break-rooms';
+  process.env.DISCORD_ACTIVITY_WEBHOOK_SECRET = 'activity-secret';
+  const requests = [];
+  const delays = [];
+
+  await sendBreakRoomsVoiceWebhook(makeState(), makeState(makeChannel('room-1', 'Breakout One')), {
+    httpClient: {
+      post: async (_url, _payload, options) => {
+        requests.push(options);
+        return { status: requests.length === 1 ? 503 : 204, headers: {} };
+      },
+    },
+    sleep: async (delay) => delays.push(delay),
+  });
+  if (previousUrl === undefined) delete process.env.BREAK_ROOMS_WEBHOOK_URL;
+  else process.env.BREAK_ROOMS_WEBHOOK_URL = previousUrl;
+  if (previousSecret === undefined) delete process.env.DISCORD_ACTIVITY_WEBHOOK_SECRET;
+  else process.env.DISCORD_ACTIVITY_WEBHOOK_SECRET = previousSecret;
+
+  assert.equal(requests.length, 2);
+  assert.deepEqual(delays, [1000]);
+  assert.equal(requests[0].headers['X-Omnilert-Event-Id'], requests[1].headers['X-Omnilert-Event-Id']);
 });
