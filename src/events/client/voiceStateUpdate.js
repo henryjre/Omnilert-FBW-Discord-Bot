@@ -14,6 +14,10 @@ const {
   handleMeetingVoiceStateUpdate,
 } = require('../../functions/helpers/meetingVoiceAttendance');
 const { captureVoiceState, safelyCapture } = require('../../utils/discordActivity');
+const {
+  isBreakRoomsVoiceState,
+  sendBreakRoomsVoiceWebhook,
+} = require('../../utils/breakRoomsVoiceWebhook');
 
 module.exports = {
   name: "voiceStateUpdate",
@@ -21,8 +25,12 @@ module.exports = {
     safelyCapture('voice state', () => captureVoiceState(oldState, newState));
     if (process.env.node_env === "test") return;
 
+    safelyCapture('Break Rooms voice webhook', () => sendBreakRoomsVoiceWebhook(oldState, newState));
+
     const oldChannelId = oldState.channelId;
     const newChannelId = newState.channelId;
+    const leftBreakRooms = isBreakRoomsVoiceState(oldState);
+    const joinedBreakRooms = isBreakRoomsVoiceState(newState);
     const joinedOfficeVoice = oldChannelId !== OFFICE_VOICE_CHANNEL_ID && newChannelId === OFFICE_VOICE_CHANNEL_ID;
     const leftOfficeForMeeting = oldChannelId === OFFICE_VOICE_CHANNEL_ID
       && Boolean(newChannelId)
@@ -54,9 +62,9 @@ module.exports = {
       }
     } else if (leftOfficeForMeeting) {
       await handleDepartmentVoiceMeetingPause(oldState, newState, client);
-    } else if (joinedAnyVoice) {
+    } else if (joinedAnyVoice && !joinedBreakRooms) {
       client.events.get("managementIn").execute(oldState, newState, client);
-    } else if (leftAllVoice) {
+    } else if (leftAllVoice && !leftBreakRooms) {
       client.events.get("managementOut").execute(oldState, newState, client);
       await handleDepartmentVoiceCheckOut(oldState, client);
     } else if (movedBetweenMeetingVoices) {
